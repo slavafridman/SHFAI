@@ -1,0 +1,1190 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<struts-config>
+	
+	<!-- Data Sources -->
+	<data-sources>
+	</data-sources>
+
+	<!-- Global Exceptions -->
+
+	<!-- Form Beans -->
+	<form-beans>
+		<form-bean name="loginForm" type="bzq.shf.forms.LoginForm">
+		</form-bean>	
+		<form-bean name="employeeArriveForm" type="bzq.shf.forms.EmployeeArriveForm">
+		</form-bean>
+		<form-bean name="employeeActivitiesForm" type="bzq.shf.forms.EmployeeActivitiesForm">
+		</form-bean>
+		<form-bean name="eventForm" type="bzq.shf.bean.EmployeeEventBean">
+		</form-bean>
+		<form-bean name="employeeSearchForm" type="bzq.shf.forms.EmployeeListForm">
+		</form-bean>
+		<form-bean name="employeeDataForm" type="bzq.shf.forms.EmployeeDataForm">
+		</form-bean>
+		<form-bean name="eventReason" type="bzq.shf.transfer.EventReason">
+		</form-bean>
+		<form-bean name="shiftDataForm" type="bzq.shf.forms.ShiftDataForm">
+		</form-bean>
+		<form-bean name="adminForm" type="bzq.shf.forms.SystemAdminForm">
+		</form-bean>
+		<form-bean name="shiftInforceForm" type="bzq.shf.forms.ShiftInforceRequestForm">
+		</form-bean>
+		<form-bean name="replaceForm" type="bzq.shf.transfer.ReplaceByCritrion">
+		</form-bean>
+		<form-bean name="messageForm" type="bzq.shf.transfer.ReplaceMassage">
+		</form-bean>
+		<form-bean name="skillForm" type="bzq.shf.transfer.SkillForm">
+		</form-bean>
+		<form-bean name="addEventForm" type="bzq.shf.bean.EmployeeEventBean">
+		</form-bean>
+		<form-bean name="offerReplaceForm" type="bzq.shf.transfer.OfferReplaceByCritrion">
+		</form-bean>
+		<form-bean name="addShiftRequestForm" type="bzq.shf.forms.AddShiftRequestForm">
+		</form-bean>
+		<form-bean name="employeeInforceForm" type="bzq.shf.forms.EmployeeInforceListForm">
+		</form-bean>
+		<form-bean name="attendanceDataForm" type="bzq.shf.forms.AttendanceDataForm">
+		</form-bean>
+		<form-bean name="breakForm" type="bzq.shf.forms.BreakSearchForm">
+		</form-bean>
+		<form-bean name="forecastForm" type="bzq.shf.forms.ForecastForm">
+		</form-bean>
+		<form-bean name="breakBeanForm" type="bzq.shf.bean.BreakBean">
+		</form-bean>
+		<form-bean name="breakCandidateBeanForm" type="bzq.shf.bean.BreakCandidateBean">
+		</form-bean>
+		<form-bean name="shiftBreakForm" type="bzq.shf.forms.ShiftBreakForm">
+		</form-bean>
+		<form-bean name="exceptionForm" type="bzq.shf.forms.EmployeeExceptionForm">
+		</form-bean>
+		<form-bean name="switchForm" type="bzq.shf.forms.SwitchForm">
+		</form-bean>
+		<form-bean name="reduceShiftReqtForm" type="bzq.shf.forms.ShiftReduceRequestForm">
+		</form-bean>
+		<form-bean name="shiftChangeRequestForm" type="bzq.shf.forms.ShiftChangeRequestForm">
+		</form-bean>
+		<form-bean name="reduceShiftListForm" type="bzq.shf.forms.ShiftReduceListForm">
+		</form-bean>
+		<form-bean name="changeRequestCandidate" type="bzq.shf.bean.ChangeRequestCandidate">
+		</form-bean>
+		<form-bean name="ctiCompletionForm" type="bzq.shf.forms.CTICompletionForm">
+		</form-bean>
+		<form-bean name="ctiSearchCompletionForm" type="bzq.shf.forms.CTISearchCompletionForm">
+		</form-bean>
+		<form-bean name="baseForm" type="bzq.shf.bean.ShfBaseBean">
+		</form-bean>
+		<form-bean name="tableForm" type="bzq.shf.forms.TableForm">
+		</form-bean>
+		<form-bean name="innerJobForm" type="bzq.shf.forms.InnerJobForm">
+		</form-bean>
+		<form-bean name="exceptionSearchForm" type="bzq.shf.forms.ExceptionSearchForm">
+		</form-bean>	
+		<form-bean name="shiftCancelledForm" type="bzq.shf.forms.ActivityCancelForm" />
+		<form-bean name="employeeExceptionForm" type="bzq.shf.forms.EmployeeExceptionForm">
+		</form-bean>
+		<form-bean name="addShiftForm" type="bzq.shf.forms.AddShiftForm">
+		</form-bean>
+		<form-bean name="activityAimForm" type="bzq.shf.forms.ActivityAimForm">
+		</form-bean>
+		<form-bean name="activityAimBean" type="bzq.shf.bean.ActivityAimBean">
+		</form-bean> 
+		<form-bean name="actualJobForm" type="bzq.shf.forms.ActualJobForm">
+		</form-bean>
+		<form-bean name="potentialInforceForm" type="bzq.shf.forms.PotentialInforceForm">
+		</form-bean>
+		<form-bean name="shiftLoginCancelForm" type="bzq.shf.forms.ShiftLoginCancelForm">
+		</form-bean> 
+		<form-bean name="buildingForm" type="bzq.shf.forms.BuildingForm"></form-bean>
+		<form-bean name="wfmReportForm" type="bzq.wfm.report.WfmReportForm">
+		</form-bean>
+		<form-bean name="teamForm" type="bzq.shf.forms.TeamForm">
+		</form-bean>
+		<form-bean name="UsageReportForm" type="bzq.shf.forms.UsageReportForm">
+		</form-bean>
+		<form-bean name="PeleIWDForm" type="bzq.shf.forms.PeleIWDForm">
+		</form-bean>
+		<form-bean name="optShfSpForm" type="bzq.shf.forms.OptShfSpForm">
+		</form-bean>
+		<form-bean name="SoftPhoneForm" type="bzq.shf.forms.SoftPhoneForm">
+		</form-bean>
+		
+	</form-beans>
+	
+	<global-exceptions>
+	</global-exceptions>
+
+	<!-- Global Forwards -->
+	<global-forwards>
+		<forward name="relogin" path="/jsp/relogin.jsp">
+		</forward>
+		<forward name="security" path="/jsp/security.jsp">
+		</forward>
+		<forward name="fatalerror" path="/jsp/fatal_error.jsp">
+		</forward>
+		<forward name="checkMobile" path="/jsp/platformDetect.jsp">
+		</forward>
+	</global-forwards>
+
+	<!-- Action Mappings -->
+	<action-mappings>
+<!-- 		<action path="/mPlatform" type="bzq.shf.actions.PlatformAction" parameter="param=login" name="loginForm" scope="request">
+			<forward name="login" path="/login.do">
+			</forward>
+		</action> -->
+		
+		<action path="/mPlatform" type="bzq.shf.actions.MobileLoginAction" name="loginForm" scope="request">
+			<forward name="loginSuccessful" path="/login.do">
+			</forward>
+		</action>
+		<action path="/login" type="bzq.shf.actions.LoginAction" name="loginForm" scope="request">
+			<forward name="loginSuccessful" path="/jsp/shf_index.jsp">
+			</forward>
+			<forward name="loginFail" path="/jsp/login_fail.jsp">
+			</forward>
+			<forward name="obtainUserId" path="/jsp/shf_obtainUserId.jsp">
+			</forward>
+		</action>
+
+		
+		<action path="/msgBar" type="org.apache.struts.actions.ForwardAction" parameter="/jsp/message_bar.jsp">
+		</action>
+		<action path="/loadTables" type="bzq.shf.actions.LoadTablesAction">
+		</action>
+		<action path="/message/messages_icon" parameter="param=showMessages_icon , activity=aa" type="bzq.shf.actions.MessagesAction" name="messageForm">
+		 	<forward name="success" path="/jsp/showMessages_new_icon.jsp">
+		 	</forward>
+		 	<forward name="fail" path="/jsp/shf_blank.jsp">
+		 	</forward>
+		 	<forward name="not_agent" path="/jsp/not_employee_main.jsp">
+		 	</forward>
+		 </action>
+		<action path="/message/messages" parameter="param=showMessages , activity=aa" type="bzq.shf.actions.MessagesAction" name="messageForm">
+		 	<forward name="success" path="/jsp/showMessages_new.jsp">
+		 	</forward>
+		 	<forward name="fail" path="/jsp/shf_blank.jsp">
+		 	</forward>
+		 	<forward name="not_agent" path="/jsp/not_employee_main.jsp">
+		 	</forward>
+		 </action>
+		 <action path="/messages/deleteMessages" type="bzq.shf.actions.MessagesAction" parameter="param=deleteMessages , activity=aa" name="messageForm">
+			<forward name="success" path="/message/messages.do">
+			</forward>
+		</action>
+		<action path="/messages/acceptOffer" type="bzq.shf.actions.MessagesAction" parameter="param=acceptOffer , activity=aa" name="messageForm">
+			<forward name="success" path="/message/messages.do">
+			</forward>
+		</action>
+		<action path="/employee/searchParam" type="bzq.shf.actions.EmployeeDataAction" name="employeeSearchForm" scope="request" parameter="param=list_param , activity=card_main">
+			<forward name="success" path="/employee/searchResult.do">
+			</forward>
+			<forward name="success_agent" path="/jsp/employee_card.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_blank.jsp">
+			</forward>
+		</action>
+		<action path="/employee/updateParamSMS" type="bzq.shf.actions.EmployeeDataAction" name="employeeDataForm" scope="request" parameter="param=updateSMS , activity=card_main">
+			<forward name="success" path="/jsp/shf_success.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_fail.jsp">
+			</forward>
+		</action>
+		<action path="/employee/showCard" type="bzq.shf.actions.EmployeeDataAction" parameter="param=card , activity=card_view" name="employeeDataForm" scope="request">
+			<forward name="success" path="/jsp/employee_card.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_blank.jsp">
+			</forward>
+		</action>
+		<action path="/employee/searchResult" type="bzq.shf.actions.EmployeeDataAction" parameter="param=list_result , activity=card_search" name="employeeSearchForm" scope="request">
+			<forward name="success" path="/jsp/employee_list.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_blank.jsp">
+			</forward>
+		</action>
+		<action path="/employee/getSkills" parameter="param=skills , activity=card_skills" type="bzq.shf.actions.EmployeeDataAction" name="employeeDataForm" scope="request">
+			<forward name="success" path="/jsp/employeeCard/emp_skills.jsp">
+			</forward>
+		</action>
+		<action path="/employee/getShifts" type="bzq.shf.actions.EmployeeDataAction" parameter="param=shifts_results , activity=card_activities" name="employeeActivitiesForm" scope="request">
+			<forward name="success" path="/jsp/employeeCard/employee_shifts.jsp">
+			</forward>
+		</action>
+		<action path="/employee/getCourses" type="bzq.shf.actions.EmployeeDataAction" parameter="param=courses , activity=card_courses" name="employeeDataForm" scope="request">
+			<forward name="success" path="/jsp/employeeCard/emp_courses.jsp">
+			</forward>
+		</action>
+		<action path="/employee/getTaxiOrders" type="bzq.shf.actions.EmployeeDataAction" parameter="param=taxi , activity=card_taxi_orders" name="employeeDataForm" scope="request">
+			<forward name="success" path="/jsp/employeeCard/emp_monit_orders.jsp">
+			</forward>
+		</action>
+		<action path="/employee/getEvents" type="bzq.shf.actions.EmployeeDataAction" name="employeeDataForm" scope="request" parameter="param=events , activity=card_events_view">
+			<forward name="success" path="/jsp/employeeCard/emp_events.jsp">
+			</forward>
+		</action>
+		<action path="/employee/getEducation" parameter="param=education , activity=card_education" name="employeeDataForm" scope="request" type="bzq.shf.actions.EmployeeDataAction">
+			<forward name="success" path="/jsp/employeeCard/employee_education.jsp">
+			</forward>
+		</action>
+		<action path="/employee/getDays" parameter="param=activities_param , activity=card_activities" type="bzq.shf.actions.EmployeeDataAction" name="employeeActivitiesForm" scope="request">
+			<forward name="success" path="/jsp/employeeCard/employee_activities.jsp">
+			</forward>
+		</action>
+		<action path="/employee/addEvent" type="bzq.shf.actions.EmployeeDataAction" parameter="param=add_event , activity=card_events_view" name="addEventForm" scope="request">
+		 	<forward name="success" path="/employee/getEvents.do">
+		 	</forward>
+		 	<forward name="fail" path="/employee/getEvents.do">
+		 	</forward>
+		 </action>
+		 <action path="/employee/searchForInforce" type="bzq.shf.actions.EmployeeDataAction" name="employeeInforceForm" scope="request" parameter="param=inforce_result , activity=shift_inforce_addshift">
+		 	<forward name="success" path="/jsp/shift_inforce_employee_list.jsp">
+		 	</forward>
+		 </action>
+		<action path="/employee/cancelEvent" type="bzq.shf.actions.EmployeeDataAction" parameter="param=event_cancel , activity=card_events_cancel" name="eventForm" scope="request">
+			<forward name="success" path="/employee/getEvents.do">
+			</forward>
+		</action>
+		<action path="/employee/getShiftsParam" type="bzq.shf.actions.EmployeeDataAction" parameter="param=shifts_param , activity=aa" name="employeeActivitiesForm" scope="request">
+			<forward name="success" path="/employee/getShifts.do">
+			</forward>
+		</action>
+		<action path="/employee/getExceptions" parameter="param=exceptions , activity=card_view_exceptions" name="employeeActivitiesForm" scope="request" type="bzq.shf.actions.EmployeeDataAction">
+			<forward name="success" path="/jsp/employeeCard/employee_exceptions.jsp">
+			</forward>
+		</action>
+		<action path="/employee/getTeamMembers" type="bzq.shf.actions.EmployeeDataAction" parameter="param=team_members , activity=aa" name="employeeSearchForm" scope="request" attribute="employeeListForm">
+			<forward name="success" path="/jsp/set_emps.jsp">
+			</forward>
+		</action>
+		<action path="/employee/getShiftsForSwitch" type="bzq.shf.actions.EmployeeDataAction" parameter="param=shifts_switch , activity=aa" name="employeeActivitiesForm" scope="request">
+			<forward name="success" path="/jsp/shifts_for_switch.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/param" type="bzq.shf.actions.AttendanceDataAction" name="employeeArriveForm" scope="request" parameter="param=param , activity=attend_menu">
+			<forward name="goto_agent" path="/attendance/agentParam.do"></forward>
+			<forward name="fail" path="/jsp/shf_blank.jsp">
+			</forward>
+			<forward name="goto_search" path="/attendance/searchParam.do">
+			</forward>
+		</action>
+		<action path="/attendance/searchResult" parameter="param=result , activity=attend_search" name="employeeArriveForm" scope="request" type="bzq.shf.actions.AttendanceDataAction">
+			<forward name="success" path="/jsp/attendance.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_blank.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/employeeArrive" type="bzq.shf.actions.AttendanceDataAction" parameter="param=station , activity=attend_reg_station" name="attendanceDataForm" scope="request">
+			<forward name="success" path="/jsp/employee_arrive_stage.jsp">
+			</forward>
+			<forward name="late" path="/jsp/late_popup.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/setAttendance" type="bzq.shf.actions.AttendanceDataAction" name="employeeArriveForm" scope="request" parameter="param=stage , activity=attend_reg_stage">
+			<forward name="late" path="/jsp/late_popup.jsp">
+			</forward>
+			<forward name="report" path="/jsp/report_popup.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/addEvent" type="bzq.shf.actions.AttendanceDataAction" parameter="param=add_event , activity=attend_add_missing" name="employeeArriveForm" scope="request">
+			<forward name="success" path="/jsp/attendance.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/employeeArriveStation" type="bzq.shf.actions.AttendanceDataAction" parameter="param=station_agent , activity=attend_reg_station" name="employeeArriveForm" scope="request" >
+		 	<forward name="success" path="/attendance/agentParam.do" redirect="true"> <!-- redirect to prevent form resubmission and thus prevent user data to change on refresh -->
+		 	</forward>
+		 </action>
+		<action path="/attendance/employeeExit" type="bzq.shf.actions.AttendanceDataAction" parameter="param=exit , activity=attend_exit_station" name="employeeArriveForm" scope="request">
+		 	<forward name="fail" path="/jsp/shf_blank.jsp">
+		 	</forward>
+		 </action>
+		<action path="/attendance/addFlag" type="bzq.shf.actions.AttendanceDataAction" name="attendanceDataForm" scope="request" parameter="param=flag , activity=attend_flags">
+			<forward name="success" path="/jsp/shf_success.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_fail.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/cancelExit" type="bzq.shf.actions.AttendanceDataAction" parameter="param=cancel_exit , activity=attend_cancel_exit" name="attendanceDataForm" scope="request">
+			<forward name="success" path="/jsp/shf_success.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_fail.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/removeFlag" type="bzq.shf.actions.AttendanceDataAction" name="attendanceDataForm" scope="request" parameter="param=cancel_flag , activity=attend_flags">
+			<forward name="success" path="/jsp/shf_success.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_fail.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/viewLate" type="bzq.shf.actions.AttendanceDataAction" parameter="param=viewLate , activity=attend_reg_station" name="attendanceDataForm" scope="request">
+			<forward name="success" path="/jsp/late_popup.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/viewMissing" type="bzq.shf.actions.AttendanceDataAction" parameter="param=viewMissing , activity=attend_add_missing" name="attendanceDataForm" scope="request">
+			<forward name="success" path="/jsp/missing_popup.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/searchParam" type="bzq.shf.actions.AttendanceDataAction" parameter="param=param_search , activity=attend_search" name="employeeArriveForm" scope="request">
+			<forward name="success" path="/attendance/searchResult.do">
+			</forward>
+			<forward name="fail" path="/jsp/shf_blank.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/agentParam" type="bzq.shf.actions.AttendanceDataAction" parameter="param=param_agent , activity=attend_agent" name="employeeArriveForm" scope="request">
+			<forward name="success" path="/jsp/employee_arrive.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_blank.jsp">
+			</forward>
+			<forward name="fail_locked" path="/jsp/employee_locked.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/employeeStationExit" type="bzq.shf.actions.AttendanceDataAction" parameter="param=agent_exit , activity=attend_exit_station" name="employeeArriveForm" scope="request">
+			<forward name="success" path="/attendance/agentParam.do" redirect="true"> <!-- redirect to prevent form resubmission and thus prevent user data to change on refresh -->
+			</forward>
+			<forward name="earlyExit" path="/jsp/employee_earlyExit.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/cancelStation" type="bzq.shf.actions.AttendanceDataAction" name="attendanceDataForm" scope="request" parameter="param=cancel_station , activity=attend_cancel_station">
+			<forward name="success" path="/jsp/shf_success.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_fail.jsp">
+			</forward>
+		</action>	
+		<action path="/admin" type="bzq.shf.actions.AdminAction" parameter="param=admin_main , activity=admin_menu" name="eventReason" scope="request">
+			<forward name="showEventReason" path="/jsp/eventReason.jsp">
+			</forward>
+			<forward name="updatedeleteEventReason" path="/jsp/eventReasonUpdateDelete.jsp">
+			</forward>
+			<forward name="updateSkills" path="/jsp/update_skills.jsp">
+			</forward>
+			<forward name="showEventType" path="/jsp/event_types.jsp">
+			</forward>
+			<forward name="updatedeleteEventType" path="/jsp/event_update_delete.jsp">
+			</forward>
+			<forward name="mainAdmin" path="/jsp/admin_main.jsp">
+			</forward>
+			<forward name="viewCompletionsTypes" path="/jsp/admin/view_completions_types.jsp">
+			</forward>
+		</action>
+		<action path="/admin/viewMokedParameters" type="bzq.shf.actions.SystemAdminAction" name="adminForm" scope="request" parameter="param=view_moked , activity=admin_param_view">
+			<forward name="success" path="/jsp/system_parameters.jsp">
+			</forward>
+		</action>
+		<action path="/admin/saveParameters" type="bzq.shf.actions.SystemAdminAction" parameter="param=save , activity=admin_param_update" name="adminForm" scope="request">
+			<forward name="success" path="/jsp/system_parameters.jsp" redirect="false">
+			</forward>
+		</action>
+		<action path="/admin/viewEmployeeParameters" type="bzq.shf.actions.SystemAdminAction" name="employeeDataForm" scope="request" parameter="param=view_employee , activity=admin_emparam_view">
+			<forward name="success" path="/jsp/employee_parameters.jsp">
+			</forward>
+		</action>
+		<action path="/admin/saveEmployeeParameters" type="bzq.shf.actions.SystemAdminAction" name="employeeDataForm" scope="request" parameter="param=update_employee , activity=admin_emparam_update">
+			<forward name="success" path="/jsp/employee_parameters.jsp">
+			</forward>
+		</action>
+		<action path="/admin/updateSkillParam" type="bzq.shf.actions.SystemAdminAction" parameter="param=updateSkillParam , activity=admin_skill_view" name="skillForm" scope="request">
+		 	<forward name="success" path="/jsp/update_skill_param.jsp">
+		 	</forward>
+		 </action>
+		<action path="/admin/updateSkillSave" parameter="param=updateSkillSave , activity=admin_skill_update" type="bzq.shf.actions.SystemAdminAction" name="skillForm" scope="request">
+		 </action>
+		<action path="/shift/shiftMenu" type="bzq.shf.actions.ShiftDataAction" name="shiftDataForm" scope="request" parameter="param=menu , activity=shift_menu">
+			<forward name="success_agent" path="/shift/myShiftParam.do">
+			</forward>
+			<forward name="success_manager" path="/shift/searchParam.do">
+			</forward>
+		</action>
+		<action path="/shift/searchParam" type="bzq.shf.actions.ShiftDataAction" parameter="param=param , activity=shift_search" name="shiftDataForm" scope="request">
+		  <forward name="success" path="/shift/searchResult.do" /> 
+	  	</action>
+		<action path="/shift/addFromFile" type="bzq.shf.actions.ShiftDataAction" parameter="param=addFromFile , activity=shift_search" name="shiftDataForm" scope="request">
+		  <forward name="selectFile" path="/jsp/shift_addFromFile.jsp" /> 
+	  	</action>
+		<action path="/shift/searchResult" type="bzq.shf.actions.ShiftDataAction" name="shiftDataForm" scope="request" parameter="param=result , activity=shift_search">
+		  <forward name="success" path="/jsp/shifts_search_list.jsp" /> 
+		  </action>
+		<action path="/shift/currentResult" type="bzq.shf.actions.ShiftDataAction" name="shiftDataForm" scope="request" parameter="param=current_result , activity=shift_current">
+		  <forward name="success" path="/jsp/shifts_list.jsp" /> 
+		  </action>
+		<action path="/shift/currentParam" type="bzq.shf.actions.ShiftDataAction" name="shiftDataForm" scope="request" parameter="param=current_param , activity=shift_current">
+		  <forward name="success" path="/shift/currentResult.do" /> 
+		  </action>
+		<action path="/shift/myShiftParam" type="bzq.shf.actions.ShiftDataAction" name="shiftDataForm" scope="request" parameter="param=my_param , activity=shift_myshifts">
+		  <forward name="success" path="/shift/myShiftResult.do" /> 
+		  </action>
+		<action path="/shift/myShiftResult" type="bzq.shf.actions.ShiftDataAction" name="shiftDataForm" scope="request" parameter="param=my_result , activity=shift_myshifts">
+		  <forward name="success" path="/jsp/shifts_my_shifts_list.jsp" /> 
+		  </action>
+		<action path="/shift/inforceShift" type="bzq.shf.actions.ShiftDataAction" parameter="param=inforce_request , activity=shift_inforce_view" name="shiftInforceForm" scope="request">
+		 	<forward name="success" path="/jsp/shift_inforce.jsp">
+		 	</forward>
+		 	<forward name="success_update" path="/jsp/shift_add_inforce_new.jsp">
+		 	</forward>
+		 	<forward name="fail" path="/jsp/shift_add_inforce_new.jsp">
+		 	</forward>
+		 </action>
+		<action path="/shift/selectForUpdateShift" type="bzq.shf.actions.ShiftDataAction" parameter="param=update_param , activity=shift_update" name="shiftDataForm" scope="request">
+		  	<forward name="success" path="/jsp/shift_change.jsp"> 
+		  	</forward>
+		  	<forward name="fail" path="/jsp/shift_change.jsp">
+		  	</forward>
+		 </action>
+		 <action path="/shift/inforceSearchOptionals" type="bzq.shf.actions.ShiftDataAction" parameter="param=search_add_options , activity=shift_inforce_agent" name="shiftInforceForm" scope="request">
+		 	<forward name="success" path="/jsp/shift_inforce_options.jsp">
+		 	</forward>
+		 </action>
+		<action path="/shift/addShift" type="bzq.shf.actions.ShiftDataAction" parameter="param=add_shift_request , activity=shift_inforce_addshift" name="addShiftRequestForm" scope="request">
+		 	<forward name="success" path="/shift/myShiftParam.do">
+		 	</forward>
+		 	<forward name="fail" path="/jsp/shift_inforce_options.jsp">
+		 	</forward>
+		 	<forward name="success_add" path="/shift/inforceShift.do?mode=populate">
+		 	</forward>
+		 	<forward name="fail_add" path="/shift/inforceShift.do?mode=populate">
+		 	</forward>
+		 </action>
+		 <action path="/shift/updateShiftExceptions" type="bzq.shf.actions.ShiftDataAction" name="shiftDataForm" scope="request" parameter="param=upsert_shift_check_exceptions, activity=shift_update">
+		 	<forward name="success" path="/jsp/shift_change.jsp">
+		 	</forward>
+		 	<forward name="fail" path="/shift/updateShift.do">
+		 	</forward>
+		 	<forward name="exception_confirmed" path="/shift/updateShift.do">
+		 	</forward>
+		 </action>
+ 		 <action path="/shift/updateShiftLocation" type="bzq.shf.actions.ShiftDataAction" name="shiftDataForm" scope="request" parameter="param=updateShiftLocation, activity=shift_update">
+		 	<forward name="success" path="/shift/selectForUpdateShift.do">
+		 	</forward>
+		 </action>
+		<action path="/shift/updateShift" type="bzq.shf.actions.ShiftDataAction" name="shiftDataForm" scope="request" parameter="param=upsert_shift, activity=shift_update">
+		 	<forward name="success" path="/shift/selectForUpdateShift.do">
+		 	</forward>
+		 	<forward name="fail" path="/shift/selectForUpdateShift.do">
+		 	</forward>
+		 </action>
+		<action path="/shift/addInforceReqParam" type="bzq.shf.actions.ShiftDataAction" parameter="param=add_inforce_param , activity=shift_inforce_update" name="shiftInforceForm" scope="request">
+			<forward name="success" path="/jsp/shift_add_inforce_new.jsp">
+			</forward>
+		</action>
+		<action name="shiftDataForm" parameter="param=shift_cancel_remark , activity=shift_cancel" path="/shift/shiftCancelRemarkDialog" scope="request" type="bzq.shf.actions.ShiftDataAction">
+			<forward name="success" path="/jsp/cancel_shift_popup.jsp">
+			</forward>
+		</action>
+		<action path="/shift/checkPoolExtensionAllocated" type="bzq.shf.actions.ShiftDataAction" parameter="param=checkPoolExtensionAllocated , activity=aa" name="shiftDataForm" scope="request">
+			<forward name="success" path="/jsp/shf_success.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_fail.jsp">
+			</forward>
+		</action>
+		<action path="/shift/poolExtAllocRelease" type="bzq.shf.actions.ShiftDataAction" parameter="param=poolExtAllocRelease , activity=aa" name="shiftDataForm" scope="request">
+			<forward name="success" path="/jsp/poolExtAllocRelease.jsp">
+			</forward>
+		</action>
+		<action path="/replace/switchPotential" type="bzq.shf.actions.ReplaceAction" parameter="param=showSwitchPotential , activity=replace_main" name="replaceForm" scope="request">
+		 	<forward name="showSwitchPotential" path="/jsp/switchPotential.jsp">
+		 	</forward>
+		 	<forward name="userNotAllowedReplace" path="/shift/shiftMenu.do">
+		 	</forward>
+		 	<forward name="switchPotentialSendRequests" path="/replace/switchPotentialSendRequests.do">
+		 	</forward>
+		 </action>
+		 <action path="/replace/switchPotentialSendRequests" type="bzq.shf.actions.ReplaceAction" parameter="param=SwitchPotentialSendRequests , activity=replace_main" name="replaceForm" scope="request">
+		 	<forward name="success" path="/shift/shiftMenu.do">
+		 	</forward>
+		 	<forward name="manageReplace" path="/replace/manageReplace.do">
+		 	</forward>
+		 </action>
+		<action path="/replace/searchForCandidate" type="bzq.shf.actions.ReplaceAction" parameter="param=searchForCandidate , activity=replace_main" name="replaceForm" scope="request">
+		 	<forward name="showCandidates" path="/jsp/showReplaceCandidate.jsp">
+		 	</forward>
+		 	<forward name="manageReplace" path="/replace/manageReplace.do">
+		 	</forward>
+		 	<forward name="getSwitchPotential" path="/replace/switchPotential.do">
+		 	</forward>
+		 </action>
+		<action path="/replace/insertShiftToRepository" type="bzq.shf.actions.ReplaceAction" parameter="param=insertShiftToRepository , activity=replace_main" name="replaceForm" scope="request">
+		 	<forward name="manageReplace" path="/replace/manageReplace.do">
+		 	</forward>
+		 </action>
+		<action path="/replace/offerReplace" type="bzq.shf.actions.ReplaceAction" parameter="param=offerReplaceToCandidate , activity=replace_main" name="replaceForm">
+		 	<forward name="manageReplace" path="/replace/manageReplace.do">
+		 	</forward>
+		 </action>
+		<action path="/replace/cancelOffer" parameter="param=cancelUnCommitedOffer , activity=replace_main" type="bzq.shf.actions.ReplaceAction" name="replaceForm">
+		 	<forward name="manageReplace" path="/replace/manageReplace.do">
+		 	</forward>
+		 </action>
+		<action path="/replace/manageReplace" type="bzq.shf.actions.ReplaceAction" parameter="param=showManageReplace , activity=replace_main" name="offerReplaceForm">
+		 	<forward name="manageReplaceMokdan" path="/replace/manageReplaceMokdan.do">
+		 	</forward>
+		 	<forward name="manageReplaceAdmin" path="/replace/manageReplaceAdmin.do">
+		 	</forward>
+		 </action>
+		<action path="/replace/cancelShiftReplace" type="bzq.shf.actions.ReplaceAction" parameter="param=cancelUnCommitedShiftReplace , activity=replace_main" name="replaceForm">
+		 	<forward name="manageReplace" path="/replace/manageReplace.do">
+		 	</forward>
+		 </action>
+		<action path="/replace/lookForOffers" type="bzq.shf.actions.ReplaceAction" parameter="param=lookForOffers , activity=replace_main" name="replaceForm">
+		 	<forward name="success" path="/jsp/showReplaceOffers.jsp">
+		 	</forward>
+		 </action>
+		<action path="/replace/rejectOffer" type="bzq.shf.actions.ReplaceAction" parameter="param=rejectReplaceOffer , activity=replace_main" name="offerReplaceForm">
+		 	<forward name="success" path="/replace/lookForOffers.do">
+		 	</forward>
+		 	<forward name="manageReplace" path="/replace/manageReplace.do">
+		 	</forward>
+		 </action>
+		<action path="/replace/acceptOffer" type="bzq.shf.actions.ReplaceAction" parameter="param=acceptReplaceOffer , activity=replace_main" name="offerReplaceForm">
+		 	<!-- <forward name="success" path="/shift/myShiftParam.do"> -->
+		 	 <forward name="success" path="/message/messages.do"> 
+		 	</forward>
+		 	<forward name="fail" path="/replace/manageReplace.do">
+		 	</forward>
+		 </action>
+		<action path="/replace/manageReplaceAdmin" type="bzq.shf.actions.ReplaceAction" parameter="param=showManageReplaceAdmin , activity=replace_admin" name="offerReplaceForm">
+		 	<forward name="success" path="/jsp/showManageReplace.jsp">
+		 	</forward>
+		 </action>
+		<action path="/replace/manageReplaceMokdan" type="bzq.shf.actions.ReplaceAction" parameter="param=showManageReplaceMokdan , activity=replace_agent" name="offerReplaceForm">
+		 	<forward name="success" path="/jsp/showManageReplace.jsp">
+		 	</forward>
+		 </action>
+		<action path="/replace/checkForChangeShift" type="bzq.shf.actions.ReplaceAction" parameter="param=checkShiftReplace , activity=aa" name="replaceForm" scope="request">
+			<forward name="success" path="/jsp/shf_success.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_fail.jsp">
+			</forward>
+		</action>
+		<action path="/break/searchParam" type="bzq.shf.actions.BreakDataAction" parameter="param=search_param , activity=break_menu" name="breakForm" scope="request">
+			<forward name="success" path="/break/searchResult.do">
+			</forward>
+		</action>
+		<action path="/break/searchResult" type="bzq.shf.actions.BreakDataAction" parameter="param=search_result , activity=aa" name="breakForm" scope="request">
+			<forward name="success" path="/jsp/break_search_list.jsp">
+			</forward>
+		</action>
+		<action path="/break/breakForShift" type="bzq.shf.actions.BreakDataAction" parameter="param=break_shift , activity=aa" name="breakBeanForm" scope="request">
+			<forward name="success" path="/jsp/shift_my_breaks.jsp">
+			</forward>
+		</action>
+		<action path="/break/exitToBreak" type="bzq.shf.actions.BreakDataAction" parameter="param=exit_to_break , activity=aa" name="breakBeanForm" scope="request">
+			<forward name="success" path="/attendance/agentParam.do" redirect="true"> <!-- redirect to prevent form resubmission and thus prevent user data to change on refresh -->
+			</forward>
+		</action>
+		<action path="/break/backFromBreak" type="bzq.shf.actions.BreakDataAction" parameter="param=back_from_break , activity=aa" name="breakBeanForm" scope="request">
+			<forward name="success" path="/attendance/agentParam.do" redirect="true"> <!-- redirect to prevent form resubmission and thus prevent user data to change on refresh -->
+			</forward>
+		</action>
+		<action path="/break/goForChangeBreak" type="bzq.shf.actions.BreakDataAction" parameter="param=change_break , activity=aa" name="breakBeanForm" scope="request">
+			<forward name="success" path="/jsp/showReplaceBreakCandidate.jsp">
+			</forward>
+			<forward name="fail" path="/shift/myShiftParam.do">
+			</forward>
+		</action>
+		<action path="/break/checkForChangeBreak" type="bzq.shf.actions.BreakDataAction" name="breakBeanForm" scope="request" parameter="param=check_break , activity=aa">
+			<forward name="success" path="/jsp/showReplaceBreakCandidate.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/break_empty.jsp">
+			</forward>
+		</action>
+		<action path="/break/insertBreakToCandidate" type="bzq.shf.actions.BreakDataAction" name="breakBeanForm" scope="request" parameter="param=insert_break , activity=aa">
+			<forward name="success" path="/shift/shiftMenu.do">
+			</forward>
+		</action>
+		<action path="/break/offerReplaceBreak" type="bzq.shf.actions.BreakDataAction" name="breakCandidateBeanForm" scope="request" parameter="param=ask_replace_break , activity=aa">
+<!-- 			<forward name="successNew" path="/shift/myShiftParam.do">
+			</forward> -->
+			<forward name="successNew" path="/shift/shiftMenu.do">
+			</forward>
+			<forward name="successExist" path="/break/showManageBreak.do">
+			</forward>
+		</action>
+		<action path="/break/showManageBreak" type="bzq.shf.actions.BreakDataAction" name="breakCandidateBeanForm" scope="request" parameter="param=manage_break , activity=aa">
+			<forward name="success" path="/jsp/showManageReplaceBreak.jsp">
+			</forward>
+		</action>
+		<action path="/break/cancelBreakOffer" name="breakCandidateBeanForm" type="bzq.shf.actions.BreakDataAction" scope="request" parameter="param=cancel_break_offer , activity=aa">
+			<forward name="success" path="/break/showManageBreak.do">
+			</forward>
+		</action>
+		<action path="/break/cancelBreakCandidate" type="bzq.shf.actions.BreakDataAction" name="breakCandidateBeanForm" scope="request" parameter="param=cancel_break_cand , activity=aa">
+			<forward name="success" path="/break/showManageBreak.do">
+			</forward>
+		</action>
+		<action path="/break/lookForBreakOffer" type="bzq.shf.actions.BreakDataAction" name="breakCandidateBeanForm" scope="request" parameter="param=select_offer , activity=aa">
+			<forward name="success" path="/jsp/showReplaceBreakOffers.jsp">
+			</forward>
+		</action>
+		<action path="/break/acceptBreakOffer" type="bzq.shf.actions.BreakDataAction" name="breakCandidateBeanForm" scope="request" parameter="param=accept_break_offer , activity=aa">
+			<forward name="success" path="/break/showManageBreak.do">
+			</forward>
+		</action>
+		<action path="/break/rejectBreakOffer" type="bzq.shf.actions.BreakDataAction" parameter="param=reject_break_offer , activity=aa" name="breakCandidateBeanForm" scope="request">
+			<forward name="success" path="/break/showManageBreak.do">
+			</forward>
+		</action>
+		<action path="/break/updateShiftBreak" type="bzq.shf.actions.BreakDataAction" parameter="param=update_shift_break , activity=aa" name="shiftBreakForm" scope="request" attribute="shiftBreakForm">
+			<forward name="success" path="/shift/selectForUpdateShift.do">
+			</forward>
+		</action>
+		<action path="/forecast/callsParam" type="bzq.shf.actions.ForecastAction" parameter="param=call_param , activity=forecast_data" name="forecastForm" scope="request">
+			<forward name="success" path="/jsp/forecast_calls.jsp">
+			</forward>
+		</action>
+		<action path="/forecast/callsResult" type="bzq.shf.actions.ForecastAction" parameter="param=call_populate , activity=forecast_data" name="forecastForm" scope="request">
+			<forward name="success" path="/jsp/forecast_calls.jsp">
+			</forward>
+		</action>
+		<action path="/forecast/schParam" type="bzq.shf.actions.ForecastAction" parameter="param=sch_param , activity=forecast_data" name="forecastForm" scope="request">
+			<forward name="success" path="/jsp/forecast_sch.jsp">
+			</forward>
+		</action>
+		<action path="/forecast/schResult" type="bzq.shf.actions.ForecastAction" parameter="param=sch_populate , activity=forecast_data" name="forecastForm" scope="request">
+			<forward name="success" path="/jsp/forecast_sch.jsp">
+			</forward>
+		</action>
+		<action path="/forecast/param" type="bzq.shf.actions.ForecastAction" parameter="param=param , activity=forecast_data" name="forecastForm" scope="request">
+			<forward name="success" path="/jsp/forecast.jsp">
+			</forward>
+		</action>
+		<action path="/switch/forceSwitch" type="bzq.shf.actions.SwitchAction" name="switchForm" scope="request" parameter="param=switch_shifts , activity=aa">
+			<forward name="removedLimit" path="/switch/forceSwitch.do">
+			</forward>
+			<forward name="success" path="/shift/searchResult.do">
+			</forward>
+			<forward name="fail" path="/jsp/goBack.jsp">
+			</forward>
+		</action>
+		
+		<action path="/switch/usrCancelForcedSwitch" type="bzq.shf.actions.SwitchAction" name="switchForm" scope="request" parameter="param=usrCancelForcedSwitch , activity=aa">
+			<forward name="success" path="/shift/shiftMenu.do">
+			</forward>
+			<forward name="fail" path="/jsp/goBack.jsp">
+			</forward>
+		</action>
+		
+		<action path="/switch/check" type="bzq.shf.actions.SwitchAction" parameter="param=check , activity=aa" name="switchForm" scope="request">
+			<forward name="confirm" path="/jsp/replace_shift.jsp">
+			</forward>
+			<forward name="success" path="/switch/forceSwitch.do">
+			</forward>
+			<forward name="fail" path="/jsp/goBack.jsp" redirect="false">
+			</forward>
+		</action>
+		
+		
+		<action path="/switch/sec_shift" type="bzq.shf.actions.SwitchAction" parameter="param=sec_shift , activity=aa" name="shiftDataForm" scope="request" attribute="shiftDataForm">
+			<forward name="success" path="/jsp/replace_shift.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/goBack.jsp" redirect="false">
+			</forward>
+		</action>
+		
+		
+		<action path="/exception/cancel" type="bzq.shf.actions.ExceptionAction" parameter="param=cancel_exception , activity=exception_cancel" name="employeeExceptionForm" scope="request">
+			<forward name="success" path="/employee/getExceptions.do">
+			</forward>
+			<forward name="fail" path="/employee/getExceptions.do">
+			</forward>
+		</action>
+		<action path="/shift/addShiftTimeChangeParam" type="bzq.shf.actions.ShiftDataAction" parameter="param=addShiftTimeChangeParam , activity=addShiftTimeChange" name="shiftChangeRequestForm" scope="request" attribute="shiftChangeForm">
+			<forward name="success" path="/jsp/shift_time_change_form.jsp">
+			</forward>
+		</action>
+		<action path="/shift/addUpdateShiftTimeChange" type="bzq.shf.actions.ShiftDataAction" parameter="param=addUpdateChangeRequest , activity=addShiftTimeChange" name="shiftChangeRequestForm" scope="request">
+			<forward name="success" path="/shift/viewShiftTimeChangeRequests.do">
+			</forward>
+			<forward name="fail" path="/jsp/shift_time_change_form.jsp">
+			</forward>
+		</action>
+		<action path="/shift/viewShiftTimeChangeRequests" type="bzq.shf.actions.ShiftDataAction" parameter="param=viewShiftTimeChangeRequests , activity=viewShiftTimeChange" name="shiftChangeRequestForm" scope="request">
+			<forward name="success" path="/jsp/shift_time_change_requests.jsp">
+			</forward>
+		</action>
+		<action path="/shift/updateShiftTimeChangeParam" type="bzq.shf.actions.ShiftDataAction" parameter="param=updateShiftTimeChangeParam , activity=addShiftTimeChange" name="shiftChangeRequestForm" scope="request">
+			<forward name="success" path="/jsp/shift_time_change_form.jsp">
+			</forward>
+			<forward name="fail" path="/shift/viewShiftTimeChangeRequests.do">
+			</forward>
+		</action>
+		<action path="/shift/viewChangeRequestApplications" type="bzq.shf.actions.ShiftDataAction" name="shiftChangeRequestForm" scope="request" parameter="param=requestApplications , activity=addShiftTimeChange">
+			<forward name="success" path="/jsp/change_request_applications.jsp">
+			</forward>
+		</action>
+		<action path="/shift/viewChangeRequestOptions" parameter="param=requestOptions , activity=addShiftTimeChange" name="shiftChangeRequestForm" scope="request" type="bzq.shf.actions.ShiftDataAction">
+			<forward name="success" path="/jsp/change_request_options.jsp">
+			</forward>
+		</action>
+		<action path="/shift/viewAgentChangeRequests" parameter="param=agentRequests , activity=agentShiftTimeChange" name="shiftChangeRequestForm" scope="request" type="bzq.shf.actions.ShiftDataAction">
+			<forward name="success" path="/jsp/agent_change_requests.jsp">
+			</forward>
+			<forward name="fail" path="/shift/myShiftParam.do">
+			</forward>
+		</action>
+		<action path="/shift/confirmChangeRequest" type="bzq.shf.actions.ShiftDataAction" parameter="param=confirmChangeRegister , activity=aa" name="changeRequestCandidate" scope="request">
+			<forward name="success" path="/shift/viewChangeRequestApplications.do">
+			</forward>
+			<forward name="fail" path="/shift/viewShiftTimeChangeRequests.do">
+			</forward>
+			<forward name="full" path="/jsp/shift_change_request_full.jsp">
+			</forward>
+		</action>
+		<action path="/reduce/searchForReduce" type="bzq.shf.actions.ReduceDataAction" parameter="param=reduce_result , activity=reduce_update" name="reduceShiftReqtForm" scope="request">
+			<forward name="success" path="/jsp/reduce_shift_list.jsp">
+			</forward>
+		</action>
+		<action path="/reduce/reduceShiftReqOptions" name="reduceShiftReqtForm" scope="request" type="bzq.shf.actions.ReduceDataAction" parameter="param=reduce_result_option , activity=reduce_agent">
+			<forward name="success" path="/jsp/reduce_shift_options.jsp">
+			</forward>
+		</action>
+		<action path="/reduce/reduceShiftReq" type="bzq.shf.actions.ReduceDataAction" name="reduceShiftReqtForm" scope="request" parameter="param=reduce_request , activity=reduce_view">
+			<forward name="success" path="/jsp/reduce_shift.jsp">
+			</forward>
+		</action>
+		<action path="/reduce/reduceShift" type="bzq.shf.actions.ReduceDataAction" name="reduceShiftListForm" scope="request" parameter="param=add_reduce , activity=reduce_agent_update">
+			<forward name="success_shift" path="/reduce/reduceShiftReq.do">
+			</forward>
+			<forward name="success_option" path="/reduce/reduceShiftReqOptions.do">
+			</forward>
+		</action>
+		<action path="/reduce/approveDeclineReduce" type="bzq.shf.actions.ReduceDataAction" parameter="param=approve_decline , activity=reduce_update" name="reduceShiftListForm" scope="request">
+			<forward name="success" path="/reduce/reduceShiftReq.do">
+			</forward>
+			<forward name="fail" path="/jsp/reduce_shift.jsp">
+			</forward>
+		</action>
+		<action path="/reduce/declineAll" parameter="param=decline_all , activity=reduce_update" type="bzq.shf.actions.ReduceDataAction" name="reduceShiftReqtForm" scope="request">
+			<forward name="success" path="/reduce/reduceShiftReq.do">
+			</forward>
+		</action>
+		<action path="/reduce/addUpdateReduceShiftReq" type="bzq.shf.actions.ReduceDataAction" parameter="param=add_update_reduce , activity=reduce_update" name="reduceShiftReqtForm" scope="request">
+			<forward name="success" path="/jsp/reduce_add_reduce.jsp">
+			</forward>
+			<forward name="successReturn" path="/reduce/reduceShiftReq.do">
+			</forward>
+			<forward name="fail" path="/jsp/reduce_add_reduce.jsp">
+			</forward>
+		</action>
+		<action path="/shift/rejectChangeCandidate" type="bzq.shf.actions.ShiftDataAction" parameter="param=rejectChangeCandidate , activity=addShiftTimeChange" name="changeRequestCandidate" scope="request">
+			<forward name="success" path="/shift/viewChangeRequestApplications.do">
+			</forward>
+		</action>
+		<action path="/shift/registerToChangeRequest" type="bzq.shf.actions.ShiftDataAction" parameter="param=registerToChangeRequest , activity=agentShiftTimeChange" name="changeRequestCandidate" scope="request">
+			<forward name="success" path="/shift/viewAgentChangeRequests.do">
+			</forward>
+			<forward name="fail" path="/shift/viewAgentChangeRequests.do">
+			</forward>
+		</action>
+		<action path="/shift/shiftChangeRejectAll" type="bzq.shf.actions.ShiftDataAction" parameter="param=shiftChangeRejectAll , activity=shiftChangeReject" name="shiftChangeRequestForm" scope="request">
+			<forward name="success" path="/shift/viewShiftTimeChangeRequests.do">
+			</forward>
+			<forward name="fail" path="/shift/viewShiftTimeChangeRequests.do">
+			</forward>
+		</action>
+		<action path="/attendance/approveReport" type="bzq.shf.actions.AttendanceDataAction" parameter="param=approve_report , activity=aa" name="attendanceDataForm" scope="request">
+		</action>
+		<action path="/attendance/cancelReport" type="bzq.shf.actions.AttendanceDataAction" parameter="param=cancel_report , activity=aa" name="attendanceDataForm" scope="request">
+		</action>
+		<action path="/attendance/employeeEarlyExit" type="bzq.shf.actions.AttendanceDataAction" name="addEventForm" scope="request" parameter="param=EarlyExit , activity=aa">
+			<forward name="success" path="/attendance/agentParam.do">
+			</forward>
+		</action>
+		<action path="/shift/deleteFromRepositories" parameter="param=deleteFromRepositories , activity=deleteFromRepositories" type="bzq.shf.actions.ShiftDataAction" name="shiftDataForm" scope="request" validate="false">
+			<forward name="success" path="/jsp/shf_success.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_fail.jsp">
+			</forward>
+		</action>
+		<action path="/attendance/setTadreech" type="bzq.shf.actions.AttendanceDataAction" parameter="param=setTadreech , activity=attend_reg_stage" name="employeeArriveForm" scope="request">
+			<forward name="success" path="/jsp/shf_success.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_fail.jsp">
+			</forward>
+		</action>
+		<action path="/completion/addParam" type="bzq.shf.actions.CTIAction" parameter="param=param , activity=login_menu" name="ctiCompletionForm" scope="request">
+			<forward name="success" path="/jsp/cti.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/cti.jsp">
+			</forward>
+		</action>
+		<action path="/completion/result" type="bzq.shf.actions.CTIAction" parameter="param=result , activity=login_menu" name="ctiCompletionForm" scope="request">
+			<forward name="success" path="/jsp/cti_completion_result.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/cti.jsp">
+			</forward>
+		</action>
+		<action path="/completion/setCompletion" type="bzq.shf.actions.CTIAction" parameter="param=setCompletion" name="ctiCompletionForm" scope="request">
+			<forward name="success" path="/jsp/cti_set_completion.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/cti_completion_result.jsp">
+			</forward>
+		</action>
+		<action path="/completion/saveCompletion" type="bzq.shf.actions.CTIAction" parameter="param=saveCompletion" name="ctiCompletionForm" scope="request">
+			<forward name="success" path="/jsp/cti_completion_finish.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/cti_set_completion.jsp">
+			</forward>
+		</action>
+		<action path="/completion/menu" type="bzq.shf.actions.CTIAction" name="ctiCompletionForm" scope="request" parameter="param=menu , activity=login_menu">
+			<forward name="success" path="/jsp/cti_main.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/cti_main.jsp">
+			</forward>
+		</action>
+		<action path="/completion/viewParam" type="bzq.shf.actions.CTIAction" parameter="param=view_param , ativity=login_view_completion" name="ctiSearchCompletionForm" scope="request">
+			<forward name="success" path="/jsp/cti_view_param.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/cti_view_param.jsp">
+			</forward>
+		</action>
+		<action path="/completion/searchResult" type="bzq.shf.actions.CTIAction" parameter="param=view_result , ativity=login_view_completion" name="ctiSearchCompletionForm" scope="request">
+			<forward name="success" path="/jsp/cti_view_param.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/cti_view_param.jsp">
+			</forward>
+			<forward name="successExcell" path="/completion/export.do">
+			</forward>
+		</action>
+		<action path="/completion/export" type="bzq.shf.actions.CTIAction" parameter="param=export , activity=completion_export" name="ctiSearchCompletionForm" scope="request">
+		</action>
+		<action path="/completion/cancel" type="bzq.shf.actions.CTIAction" parameter="param=cancel , activity=completion_cancel" name="ctiSearchCompletionForm" scope="request">
+			<forward name="success" path="/jsp/cti_validate_cancel.jsp">
+			</forward>
+			<forward name="fail" path="/completion/searchResult.do">
+			</forward>
+		</action>
+		<action path="/completion/confirmCancel" type="bzq.shf.actions.CTIAction" parameter="param=confirm_cancel , activity=completion_cancel" name="ctiSearchCompletionForm" scope="request">
+			<forward name="success" path="/completion/searchResult.do">
+			</forward>
+			<forward name="fail" path="/completion/searchResult.do">
+			</forward>
+		</action>
+		<action path="/completion/update" type="bzq.shf.actions.CTIAction" parameter="param=update , activity=completion_update" name="ctiSearchCompletionForm" scope="request">
+			<forward name="success" path="/jsp/cti_set_completion_forupdate.jsp">
+			</forward>
+			<forward name="fail" path="/completion/searchResult.do">
+			</forward>
+		</action>
+		<action path="/completion/confirmUpdate" type="bzq.shf.actions.CTIAction" parameter="param=confirm_update , activity=completion_update" name="ctiSearchCompletionForm" scope="request">
+			<forward name="success" path="/jsp/cti_completion_finish.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/cti_completion_finish.jsp">
+			</forward>
+		</action>
+		<action path="/cti/viewJobsToSap" type="bzq.shf.actions.CTIAction" parameter="param=view_job_sap , activity=login_assign_jobtosap">
+			<forward name="success" path="/jsp/cti_job_to_sap.jsp">
+			</forward>
+		</action>
+		<action path="/cti/assignJobToSap" type="bzq.shf.actions.CTIAction" parameter="param=assign_job_sap , activity=login_assign_jobtosap" name="tableForm" scope="request">
+			<forward name="success" path="/cti/viewJobsToSap.do">
+			</forward>
+		</action>
+		<action path="/cti/unAssignJobToSap" type="bzq.shf.actions.CTIAction" parameter="param=unassign_job_sap , activity=login_assign_jobtosap" name="tableForm" scope="request">
+			<forward name="success" path="/cti/viewJobsToSap.do">
+			</forward>
+		</action>
+		<action path="/shift/viewRemarkDialog" type="bzq.shf.actions.ShiftDataAction" parameter="param=showRemarkDialog" name="shiftDataForm" scope="request">
+			<forward name="success" path="/jsp/add_remark_dialog.jsp">
+			</forward>
+		</action>
+		<action path="/shift/addRemark" type="bzq.shf.actions.ShiftDataAction" parameter="param=addRemark" name="shiftDataForm" scope="request">
+			<forward name="success" path="/jsp/shf_success.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_fail.jsp">
+			</forward>
+		</action>
+		<action path="/admin/manageInnerJobs" type="bzq.shf.actions.SystemAdminAction" parameter="param=manage_innerJobs" name="innerJobForm" scope="request">
+			<forward name="successView" path="/jsp/admin/manage_inner_jobs.jsp">
+			</forward>
+			<forward name="successAdd" path="/admin/manageInnerJobs.do?action=view">
+			</forward>
+			<forward name="successViewUpdate" path="/jsp/admin/update_inner_job.jsp">
+			</forward>
+			<forward name="successGroups" path="/jsp/admin/inner_job_groups.jsp">
+			</forward>
+		</action>
+		<action path="/admin/manageBuildings" type="bzq.shf.actions.ManageBuildingsAction" parameter="param=manage_buildings" name="buildingForm" scope="request">
+			<forward name="successView" path="/jsp/admin/manage_buildings.jsp">
+			</forward>
+			<forward name="successUpdate" path="/admin/manageBuildings.do?action=view">
+			</forward>
+			<forward name="successViewUpdate" path="/jsp/admin/update_building.jsp">
+			</forward>
+		</action>
+		
+		<action path="/admin/optShfSpView" type="bzq.shf.actions.OptShfSpAction" parameter="param=view" name="optShfSpForm" scope="request">
+			<forward name="successView" path="/jsp/opt_shf_sp.jsp">
+			</forward>
+		</action>
+		<action path="/admin/optShfSpUpdate" type="bzq.shf.actions.OptShfSpAction" parameter="param=update" name="optShfSpForm" scope="request">
+			<forward name="successUpdate" path="/admin/optShfSpView.do">
+			</forward>
+		</action>
+		
+		<action path="/sp/break/timeActual" type="bzq.shf.actions.SoftPhoneAction" parameter="param=timeActual" name="SoftPhoneForm" scope="request">
+		</action>
+		<action path="/sp/logout" type="bzq.shf.actions.SoftPhoneAction" parameter="param=logout" name="SoftPhoneForm" scope="request">
+		</action>
+		
+		<action path="/shift/viewOriginalShiftDialog" type="bzq.shf.actions.ShiftDataAction" parameter="param=getShift" name="shiftDataForm" scope="request">
+			<forward name="success" path="/jsp/show_original_shift_popup.jsp">
+			</forward>
+		</action>
+		<action path="/shift/viewOriginalShiftDialog" type="bzq.shf.actions.ShiftDataAction" parameter="param=getShift" name="shiftDataForm" scope="request">
+			<forward name="success" path="/jsp/show_original_shift_popup.jsp">
+			</forward>
+		</action>
+		<action path="/shift/export" type="bzq.shf.actions.ShiftDataAction" parameter="param=export" name="shiftDataForm" scope="request">
+		</action>
+		<action path="/attendance/export" parameter="param=export" name="employeeArriveForm" scope="request" type="bzq.shf.actions.AttendanceDataAction">
+		</action>
+		<action path="/employee/export" parameter="param=export" name="employeeSearchForm" scope="request" type="bzq.shf.actions.EmployeeDataAction">
+		</action>
+		<action path="/break/export" type="bzq.shf.actions.BreakDataAction" parameter="param=export" name="breakForm" scope="request">
+		</action>
+		<action path="/shift/currentExport" type="bzq.shf.actions.ShiftDataAction" parameter="param=currentExport" name="shiftDataForm" scope="request">
+		</action>
+		<action path="/attendance/removeMissing" type="bzq.shf.actions.AttendanceDataAction" parameter="param=removeMissing" name="employeeArriveForm" scope="request">
+			<forward name="success" path="/jsp/shf_success.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_fail.jsp">
+			</forward>
+		</action>
+		<action path="/exceptions/param" parameter="param=param" name="exceptionSearchForm" scope="request" type="bzq.shf.actions.ExceptionAction">
+			<forward name="success" path="/exceptions/result.do">
+			</forward>
+		</action>
+		<action path="/exceptions/result" parameter="param=result" name="exceptionSearchForm" scope="request" type="bzq.shf.actions.ExceptionAction">
+			<forward name="success" path="/jsp/exception_list.jsp">
+			</forward>
+		</action>
+		<action path="/shift/exportMyShifts" type="bzq.shf.actions.ShiftDataAction" parameter="param=exportMyShifts" name="shiftDataForm" scope="request">
+		</action>
+		<action path="/shift/exportInforce" parameter="param=exportInforce" type="bzq.shf.actions.ShiftDataAction" name="shiftInforceForm" scope="request">
+		</action>
+		<action path="/exceptions/export" type="bzq.shf.actions.ExceptionAction" parameter="param=export" name="exceptionSearchForm" scope="request">
+		</action>
+		<action path="/shift/cancelledResult" type="bzq.shf.actions.ShiftCancelledAction" parameter="param=result" name="shiftCancelledForm" scope="request">
+  <forward name="success" path="/jsp/shift_activity_cancelled.jsp" /> 
+  </action>
+		<action path="/shift/cancelledParam" type="bzq.shf.actions.ShiftCancelledAction" parameter="param=param" name="shiftCancelledForm" scope="request">
+  <forward name="success" path="/jsp/shift_activity_cancelled.jsp" /> 
+  </action>
+		<action path="/shift/cancelledExport" name="shiftCancelledForm" scope="request" parameter="param=export" type="bzq.shf.actions.ShiftCancelledAction">
+  </action>
+		<action path="/exceptions/viewRemarkDialog" type="bzq.shf.actions.ExceptionAction" parameter="param=showRemarkDialog" name="employeeExceptionForm" scope="request">
+  	<forward name="success" path="/jsp/add_exception_remark_dialog.jsp">
+  	</forward>
+  </action>
+		<action path="/exceptions/addRemark" parameter="param=addRemark" type="bzq.shf.actions.ExceptionAction" name="employeeExceptionForm" scope="request">
+  	<forward name="success" path="/jsp/shf_success.jsp">
+  	</forward>
+  	<forward name="fail" path="/jsp/shf_fail.jsp">
+  	</forward>
+  </action>
+		<action path="/exceptions/cancel" type="bzq.shf.actions.ExceptionAction" parameter="param=cancel , activity=exception_cancel" name="employeeExceptionForm" scope="request">
+  	<forward name="success" path="/exceptions/param.do">
+  	</forward>
+  	<forward name="fail" path="/exceptions/param.do">
+  	</forward>
+  </action>
+		<action path="/exceptions/cancelParam" type="bzq.shf.actions.ExceptionAction" parameter="param=cancel_param , activity=exception_cancel" name="employeeExceptionForm" scope="request">
+  	<forward name="success" path="/jsp/cancel_exception_popup.jsp">
+  	</forward>
+  </action>
+		<action path="/shift/cancel" parameter="param=shift_cancel , activity=shift_cancel" name="shiftDataForm" scope="request" type="bzq.shf.actions.ShiftDataAction">
+  	<forward name="shiftsParam" path="/shift/searchParam.do">
+  	</forward>
+  	<forward name="employeeCard" path="/employee/getShiftsParam.do">
+  	</forward>
+  </action>
+		<action path="/shift/add" type="bzq.shf.actions.ShiftDataAction" parameter="param=add_extra_shift" name="addShiftForm" scope="request">
+			<forward name="success" path="/employee/showCard.do">
+			</forward>
+		</action>
+		<action path="/shift/viewExtraShiftDialog" type="bzq.shf.actions.ShiftDataAction" parameter="param=view_add_shift" name="addShiftForm" scope="request">
+			<forward name="success" path="/jsp/add_shift_popup.jsp">
+			</forward>
+		</action>
+		<action path="/admin/viewActivityAim" type="bzq.shf.actions.SystemAdminAction" parameter="param=findActivityAim,activity=admin_activity_view" name="activityAimForm" scope="request">
+		<forward name="success" path="/jsp/activity_aim.jsp">
+			</forward>
+		</action>
+		<action path="/admin/viewActualJob" type="bzq.shf.actions.SystemAdminAction" parameter="param=showActualJob,activity=actual_job" name="actualJobForm" scope="request">
+		<forward name="success" path="/jsp/actual_job.jsp">
+			</forward>
+		</action>
+		<action path="/admin/insertActualJob" type="bzq.shf.actions.SystemAdminAction" name="actualJobForm" scope="request" parameter="param=insertActualJob,activity=actual_job">
+		<forward name="success" path="/jsp/actual_job.jsp">
+			</forward>
+		</action>
+		<action path="/admin/insertActivityAim" type="bzq.shf.actions.SystemAdminAction" name="activityAimForm" scope="request" parameter="param=insertActivityAim,activity=admin_activity_view">
+		<forward name="success" path="/jsp/activity_aim_param.jsp">
+			</forward>
+		</action>
+		
+		<action path="/admin/deleteActivityAim" type="bzq.shf.actions.SystemAdminAction" parameter="param=deleteActivityAim,activity=admin_activity_view" name="activityAimForm" scope="request">
+			<forward name="success" path="/admin/viewActivityAim.do">
+			</forward>
+			<forward name="failure" path="/jsp/shf_fail.jsp">
+			</forward>
+		</action>
+		<action path="/admin/saveActivityAim" type="bzq.shf.actions.SystemAdminAction" parameter="param=saveActivityAim,activity=admin_activity_view" name="activityAimForm" scope="request">
+			<forward name="success" path="/admin/updateActivityAim.do?action=showActivityAim">
+			</forward>
+			<forward name="successInsert" path="/admin/viewActivityAim.do?action=findActivityAim">
+			</forward>
+			<forward name="insertCallAimFailed" path="/admin/viewActivityAim.do">
+			</forward>
+		</action>
+		<action path="/admin/updateActivityAim" type="bzq.shf.actions.SystemAdminAction" name="activityAimForm" scope="request" parameter="param=showActivityAim,activity=admin_activity_view">
+			<forward name="success" path="/jsp/activity_aim_param.jsp">
+			</forward>
+		</action>
+		<action path="/shift/InforcePotentialParam" type="bzq.shf.actions.ShiftDataAction" parameter="param=search_potential_inforce_param , activity=shift_inforce_update" name="potentialInforceForm" scope="request">
+			<forward name="success" path="/jsp/shift_inforce_potential.jsp">
+			</forward>
+		</action>
+		<action path="/shift/InforcePotentialData" parameter="param=search_potential_inforce_data , activity=shift_inforce_update" type="bzq.shf.actions.ShiftDataAction" name="potentialInforceForm" scope="request">
+			<forward name="success" path="/jsp/shift_inforce_potential.jsp">
+			</forward>
+		</action>
+		<action path="/shift/InforcePotentialAdd" type="bzq.shf.actions.ShiftDataAction" parameter="param=search_potential_inforce_add , activity=shift_inforce_update" name="potentialInforceForm" scope="request">
+			<forward name="success" path="/jsp/shift_inforce_potentialAdd.jsp">
+			</forward>
+			<forward name="failure" path="/jsp/shift_inforce_potentialAdd.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shift_inforce_potential.jsp">
+			</forward>
+		</action>
+		<action path="/admin/updateActualJob" name="actualJobForm" scope="request" type="bzq.shf.actions.SystemAdminAction" parameter="param=updateActualJob,activity=actual_job">
+			<forward name="success" path="/jsp/actual_job.jsp">
+			</forward>
+			<forward name="failure" path="/jsp/shf_fail.jsp">
+			</forward>
+			<forward name="successUpdate" path="/admin/viewActualJob.do?action=showActualJob">
+			</forward>
+		</action>
+		<action path="/shift/exportPotentialInforce" type="bzq.shf.actions.ShiftDataAction" parameter="param=export_potentail" name="potentialInforceForm" scope="request">
+		</action>
+		<action path="/shift/addExtraAll" type="bzq.shf.actions.ShiftDataAction" parameter="param=add_extra_shift_all" name="addShiftForm" scope="request">
+			<forward name="success" path="/jsp/shift_inforce_potentialAdd.jsp">
+			</forward>
+			<forward name="successAdd" path="/shift/InforcePotentialData.do?action=search_potential_inforce_data">
+			</forward>
+		</action>
+		<action path="/forecast/markedAgent" type="bzq.shf.actions.ForecastAction" parameter="param=marked_agents " name="forecastForm">
+			<forward name="success" path="/jsp/forecast_markedAgent.jsp">
+			</forward>
+		</action>
+		<action path="/forecast/lateAgent" type="bzq.shf.actions.ForecastAction" name="forecastForm" parameter="param=late_agents">
+			<forward name="success" path="/jsp/forecast_lateAgent.jsp">
+			</forward>
+		</action>
+		<action path="/forecast/missingAgent" type="bzq.shf.actions.ForecastAction" parameter="param=missing_agents" name="forecastForm">
+			<forward name="success" path="/jsp/forecast_missingAgent.jsp">
+			</forward>
+		</action>
+		<action path="/forecast/futureAgent" type="bzq.shf.actions.ForecastAction" parameter="param=future_agents" name="forecastForm">
+			<forward name="success" path="/jsp/forecast_futureAgent.jsp">
+			</forward>
+		</action>
+		<action path="/forecast/arrivalAgent" type="bzq.shf.actions.ForecastAction" parameter="param=arrival_agents" name="forecastForm">
+			<forward name="success" path="/jsp/forecast_arrivalAgent.jsp">
+			</forward>
+		</action>
+		<action path="/forecast/shiftingAgent" type="bzq.shf.actions.ForecastAction" parameter="param=shifting_agents" name="forecastForm">
+			<forward name="success" path="/jsp/forecast_shiftingAgent.jsp">
+			</forward>
+		</action>
+		<action path="/forecast/extensionAgent" type="bzq.shf.actions.ForecastAction" parameter="param=extension_agents" name="forecastForm">
+			<forward name="success" path="/jsp/forecast_shiftingAgent.jsp">
+			</forward>
+		</action>
+		<action path="/forecast/reducingAgent" type="bzq.shf.actions.ForecastAction" parameter="param=reducing_agents" name="forecastForm">
+			<forward name="success" path="/jsp/forecast_shiftingAgent.jsp">
+			</forward>
+		</action>
+		
+		<action path="/forecast/activitySwitch" type="bzq.shf.actions.ForecastAction" parameter="param=activitySwitch" name="forecastForm">
+			<forward name="success" path="/jsp/forecast_activitySwitch.jsp">
+			</forward>
+		</action>
+		
+		
+		<action path="/forecast/extraAgent" parameter="param=extra_agents" type="bzq.shf.actions.ForecastAction" name="forecastForm">
+			<forward name="success" path="/jsp/forecast_shiftingAgent.jsp">
+			</forward>
+		</action>
+		<action path="/forecast/cancelAgent" type="bzq.shf.actions.ForecastAction" parameter="param=cancel_agents" name="forecastForm">
+			<forward name="success" path="/jsp/forecast_shiftingAgent.jsp">
+			</forward>
+		</action>
+		<action path="/shift/cancelLoginView" type="bzq.shf.actions.ShiftDataAction" parameter="param=shift_cancel_login_view , activity=shift_cancel" name="shiftLoginCancelForm" scope="request">
+			<forward name="success" path="/jsp/add_cancel_login_dialog_1.jsp">
+			</forward>
+		</action>
+		<action path="/shift/cancelLoginUpdate" type="bzq.shf.actions.ShiftDataAction" parameter="param=shift_cancel_login_update , activity=shift_cancel" name="shiftLoginCancelForm" scope="request">
+			<forward name="success" path="/jsp/shifts_search_list.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shifts_search_list.jsp">
+			</forward>
+		</action>
+		<action path="/wfmReport" type="bzq.wfm.report.ScheduleHomeAction" parameter="param= , activity=" name="wfmReportForm" scope="request">
+			<forward name="success" path="/jsp/wfm/schedule_report_params.jsp">
+			</forward>
+			<forward name="successReport" path="/wfmReport.do" redirect="true"> 
+			</forward>
+		</action>
+		<action path="/wfmReport/getForecast" type="bzq.wfm.report.ScheduleForecastAction" name="wfmReportForm" scope="request" parameter="param= , activity=">
+			<forward name="success" path="/jsp/wfm/forecast_select.jsp">
+			</forward>
+		</action>
+		<action path="/wfmReport/getSites" name="wfmReportForm" scope="request" type="bzq.wfm.report.ScheduleSitesAction" parameter="param= , activity=">
+			<forward name="success" path="/jsp/wfm/site_select.jsp">
+			</forward>
+		</action>
+		<action path="/wfmHRReport" type="bzq.wfm.report.ScheduleHomeAction" parameter="param=HR" name="wfmReportForm" scope="request">
+			<forward name="success" path="/jsp/wfm/hr_report_params.jsp">
+			</forward>
+		</action>
+		<action path="/mobile/ReportParam" type="bzq.shf.actions.PlatformAction" parameter="param=param" name="UsageReportForm" scope="request">
+			<forward name="success" path="/mobile/ReportResult.do">
+			</forward>
+		</action>
+		<action path="/mobile/ReportResult" type="bzq.shf.actions.PlatformAction" parameter="param=result" name="UsageReportForm" scope="request">
+			<forward name="success" path="/jsp/shf_usage_report.jsp">
+			</forward>
+		</action>
+		<action path="/mobile/ReportExport" type="bzq.shf.actions.PlatformAction" parameter="param=export" name="UsageReportForm" scope="request">
+		</action>
+		<action path="/IWD/peleParam" type="bzq.shf.actions.IWDAction" parameter="param=pele_param" name="PeleIWDForm" scope="request">
+			<forward name="result" path="/IWD/peleResult.do">
+			</forward>
+			<forward name="success" path="/jsp/peleIWD.jsp">
+			</forward>
+		</action>
+		<action path="/IWD/peleResult" type="bzq.shf.actions.IWDAction" parameter="param=pele_result" name="PeleIWDForm" scope="request">
+			<forward name="success" path="/jsp/peleIWD.jsp">
+			</forward>
+		</action>
+		<action path="/IWD/peleSchedule" type="bzq.shf.actions.IWDAction" parameter="param=pele_schedule" name="PeleIWDForm" scope="request">
+			<forward name="success" path="/IWD/peleResult.do">
+			</forward>
+		</action>
+		<action path="/IWD/peleScheduleCancel" type="bzq.shf.actions.IWDAction" parameter="param=pele_schedule_cancel" name="PeleIWDForm" scope="request">
+			<forward name="success" path="/IWD/peleResult.do">
+			</forward>
+		</action>
+		<action path="/admin/assignTeamToBuilding" type="bzq.shf.actions.ManageBuildingsAction" parameter="param=view_teams" name="buildingForm" scope="request">
+			<forward name="success" path="/jsp/admin/assign_team_to_building.jsp">
+			</forward>
+		</action>
+		<action path="/admin/updateTeamBuilding" type="bzq.shf.actions.ManageBuildingsAction" parameter="param=update_team_building" name="teamForm" scope="request">
+			<forward name="success" path="/jsp/shf_success.jsp">
+			</forward>
+			<forward name="fail" path="/jsp/shf_fail.jsp">
+			</forward>
+		</action>
+
+  <!-- action path="/admin/updateActivityAim" type="org.apache.struts.actions.ForwardAction" parameter="/jsp/activity_aim.jsp"/-->
+	</action-mappings>
+	<!-- Message Resources -->
+	<message-resources/>
+</struts-config>

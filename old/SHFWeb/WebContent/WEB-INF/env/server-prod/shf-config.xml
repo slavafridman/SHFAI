@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<app-config>
+	<logger>
+		<logger-info 	name="WEB-INF/env/server-prod/log4j_shf.xml"
+		watch="true"
+		watchInterval="10000"/>
+	</logger>
+	<db-definitions>
+	  	<dsconnection name="shfprod"  isDefaultDb="true" providerUrl="iiop://localhost:900" dataSourceName="jdbc/shfprod" factory="com.ibm.ejs.ns.jndi.CNInitialContextFactory" />
+	  	<dsconnection name="wfm" isDefaultDb="false" providerUrl="iiop://localhost:900" dataSourceName="jdbc/wfmprod" factory="com.ibm.ejs.ns.jndi.CNInitialContextFactory" /> 
+	</db-definitions>
+	<app-info>
+		<version-info mainApp="true" name="shf" contextUri="/shf" version="v1.0" environment="prod" versionDate="Feb 11 2013" /> 
+	</app-info>
+	<app-resources>
+		<code-tables initializer="bzq.shf.utils.TablesContainerInitializerImpl" /> 
+		<message-xml-definitions>
+			<message-xml-info name="WEB-INF/bezeq-messages.xml"/>
+			<message-xml-info name="WEB-INF/shf-messages.xml"/>
+		</message-xml-definitions>
+	</app-resources>
+ 	<mail>
+		<mail-info protocol="mail.smtp.host" smtpServer="AVGAD1-E2K"
+			clientCharset="windows-1255" serverCharset="windows-1255" />
+	</mail>
+</app-config>

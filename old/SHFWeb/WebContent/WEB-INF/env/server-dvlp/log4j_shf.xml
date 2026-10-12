@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "../../../WEB-INF/log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+	<renderer renderedClass="org.apache.struts.action.ActionErrors" renderingClass="bzq.log4j.ActionErrorsRenderer" />
+
+	<appender name="SHF" class="org.apache.log4j.DailyRollingFileAppender">
+		<param name="File" value="/logs/shf/dvlp/shf.log" />
+		<param name="DatePattern" value="'-'yyyy-MM-dd'.log'" />
+		<param name="Append" value="false" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern"	value="%d{dd-MM-yyyy HH:mm:ss.SSS} [%x] %-5p %-20.20C{1} - %m\n" />
+		</layout>
+	</appender>
+
+	<appender name="PrivacyAppender" class="org.apache.log4j.DailyRollingFileAppender">
+		<param name="File" value="/logs/shf/dvlp/${shfHostName}-shfPrivacyLogger.log" />
+		<param name="DatePattern" value="'-'yyyy_MM_dd'.log'" />
+		<param name="Append" value="false" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern"	value="%d{dd-MM-yyyy HH:mm:ss.SSS} [%x] %-5p %-20.20C{1} - %m\n" />
+		</layout>
+	</appender>
+
+	<category name="bzq" additivity="true">
+		<priority value="info" />
+	</category>
+
+
+	<!-- Start Application -->
+
+	<category name="shf" additivity="true">
+		<priority value="info" />
+	</category>
+
+
+	<!-- End Application -->
+
+	<logger name="PrivacyLogger" additivity="false">
+		<level value="info" />
+		<appender-ref ref="PrivacyAppender"/>
+	</logger>
+
+	<root>
+		<priority value="info" />
+		<appender-ref ref="SHF" />
+	</root>
+
+</log4j:configuration>
+

@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Class-Path: Log4j.jar 
+ jaxb-impl.jar 
+ jaxb-api.jar 
+ Bezeq.jar 
+ stax-api-1.0.1.jar 
+ Struts.jar 
+ Shfsp.jar
+

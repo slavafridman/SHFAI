@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="SHFSPBreaks_response">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="interfaceId" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>
+				<xs:element name="userId" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>
+				<xs:element name="applicationId" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>		<!-- SHF -->
+				<xs:element name="user" type="xs:string" maxOccurs="1" minOccurs="1"></xs:element>
+				<xs:element name="password" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>
+				
+				<xs:element name="transactionId" type="xs:string" maxOccurs="1" minOccurs="1"></xs:element>
+				<xs:element name="statusCode" type="xs:string" maxOccurs="1" minOccurs="1"></xs:element>		<!-- 0 = SUCCESS, 1 = FAILURE -->
+				<xs:element name="statusDesc" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>		<!-- failure descitprion -->
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

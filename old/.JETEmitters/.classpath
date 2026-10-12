@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="C:/Program Files (x86)/IBM/SDPShared/plugins/com.ibm.etools.j2ee.ejb_1.0.200.v20100709_2251.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

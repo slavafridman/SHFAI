@@ -1,0 +1,210 @@
+({
+	"field-dayperiod": "doba dana", 
+	"dateFormatItem-yyMMdd": "dd.MM.yy", 
+	"field-minute": "minut", 
+	"eraNames": [
+		"Pre nove ere", 
+		"Nove ere"
+	], 
+	"dateFormatItem-MMMEd": "E d. MMM", 
+	"field-weekday": "dan u nedelji", 
+	"days-standAlone-wide": [
+		"nedelja", 
+		"ponedeljak", 
+		"utorak", 
+		"sreda", 
+		"Ä?etvrtak", 
+		"petak", 
+		"subota"
+	], 
+	"patternChars": "GanjkHmsSEDFwWxhKzAeugXZvcL", 
+	"months-standAlone-narrow": [
+		"j", 
+		"f", 
+		"m", 
+		"a", 
+		"m", 
+		"j", 
+		"j", 
+		"a", 
+		"s", 
+		"o", 
+		"n", 
+		"d"
+	], 
+	"field-era": "era", 
+	"field-hour": "Ä?as", 
+	"dateFormatItem-hhmm": "hh:mm a", 
+	"quarters-standAlone-abbr": [
+		"K1", 
+		"K2", 
+		"K3", 
+		"K4"
+	], 
+	"timeFormat-full": "HH.mm.ss v", 
+	"dateFormatItem-yyyy": "yyyy.", 
+	"months-standAlone-abbr": [
+		"jan", 
+		"feb", 
+		"mar", 
+		"apr", 
+		"maj", 
+		"jun", 
+		"jul", 
+		"avg", 
+		"sep", 
+		"okt", 
+		"nov", 
+		"dec"
+	], 
+	"dateFormatItem-Ed": "E d.", 
+	"days-standAlone-narrow": [
+		"n", 
+		"p", 
+		"u", 
+		"s", 
+		"Ä?", 
+		"p", 
+		"s"
+	], 
+	"eraAbbr": [
+		"p. n. e.", 
+		"n. e"
+	], 
+	"dateFormat-long": "dd. MMMM yyyy.", 
+	"timeFormat-medium": "HH.mm.ss", 
+	"field-zone": "zona", 
+	"dateFormat-medium": "dd.MM.yyyy.", 
+	"dateFormatItem-yyQQQQ": "QQQQ yy", 
+	"quarters-standAlone-wide": [
+		"Prvo tromeseÄ?je", 
+		"Drugo tromeseÄ?je", 
+		"TreÄ‡e tromeseÄ?je", 
+		"Ä?etvrto tromeseÄ?je"
+	], 
+	"field-year": "godina", 
+	"dateFormatItem-yyMMMd": "d. MMM yy.", 
+	"field-week": "nedelja", 
+	"months-standAlone-wide": [
+		"januar", 
+		"februar", 
+		"mart", 
+		"april", 
+		"maj", 
+		"jun", 
+		"jul", 
+		"avgust", 
+		"septembar", 
+		"oktobar", 
+		"novembar", 
+		"decembar"
+	], 
+	"timeFormat-long": "HH.mm.ss z", 
+	"months-format-abbr": [
+		"jan", 
+		"feb", 
+		"mar", 
+		"apr", 
+		"maj", 
+		"jun", 
+		"jul", 
+		"avg", 
+		"sep", 
+		"okt", 
+		"nov", 
+		"dec"
+	], 
+	"timeFormat-short": "HH.mm", 
+	"field-month": "mesec", 
+	"dateFormatItem-MMMMd": "MMMM d.", 
+	"quarters-format-abbr": [
+		"K1", 
+		"K2", 
+		"K3", 
+		"K4"
+	], 
+	"days-format-abbr": [
+		"ned", 
+		"pon", 
+		"uto", 
+		"sre", 
+		"Ä?et", 
+		"pet", 
+		"sub"
+	], 
+	"dateFormatItem-MMMMdd": "dd. MMMM", 
+	"pm": "PM", 
+	"dateFormatItem-mmss": "mm:ss", 
+	"days-format-narrow": [
+		"n", 
+		"p", 
+		"u", 
+		"s", 
+		"Ä?", 
+		"p", 
+		"s"
+	], 
+	"field-second": "sekund", 
+	"field-day": "dan", 
+	"months-format-narrow": [
+		"j", 
+		"f", 
+		"m", 
+		"a", 
+		"m", 
+		"j", 
+		"j", 
+		"a", 
+		"s", 
+		"o", 
+		"n", 
+		"d"
+	], 
+	"dateFormatItem-hhmmss": "hh:mm:ss a", 
+	"am": "AM", 
+	"days-standAlone-abbr": [
+		"ned", 
+		"pon", 
+		"uto", 
+		"sre", 
+		"Ä?et", 
+		"pet", 
+		"sub"
+	], 
+	"dateFormat-short": "d.M.yy.", 
+	"dateFormat-full": "EEEE, dd. MMMM yyyy.", 
+	"dateFormatItem-yMEd": "EEE, d. M. yyyy.", 
+	"months-format-wide": [
+		"januar", 
+		"februar", 
+		"mart", 
+		"april", 
+		"maj", 
+		"jun", 
+		"jul", 
+		"avgust", 
+		"septembar", 
+		"oktobar", 
+		"novembar", 
+		"decembar"
+	], 
+	"quarters-format-wide": [
+		"Prvo tromeseÄ?je", 
+		"Drugo tromeseÄ?je", 
+		"TreÄ‡e tromeseÄ?je", 
+		"Ä?etvrto tromeseÄ?je"
+	], 
+	"days-format-wide": [
+		"nedelja", 
+		"ponedeljak", 
+		"utorak", 
+		"sreda", 
+		"Ä?etvrtak", 
+		"petak", 
+		"subota"
+	], 
+	"eraNarrow": [
+		"p.n.e.", 
+		"n. e."
+	]
+})

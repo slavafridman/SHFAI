@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Class-Path: Bezeq.jar 
+ SHF.jar 
+ Log4j.jar 
+ Struts.jar 
+ StrutsValidator.jar 
+ tibjms.jar
+Implementation-Version: 1.1
+

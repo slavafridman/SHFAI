@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<messages>
+	<message key="shf.security.activityNotAllowed" value="אין לך הרשאה לבצע פעולה זו" />
+	
+	<message key="shf.error.employeeNotExist" value="עובד לא קיים"/>
+	<message key="shf.error.pastDate" value="תאריך חייב להיות עתידי" />
+	<message key="shf.error.invalidUser" value="קיימת בעיה בהרשאות"/>
+	<message key="shf.error.insertFailed" value="אירעה שגיאה בהוספת הנתונים" />
+	<message key="shf.error.populateFailed" value="אירעה שגיאה בשליפת הנתונים" />
+	<message key="shf.error.deleteFailed" value="אירעה שגיאה במחיקה" />
+	<message key="shf.error.updateFailed" value="אירעה שגיאה בעדכון הנתונים" />
+	<message key="shf.error.updateFailedStartEnd" value="אירעה שגיאה בעדכון הנתונים - תאריכים חורגים מטווח סידור המשמרת" />	
+	<message key="shf.error.updateFailedEndBeforeStart" value="אירעה שגיאה בעדכון הנתונים - תאריך סיום קודם לתאריך התחלה" />
+	<message key="shf.error.updateFailedStartBeforeCurrent" value="אירעה שגיאה בעדכון הנתונים - תאריך התחלה קטן מתאריך נוכחי" />
+	<message key="shf.error.insertInvalidShift" value="הוספת משמרת נכשלה! יתכן ואין מספיק הפרש שעות עם משמרת אחרת"/>
+	<message key="shf.error.updateFailedShiftInRange" value="אירעה שגיאה בעדכון הנתונים - אין מספיק הפרש שעות עם משמרת אחרת" />
+	<message key="shf.error.updateFailedShiftSource" value="לא ניתן לעדכן משמרת מסוג זה"/>
+	<message key="shf.error.replaceFailedShiftSource" value="לא ניתן להחליף משמרת מסוג זה"/>
+	<message key="shf.error.replaceFailedAttend" value="לא ניתן להחליף משמרת שיש עליה נתוני נוכחות"/>
+	<message key="shf.error.replaceFailedPoolExt" value="לא ניתן להחליף משמרת מאחר ויש לה שלוחה מוקצית"/>
+	<message key="shf.error.replaceUserNotAllowed" value="נציג לא מוגדר כמשתמש בהחלפות"/>
+	<message key="shf.error.replaceFailedCloseTime" value="(לא ניתן להחליף משמרת שמתחילה ב {0} שעות הקרובות (או שעת התחלה עברה"/>
+	<message key="shf.error.cancelStationNotExist" value="לא בוצעה כניסה לעמדה עבור משמרת זו"/>
+	<message key="shf.error.cancelStationHasExit" value="אי אפשר לבטל כניסה למשמרת שבוצעה לה יציאה"/>
+	<message key="shf.error.cancelExitNotExist" value="לא בוצעה יציאה מהעמדה עבור משמרת זו"/>
+	<message key="shf.error.cancelFailedPoolExt" value="לא ניתן לבטל משמרת מאחר ויש לה שלוחה מוקצית"/>
+	<message key="shf.error.updateFailedPoolExt" value="לא ניתן לעדכן משמרת מאחר ויש לה שלוחה מוקצית"/>
+	<message key="shf.error.general" value="אירעה שגיאה נא לנסות שוב, במידה וזאת שגיאה חוזרת נא לפנות לאחראי המערכת במוקד" />
+	<message key="shf.error.cancelFlagNotExist" value="דגל לא קיים" />
+	<message key="shf.error.unableToMoveShift" value="אי אפשר לשנות משמרת שיש עליה דיווח נוכחות"/>
+	<message key="shf.error.siteFullForSwitch" value="לא ניתן לבצע החלפה עקב מחסור במקומות ישיבה"/>
+	<message key="shf.error.switchSuccessful" value="החלפה בוצעה בהצלחה"/>
+	<message key="shf.error.deleteRecordConnected" value="לא ניתן למחוק את הרשומה מאחר והיא מקושרת לערכים בטבלה אחרת" />
+	<message key="error.db.duplicatekey" value="ערך כפול במסד הנתונים"></message>
+	<message key="error.db.duplicateCallAim" value="קיים כבר יעד שיחה לתור זה"></message>
+	<message key="shf.error.upload.emptyFile" value="הפעולה נכשלה, הקובץ שנטען הינו ריק"></message>
+	<message key="shf.error.upload.wrongFileType" value="הפעולה נכשלה, סוג הקובץ לא נתמך"></message>
+	<message key="shf.error.upload.fileSizeTooBig" value="הפעולה נכשלה, גודל הקובץ חורג מהמותר"></message>
+	<message key="shf.error.upload.csv.invalidFile" value="הפעולה נכשלה, קובץ לא תקין"></message>
+	
+	<message key="shf.error.completionConflict" value="קיימת חפיפה בזמני ההשלמה"/>
+	<message key="shf.error.selectCompletionForCancel" value="נא לבחור את ההשלמות שברצונך לבטל"/>
+	<message key="shf.success.completionCancelled" value="ההשלמות בוטלו בהצלחה" />
+	<message key="shf.success.completionUpdated" value="ההשלמות עודכנו בהצלחה" />
+	<message key="shf.error.brealLateReasonNotExist" value="לא נמצאה סיבת איחור מהפסקה בטבלת האירועים"/>
+	<message key="shf.error.dayExitNotRegistered" value="אי אפשר לבצע יציאה, יתכן ולא בוצעה כניסה לעמדה"/>
+	<message key="shf.error.dayExitAlreadyRegistered" value="יציאה מהעמדה בוצעה כבר"/>
+	<message key="shf.error.lowShiftDuration" value="אורך המשמרת קטן מהאורך המינימלי" />
+	<message key="shf.error.highShiftDuration" value="אורך המשמרת גדול מהאורך המקסימלי" />
+	<message key="shf.error.highCompletionDuration" value="אורך ההשלמה גדול מהאורך המקסימלי" />
+	<message key="shf.error.endBeforeStart" value="זמן סיום חייב להיות גדול מזמן התחלה" />
+	<message key="shf.error.breakEndBeforeStart" value="זמן סיום של ההפסקה חייב להיות גדול מזמן התחלה" />
+	<message key="shf.error.breakInSplitShiftRange" value="זמני הפסקה לא יכולים להיות בטווח של פיצול" />
+	<message key="shf.error.missingSite" value="חסר קוד מוקד" />
+	<message key="shf.error.missingActivity" value="חסר קוד תור" />
+	<message key="shf.error.missingIdNumber" value="חסר תעודת זהות לעובד" />
+	<message key="shf.error.eventFutureDate" value="אי אפשר להוסיף אירוע חריג לתאריך עתידי"/>
+	<message key="shf.error.completionEndBeforeStart" value="זמן סיום של ההשלמה חייב להיות גדול מזמן התחלה" />
+	<!-- split shift - -->
+	<message key="shf.error.splitShiftEndBeforeStart" value="תחילת פיצול חייב להיות לפני סוף פיצול" />
+	<message key="shf.error.splitShiftOutOfRange" value="זמני פיצול חייבים להיות בטווח משמרת" />
+	<message key="shf.error.splitShiftFirstPartMinDuration" value="אורך מינימלי לחלק ראשון במשמרת מפוצלת הינו {0} דקות" />
+	<message key="shf.error.splitMinDuration" value="אורך מינימלי לפיצול הינו {0} דקות" />
+	<message key="shf.error.splitSecondPartMinStartTime" value="חלק שני במשמרת מפוצלת חייב להתחיל החל משעה {0}" />
+<!-- Message for breaks -->
+	<message key="shf.error.breakCandidateExist" value="לא ניתן לעדכן להחלפה, ההפסקה כבר נמצאת במאגר ההחלפות"/>
+	<message key="shf.error.breakSourceNotAllowed" value="לא ניתן להחליף את סוג הפסקה זאת"/>
+	<message key="shf.error.breakChangeNotAllowed" value="אין לך הרשאה לביצוע החלפה"/>
+	<message key="shf.error.breakTimeProblem" value="זמני ההפסקה אינם מתאימים לביצוע החלפה"/>
+	<message key="shf.error.breakTimeShift" value="זמני הפסקה אינם תואמים לזמני המשמרת"/>
+	<message key="shf.error.breakTimeClose" value="לא ניתן להחליף הפסקה שמתחילה עד לפני {0} הדקות הקרובות"/>
+	<message key="shf.error.rangeBetweenBreaks" value="הפרש בין שתי הפסקות חייב להיות לפחות {0} דקות"/>
+	<message key="shf.error.breakLength" value="אורך ההפסקה אינו חוקי"/>
+	<message key="shf.error.switchBreakEntryExit" value="לא ניתן להחליף הפסקה שדווח עליה יציאה להפסקה"/>
+	<message key="shf.error.updateManagedBreakOldNotMatch" value="לא נמצאה הפסקה עם הפרטים שלפני השינוי"/>
+	<message key="shf.error.updateManagedBreakMinTimeBeforeChange" value="לא ניתן לעדכן הפסקה אוטומטית אשר מתחילה ב {0} דק' הקרובות"/>
+	<message key="shf.error.shfsp_sync_failed" value="שינויים לא נשמרו, הסנכרון עם מערכת סופטפון נכשל, יש לנסות מאוחר יותר"/>
+<!-- Message for breaks -->	
+
+<!-- Message for reduce -->	
+	<message key="shf.error.timeBforReduce" value="עבר זמן המינימום לבקשת צמצום משמרת"/>
+<!-- Message for reduce -->	
+	<message key="shf.error.forecastDataNotFound" value="לא נמצאו נתוני זמינות" />
+	<message key="shf.error.perfDataNotFound" value="לא נמצאו נתוני שיחות" />
+	
+	
+	<message key="shf.success.dayExitSucceeded" value="יציאה מהעמדה בוצעה בהצלחה"/>
+	<message key="shf.success.updateSecceeded" value="העדכון בוצע בהצלחה"/>
+	<message key="shf.success.deleteSecceeded" value="המחיקה בוצעה בהצלחה"/>
+	<message key="shf.success.insertSecceeded" value="ההוספה בוצעה בהצלחה"/>
+	<message key="shf.success.cancelStationSucceeded" value="ביטול כניסה לעמדה בוצע בהצלחה"/>
+	<message key="shf.success.flagAdded" value="נוסף דגל למשמרת בהצלחה"/>
+	<message key="shf.success.cancelExitStationSucceeded" value="ביטול יציאה מהעמדה בוצע בהצלחה"/>
+	<message key="shf.success.cancelFlag" value="דגל נמחק בהצלחה"/>
+	<message key="shf.success.breakUpdated" value="ההפסקות עודכנו בהצלחה" />
+	<message key="shf.success.switchSucceeded" value="ההחלפה בוצעה בהצלחה" />
+	<message key="shf.success.generalSuccessMsg" value="פעולה בוצעה בהצלחה" />
+	
+
+	<message key="shf.error.entryExist" value="לא ניתן לבצע את הפעולה המבוקשת למשמרת/הפסקה שדווח לה כניסה או יציאה" />
+	<message key="shf.error.switchShiftExist" value="לא ניתן לבצע את הפעולה מאחר והמשמרת נמצאת במאגר ההחלפות" />
+	<message key="shf.error.switchBreakExist" value="לא ניתן לבצע את הפעולה מאחר והפסקה של המשמרת נמצאת במאגר ההחלפות" />
+
+	<message key="shf.error.invalidAgent" value="אירעה שגיאה, נא לפנות למנהל המערכת לבדיקת ההרשאות שלך" />
+	
+	<message key="shf.error.switchDifferentSite" value="לא ניתן להחליף משמרות ממוקדים שונים"/>
+	<message key="shf.error.switchDifferentActivity" value="לא ניתן להחליף משמרות בפעילויות שונות"/>
+	<message key="shf.error.switchDifferentInnerJobs" value="לא ניתן להחליף בין שני התפקידים בפועל שנבחרו"/>
+	<message key="shf.error.switchAttendance" value="לא ניתן לבצע את ההחלפה מאחר ויש דיווח נוכחות על המשמרת של {0}" />
+	<message key="shf.error.switchInCandidate" value="לא ניתן להחליף את המשמרת מאחר והיא במאגר ההחלפות, יש להסיר אותה מהמאגר קודם" />
+	<message key="shf.error.switchBreakInCandidate" value="לא ניתן להחליף את המשמרת מאחר ויש בתוכה הפסקה במאגר ההחלפות, יש להסיר קודם את ההפסקה ממאגר ההחלפות" />
+	<message key="shf.error.switchShiftHasExceptions" value="לא ניתן להחליף את המשמרת מאחר והיא מכילה פעילויות נוספות" />
+	<message key="shf.error.switchSameTime" value="שתי המשמרות מתחילות ומסתיימות באותם זמנים"/>
+	<message key="shf.error.switchOffersLimitReached" value="הגעת למגבלת כמות ההצעות לפי סידור למשמרת זו, ניתן להציע שוב במידה ויבוטלו כמה מההצעות הקיימות עבורה או לחילופין הצע דרך מאגר משמרות"/>
+	
+	<message key="shf.error.switchOfferIrrelevant" value="לא ניתן לבצע החלפה, ההצעה איננה רלוונטית עוד"/>
+	<message key="shf.error.switchMessageNotOfferType" value="לא ניתן לבצע את הפעולה, אנא בחר הצעה רלוונטית להחלפה"/>
+	
+	<message key="shf.error.maxShiftDurationCR" value="לא ניתן לשנות את המשמרת, אורך משמרת גדול מדי" />
+	<message key="shf.error.minShiftDurationCR" value="לא ניתן לשנות את המשמרת, אורך משמרת קטן מדי" />
+	<message key="shf.error.minBeforeCR" value="לא ניתן לשנות משמרת שמתחילה עד לפני ה {0} הדקות הקרובות"/>
+	<message key="shf.error.changeRequestFull" value="אושרה כל המכסה של הבקשה" />
+	<message key="shf.error.shiftInChangeRequest" value="המשמרת נמצאת במאגר לשינוי משמרות המוני" />
+	
+	<message key="shf.error.startFromAfterStartTo" value="טווח התחלת משמרת לא חוקי" />
+	<message key="shf.error.endFromAfterEndTo" value="טווח סיום משמרת לא חוקי" />
+	<message key="shf.error.startToAfterEndFrom" value="טווח סיום משמרת לפני טווח התחלת משמרת" />
+	<message key="shf.error.newStartAfterNewEnd" value="שעת ההתחלת החדשה של המשמרת אחרי שעת הסיום החדש שלה" />
+	<message key="shf.error.changeRequestLowAgentsNum" value="אושרו כבר {0} בקשות, כמות הנציגים חייבת להיות גדולה או שווה למספר זה"/>
+	<message key="shf.error.inforceLowAgentsNum" value="נוספו כבר {0} משמרות, כמות הנציגים חייבת להיות גדולה או שווה למספר זה"/>
+	<message key="shf.error.illegalNewEnd" value="זמן סיום חדש לא חוקי" />
+	<message key="shf.error.illegalNewStart" value="זמן התחלה חדש לא חוקי"/>
+	<message key="shf.error.inforceNotExists" value="בקשת תגבור לא קיימת במערכת, נא לוודא ששמרת אותה בהצלחה" />
+	<message key="shf.error.noCommonDenominator" value="לא קיים מכנה משותף בין כל המשמרות" />
+	
+	<message key="shf.error.deleteBuilding" value="לא ניתן למחוק אתר שמקושרים אליו יחידות ארגוניות"/>
+	<message key="shf.error.selectMoked" value="נא לבחור מוקד קודם"/>
+	
+	<message key="shf.info.idnumber" value="תעודת זהות" />
+	<message key="shf.info.empid" value="מספר עובד" />
+	<message key="shf.info.phoneNumber" value="מספר טלפון" />
+	<message key="shf.info.date" value="תאריך" />
+	<message key="shf.info.activity" value="תור" />
+	<message key="shf.info.moked" value="מוקד" />
+	<message key="shf.info.skill" value="סקיל" />
+	<message key="shf.info.team" value="צוות" />
+	<message key="shf.info.agentsNum" value="כמות נציגים" />
+	<message key="shf.info.breakLength" value="זמן הפסקה" />
+	<message key="shf.info.lateMinutes" value="דקות איחור" />
+	<message key="shf.info.lateReason" value="סיבת איחור" />
+	<message key="shf.info.timeFrom" value="שעת התחלה" />
+	<message key="shf.info.timeTo" value="שעת סיום" />
+	<message key="shf.info.NoChanges" value="לא בוצעו שינויים" />
+	
+	<message key="shf.message.breakLateOccured" value="איחרת בחזרה מהפסקה, נרשם איחור בכטיס עובד שלך" />
+	
+</messages>

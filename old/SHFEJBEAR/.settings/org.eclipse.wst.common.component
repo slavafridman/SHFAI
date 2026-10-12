@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
+    <wb-module deploy-name="SHFEJBEAR">
+        <wb-resource deploy-path="/" source-path="/" tag="defaultRootSource"/>
+        <dependent-module archiveName="SHFEJB.jar" deploy-path="/" handle="module:/resource/SHFEJB/SHFEJB">
+            <dependent-object>EjbModule_1472621197723</dependent-object>
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="jaxb-impl.jar" deploy-path="/" handle="module:/classpath/lib/APPLib/lib/jaxb-impl.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="Log4j.jar" deploy-path="/" handle="module:/classpath/lib/SharedLibraries/bzq/Log4j.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="jaxb-api.jar" deploy-path="/" handle="module:/classpath/lib/APPLib/lib/jaxb-api.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="Bezeq.jar" deploy-path="/" handle="module:/classpath/lib/SharedLibraries/bzq/Bezeq.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="stax-api-1.0.1.jar" deploy-path="/" handle="module:/classpath/lib/D:/jexcel/poi-3.8/ooxml-lib/stax-api-1.0.1.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="Struts.jar" deploy-path="/" handle="module:/classpath/lib/SharedLibraries/bzq/Struts.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="Shfsp.jar" deploy-path="/" handle="module:/classpath/lib/SharedLibraries/bzq/Shfsp.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+    </wb-module>
+</project-modules>

@@ -1,0 +1,210 @@
+({
+	"field-dayperiod": "Dio dana", 
+	"field-minute": "Minuta", 
+	"eraNames": [
+		"Prije Krista", 
+		"Poslije Krista"
+	], 
+	"dateFormatItem-MMdd": "MM.dd", 
+	"field-weekday": "Dan u tjednu", 
+	"days-standAlone-wide": [
+		"nedjelja", 
+		"ponedjeljak", 
+		"utorak", 
+		"srijeda", 
+		"Ä?etvrtak", 
+		"petak", 
+		"subota"
+	], 
+	"patternChars": "GanjkHmsSEDFwWxhKzAeugXZvcL", 
+	"months-standAlone-narrow": [
+		"s", 
+		"v", 
+		"o", 
+		"t", 
+		"s", 
+		"l", 
+		"s", 
+		"k", 
+		"r", 
+		"l", 
+		"s", 
+		"p"
+	], 
+	"field-era": "Era", 
+	"field-hour": "Sat", 
+	"dateFormatItem-hhmm": "hh:mm a", 
+	"quarters-standAlone-abbr": [
+		"1kv", 
+		"2kv", 
+		"3kv", 
+		"4kv"
+	], 
+	"dateFormatItem-yyMMMEEEd": "EEE yy.MMM d", 
+	"timeFormat-full": "HH:mm:ss v", 
+	"months-standAlone-abbr": [
+		"sij", 
+		"vel", 
+		"oÅ¾u", 
+		"tra", 
+		"svi", 
+		"lip", 
+		"srp", 
+		"kol", 
+		"ruj", 
+		"lis", 
+		"stu", 
+		"pro"
+	], 
+	"days-standAlone-narrow": [
+		"n", 
+		"p", 
+		"u", 
+		"s", 
+		"Ä?", 
+		"p", 
+		"s"
+	], 
+	"eraAbbr": [
+		"pr.n.e.", 
+		"AD"
+	], 
+	"dateFormatItem-yyyyMM": "yyyy.MM", 
+	"dateFormatItem-yyyyMMMM": "yyyy. MMMM", 
+	"dateFormat-long": "d. MMMM yyyy.", 
+	"timeFormat-medium": "HH:mm:ss", 
+	"field-zone": "Zona", 
+	"dateFormat-medium": "d. MMM. yyyy.", 
+	"dateFormatItem-yyQQQQ": "QQQQ yy", 
+	"quarters-standAlone-wide": [
+		"1. kvartal", 
+		"2. kvartal", 
+		"3. kvartal", 
+		"4. kvartal"
+	], 
+	"dateTimeFormat": "{1} {0}", 
+	"field-year": "Godina", 
+	"dateFormatItem-HHmmss": "HH:mm:ss", 
+	"months-standAlone-wide": [
+		"sijeÄ?anj", 
+		"veljaÄ?a", 
+		"oÅ¾ujak", 
+		"travanj", 
+		"svibanj", 
+		"lipanj", 
+		"srpanj", 
+		"kolovoz", 
+		"rujan", 
+		"listopad", 
+		"studeni", 
+		"prosinac"
+	], 
+	"field-week": "Tjedan", 
+	"dateFormatItem-HHmm": "HH:mm", 
+	"dateFormatItem-yyQ": "Q yy", 
+	"timeFormat-long": "HH:mm:ss z", 
+	"months-format-abbr": [
+		"sij", 
+		"vel", 
+		"oÅ¾u", 
+		"tra", 
+		"svi", 
+		"lip", 
+		"srp", 
+		"kol", 
+		"ruj", 
+		"lis", 
+		"stu", 
+		"pro"
+	], 
+	"timeFormat-short": "HH:mm", 
+	"field-month": "Mjesec", 
+	"quarters-format-abbr": [
+		"1kv", 
+		"2kv", 
+		"3kv", 
+		"4kv"
+	], 
+	"days-format-abbr": [
+		"ned", 
+		"pon", 
+		"uto", 
+		"sri", 
+		"Ä?et", 
+		"pet", 
+		"sub"
+	], 
+	"dateFormatItem-MMMMdd": "MMMM dd", 
+	"pm": "PM", 
+	"days-format-narrow": [
+		"n", 
+		"p", 
+		"u", 
+		"s", 
+		"Ä?", 
+		"p", 
+		"s"
+	], 
+	"field-second": "Sekunda", 
+	"field-day": "Dan", 
+	"months-format-narrow": [
+		"s", 
+		"v", 
+		"o", 
+		"t", 
+		"s", 
+		"l", 
+		"s", 
+		"k", 
+		"r", 
+		"l", 
+		"s", 
+		"p"
+	], 
+	"dateFormatItem-hhmmss": "hh:mm:ss a", 
+	"am": "AM", 
+	"days-standAlone-abbr": [
+		"ned", 
+		"pon", 
+		"uto", 
+		"sri", 
+		"Ä?et", 
+		"pet", 
+		"sub"
+	], 
+	"dateFormat-short": "dd.MM.yyyy.", 
+	"dateFormat-full": "EEEE, d. MMMM yyyy.", 
+	"months-format-wide": [
+		"sijeÄ?nja", 
+		"veljaÄ?e", 
+		"oÅ¾ujka", 
+		"travnja", 
+		"svibnja", 
+		"lipnja", 
+		"srpnja", 
+		"kolovoza", 
+		"rujna", 
+		"listopada", 
+		"studenoga", 
+		"prosinca"
+	], 
+	"quarters-format-wide": [
+		"1. kvartal", 
+		"2. kvartal", 
+		"3. kvartal", 
+		"4. kvartal"
+	], 
+	"days-format-wide": [
+		"nedjelja", 
+		"ponedjeljak", 
+		"utorak", 
+		"srijeda", 
+		"Ä?etvrtak", 
+		"petak", 
+		"subota"
+	], 
+	"eraNarrow": [
+		"pr.n.e.", 
+		"AD"
+	]
+})

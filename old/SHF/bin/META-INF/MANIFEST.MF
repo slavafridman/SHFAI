@@ -1,0 +1,26 @@
+Manifest-Version: 1.0
+Class-Path: Bezeq.jar 
+ Log4j.jar 
+ Struts.jar 
+ StrutsValidator.jar 
+ NogaProxy.jar 
+ tibjms.jar 
+ poi-3.8-20120326.jar 
+ poi-ooxml-3.8-20120326.jar 
+ poi-ooxml-schemas-3.8-20120326.jar 
+ poi-excelant-3.8-20120326.jar 
+ xmlbeans-2.3.0.jar 
+ poi-scratchpad-3.8-20120326.jar 
+ dom4j-1.6.1.jar 
+ stax-api-1.0.1.jar 
+ jaxb-impl.jar 
+ jaxb-api.jar 
+ Shfsp.jar 
+ shfiwd.jar 
+ opencsv-2.3.jar 
+ httpclient-4.3.6.jar 
+ httpcore-4.3.3.jar 
+ jackson-databind-2.1.5.jar 
+ jackson-core-2.1.5.jar 
+ jackson-annotations-2.1.5.jar
+

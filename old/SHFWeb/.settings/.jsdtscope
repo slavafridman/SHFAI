@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.wst.jsdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.wst.jsdt.launching.WebProject">
+		<attributes>
+			<attribute name="hide" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.wst.jsdt.launching.baseBrowserLibrary"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.wst.jsdt.launching.InternetExplorer"/>
+	<classpathentry kind="lib" path="WebContent/js"/>
+	<classpathentry kind="con" path="com.ibm.etools.webtools.dojo.jscontainer"/>
+	<classpathentry kind="output" path=""/>
+</classpath>

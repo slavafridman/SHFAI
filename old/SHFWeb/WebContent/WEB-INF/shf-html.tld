@@ -1,0 +1,2012 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE taglib PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN" "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd">
+<taglib>
+<tlibversion>1.0</tlibversion>
+<jspversion>1.1</jspversion>
+<shortname>shf</shortname>
+<tag>
+	<name>orgunitCheckList</name>
+	<tagclass>bzq.shf.taglib.OrgUnitCheckListTag</tagclass>
+	<attribute>
+		<name>property</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>tablename</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>type</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>optionsLength</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>length</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>parentUnit</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>disabled</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+</tag>
+
+<tag>
+	<name>skillsCheckList</name>
+	<tagclass>bzq.shf.taglib.SkillsCheckListTag</tagclass>
+	<attribute>
+		<name>property</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+	<name>eventReasonCheckList</name>
+	<tagclass>bzq.shf.taglib.EventReasonCheckListTag</tagclass>
+	<attribute>
+		<name>property</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>tablename</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>type</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>optionsLength</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>length</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+	<name>activityCheckList</name>
+	<tagclass>bzq.shf.taglib.ActivityCheckListTag</tagclass>
+	<bodycontent>empty</bodycontent>
+	
+	<attribute>
+		<name>property</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>moked</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>tablename</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>length</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>optionsLength</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+	<name>LocalMokedCheckList</name>
+	<tagclass>bzq.shf.taglib.LocalMokedsCheckListTag</tagclass>
+	<bodycontent>empty</bodycontent>
+	
+	<attribute>
+		<name>property</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>moked</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>tablename</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>length</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>optionsLength</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+
+
+<tag>
+	<name>exceptionCheckList</name>
+	<tagclass>bzq.shf.taglib.ExceptionCheckListTag</tagclass>
+	<bodycontent>empty</bodycontent>
+	
+	<attribute>
+		<name>property</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>moked</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>tablename</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>length</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>optionsLength</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+	<name>timeoffCheckList</name>
+	<tagclass>bzq.shf.taglib.TimeoffCheckListTag</tagclass>
+	<bodycontent>empty</bodycontent>
+	
+	<attribute>
+		<name>property</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>moked</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>tablename</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>length</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>optionsLength</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+	<name>innerJobCheckList</name>
+	<tagclass>bzq.shf.taglib.InnerJobsCheckListTag</tagclass>
+	<bodycontent>empty</bodycontent>
+	
+	<attribute>
+		<name>property</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>tablename</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>length</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>optionsLength</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>disabled</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>agaf</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+	<name>unitSelectCheckList</name>
+	<tagclass>bzq.shf.taglib.UnitSelectCheckListTag</tagclass>
+	<bodycontent>empty</bodycontent>
+	
+	<attribute>
+		<name>type</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>property</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>tablename</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>length</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>optionsLength</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>disabled</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>agaf</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>parentunit</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+	<name>moduleSelectCheckList</name>
+	<tagclass>bzq.shf.taglib.ModuleCheckListTag</tagclass>
+	<bodycontent>empty</bodycontent>
+	
+	<attribute>
+		<name>property</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>tablename</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>length</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>optionsLength</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>disabled</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+
+</tag>
+<tag>
+	<name>shiftLocationCheckList</name>
+	<tagclass>bzq.shf.taglib.ShiftLocationCheckListTag</tagclass>
+	<bodycontent>empty</bodycontent>
+	
+	<attribute>
+		<name>property</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>tablename</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>length</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>optionsLength</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>disabled</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+
+</tag>
+
+<tag>
+
+	<name>shiftLocationSelectTag</name>
+	<tagclass>bzq.shf.taglib.ShiftLocationSelectTag</tagclass>
+	<bodycontent>empty</bodycontent>
+	
+	<attribute>
+	<name>name</name>
+	<required>true</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>tablename</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>selectedvalue</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>all</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>emptySelection</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>required</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>tabindex</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>style</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>classname</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>disabled</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>logic</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>multiple</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>vectorname</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>vectorscope</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>vectorallcode</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>vectoralldesc</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>vectoremptyselectioncode</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>vectoremptyselectiondesc</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>selectedName</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>selectedProperty</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>onclick</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+<name>combocheck</name>
+<tagclass>bzq.shf.taglib.CheckListTag</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>property</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>tablename</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>length</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>optionsLength</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+<name>virtualActivityCheckList</name>
+<tagclass>bzq.shf.taglib.VirtualActivityCheckListTag</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>property</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+
+</tag>
+
+<tag>
+<name>innerJobSelect</name>
+<tagclass>bzq.shf.taglib.InnerJobSelectTag</tagclass>
+<bodycontent>empty</bodycontent>
+	
+	<attribute>
+	<name>type</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>name</name>
+	<required>true</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>tablename</name>
+	<required>true</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>selectedvalue</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>all</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>emptySelection</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>required</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>tabindex</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>style</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>classname</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>disabled</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>logic</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>multiple</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>vectorname</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>vectorscope</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>vectorallcode</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>vectoralldesc</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>vectoremptyselectioncode</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>vectoremptyselectiondesc</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>selectedName</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>selectedProperty</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	
+	<attribute>
+	<name>onclick</name>
+	<required>false</required>
+	<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+<name>activityName</name>
+<tagclass>bzq.shf.taglib.ActivityTag</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>activity</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+
+<tag>
+<name>employee</name>
+<tagclass>bzq.shf.taglib.EmployeeTag</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>empid</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>empname</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+<name>reasonMarked</name>
+<tagclass>bzq.shf.taglib.ReasonMarkedTag</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>reason</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+<name>dayofweek</name>
+<tagclass>bzq.shf.taglib.DayOfWeekTag</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>date</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+<name>mobileAction</name>
+<tagclass>bzq.shf.taglib.MobileActionSelectTag</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>formName</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>formProperty</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+
+<tag>
+<name>calendar</name>
+<tagclass>bzq.shf.taglib.CalendarTag</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>calname</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>disabled</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>onchange</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>name</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>property</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>marginBottom</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>marginRight</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+		<attribute>
+		<name>disableDays</name> <!-- Igal, addition to optionally disable today + past date -->
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+<name>calendarExtra</name>
+<tagclass>bzq.shf.taglib.CalendarTagExtra</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>calname</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>disabled</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>onchange</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>name</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>property</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>marginBottom</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>marginRight</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+
+<tag>
+<name>timechooser</name>
+<tagclass>bzq.shf.taglib.TimeChooserTag</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>inputname</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>inputid</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>inputvalue</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>disabled</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>name</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>property</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+
+<tag>
+<name>checkbox</name>
+<tagclass>bzq.shf.taglib.CheckBoxTag</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>inputname</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>checked</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>logic</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>name</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>property</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+<name>shfdate</name>
+<tagclass>bzq.shf.taglib.SHFDateTag</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>date</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>name</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>property</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>pattern</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+<name>shftime</name>
+<tagclass>bzq.shf.taglib.SHFTimeTag</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>date</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>name</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>property</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>pattern</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+
+<name>eventselect</name>
+<tagclass>bzq.shf.taglib.EventReasonTag</tagclass>
+<bodycontent>empty</bodycontent>
+
+<attribute>
+<name>type</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>name</name>
+<required>true</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>tablename</name>
+<required>true</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedvalue</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>all</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>emptySelection</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>required</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>tabindex</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>style</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>classname</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>disabled</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>logic</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>multiple</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorname</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorscope</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorallcode</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoralldesc</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoremptyselectioncode</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoremptyselectiondesc</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedName</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedProperty</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>onclick</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+</tag>
+
+<tag>
+
+<name>activityselect</name>
+<tagclass>bzq.shf.taglib.ActivitySelectTag</tagclass>
+<bodycontent>empty</bodycontent>
+
+<attribute>
+<name>moked</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>name</name>
+<required>true</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>tablename</name>
+<required>true</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedvalue</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>all</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>emptySelection</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>required</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>tabindex</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>style</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>classname</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>disabled</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>logic</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>multiple</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorname</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorscope</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorallcode</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoralldesc</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoremptyselectioncode</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoremptyselectiondesc</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedName</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedProperty</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>onclick</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+</tag>
+
+<tag>
+
+<name>localActivitySelectTag</name>
+<tagclass>bzq.shf.taglib.LocalMokedSelectTag</tagclass>
+<bodycontent>empty</bodycontent>
+
+<attribute>
+<name>moked</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>name</name>
+<required>true</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>tablename</name>
+<required>true</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedvalue</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>all</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>emptySelection</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>required</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>tabindex</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>style</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>classname</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>disabled</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>logic</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>multiple</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorname</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorscope</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorallcode</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoralldesc</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoremptyselectioncode</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoremptyselectiondesc</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedName</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedProperty</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>onclick</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+</tag>
+
+<tag>
+<name>exceptionselect</name>
+<tagclass>bzq.shf.taglib.ExceptionSelectTag</tagclass>
+<bodycontent>empty</bodycontent>
+
+<attribute>
+<name>site</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>name</name>
+<required>true</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>tablename</name>
+<required>true</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedvalue</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>all</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>emptySelection</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>required</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>tabindex</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>style</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>classname</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>disabled</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>logic</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>multiple</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorname</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorscope</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorallcode</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoralldesc</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoremptyselectioncode</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoremptyselectiondesc</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedName</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedProperty</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>onclick</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+</tag>
+
+<tag>
+<name>exceptioncbselect</name>
+<tagclass>bzq.shf.taglib.ExceptionCheckBoxSelectTag</tagclass>
+<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>site</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>name</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>selectedException</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>cbDisabled</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+
+<tag>
+
+<name>unitselect</name>
+<tagclass>bzq.shf.taglib.UnitSelectTag</tagclass>
+<bodycontent>empty</bodycontent>
+
+<attribute>
+<name>type</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>parentunit</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>name</name>
+<required>true</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>tablename</name>
+<required>true</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedvalue</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>all</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>emptySelection</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>required</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>tabindex</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>style</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>classname</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>disabled</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>logic</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>multiple</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorname</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorscope</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectorallcode</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoralldesc</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoremptyselectioncode</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>vectoremptyselectiondesc</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedName</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>selectedProperty</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>onclick</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+
+
+</tag>
+
+<tag>
+
+<name>unitselectSinlgeMoked</name> <!-- The following tag attempts to draw select with single moked Igal 8.2015 -->
+<tagclass>bzq.shf.taglib.UnitSelectTagSingleMoked</tagclass>
+<bodycontent>empty</bodycontent>
+
+<attribute>
+<name>mokedUnitId</name>
+<required>true</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>style</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>logic</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>name</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>disabled</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+</tag>
+
+
+<tag>
+		<name>tables</name>
+		<tagclass>bzq.shf.taglib.TablesTag</tagclass>
+		<bodycontent>empty</bodycontent>
+
+		<attribute>
+			<name>tableName</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>codeName</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		
+		<attribute>
+			<name>name</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		
+		<attribute>
+			<name>property</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		
+		<attribute>
+			<name>scope</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+</tag>
+
+<tag>
+		<name>activityAimTable</name>
+		<tagclass>bzq.shf.taglib.activityAimTableTag</tagclass>
+		<bodycontent>empty</bodycontent>
+
+		<attribute>
+			<name>tableName</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>codeName</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		
+		<attribute>
+			<name>name</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		
+		<attribute>
+			<name>property</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		
+		<attribute>
+			<name>scope</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+</tag>
+
+<tag>
+	<name>errors</name>
+	<tagclass>bzq.shf.taglib.ErrorsTag</tagclass>
+	<bodycontent>empty</bodycontent>
+	<attribute>
+		<name>bundle</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>locale</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>name</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>property</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>errorLength</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+	<name>reloadErrors</name>
+	<tagclass>bzq.shf.taglib.ReloadErrorsTag</tagclass>
+	<bodycontent>empty</bodycontent>
+</tag>
+
+<tag>
+	<name>security</name>
+	<tagclass>bzq.shf.taglib.SecurityTag</tagclass>
+	<bodycontent>JSP</bodycontent>
+
+	<attribute>
+		<name>activity</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+<tag>
+	<name>msgIcon</name>
+	<tagclass>bzq.shf.taglib.MessageIcon</tagclass>
+	<bodycontent>JSP</bodycontent>
+
+</tag>
+	<tag>
+		<name>clickselect</name>
+		<tagclass>bzq.shf.taglib.ClickSelectTag</tagclass>
+		<bodycontent>empty</bodycontent>
+		<attribute>
+			<name>itemid</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>fieldname</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>fielddesc</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>uriaction</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>buildingSelectTag</name>
+		<tagclass>bzq.shf.taglib.BuildingSelectTag</tagclass>
+		<bodycontent>empty</bodycontent>
+		<attribute>
+			<name>moked</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>building</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>onchange</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>teamId</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+</taglib>
+

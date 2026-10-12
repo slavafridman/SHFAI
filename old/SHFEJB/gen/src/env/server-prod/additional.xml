@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<app-config>
+
+	<shf-sms>
+		<tibco-info scheme="tcp" hostName="emsgenp" port="7222" queueName="shf.sendsms.01.update" />
+		<sms-info user="igal" pass="Q1w2e3r4" account="shifter"/>
+	</shf-sms>
+
+</app-config>

@@ -1,0 +1,51 @@
+<form-validation>
+	<global>
+		<constant name="phone" value="^\(?(\d{3})\)?[-| ]?(\d{3})[-| ]?(\d{4})$" />
+		<constant name="minPhoneNumber" value="9" />
+		<constant name="areaCodeMask" value="^([0-9]{2}|\*|[0-9]{4})$" />
+	</global>
+	
+	<formset>
+		<form name="employeeListForm">
+			<field key="001" property="id_number" depends="integer">
+				<arg0 key="shf.info.idnumber" resource="true"/>
+			</field>	
+		</form>
+		
+		<form name="employeeParametersForm">
+			<field key="001" property="employeeId" depends="required,integer,notzero">
+				<arg0 key="shf.info.empid" resource="true"/>
+			</field>	
+		
+			<field key="002" property="benzoogTel" depends="integer,minlength">
+				<arg0 key="shf.info.phoneNumber" resource="true"/>
+				<arg1 name="minlength" key="${var:minlength}" resource="false" />
+				<var>
+					<var-name>minlength</var-name>
+					<var-value>${minPhoneNumber}</var-value>
+				</var>
+				
+			</field>	
+		</form>
+		
+		<form name="addInforceForm">
+			<field key="001" property="date" depends="required">
+				<arg0 key="shf.info.date" resource="true"/>
+			</field>
+			<field key="002" property="activity" depends="required">
+				<arg0 key="shf.info.moked" resource="true"/>
+			</field>
+			<field key="003" property="numOfAgents" depends="integer">
+				<arg0 key="shf.info.agentsNum" resource="true"/>
+			</field>
+			
+		</form>
+		
+		<form name="addLateForm">
+			<field key="001" property="lateMinutes" depends="required,integer,notzero">
+				<arg0 key="shf.info.lateMinutes" resource="true"/>
+			</field>
+		</form>
+	
+	</formset>
+</form-validation>

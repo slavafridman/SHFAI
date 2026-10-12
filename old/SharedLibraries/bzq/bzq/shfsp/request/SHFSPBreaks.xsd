@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="SHFSPBreaks">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="interfaceId" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>
+				<xs:element name="userId" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>
+				<xs:element name="applicationId" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>		<!-- SHF -->
+				<xs:element name="user" type="xs:string" maxOccurs="1" minOccurs="1"></xs:element>
+				<xs:element name="password" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>
+				
+				<xs:element name="transactionId" type="xs:string" maxOccurs="1" minOccurs="1"></xs:element>
+				<xs:element name="actionId" type="xs:string" maxOccurs="1" minOccurs="1"></xs:element>	<!-- Possible values : '1' (Flag ON), '0' (Flag OFF), '2' (Break update) -->
+				<xs:element name="orgUnitId" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>	<!-- Only if 'actionId' = 1/0 -->
+				<xs:element name="breakInfo" maxOccurs="unbounded" minOccurs="0">	<!-- Can appear zero times or multiple times as needed if 'actionId' = 2 -->
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="mode" type="xs:string" maxOccurs="1" minOccurs="1"></xs:element>	<!-- Possible values : 'D' (Delete), 'I' (Insert) -->
+							<xs:element name="employeeId" type="xs:string" maxOccurs="1" minOccurs="1"></xs:element>
+							<xs:element name="agentDayId" type="xs:long" maxOccurs="1" minOccurs="1"></xs:element>
+							<xs:element name="startDatePlanned" type="xs:string" maxOccurs="1" minOccurs="1"></xs:element>	<!-- format: YYYYMMDDHHmmss -->
+							<xs:element name="duration" type="xs:int" maxOccurs="1" minOccurs="1"></xs:element>	<!-- minutes -->
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

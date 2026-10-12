@@ -1,0 +1,94 @@
+({
+	"months-format-abbr": [
+		"Ian.", 
+		"Pep.", 
+		"Mal.", 
+		"?»Ap.", 
+		"Mei", 
+		"Iun.", 
+		"Iul.", 
+		"?»Au.", 
+		"Kep.", 
+		"?»Ok.", 
+		"Now.", 
+		"Kek."
+	], 
+	"months-format-wide": [
+		"Ianuali", 
+		"Pepeluali", 
+		"Malaki", 
+		"?»Apelila", 
+		"Mei", 
+		"Iune", 
+		"Iulai", 
+		"?»Aukake", 
+		"Kepakemapa", 
+		"?»Okakopa", 
+		"Nowemapa", 
+		"Kekemapa"
+	], 
+	"days-format-abbr": [
+		"LP", 
+		"P1", 
+		"P2", 
+		"P3", 
+		"P4", 
+		"P5", 
+		"P6"
+	], 
+	"days-format-wide": [
+		"LÄ?pule", 
+		"Po?»akahi", 
+		"Po?»alua", 
+		"Po?»akolu", 
+		"Po?»ahÄ?", 
+		"Po?»alima", 
+		"Po?»aono"
+	], 
+	"months-standAlone-abbr": [
+		"Ian.", 
+		"Pep.", 
+		"Mal.", 
+		"?»Ap.", 
+		"Mei", 
+		"Iun.", 
+		"Iul.", 
+		"?»Au.", 
+		"Kep.", 
+		"?»Ok.", 
+		"Now.", 
+		"Kek."
+	], 
+	"months-standAlone-wide": [
+		"Ianuali", 
+		"Pepeluali", 
+		"Malaki", 
+		"?»Apelila", 
+		"Mei", 
+		"Iune", 
+		"Iulai", 
+		"?»Aukake", 
+		"Kepakemapa", 
+		"?»Okakopa", 
+		"Nowemapa", 
+		"Kekemapa"
+	], 
+	"days-standAlone-abbr": [
+		"LP", 
+		"P1", 
+		"P2", 
+		"P3", 
+		"P4", 
+		"P5", 
+		"P6"
+	], 
+	"days-standAlone-wide": [
+		"LÄ?pule", 
+		"Po?»akahi", 
+		"Po?»alua", 
+		"Po?»akolu", 
+		"Po?»ahÄ?", 
+		"Po?»alima", 
+		"Po?»aono"
+	]
+})

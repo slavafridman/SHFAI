@@ -1,0 +1,130 @@
+
+thead tr{
+
+	position:relative;
+	
+	top: expression(offsetParent.scrollTop);
+
+	
+	height:20px;
+
+}
+
+thead td,thead th {
+
+	background-color:#dbeaf5;
+
+	border-bottom: 1px solid #cecece;
+
+	border-width:1px;
+
+	font-weight: bold;
+
+	text-align: center;
+
+	font-size: 10pt;
+
+	color:#104a7b;
+
+}
+
+
+
+
+
+
+INPUT.button {
+	border: 1px solid #6a96b7;
+	font-family: Arial;
+	font-size: 12px;
+	font-color: #003366;
+	background-color: #487FA8;
+	color: #003366;
+	text-decoration: none;
+	font-weight: bold;
+	text-align: center;
+}
+
+.headerAdm{
+
+	color: #333396;
+
+	font-weight: bold;
+
+	font-family: "Arial";
+
+	font-size: 10pt;
+
+}
+
+
+
+fieldset.infoAdm {
+
+  margin: 0px 2px 2px;
+
+  padding: 0 0.5em 0.5em 0.5em;
+
+  border: 1px solid #BDBF00;
+
+  background-color: #FFFFee;
+
+  color: #000;
+
+  direction:rtl;
+  
+  width: 65%;
+
+  right: auto;
+
+}
+
+fieldset.infoAdmCus {
+
+  margin: 0px 2px 2px;
+
+  padding: 0 0.5em 0.5em 0.5em;
+
+  border: 1px solid #BDBF00;
+
+  background-color: #FFFFee;
+
+  color: #000;
+
+  direction:rtl;
+  
+  right: auto;
+
+}
+
+
+
+
+TD.dataAdm{
+
+	font-size: 11pt;
+
+}
+
+INPUT.button,
+INPUT.submit,
+button{
+
+	width: 80px;
+
+	height: 17px;
+
+	border: 1px #8888aa solid;
+
+	background-color: #d5e3ff;
+
+	font-size: 11px;
+
+	color:black;
+
+	border: 1px #8888aa solid;
+
+}
+A {
+	color: blue;
+}

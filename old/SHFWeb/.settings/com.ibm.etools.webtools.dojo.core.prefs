@@ -1,0 +1,16 @@
+#Wed Jan 11 11:38:44 IST 2012
+dojo-id-attribute-name=jsId
+dojo-props-attribute-name=DOJO-SETTINGS-NO-VALUE
+dojo-theme-css=dijit/themes/nihilo/nihilo.css
+dojo-dijit-css=dijit/themes/dijit.css
+dojo-attach-point-attribute-name=dojoAttachPoint
+dojo-bootstrap-js=dojo/dojo.js
+dojo-event-attribute-name=event
+dojo-args-attribute-name=args
+dojo-version-attribute-name=1.3.1 (17468)
+dojo-config-attribute-name=djConfig
+eclipse.preferences.version=1
+dojo-root=/SHFWeb/WebContent/dojo
+dojo-type-attribute-name=dojoType
+dojo-attach-event-attribute-name=dojoAttachEvent
+dojo-css=dojo/resources/dojo.css

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<app-config>
+
+	<shf-sms>
+		<tibco-info scheme="tcp" hostName="emsgend" port="7222" queueName="shf.sendsms.01.update" />
+		<sms-info user="igal" pass="Q1w2e3r4" account="shifter"/>
+	</shf-sms>
+	<jms>
+		<shf-sp>
+			<request>
+				<tibco-info queueJndiName="jms/queue/shf.break.01.update" />
+			</request>
+			<response>
+				<tibco-info queueJndiName="jms/queue/shf.breakreply.01.update" />
+			</response>
+		</shf-sp>
+		<shf-iwd>
+			<tibco-info queueJndiName="jms/queue/shf.backofficetask.01.update" />
+		</shf-iwd>
+	</jms>
+
+</app-config>

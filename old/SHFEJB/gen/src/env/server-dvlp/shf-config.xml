@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<app-config>
+ <logger>
+	<logger-info 	name="WEB-INF/env/server-dvlp/log4j_shf.xml"
+		watch="true"
+		watchInterval="10000"/>
+ </logger>
+ 
+ <db-definitions>
+   	<dsconnection name="shfdvlp" isDefaultDb="true" providerUrl="iiop://localhost:900" dataSourceName="jdbc/shfdvlp" factory="com.ibm.ejs.ns.jndi.CNInitialContextFactory" />
+   	<dsconnection name="wfm" isDefaultDb="false" providerUrl="iiop://localhost:900" dataSourceName="jdbc/wfmtest" factory="com.ibm.ejs.ns.jndi.CNInitialContextFactory" /> 
+ </db-definitions>
+ 
+ <app-info>
+ 	<version-info mainApp="true" name="shf" contextUri="/shf" version="v1.0" environment="dvlp" versionDate="Dec 02 2012" /> 
+ </app-info>
+ 
+ 
+ <app-resources>
+ 	 <code-tables initializer="bzq.shf.utils.TablesContainerInitializerImpl" /> 
+ 	 <message-xml-definitions>
+	 	<message-xml-info name="WEB-INF/bezeq-messages.xml"/>
+	 	<message-xml-info name="WEB-INF/shf-messages.xml"/>
+ 	 </message-xml-definitions>
+ </app-resources>
+ 
+ <mail>
+	<mail-info protocol="mail.smtp.host" smtpServer="relay.bezeq.com"
+ 	clientCharset="windows-1255" serverCharset="windows-1255" />
+ </mail>
+  
+</app-config>

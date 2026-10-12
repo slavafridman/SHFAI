@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/SHF"/>
+	<classpathentry kind="lib" path="/SharedLibraries/bzq/Bezeq.jar"/>
+	<classpathentry kind="lib" path="/SharedLibraries/bzq/Log4j.jar"/>
+	<classpathentry kind="lib" path="/SharedLibraries/bzq/Struts.jar"/>
+	<classpathentry kind="lib" path="/SharedLibraries/bzq/StrutsValidator.jar"/>
+	<classpathentry kind="lib" path="/SharedLibraries/oracle/v10/ojdbc14.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

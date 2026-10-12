@@ -1,0 +1,233 @@
+({
+	"dateFormatItem-yM": "M/yyyy", 
+	"field-dayperiod": "পূর�?বাহ�?ণ/অপরাহ�?ণ", 
+	"dateFormatItem-yQ": "Q yyyy", 
+	"field-minute": "মিনি�?", 
+	"eraNames": [
+		"খৃষ�?�?পূর�?ব", 
+		"খৃষ�?�?াব�?দ"
+	], 
+	"dateFormatItem-MMMEd": "E d MMM", 
+	"dateFormatItem-MMdd": "dd-MM", 
+	"dateFormatItem-yQQQ": "QQQ yyyy", 
+	"field-weekday": "সপ�?তাহের দিন", 
+	"days-standAlone-wide": [
+		"রবিবার", 
+		"সোমবার", 
+		"মঙ�?গলবার", 
+		"ব�?ধবার", 
+		"বৃহষ�?পতিবার", 
+		"শ�?ক�?রবার", 
+		"শনিবার"
+	], 
+	"dateFormatItem-MMM": "LLL", 
+	"months-standAlone-narrow": [
+		"�?া", 
+		"ফে", 
+		"মা", 
+		"�?", 
+		"মে", 
+		"�?�?ন", 
+		"�?�?", 
+		"আ", 
+		"সে", 
+		"অ", 
+		"ন", 
+		"ডি"
+	], 
+	"field-era": "য�?গ", 
+	"field-hour": "ঘন�?�?া", 
+	"quarters-standAlone-abbr": [
+		"�?ত�?র�?থাংশ ১", 
+		"�?ত�?র�?থাংশ ২", 
+		"�?ত�?র�?থাংশ ৩", 
+		"�?ত�?র�?থাংশ ৪"
+	], 
+	"dateFormatItem-y": "yyyy", 
+	"timeFormat-full": "h:mm:ss a v", 
+	"months-standAlone-abbr": [
+		"�?ান�?য়ারী", 
+		"ফেব�?র�?য়ারী", 
+		"মার�?�?", 
+		"�?প�?রিল", 
+		"মে", 
+		"�?�?ন", 
+		"�?�?লাই", 
+		"আগস�?�?", 
+		"সেপ�?�?েম�?বর", 
+		"অক�?�?োবর", 
+		"নভেম�?বর", 
+		"ডিসেম�?বর"
+	], 
+	"dateFormatItem-yMMM": "MMM yyyy", 
+	"days-standAlone-narrow": [
+		"র", 
+		"সো", 
+		"ম", 
+		"ব�?", 
+		"বৃ", 
+		"শ�?", 
+		"শ"
+	], 
+	"eraAbbr": [
+		"খৃষ�?�?পূর�?ব", 
+		"খৃষ�?�?াব�?দ"
+	], 
+	"dateFormatItem-yyyyMM": "MM-yyyy", 
+	"dateFormatItem-yyyyMMMM": "MMMM yyyy", 
+	"dateFormat-long": "d MMMM, yyyy", 
+	"timeFormat-medium": "h:mm:ss a", 
+	"field-zone": "�?লাকা", 
+	"dateFormatItem-Hm": "HH:mm", 
+	"dateFormat-medium": "d MMM, yyyy", 
+	"quarters-standAlone-wide": [
+		"প�?রথম �?ত�?র�?থাংশ", 
+		"দ�?বিতীয় �?ত�?র�?থাংশ", 
+		"তৃতীয় �?ত�?র�?থাংশ", 
+		"�?ত�?র�?থ �?ত�?র�?থাংশ"
+	], 
+	"dateTimeFormat": "{1} {0}", 
+	"dateFormatItem-yMMMM": "MMMM yyyy", 
+	"dateFormatItem-ms": "mm:ss", 
+	"field-year": "বছর", 
+	"quarters-standAlone-narrow": [
+		"১", 
+		"২", 
+		"৩", 
+		"৪"
+	], 
+	"field-week": "সপ�?তাহ", 
+	"months-standAlone-wide": [
+		"�?ান�?য়ারী", 
+		"ফেব�?র�?য়ারী", 
+		"মার�?�?", 
+		"�?প�?রিল", 
+		"মে", 
+		"�?�?ন", 
+		"�?�?লাই", 
+		"আগস�?�?", 
+		"সেপ�?�?েম�?বর", 
+		"অক�?�?োবর", 
+		"নভেম�?বর", 
+		"ডিসেম�?বর"
+	], 
+	"dateFormatItem-MMMMEd": "E d MMMM", 
+	"dateFormatItem-MMMd": "d MMM", 
+	"quarters-format-narrow": [
+		"১", 
+		"২", 
+		"৩", 
+		"৪"
+	], 
+	"dateFormatItem-yyQ": "Q yy", 
+	"timeFormat-long": "h:mm:ss a z", 
+	"months-format-abbr": [
+		"�?ান�?য়ারী", 
+		"ফেব�?র�?য়ারী", 
+		"মার�?�?", 
+		"�?প�?রিল", 
+		"মে", 
+		"�?�?ন", 
+		"�?�?লাই", 
+		"আগস�?�?", 
+		"সেপ�?�?েম�?বর", 
+		"অক�?�?োবর", 
+		"নভেম�?বর", 
+		"ডিসেম�?বর"
+	], 
+	"timeFormat-short": "h:mm a", 
+	"field-month": "মাস", 
+	"dateFormatItem-MMMMd": "d MMMM", 
+	"quarters-format-abbr": [
+		"�?ত�?র�?থাংশ ১", 
+		"�?ত�?র�?থাংশ ২", 
+		"�?ত�?র�?থাংশ ৩", 
+		"�?ত�?র�?থাংশ ৪"
+	], 
+	"days-format-abbr": [
+		"রবি", 
+		"সোম", 
+		"মঙ�?গল", 
+		"ব�?ধ", 
+		"বৃহস�?পতি", 
+		"শ�?ক�?র", 
+		"শনি"
+	], 
+	"pm": "অপরাহ�?ণ", 
+	"dateFormatItem-M": "L", 
+	"days-format-narrow": [
+		"র", 
+		"সো", 
+		"ম", 
+		"ব�?", 
+		"বৃ", 
+		"শ�?", 
+		"শ"
+	], 
+	"field-second": "সেকেন�?ড", 
+	"field-day": "দিন", 
+	"dateFormatItem-MEd": "E, d-M", 
+	"months-format-narrow": [
+		"�?া", 
+		"ফে", 
+		"মা", 
+		"�?", 
+		"মে", 
+		"�?�?ন", 
+		"�?�?", 
+		"আ", 
+		"সে", 
+		"অ", 
+		"ন", 
+		"ডি"
+	], 
+	"am": "পূর�?বাহ�?ণ", 
+	"days-standAlone-abbr": [
+		"রবি", 
+		"সোম", 
+		"মঙ�?গল", 
+		"ব�?ধ", 
+		"বৃহস�?পতি", 
+		"শ�?ক�?র", 
+		"শনি"
+	], 
+	"dateFormat-short": "d/M/yy", 
+	"dateFormatItem-yMMMEd": "EEE, d MMM, yyyy", 
+	"dateFormat-full": "EEEE, d MMMM, yyyy", 
+	"dateFormatItem-Md": "d/M", 
+	"dateFormatItem-yMEd": "EEE, d/M/yyy", 
+	"months-format-wide": [
+		"�?ান�?য়ারী", 
+		"ফেব�?র�?য়ারী", 
+		"মার�?�?", 
+		"�?প�?রিল", 
+		"মে", 
+		"�?�?ন", 
+		"�?�?লাই", 
+		"আগস�?�?", 
+		"সেপ�?�?েম�?বর", 
+		"অক�?�?োবর", 
+		"নভেম�?বর", 
+		"ডিসেম�?বর"
+	], 
+	"dateFormatItem-d": "d", 
+	"quarters-format-wide": [
+		"প�?রথম �?ত�?র�?থাংশ", 
+		"দ�?বিতীয় �?ত�?র�?থাংশ", 
+		"তৃতীয় �?ত�?র�?থাংশ", 
+		"�?ত�?র�?থ �?ত�?র�?থাংশ"
+	], 
+	"days-format-wide": [
+		"রবিবার", 
+		"সোমবার", 
+		"মঙ�?গলবার", 
+		"ব�?ধবার", 
+		"বৃহষ�?পতিবার", 
+		"শ�?ক�?রবার", 
+		"শনিবার"
+	], 
+	"eraNarrow": [
+		"খৃষ�?�?পূর�?ব", 
+		"খৃষ�?�?াব�?দ"
+	]
+})

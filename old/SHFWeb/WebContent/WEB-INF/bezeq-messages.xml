@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<messages>
+	<message key="error.convert.stringtodate" value="נכשלה המרת תאריך {0} בפורמט {1}"/>
+	<message key="error.convert.stringtodouble" value="נכשלה המרת {0} ל- Double"/>
+	<message key="error.convert.stringtofloat" value="נכשלה המרת {0} ל- Float"/>
+	<message key="error.convert.stringtointeger" value="נכשלה המרת {0} ל- Integer"/>
+	<message key="error.convert.stringtolong" value="נכשלה המרת {0} ל- Long"/>
+	<message key="error.convert.stringtoshort" value="נכשלה המרת {0} ל- Short"/>
+	<message key="error.db.callableStatement.registeroutparameter" value="נכשלה השמת פרמטר תשובה ל- CallableStatement"/>
+	<message key="error.db.childrecordfound" value="לא ניתן למחוק, הערך בשימוש המערכת"/>
+	<message key="error.db.classcast" value="מיפוי נכשל "/>
+	<message key="error.db.closeconnection" value="בעיה בהתנתקות מבסיס הנתונים"/>
+	<message key="error.db.commitfailed" value="נכשלה פעולת COMMIT"/>
+	<message key="error.db.connect" value="בעיה בחיבור לבסיס הנתונים "/>
+	<message key="error.db.duplicatekey" value="רשומה קיימת"/>
+	<message key="error.db.executefailed" value="שליפה נכשלה "/>
+	<message key="error.db.lookupfailed" value="DATASOURCE לא נמצא"/>
+	<message key="error.db.norowsupdated" value="לא עודכנו רשומות"/>
+	<message key="error.db.nullsql" value="חסר משפט שליפה"/>
+	<message key="error.db.parentkeynotfound" value="לא ניתן להוסיף/לעדכן, הערך לא קיים במערכת"/>
+	<message key="error.db.populate" value="שגיאה באיכלוס מבסיס הנתונים"/>
+	<message key="error.db.populateresultset" value="שגיאה באיכלוס מבסיס הנתונים"/>
+	<message key="error.db.preparedStatment.setBigDecimal" value="שגיאה בהשמת BigDecima"/>
+	<message key="error.db.preparedStatment.setdate" value="שגיאה בהשמת DATE"/>
+	<message key="error.db.preparedStatment.setDouble" value="שגיאה בהשמת Double"/>
+	<message key="error.db.preparedStatment.setFloat" value="שגיאה בהשמת Float "/>
+	<message key="error.db.preparedStatment.setfloat" value="שגיאה בהשמת float"/>
+	<message key="error.db.preparedStatment.setint" value="שגיאה בהשמת int"/>
+	<message key="error.db.preparedStatment.setlong" value="שגיאה בהשמת long "/>
+	<message key="error.db.preparedStatment.setstring" value="שגיאה בהשמת STRING "/>
+	<message key="error.db.resultset.empty" value="לא נשלפו נתונים"/>
+	<message key="error.db.resultset.getBigDecimal" value="שגיאה בשליפת BigDecimal מ-resultset"/>
+	<message key="error.db.resultset.getDate" value="שגיאה בשליפת Date מ-resultset"/>
+	<message key="error.db.resultset.getDouble" value="שגיאה בשליפת Double מ-resultset"/>
+	<message key="error.db.resultset.getDoubleObject" value="שגיאה בשליפת DoubleObject מ-resultset"/>
+	<message key="error.db.resultset.getFloat" value="שגיאה בשליפת Float מ-resultset"/>
+	<message key="error.db.resultset.getFloatObject" value="שגיאה בשליפת FloatObject מ-resultset"/>
+	<message key="error.db.resultset.getInt" value="שגיאה בשליפת int מ-resultset"/>
+	<message key="error.db.resultset.getIntegerObject" value="שגיאה בשליפת IntegerObject מ-resultset"/>
+	<message key="error.db.resultset.getLong" value="שגיאה בשליפת Long מ-resultset"/>
+	<message key="error.db.resultset.getLongObject" value="שגיאה בשליפת LongObject מ-resultset"/>
+	<message key="error.db.resultset.next" value="שגיאה בשליפת השורה הבאה"/>
+	<message key="error.db.rollbackfailed" value="נכשלה פעולת ROLLBACK   "/>
+	<message key="error.db.updatefailed" value="עדכון נכשל "/>
+	<message key="error.java.classnotfound" value="class לא נמצא"/>
+	<message key="error.java.illegalAccess" value="גישה בלתי חוקית"/>
+	<message key="error.java.instantiation" value="בעיה באתחול"/>
+	<message key="error.jms.init.initialContextFactory" value="לא הוגדר פרמטר jms עבור initialContextFactory"/>
+	<message key="error.jms.init.providerUrl" value="לא הוגדר פרמטר jms עבור providerUrl"/>
+	<message key="error.jms.nocontext" value="נכשלה התחברות ל-JNDI עבור JMS                                                                       "/>
+	<message key="error.jms.qcf.lookupfailed" value="לא נמצא אובייקט QCF"/>
+	<message key="error.jms.queue.lookupfailed" value="לא נמצא אובייקט Q "/>
+	<message key="error.navigator.expired" value="פג תוקף שורת הניווט"/>
+	<message key="error.navigator.wrong.track" value="פג תוקף שורת הניווט"/>
+	<message key="errors.codetable" value="הערך בשדה {0} אינו "/>
+	<message key="errors.date" value="ערך בשדה {0} אינו חוקי, הקש תאריך במבנה DD/MM/YYYY"/>
+	<message key="errors.date.range.year" value="ב {0} השנה חייבת להיות בין {1} ל-{2}"/>
+	<message key="errors.double" value="ב{0} הזן מספר חוקי"/>
+	<message key="errors.email" value="{0} אינו במבנה חוקי"/>
+	<message key="errors.integer" value="ב{0} הזן מספר חוקי"/>
+	<message key="errors.invalid" value="ב{0} הזן מספר חוקי"/>
+	<message key="errors.long" value="ב{0} הזן מספר חוקי"/>
+	<message key="errors.maxlength" value="{0} לא יכול להכיל יותר מ {1} תוים"/>
+	<message key="errors.minlength" value="{0} לא יכול להכיל פחות מ {1} תוים"/>
+	<message key="errors.notzero" value="אין להזין 0 בשדה {0}"/>
+	<message key="errors.range" value="הקש ערך בין {1} ל-{2} ב-{0}"/>
+	<message key="errors.required" value="יש להזין {0}"/>
+	<message key="errors.short" value="ב{0} הזן מספר חוקי"/>
+</messages>

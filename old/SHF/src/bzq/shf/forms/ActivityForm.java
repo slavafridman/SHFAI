@@ -1,0 +1,97 @@
+/*
+ * Created on 09/02/2009
+ *
+ * To change the template for this generated file go to
+ * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
+ */
+package bzq.shf.forms;
+
+/**
+ * @author 04982497
+ *
+ * To change the template for this generated type comment go to
+ * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
+ */
+public class ActivityForm extends TableForm{
+
+	protected String moked;
+	protected String shortName;
+	protected String siteId;
+	protected String virtualActivity;
+	protected String virtualActivityName;
+	
+	static{
+		fieldsMapping.put("MOKED","moked");
+		fieldsMapping.put("SHORT_NAME","shortName");
+		fieldsMapping.put("SITE_ID","siteId");
+		fieldsMapping.put("VIRTUAL_ACTIVITY_ID","virtualActivity");
+		fieldsMapping.put("NAME","virtualActivityName");
+	}
+
+	/**
+	 * @return
+	 */
+	public String getMoked() {
+		return moked;
+	}
+
+	/**
+	 * @return
+	 */
+	public String getShortName() {
+		return shortName;
+	}
+
+	/**
+	 * @return
+	 */
+	public String getSiteId() {
+		return siteId;
+	}
+
+	/**
+	 * @param m
+	 */
+	public void setMoked(String m) {
+		moked = m;
+	}
+
+	/**
+	 * @param string
+	 */
+	public void setShortName(String string) {
+		shortName = string;
+	}
+
+	/**
+	 * @param i
+	 */
+	public void setSiteId(String i) {
+		siteId = i;
+	}
+	
+	
+	/**
+	 * @return
+	 */
+	public String getVirtualActivity() {
+		return virtualActivity;
+	}
+
+	/**
+	 * @param string
+	 */
+	public void setVirtualActivity(String string) {
+		virtualActivity = string;
+	}
+
+	public String getVirtualActivityName() {
+		return virtualActivityName;
+	}
+
+	public void setVirtualActivityName(String virtualActivityName) {
+		this.virtualActivityName = virtualActivityName;
+	}
+	
+
+}

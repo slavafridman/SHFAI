@@ -1,0 +1,7 @@
+({
+	createLinkTitle: "خصائص ا?�?�ص?�ة",
+	insertImageTitle: "خصائص ا?�ص?�رة",
+	url: "ع?�?�ا?� URL:",
+	text: "ا?�?�ص??:",
+	set: "تحد??د"
+})
