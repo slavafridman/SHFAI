@@ -1,4 +1,4 @@
-# SHF Web Synthetic Personal Shifts
+# SHF Web Synthetic Personal Workspace
 
 Standalone Angular 22.2.2 with Angular Material/CDK and Material 3. This is a
 local Hebrew/RTL demonstration backed by the explicitly synthetic API, not a
@@ -87,6 +87,33 @@ redaction, opening/closing focus, start-date inclusion, 320/768/1280 reflow and
 200% text resizing on updated isolated local servers. A transient browser click
 timeout and an unavailable page interrupted initial attempts; fresh-page
 self-contained checks passed. No accessibility certification is claimed.
+
+## Read-Only Messages Demo
+
+The [messages screen](src/app/personal-messages.ts) appears below personal shifts.
+It consumes the approved stub list/detail API through the same proxy and existing
+startup commands. Three invented messages cover unread offer text, a previously
+read historical notification and unknown read/type state with HTML-like content.
+Other-recipient and deleted messages are not exposed.
+
+Opening/closing a message does not mark it read; filtering and refresh preserve
+the source fixture status. There are no deletion, acceptance, rejection or
+notification controls. Content uses Angular text interpolation, never innerHTML.
+Detail focuses its heading and restores the invoking button when closed.
+Older filter/detail reads are cancelled before newer data replaces the view.
+
+The [typed client](src/app/messages-api.ts) shares demo DTO types with the API
+owner and uses the extracted [stub response guards](src/app/stub-response.ts)
+also used by shifts. Capability, list and detail must be explicitly synthetic
+and unauthenticated; malformed or unlabelled responses are rejected visibly.
+Empty data is not a dependency-error fallback.
+
+Current checks: 21 Angular tests and 58 backend tests passed (79 total), full
+lint/type/template/build checks passed. Browser verification covered messages,
+filtering, plain-text safety, unchanged read state, detail focus/return, narrow
+layouts, 200% resizing and injected empty/503/retry cases. No Oracle, trusted
+identity, manual Hebrew assistive-technology assessment, full WCAG conformance or
+human business acceptance is established by these synthetic checks.
 
 Accessibility acceptance includes keyboard access to the skip link, focus on the
 main landmark, no horizontal overflow at 320 CSS pixels or 200% text resizing,

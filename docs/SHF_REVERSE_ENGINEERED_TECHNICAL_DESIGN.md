@@ -2252,6 +2252,18 @@ reject contradictory redaction data. The
 records 70 passing tests and targeted synthetic browser evidence, not real
 business/Oracle/identity proof.
 
+The subsequent user-approved R05 messages demo now provides bounded personal
+list/detail reads. Legacy
+[getAllMessage](../old/SHF/src/bzq/shf/model/MessageModel.java#L46) marks messages
+read after selecting; the demo intentionally excludes that mutation and preserves
+synthetic read flags. The
+[demo message DTO](../apps/api/src/stub/message-contracts.ts) minimizes subject,
+plain text, local creation time and nullable note/read/type data, without recipient
+identity. Foreign/deleted rows remain hidden; no offer/deletion/read-status command
+exists. The [R05 execution record](plan-shfAiAgentDevelopment.prompt.md#17-approved-r05-personal-messages-stub)
+records 79 passing tests and synthetic UI evidence. Real message schema/identity
+mapping and business acceptance are still pending; this does not clear G3.
+
 Require supported pinned runtimes/dependencies, clean type/lint/unit/contract
 checks, zero schema deltas, reviewed existing SQL/PLSQL mappings,
 authorization/security tests, isolated abstract-port contract tests,

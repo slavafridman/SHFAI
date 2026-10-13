@@ -521,3 +521,72 @@ and the temporary proxy were cleaned up afterward.
 No Oracle call, real identity/data, write, partner, batch, schema or deployment
 work occurred. Full Hebrew assistive-technology/UAT and live parity remain
 NOT RUN. Review the expanded demonstration before choosing another capability.
+
+## 17. Approved R05 Personal Messages Stub
+
+Task ID: SHF-R05-MESSAGES-STUB-20261013. Status: done for approved synthetic
+read-only messages API/UI; R05 employee/card features and real message reads
+remain pending. This does not clear the R04 real parity/G3 gate.
+
+The user explicitly approved a personal messages list/detail stub API and
+Hebrew/RTL screen. Read-status mutations, deletion, offer acceptance, Oracle
+access and trusted identity stay disabled.
+
+Read-only legacy trace:
+
+- The [catalog](SHF_SOURCE_CONTRACT_CATALOG.md#1-complete-struts-route-catalog)
+  maps `/message/messages` to
+  [MessagesAction.showMessages](../old/SHF/src/bzq/shf/actions/MessagesAction.java#L62).
+- [MessageModel.getAllMessage](../old/SHF/src/bzq/shf/model/MessageModel.java#L46)
+  selects recipient messages and then calls `updateToRead`: reading the legacy
+  screen is not mutation-free. This hidden effect is intentionally excluded.
+- [ReplaceMassageDao.select](../old/SHF/src/bzq/shf/dao/ReplaceMassageDao.java#L264)
+  scopes employee, excludes deleted messages and sorts creation time descending.
+  Source evidence does not establish actual database types/grants or live scope.
+
+The sequential architect responsibility owns the
+[minimal synthetic DTO](../apps/api/src/stub/message-contracts.ts): exact string
+ID, `createdLocal`, `subject`, plain `text`, nullable `note`, boolean-or-null
+`isRead`, and nullable message-type code. No recipient identifier or whole
+legacy form is exposed. This is a demo contract, not a real schema/API baseline.
+
+Implemented:
+
+- [Fixtures](../apps/api/src/stub/message-fixtures.ts): three visible invented
+  messages (unread/read/unknown), plus hidden foreign/deleted fixtures.
+- Existing [stub controller](../apps/api/src/stub/stub.module.ts): capability,
+  `GET /api/v1/me/messages` with bounded status/limit, and scoped detail.
+  No SQL, writes, partner calls or real identity. Insufficient limit returns
+  explicit unavailability; unsupported selectors/cursors are rejected.
+- [UI client](../apps/web/src/app/messages-api.ts) /
+  [screen](../apps/web/src/app/personal-messages.ts) /
+  [template](../apps/web/src/app/personal-messages.html): same-origin synthetic
+  reads, Hebrew status filter, explicit loading/empty/error/retry, safe text,
+  focus-managed detail and no read-status changes.
+- Existing duplicate response checks were extracted into
+  [shared frontend guards](../apps/web/src/app/stub-response.ts), preserving
+  existing shifts behavior.
+- [API tests](../apps/api/test/stub-messages.test.ts) and
+  [UI tests](../apps/web/src/app/personal-messages.spec.ts) verify recipient
+  privacy, unchanged flags, safe text, filters, malformed responses, superseded
+  reads and absent write/acceptance endpoints.
+
+Executed evidence: `npm run check` passed lint, strict types/templates,
+58 backend and 21 frontend tests (79 total), and both production builds.
+An initial controller-method insertion error was corrected before API tests
+passed. UI tests caught filter submit not wired through a form directive;
+native submit handling was fixed and tests passed without weakening assertions.
+
+Browser checks used updated isolated stub/UI ports 3103/4203 and a temporary
+session-only proxy. Three-message load, unknown filter, unchanged unread status
+after opening, literal HTML-like text, detail heading/return focus,
+1280/768/320 CSS pixel reflow and 200% text resizing passed. Injected synthetic
+empty and 503 responses were distinguished, and retry recovered the list.
+The expected 503 resource warning is a test injection, not live Oracle evidence.
+Temporary servers/proxy were cleaned up; existing user servers were preserved.
+
+All responses retain explicit synthetic/unauthenticated markers and no-store
+headers. Full accessibility/human UAT, real identity/Oracle message parity,
+concurrency/write proof and release remain NOT RUN. Next milestone: review the
+messages demo, then select an approved employee-card or operational read stub
+increment; do not claim all R05 work complete.

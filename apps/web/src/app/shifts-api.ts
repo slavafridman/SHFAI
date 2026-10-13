@@ -2,20 +2,10 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { forkJoin, map } from 'rxjs';
 import type { PersonalShiftItem, PersonalShiftList, ShiftSchedule } from '../../../api/src/personal-shifts/contracts';
+import { local, metadata, record, StubContractError, synthetic } from './stub-response';
 
 export type { PersonalShiftItem, ShiftSchedule };
-
-function record(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function synthetic(value: unknown): value is Record<string, unknown> {
-  return record(value) && value['mode'] === 'stub' && value['synthetic'] === true && value['authenticated'] === false;
-}
-
-function local(value: unknown): value is string {
-  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value);
-}
+export { StubContractError };
 
 function nullableString(value: unknown): boolean {
   return value === null || typeof value === 'string';
@@ -44,17 +34,6 @@ function item(value: unknown): value is PersonalShiftItem {
   return typeof value['id'] === 'string' && /^[1-9]\d{0,37}$/.test(value['id'])
     && (value['projection'] === 'baseline' || value['projection'] === 'override')
     && schedule(value['effective']) && validBaseline;
-}
-
-function metadata(value: Record<string, unknown>): boolean {
-  return typeof value['fetchedAt'] === 'string' && Number.isFinite(Date.parse(value['fetchedAt']))
-    && value['businessTimeZone'] === 'Asia/Jerusalem';
-}
-
-export class StubContractError extends Error {
-  constructor() {
-    super('תגובת ההדגמה אינה תקינה או אינה מסומנת כנתונים סינתטיים.');
-  }
 }
 
 @Injectable({ providedIn: 'root' })

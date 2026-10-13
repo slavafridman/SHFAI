@@ -355,6 +355,39 @@ updated stub/UI servers covered overnight/null/reassignment detail, keyboard foc
 start-date filtering, 320/768/1280 CSS pixel reflow and 200% text resizing. These
 are synthetic proofs, not Oracle, real authorization or business acceptance.
 
+### R05 Personal Messages Demo
+
+The user approved a synthetic read-only messages increment. The existing local
+API/UI commands also show the messages list/detail section, with three invented
+messages and read/unread/unknown filters. Restart the stub API when upgrading
+from the previous fixture version; no Oracle command is needed.
+
+| Stub route | Contract |
+| --- | --- |
+| `GET /api/v1/me/messages?status=all&limit=100` | Scoped synthetic list, newest local creation time first; status is `all`, `unread`, `read` or `unknown`. Limit defaults to 25, maximum 100. Insufficient limit fails explicitly rather than silently truncating. |
+| `GET /api/v1/me/messages/{id}` | Synthetic text-only detail; absent, foreign-recipient and deleted IDs return the same 404 problem. |
+
+List/detail fields are defined in the
+[demo DTO](apps/api/src/stub/message-contracts.ts): lossless string ID, local
+creation time, subject/text, nullable note, nullable boolean read status and
+nullable legacy message-type code. Recipient IDs and hidden message bodies are
+not returned. These are approved demonstration contracts, not verified Oracle
+metadata or authentication. The capability response exposes `personalMessages`
+with demo reads enabled and writes disabled.
+
+Legacy `MessageModel.getAllMessage` marks selected messages read. This demo
+intentionally does **not** reproduce that mutation: neither listing nor opening
+changes read state. Deletion, acceptance/rejection, notification and partner
+actions remain unavailable. Angular renders message content as plain text, not
+HTML; the synthetic HTML-like test message must appear literally.
+
+Verification: **58 backend and 21 frontend tests (79 total)** passed, along with
+full lint, strict types/templates and production builds. Browser checks used
+isolated ports 3103/4203, covering three-message load, filtering, unchanged unread
+status, safe text rendering, detail/close focus, 320/768/1280 reflow, 200% text
+resizing and injected synthetic empty/failure/retry states. Temporary servers and
+session proxy were cleaned up. No live database or real authorization was tested.
+
 Latest UI verification: full `npm run check` passed **53 backend and 11 frontend
 tests (64 total)**, lint, strict types/templates and both builds. Browser checks
 against the local stub/proxy passed detail and keyboard focus, 320/768/1280 CSS

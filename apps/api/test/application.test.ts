@@ -11,6 +11,7 @@ test('local foundation returns 404 for unimplemented business reads and writes',
       '/', '/me', '/me/capabilities', '/me/shifts', '/shifts',
       '/api/v1/me', '/api/v1/me/capabilities', '/api/v1/me/shifts',
       '/api/v1/shifts/9007199254740993',
+      '/api/v1/me/messages', '/api/v1/me/messages/8007199254740993',
     ]) {
       const response = await application.inject({ method: 'GET', url });
       assert.equal(response.statusCode, 404, url);

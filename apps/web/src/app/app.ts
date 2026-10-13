@@ -3,9 +3,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { PersonalShifts } from './personal-shifts';
+import { PersonalMessages } from './personal-messages';
 
 @Component({
-  imports: [MatButtonModule, MatCardModule, MatToolbarModule, PersonalShifts],
+  imports: [MatButtonModule, MatCardModule, MatToolbarModule, PersonalShifts, PersonalMessages],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',
