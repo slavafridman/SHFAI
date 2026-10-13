@@ -426,6 +426,222 @@ Paths sharing one row have the same owning business service, not shared authoriz
 | Machine ingress | `POST /interfaces/softphone/break-actual-events`, `POST /interfaces/softphone/logout-events` | Service authentication, partner event ID, schema validation, replay protection; logout remains logging-only unless approved otherwise. |
 | Batch operations, deferred | Future `/batch-runs` metadata and replay contracts only | Not current-stage routes or UI actions. Existing ledger reads may be considered separately; no job execution, replay, scheduling or arbitrary shell execution. |
 
+### 3.6.1 R01 Personal-Shifts Baseline, R01-PS-1.0
+
+**Status: business baseline proposed for review; isolated code/tests approved.** Owner:
+`system_architect`, performed as a sequential responsibility in this task.
+The local scaffold approval is not G1 approval. This baseline covers identity
+display, capability display, bounded personal activity-shift reads and scoped
+detail only. Messages, offers, attendance, previews, exports and writes are not
+part of the first slice. No new storage or integration transport is required.
+
+After this draft was prepared, the user explicitly approved isolated DTO/rule
+implementation and synthetic tests only. The
+[DTO contracts](../apps/api/src/personal-shifts/contracts.ts) and
+[pure helpers](../apps/api/src/personal-shifts/personal-shifts.ts) are not wired
+into the API. They consume resolved synthetic facts and supplied scope, not raw
+Oracle columns or an authenticated session. Full G1, identity, Oracle mapping,
+cancellation, time-zone and cursor prerequisites remain pending.
+
+#### Source Trace and Compatibility Decisions
+
+| Evidence | Source-observed behavior | Proposed obligation / unresolved decision |
+| --- | --- | --- |
+| [Catalog personal-shifts routes](SHF_SOURCE_CONTRACT_CATALOG.md#1-complete-struts-route-catalog), [action branches](../old/SHF/src/bzq/shf/actions/ShiftDataAction.java#L134) | `/shift/myShiftParam` selects the current date; `/shift/myShiftResult` calls `populateMyShifts`. The mapping requires `shift_myshifts`. | Begin with this self-service flow, not the employee-card `populateActivities` flow, which uses different date limits and ownership parameters. |
+| [Session/activity checks](../old/SHF/src/bzq/shf/actions/BaseAction.java#L96), [profile copy](../old/SHF/src/bzq/shf/actions/BaseAction.java#L170) | A session profile supplies actor identity and allowed activities before the action runs. | Modern identity must be request-local and trusted; a body, query, forwarded header or browser value cannot select the actor. SEC must approve the trust/session boundary and employment link. |
+| [Active personal-shifts SQL](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L1233), [binds and query execution](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L1348) | The active UNION selects unchanged day rows and changed rows separately; both bind the profile user ID against full employee identity and use the eight-character identity prefix for day ownership. Both filter activity day type. | Retain original and effective ownership internally, resolve employee links without numeric coercion or prefix guessing, and bind trusted identity. Physical identity uniqueness and prefix compatibility require DBA/SEC proof. |
+| [Activity constant](../old/SHF/src/bzq/shf/utils/SHFConstants.java#L51) | `DAY_TYPE_ACTIVITY` is 4, not an inferred generic day type. | This first list is for activity shifts only; do not include exceptions/time-off by treating every employee-day row as a shift. |
+| [Active lower-bound predicate](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L1283), [changed predicate and ordering](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L1344) | There is a strict `>` lower bound, no upper bound or pagination, and `ORDER BY 3 DESC` orders the projected day-start column. | Propose a bounded half-open effective-shift-start interval and deterministic order below. These are intentional compatibility changes requiring PO approval, not demonstrated legacy parity. |
+| [Changed attendance join](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L1338), [detail join](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L203) | The active changed-row list joins `new_employee_id` to attendance's day ID; the detail query joins on employee-day ID. | Do not copy this mismatched join. Attendance is excluded from the first DTO. A later attendance slice must characterize the intended day-key relationship with authorized metadata. |
+| [Detail projection](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L150), [field mapping](../old/SHF/src/bzq/shf/bean/AgentDayBean.java#L49), [effective getters](../old/SHF/src/bzq/shf/bean/AgentDayBean.java#L968) | Detail retains `d.*` and named override fields; bean getters fall back from new shift/site/activity values to baseline values. The active personal list flattens changed fields into the UNION and does not select all baseline/source fields. | Design one explicit, minimized baseline/effective projection for both list and detail. Do not treat the commented-out NVL query as the active implementation or infer unavailable original fields from the flattened result. |
+| [Home-work and split getters](../old/SHF/src/bzq/shf/bean/AgentDayBean.java#L1407) | New home-work/split flags override baseline flags; split-start/end describe the gap between two work segments. | Preserve the gap meaning. A null home-work flag is unknown, not automatically false; invalid flags or inconsistent split boundaries need explicit error/data-owner handling, not a success-shaped fallback. |
+| [List result/failure handling](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L1364), [scoped-detail gap](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L210) | Query failures become general application errors; no rows can return null. The detail SQL filters by day ID without the actor predicate shown in the list. | Return an explicit empty collection for a successful empty query, not for a query failure. Enforce current effective ownership before serializing detail; knowing an ID is not permission. |
+
+No UPDATE, sequence allocation or partner call appears in the traced list/detail
+SELECT paths. This is source evidence, not proof of database-side effects,
+physical Oracle metadata, proprietary DBAccess behavior or deployed execution.
+The active personal UNION does not explicitly select/filter cancellation reason;
+the cancellation predicate in its commented predecessor is not active evidence.
+DBA/PO must confirm cancellation/day-type semantics before replacement inclusion
+rules are finalized. Duplicate change rows or ambiguous employee links must not
+be arbitrarily collapsed to one successful result.
+
+#### Identity, Capability and Request Baseline
+
+Proposed business paths use the existing `/api/v1` prefix:
+
+- `GET /api/v1/me`: authenticated opaque actor ID, internal employee ID as a
+  string or null, purpose-limited display name and approved business time zone.
+  Do not expose national identity, raw SSO arrays or whole organizational trees.
+- `GET /api/v1/me/capabilities`: server-evaluated read/preview/write capability
+  states with stable unavailability reasons, plus `integrationAvailable: false`.
+  Capability display is not authorization; every request re-evaluates policy.
+- `GET /api/v1/me/shifts`: actor-derived employee, mandatory `from` and
+  `toExclusive` ISO dates; no employee/unit/actor override or arbitrary sort.
+- `GET /api/v1/shifts/{id}`: same minimized item shape and self-service
+  authorization as the list. Manager detail is a later separately scoped slice.
+
+Identity-provider technology remains a recommendation, not a selected deployment.
+SEC must approve issuer/session validation, expiration/logout, employment mapping,
+cookie/CSRF behavior and trusted gateway handling before any identity endpoint
+is enabled. Authentication without an unambiguous employment link may return
+identity display but cannot enable personal-shifts reads.
+
+Synthetic capability example; the disconnected scaffold does not serve it:
+
+```json
+{
+  "personalShifts": {
+    "read": { "enabled": false, "reason": "EMPLOYEE_LINK_REQUIRED" },
+    "preview": { "enabled": false, "reason": "NOT_APPROVED" },
+    "write": { "enabled": false, "reason": "NOT_APPROVED" }
+  },
+  "integrationAvailable": false
+}
+```
+
+Request constraints are proposed:
+
+- Validate real calendar dates, `from < toExclusive`, and a maximum interval of
+  31 calendar days before acquiring a connection. The interval is
+  `[from 00:00, toExclusive 00:00)` in the owner-approved business time zone.
+  Include a shift when its effective start belongs to the interval; overnight
+  end times remain on their actual date. UI proposes today through today + 7
+  calendar days, without silently issuing a wider query.
+- `limit` defaults to 25 and is an integer from 1 to 100. Fetch at most
+  `limit + 1` scoped rows to determine whether a next page exists. No unbounded
+  export, count-all or browser-supplied SQL/order expression is allowed.
+- Order by effective shift start descending, then exact numeric employee-day ID
+  descending. A bounded, versioned opaque cursor carries this keyset anchor and
+  normalized filter context; treat it as untrusted input and reject malformed or
+  mismatched filters. The server still derives actor scope on every page.
+  Cursor ownership/codec and maximum encoded length require contract review
+  before implementation; no memory-backed result store or new database object.
+- A single query is the proposed list consistency boundary. `fetchedAt` records
+  response-read time, not an Oracle SCN or frozen multi-page snapshot. Concurrent
+  legacy changes may move a row across the paging anchor; refresh restarts paging.
+  Do not promise duplicate-free historical snapshots or expose an edit ETag
+  without a verified revision source.
+- Return `Cache-Control: no-store` for identity, capability, shift and error
+  responses. These reads do not mark messages read, delete offers, allocate
+  correlations, invoke mutating PL/SQL, dispatch integrations or run jobs.
+
+#### Minimized Response and Mapping
+
+Required envelope: `items` array, nullable opaque `nextCursor`, RFC 3339 UTC
+`fetchedAt`, and approved IANA `businessTimeZone`. Empty success is
+`items: []` and `nextCursor: null`. Detail returns the same item under `item`,
+with `fetchedAt` and `businessTimeZone`, not unrelated employee-card fields.
+
+Required item fields:
+
+- `id`: lossless string employee-day ID; do not JSON-encode it as a number.
+- `projection`: `baseline` or `override`, meaning row provenance rather than a
+  partner completion/approval state.
+- `effective`: trusted internal `employeeId` string, local start/end strings,
+  nullable site/activity IDs, nullable boolean `workFromHome`, and `split`.
+- `split`: `enabled` is boolean or null; `gapStartLocal`/`gapEndLocal` are local
+  strings or null. Null flags mean explicitly unknown source data; a verified
+  disabled split has null gap endpoints. An enabled split must satisfy
+  `start <= gapStart <= gapEnd <= end` under the approved date/time policy.
+  Zero-gap and equal-time handling are business decisions, not implied duration
+  validation for this read-only slice.
+- `baseline` has the same schedule fields only when separately authorized.
+  `baselineAvailability` is `available`, `not-authorized` or `not-present`.
+  When another employee originally owned a reassigned shift, do not expose that
+  employee's ID/name or schedule merely because the actor owns the effective
+  row; return `baseline: null` with the applicable reason.
+
+Local schedule strings use `YYYY-MM-DDTHH:mm:ss` **without** an invented offset.
+Oracle DATE/time-zone metadata and legacy JVM/NLS interpretation are unverified.
+Propose `Asia/Jerusalem` for business display, but require owner confirmation.
+Do not append `Z`, use the browser time zone, or infer UTC instants from local
+wall times. DST ambiguity and any later instant/duration calculation need an
+approved policy; this DTO does not promise UTC duration arithmetic.
+
+Numeric/identifier nullability, baseline/override row cardinality, source flags,
+date types and cancellation semantics require authorized metadata before SQL
+implementation. Paid/work minutes and attendance are deliberately omitted
+because their zero/null/rewarded semantics are not settled by this first trace.
+
+Synthetic list example; all IDs/data below are invented for contract review,
+and the large ID tests lossless JSON representation, not physical column capacity:
+
+```json
+{
+  "items": [
+    {
+      "id": "9007199254740993",
+      "projection": "override",
+      "effective": {
+        "employeeId": "00000001",
+        "startLocal": "2026-10-14T08:00:00",
+        "endLocal": "2026-10-14T16:00:00",
+        "siteId": "synthetic-site",
+        "activityId": "synthetic-activity",
+        "workFromHome": false,
+        "split": {
+          "enabled": false,
+          "gapStartLocal": null,
+          "gapEndLocal": null
+        }
+      },
+      "baseline": null,
+      "baselineAvailability": "not-authorized"
+    }
+  ],
+  "nextCursor": null,
+  "fetchedAt": "2026-10-13T10:30:00Z",
+  "businessTimeZone": "Asia/Jerusalem"
+}
+```
+
+#### Error and Authorization Baseline
+
+| Condition | Proposed response | Required behavior |
+| --- | --- | --- |
+| Malformed date, invalid limit/cursor or unsupported query selector | 400 `INVALID_QUERY` | Hebrew field-level explanation; no repository call. |
+| Missing/expired session once identity is configured | 401 `AUTHENTICATION_REQUIRED` | Clear protected UI state; no retained protected results or fallback actor. |
+| Missing employment link or denied self-service capability | 403 `EMPLOYEE_LINK_REQUIRED` / `PERSONAL_SHIFTS_FORBIDDEN` | No data query or silent user substitution; purpose-limited capability explanation. |
+| Missing detail or detail outside current effective ownership | 404 `SHIFT_NOT_FOUND` | Uniform response that does not disclose whether another employee's row exists. |
+| Identity/approved data mapping is unavailable | 503 `IDENTITY_NOT_CONFIGURED` / `DATA_CONTRACT_UNVERIFIED` | Fail closed; do not substitute development identity, guessed metadata or fake results. |
+| Approved Oracle read times out or dependency is unavailable | 503 `SHIFT_READ_UNAVAILABLE` | Bounded deadline, connection cleanup and redacted operational logging; not `200` with an empty array. |
+| Unexpected application fault | 500 `INTERNAL_ERROR` | Redacted request correlation and explicit incident evidence; no SQL/stack/PII in response. |
+
+Errors use `application/problem+json` with stable `type`, `title`, `status`,
+`code` and optional `errors` entries (`field`, `code`, Hebrew `message`).
+Do not serialize actor identity, request payload, raw headers, SQL or database
+addresses into error details. Retain the general Section 3.5 convention.
+None of these responses exists in the current route-free scaffold.
+
+#### First-Slice Sequence and Ownership Gate
+
+```mermaid
+sequenceDiagram
+    participant UI as Personal workspace
+    participant API as Authorized application service
+    participant Policy as Request-local identity and scope
+    participant Repo as Approved read repository
+    participant DB as Existing Oracle schema
+    UI->>API: GET personal shifts, bounded dates
+    API->>Policy: Resolve trusted actor and read capability
+    Policy-->>API: Approved self-service employee scope or denial
+    API->>API: Validate dates, limit and cursor
+    API->>Repo: Scoped effective-shift read
+    Repo->>DB: One bounded bound-parameter SELECT
+    DB-->>Repo: Baseline and override projection
+    Repo-->>API: Release connection and return mapped rows
+    API->>API: Minimize baseline visibility and validate mapping
+    API-->>UI: No-store result or explicit problem
+```
+
+This diagram is a proposed successful read sequence, not executed integration.
+Denied/invalid requests stop before the repository. A query failure returns a
+problem after cleanup; there is no write, commit-dependent business operation,
+EMS wait or fallback to legacy endpoints. Implementation requires G1 approval
+of R01-PS-1.0, SEC identity/employment policy, DBA environment/grants/metadata,
+cancellation semantics and owner-approved time-zone/cursor/privacy decisions.
+
 ### 3.7 Example Change-Proposal DTO
 
 Synthetic example; field types and error behavior are proposed, not a legacy payload:
@@ -511,8 +727,10 @@ by UTF-8 reads must not be interpreted as proof that the original file is corrup
 
 ### 4.3 Proposed Angular UI Structure
 
-The following UI structure and Section 4.6 screen contracts form the self-contained
-frontend design. No Angular application or browser verification exists yet.
+The following UI structure and Section 4.6 screen contracts form the proposed
+frontend design. A disconnected Angular/Material foundation now exists; its
+targeted browser checks are recorded in the [root README](../readme.md).
+No connected business screen or approved API/UI baseline exists yet.
 
 Use Angular 22 with standalone feature components, route-based lazy loading,
 signals for local state, typed forms, and RxJS for request streams. Use stable
@@ -561,8 +779,9 @@ screens. Test agent versus manager scopes, session expiry, multi-tab filters,
 selection across pages, confirmation warnings, stale edits, failed/late partner
 replies, export contents, Hebrew/RTL, and keyboard/screen-reader workflows.
 Use Playwright at desktop and mobile sizes plus automated accessibility checks
-and manual keyboard/screen-reader verification. No UI runtime or screenshot
-verification was performed in this source-only design task.
+and manual keyboard/screen-reader verification. The source-only investigation
+did not run business UI checks. Later disconnected-foundation checks do not
+establish business parity, human acceptance or full accessibility conformance.
 
 ### 4.6 Current-Stage Screen and State Contracts
 
@@ -615,6 +834,65 @@ the validation summary on failure, contain dialog focus and restore it on close.
 Desktop/mobile acceptance includes 320 CSS-pixel reflow, 200% text resizing,
 keyboard completion, unobscured focus, 4.5:1 normal text contrast, applicable 3:1
 non-text contrast and 24-by-24 CSS-pixel targets or WCAG-permitted exceptions.
+
+### 4.6.1 First-Slice Personal Workspace, R01-PS-1.0
+
+**Proposed UI baseline, not implemented or accepted.** The initial `/app/me`
+screen is personal shifts only, using Section 3.6.1. The broader messages,
+offers, attendance and preference areas in Section 4.6 remain later capabilities,
+not working tabs or placeholder results in this slice.
+
+Information hierarchy:
+
+1. Hebrew heading `המשמרות שלי` with trusted identity display and an explicit
+   read-only indicator `תצוגה בלבד`. No user/employee selector.
+2. Date controls labelled `מתאריך` and `עד לתאריך`. The UI's inclusive final day
+   is converted by calendar arithmetic to API `toExclusive`, not by adding
+   24 UTC hours. Validate the proposed 31-day maximum and preserve entered dates
+   after an error. `הצגת משמרות` submits the filter; `רענון` restarts paging.
+3. Semantic table with effective date/start/end, activity/site identifiers,
+   `תכנון מקורי` / `שינוי` provenance, home-work state and a detail action
+   `פרטי משמרת`. Resolve display labels only through approved, scoped reference
+   mappings; otherwise identify the value as a code, not an invented name.
+4. Detail region presents effective versus independently authorized baseline
+   values and split gap/segments. For redacted baseline, say
+   `התכנון המקורי אינו מוצג בהרשאות הנוכחיות`, without identifying its owner.
+   Unknown home-work/split data is labelled `לא ידוע`, not `לא`.
+5. Freshness text labelled `מועד קריאת הנתונים` and next-page control
+   `הצגת משמרות נוספות`. Show loaded count only; do not imply a verified total
+   or a frozen multi-page snapshot.
+
+At narrow widths, keep date/time, provenance and detail access visible; move
+secondary fields into the same semantic detail region rather than duplicating
+hidden focusable controls. At desktop widths, keep the table scan-oriented.
+Dates, times and technical IDs use LTR isolation within the Hebrew RTL flow.
+Local schedule strings must not be passed through browser-local UTC conversion.
+
+| State | Hebrew feedback / UI behavior | Contract and focus responsibility |
+| --- | --- | --- |
+| Session/capability check | `בודק הרשאות להצגת משמרות` | No default employee or data request before server capability evaluation. |
+| Loading first page | `טוען משמרות` | Polite status announcement, bounded request, no mismatched previous-filter rows. Keep filters stable. |
+| Successful empty page | `לא נמצאו משמרות בטווח התאריכים שנבחר` | Only after a successful empty API response; no unavailable-service message disguised as empty success. |
+| Successful populated page | Effective values plus provenance and freshness | Stable row/detail identity; no edit, export, replacement or attendance action. |
+| Invalid filter | `יש לתקן את טווח התאריכים` with specific Hebrew field errors | Link the message to the field and focus the first invalid input; no repository request. |
+| Read capability denied or employee link missing | `אין הרשאה להצגת המשמרות` / `לא נמצא שיוך עובד מאומת` | Clear protected rows; no legacy fallback or guessed identity. |
+| Session expired | `פג תוקף ההתחברות` | Cancel outstanding reads and clear protected state; approved login flow is a separate prerequisite. |
+| Dependency/query failed | `לא ניתן לטעון משמרות כעת` and `ניסיון נוסף` | Retain date inputs; show explicit failure instead of old rows as current. Retry only the bounded read. |
+| Detail absent/no longer owned | `המשמרת אינה זמינה להצגה` | Do not disclose another owner. Clear that detail and offer list refresh without claiming deletion. |
+| New filter/refresh overtakes a response | No stale announcement or old selection restored | Cancel/suppress older responses; only the current query may populate the table. |
+
+The detail may be an inline labelled region at first, avoiding an unnecessary
+modal workflow. Its heading receives focus on explicit opening; closing returns
+focus to the invoking row action when it still exists, otherwise to the table
+heading. Route entry focuses the page heading/main landmark, not a random cell.
+Refresh/load announcements do not steal focus.
+
+Acceptance targets: applicable WCAG 2.2 A/AA keyboard semantics, visible and
+unobscured focus, no trap, labels/error relationships, status announcements,
+4.5:1 normal text and 3:1 applicable non-text contrast, applicable 24-by-24 CSS
+pixel targets, 320 CSS pixel reflow, 200% text resizing, reduced-motion support
+and Hebrew screen-reader assessment. A generated Material table or passing
+jsdom suite is not evidence that these complete-process criteria pass.
 
 ## 5. Database and Business Rules
 
@@ -1801,7 +2079,164 @@ representative Oracle snapshots. Restore a test schema or use approved test data
 for mutations; a production account with write privileges is not a test harness.
 Use real Oracle integration tests for Oracle SQL, not a substitute SQLite schema.
 
+### 10.3.1 First-Slice Synthetic Acceptance Matrix
+
+Baseline: R01-PS-1.0, Sections 3.6.1 and 4.6.1. This is the proposed complete-case
+characterization/contract matrix, not evidence of connected execution or UAT
+sign-off. Isolated mapping/filter proof is now implemented as recorded in Section
+10.3.2; Oracle/API/identity/business UI cases remain **NOT RUN**. Run connected
+cases only after baseline and environment approval. No live mutation, legacy
+execution or batch-only test is authorized here.
+
+Use synthetic actors A/B with employment IDs `00000001`/`00000002`, synthetic
+sites X/Y, frozen business date 2026-10-13, and list interval
+`from=2026-10-14&toExclusive=2026-10-15`. Rule tests use isolated input rows;
+Oracle tests require separately approved seeded/anonymized data and least
+privilege. Reads must not seed or clean up shared records automatically.
+
+| Case / risk | Given / when | Expected result proposed by baseline | Lowest proof level / dependency |
+| --- | --- | --- | --- |
+| PS-01 baseline identity | A owns one activity row, no override, start 2026-10-14 08:00 | One baseline item with exact ID and A's effective values; no unrelated employee data. | Mapping unit, then approved Oracle parity. |
+| PS-02 changed values | A's 08:00-16:00 site X row changes to 09:00-17:00 site Y | One override item with changed values; authorized original values remain distinct, not duplicated as a second active item. | Mapping unit and approved cardinality metadata. |
+| PS-03 changed owner / privacy | Baseline owner A changes to effective owner B | B receives the item; A's personal list/detail cannot receive it. B receives no A identity or baseline schedule without independent permission. | Scoped API plus Oracle predicate/field-level test. |
+| PS-04 cancellation | Activity override also has a cancellation marker | Proposed active list excludes it. This expected outcome is blocked until PO/DBA confirm authoritative cancellation fields and day-type interaction. | Rule characterization; pending cancellation decision. |
+| PS-05 bounds / overnight | Starts at lower midnight, upper midnight, and 2026-10-14 23:00 ending next day | Lower midnight included, upper midnight excluded, overnight item included with next-day end. This intentionally differs from legacy strict-lower-bound SQL. | Filter unit, approved Oracle date-bind test. |
+| PS-06 invalid dates/limits | Invalid 2026-02-30; equal/reversed dates; 32-day range; limit 0/101/decimal; actor selector | 400 `INVALID_QUERY`, Hebrew field message, zero repository acquisitions. Boundary 31 days and limits 1/100 accepted. | HTTP contract with acquisition spy, not a live DB call. |
+| PS-07 identity and capability | Missing/expired session; valid session without link; denied activity; client-supplied actor header | Configured authentication returns 401/403 as applicable; spoofed selector cannot widen authority; zero protected data response. | API with approved trust mechanism; SEC cases. |
+| PS-08 detail non-disclosure | A requests B's day ID and a nonexistent day ID | Same 404 code/body shape; no employee lookup details or distinguishable explanatory text. | Scoped API plus approved object-scope integration. |
+| PS-09 lossless ID | Day ID string `9007199254740993`, employment ID string `00000001` | String round-trip unchanged through DTO, cursor and UI; numeric parsing cannot truncate precision or leading zeros. Physical Oracle column capacity is not implied. | Serialization/codec unit and browser display. |
+| PS-10 home-work/split | New Y overrides old N; split gap 12:00-14:00 within 08:00-18:00; source flag null | New home-work true; gap displayed as break between segments; null displayed unknown. Invalid flag or out-of-order gap is an explicit mapping failure, not false/zero. | Mapping unit after DBA flag/date semantics. |
+| PS-11 duplicate/ambiguous rows | Multiple override rows or ambiguous employee-prefix matches | Explicit `DATA_CONTRACT_UNVERIFIED` failure and redacted diagnostic; no arbitrary row choice or cross-user merge. | Mapping/cardinality test, then approved Oracle proof. |
+| PS-12 pagination | Equal effective starts with distinct exact numeric IDs; page at max limit; mismatched/invalid cursor | Stable numeric-ID tiebreak, bounded `limit + 1`, no duplicate row on an unchanged dataset; reject cursor mismatch. No frozen-snapshot claim under concurrent changes. | Codec/repository unit; cursor contract must be finalized first. |
+| PS-13 empty vs failure | Successful zero rows versus timeout/query failure | Empty 200 envelope only for successful query; explicit 503/500 problem on failure, connection released after work ends. | Adapter tests; real cleanup/deadline proof on approved Oracle. |
+| PS-14 zero effects | Every success, denial, invalid-input and failure read path | Zero UPDATE/DELETE/INSERT, sequence allocation, mutating procedure, offer cleanup, ledger/correlation write and partner request; logs contain no raw PII/SQL. | Isolated call spies plus reviewed SQL; live DB effects remain a separate authorized proof. |
+| PS-15 browser state/response race | Filter request B completes before older A; session expires while detail is open | Only B appears; expired session clears protected rows/detail; loading/empty/failure remain distinct and dates survive recoverable errors. | Angular component/API-double test, then browser flow. |
+| PS-16 accessibility/UAT | Keyboard-only and Hebrew screen-reader users filter, page, open/close detail and recover an error at narrow/zoomed layouts | Focus/announcements and label relationships meet Section 4.6.1; displayed values match the approved fixture; no inaccessible hidden controls. | Browser automation plus manual Hebrew assistive-technology/UAT; human owners pending. |
+| PS-17 DST interpretation | Business-zone offset changes or a local wall time is repeated/nonexistent | Do not invent a UTC offset or normalize through browser zone. Confirm source interpretation and display/instant policy before asserting exact duration/instant results. | Blocked owner decision, then date-mapping characterization. |
+
+For isolated cases, fixture disposal is local test-runner cleanup only.
+Authorized Oracle reads use owner-provided fixtures; their lifecycle belongs to
+DBA, not automatic API seeding. Contract and UI doubles must be labelled synthetic
+and cannot clear metadata, identity, Oracle parity, UIT or UAT gates.
+
+### 10.3.2 Approved Isolated Implementation Evidence
+
+Task: SHF-R01-PS-ISOLATED-20261013. User approval is limited to isolated
+implementation and synthetic tests, not live endpoints, Oracle access, schema
+changes, identity, partner transport or deployment. A standalone schema-only
+proposal was superseded by this explicit approval; no schema file was created.
+
+The architect responsibility owns the DTO definitions; backend/QA
+responsibilities own the pure helpers and tests in a sequential single-assistant
+pass. No shared contract has been implicitly approved for live consumers.
+
+| Artifact / check | Actual result and remaining boundary |
+| --- | --- |
+| [DTO contracts](../apps/api/src/personal-shifts/contracts.ts) | Implemented readonly item/schedule/query/selection/list shapes; not an executable OpenAPI or an enabled API. |
+| [Pure helpers](../apps/api/src/personal-shifts/personal-shifts.ts) | Implemented real-calendar/date-window/limit validation, scoped normalized-fact projection, baseline redaction, flag/null/split checks, exact numeric-ID sorting, duplicate detection and bounded selection. |
+| [Synthetic tests](../apps/api/test/personal-shifts.test.ts) | PASS: 22 isolated tests, including changed times/site/home-work and inclusive split boundaries. Fixtures are resolved facts, not raw Oracle rows or trusted identity evidence. |
+| [Foundation regression](../apps/api/test/application.test.ts) | PASS: two tests, including absent `/api/v1/me`, capabilities, personal-shifts and detail routes. Fastify injection opens no socket. |
+| `npm test --workspace=@shf/api` | PASS: 24 tests, zero failures/skips. The existing runner now discovers both compiled test files. |
+| Lint / strict type checks / builds | PASS after repairing an imprecise numeric literal in a rejection fixture. Both app builds passed; no frontend behavior changed or frontend unit/browser test rerun for this slice. |
+
+Coverage links: PS-01/02/03/09/10/11 have isolated mapping/scope/precision proof;
+PS-05/06/12 have pure date/order/limit proof; PS-14/15 have input immutability,
+separate-actor results and explicit error/redaction assertions. This does not
+prove SQL binding, Oracle cleanup, real authentication, zero database-side
+effects, UI request races or complete-case acceptance. Cursor tests prove the
+explicit unavailable gate, not a completed pagination codec.
+
+Normalization boundaries are explicit: positive canonical decimal day IDs up to
+38 digits, digit-only employee IDs up to 128 characters preserving leading zeros,
+and nullable nonempty site/activity codes up to 256 characters. They are isolated
+input guards, not verified database metadata. Local times remain wall-time strings;
+no UTC offset, DST instant or paid duration is calculated.
+
+`eligibility` must already be resolved to `included`/`excluded`; `unverified`
+fails with `DATA_CONTRACT_UNVERIFIED`. The helper does not decide cancellation or
+day-type semantics, choose an Oracle override, authenticate caller-supplied scope
+or authorize `canViewBaseline`. Those belong to approved future adapters/policies.
+Selection exposes `hasMore`; it does not generate `nextCursor` or claim a complete
+HTTP response when more results exist. Any cursor input remains explicitly gated.
+
+### 10.3.3 Real Oracle Read-Only Adapter, No Live Checks
+
+Task: SHF-ORACLE-READONLY-20261013. The user requested a real Oracle connection
+adapter, classified the supplied TNS target `ctidbp_wfmp` as production/shared,
+and explicitly chose **implement the real adapter without connecting**.
+This is implementation authorization, not authorization for a connection,
+metadata discovery, business rows or production tests.
+The supplied password is not reproduced or stored in repository artifacts.
+
+| Component / evidence | Implemented boundary |
+| --- | --- |
+| node-oracledb 26.0.0 with @types/oracledb 7.0.3 | Installed under the approved Node 24 toolchain; strict types and offline Thin-mode import passed. Actual database/TNS/auth/TLS compatibility is NOT RUN. |
+| [External configuration](../apps/api/src/oracle/configuration.ts) | Disabled unless explicitly enabled, credentials separate from the connection string, TNS directory required for aliases, no credential/provider URL or write-mode option. No local Oracle Net or secret file was read/created. |
+| [Read-only database](../apps/api/src/oracle/read-only-database.ts) | Lazy private pool; two fixed operations only: constant connectivity SELECT and column metadata for the three source shift tables. No raw SQL API, business-data query, DML, PL/SQL, sequence allocation or schema change. |
+| [Nest module](../apps/api/src/oracle/oracle.module.ts) | Registered provider with no startup pool/connection/query. Existing business routes remain absent; identity/authorization are not fabricated. |
+| [Explicit check command](../apps/api/src/oracle/check.ts) | Future operator-invoked real connectivity check, currently disabled and NOT RUN against Oracle. Does not print credentials, connection details or business rows. |
+| [Oracle adapter tests](../apps/api/test/oracle-read-only.test.ts) | PASS: 20 isolated pool/connection-double tests for opt-in, fixed statements, read-only setup, bounds, redaction, failures, release and shutdown. They do not prove real Oracle transaction behavior. |
+
+Every implemented read lease starts with `SET TRANSACTION READ ONLY`, uses
+`autoCommit: false`, then rolls back and releases. Rollback failure requests a
+dropped connection; read and cleanup failures are retained as redacted errors.
+Pool close is drained/shared across concurrent callers and remains retryable
+after cleanup failure. Only approved machine driver codes are logged; raw driver
+messages, SQL, passwords, account/host details and payloads are excluded.
+
+Limits are code defaults, not measured capacity: pool min 0/max 2, queue max 10,
+queue/call settings 5 seconds, connect 10 seconds, transport connect 5 seconds,
+driver retry count 0, metadata maximum 512 rows with overflow detection, and
+10-second shutdown drain. Call timeout applies to individual round-trips, not a
+total business deadline. No production load or pool-sizing test was authorized.
+
+The metadata SELECT is derived from the existing read-only discovery document,
+but narrowed to column names/types/precision/scale/nullability for
+`SHF_EMPLOYEE_DAY`, `SHF_DAY_CHANGES` and `SHF_EMPLOYEES`; defaults, stored source,
+employee data and other schemas are excluded. Missing/incomplete or oversized
+results fail explicitly. This operation has not been executed.
+
+The real adapter does not yet replace normalized synthetic facts with a verified
+Oracle personal-shifts projection. Actual schema/cardinality, cancellation,
+employment scope, time-zone and cursor decisions remain pending. No authenticated
+business read endpoint or frontend connection is enabled.
+
+Executed offline validation: clean `npm ci` and complete `npm run check` passed,
+with 44 backend plus three unchanged frontend tests, lint, strict types and both
+builds. The disabled CLI guard returned `ORACLE_DISABLED`/exit 1. Initial type
+checks exposed an unknown-object guard and the driver's optional call-timeout
+typing; both were corrected before tests passed. Scoped documentation validation
+passed five JSON examples, 1,137 local links and 776 source-line references.
+Install-script review warnings were not bypassed or approved.
+
+The [root README](../readme.md) documents external configuration and a future
+secure local prompt, explicitly not runnable under the current no-live-checks
+instruction. Account privileges and database-side effects are unverified; the
+name `SHIFTER` is not evidence of a least-privilege read-only principal.
+
 ### 10.4 Release and Operational Gates
+
+Subsequent diagnostic/stub status: the user explicitly authorized one connectivity
+and three-table column-metadata check. The live attempt failed with NJS-530
+(host not found), so no metadata query or business row read completed. The user
+then approved continuing with an opt-in synthetic API. The
+[stub module](../apps/api/src/stub/stub.module.ts) reuses isolated shift helpers,
+labels responses synthetic/unauthenticated and excludes the Oracle module.
+Its identity/capability/list/detail responses are demo contracts only; writes,
+real authentication, business SQL, pagination and partner completion remain
+unavailable. The default real-mode API still has no business routes.
+See [execution plan](plan-shfAiAgentDevelopment.prompt.md#14-diagnostic-attempt-and-approved-stub-redirect)
+and [README](../readme.md) for the updated authorization and run commands.
+
+The user then approved the Angular stub workflow. The
+[personal-shifts screen](../apps/web/src/app/personal-shifts.ts) now consumes only
+explicitly synthetic responses through the local development proxy, with Hebrew
+filters, states, RTL table/detail, cancellation of superseded reads and focus
+restoration. Shared backend contracts are unchanged. Eleven frontend tests,
+full lint/type/build checks and targeted local browser workflows passed;
+real identity/Oracle parity, manual Hebrew screen-reader assessment and business
+UAT are not proven. See
+[UI execution record](plan-shfAiAgentDevelopment.prompt.md#15-user-approved-angular-stub-workflow).
 
 Require supported pinned runtimes/dependencies, clean type/lint/unit/contract
 checks, zero schema deltas, reviewed existing SQL/PLSQL mappings,
@@ -1816,8 +2251,8 @@ user/owner approval.
 
 | Requirement | Planned discriminating acceptance | Owner / status |
 | --- | --- | --- |
-| REQ-01 | Node API build/type/contract checks, request-local identity and bounded Oracle cleanup/rollback. | Backend/platform; not implemented or run. |
-| REQ-02 | Supported Angular/Material matrix plus complete Hebrew/RTL keyboard, focus, reflow, contrast and assistive-technology workflows. | UI/QA; not implemented or run, no AA conformance claim. |
+| REQ-01 | Node API build/type/contract checks, request-local identity and bounded Oracle cleanup/rollback. | Backend/platform; disconnected scaffold build/type/tests passed; identity, contracts and Oracle remain unimplemented. |
+| REQ-02 | Supported Angular/Material matrix plus complete Hebrew/RTL keyboard, focus, reflow, contrast and assistive-technology workflows. | UI/QA; disconnected shell checks passed; connected workflow and manual assessment pending, no AA conformance claim. |
 | REQ-03 | Abstract-port tests distinguish unavailable, accepted, confirmed and unknown; unavailable commands cause zero writes/requests. | Architect/backend/partner; JSON documentation parsed, runtime tests not run. |
 | REQ-04 | Review package/task/deployment inventories and prove no worker, batch scheduler, sender or SAP/BI producer is included. | Architect/DevOps; design-only now, package check not run. |
 | REQ-05 | Approved metadata mapping and artifact review show no DDL/migrations; Oracle parity, binds, null/date/precision and transaction tests on isolated approved data. | DBA/backend/QA; live checks blocked by environment approval. |
@@ -1854,10 +2289,29 @@ Companion REST/Angular/.NET validation branches and XML fixture tests are not ru
 by `CurrentProject`; their zero counters are not passing runtime or conformance
 results. Only the scoped documentation/source checks above are claimed.
 
-No live Oracle query, SOAP/HTTP business request, EMS interaction, application
-build/test, deployment or browser workflow was run. Environment access and contract
-approval were not supplied for those actions. Source-only and static checks do
-not prove runtime compatibility, transaction behavior, accessibility or acceptance.
+The original design-only investigation ran no live Oracle query, SOAP/HTTP
+business request, EMS interaction, application build/test, deployment or browser
+workflow. The separately approved disconnected foundation later passed local
+build/test and targeted browser checks recorded in the [root README](../readme.md).
+These do not prove business integration, Oracle behavior or user acceptance.
+This R01 continuation changes documentation only; it performs no business
+application test, database/broker connection or deployment.
+
+Revision 2.1 / R01-PS-1.0 continuation checks executed on 2026-10-13:
+
+| Check | Outcome / limit |
+| --- | --- |
+| Existing `-Mode Validate -DocumentationScope CurrentProject` | PASS: three documents, five parsed JSON examples, 1,125 local links, 776 source-line references, 216 routes, 50 forms and 15 SELECT-only metadata statements. |
+| Focused synthetic-example assertions | PASS: string ID precision/leading zeros, redacted baseline, null/disabled split and cursor shapes, local-time string shape and unavailable capability. These are documentation assertions, not running API contracts. |
+| Acceptance matrix inventory | PASS: exactly 17 unique proposed cases, PS-01 through PS-17. The business scenarios themselves are NOT RUN. |
+| README/development-plan link and anchor check | PASS: 14 local file/folder links and Markdown anchors outside the inspector's three-document scope. An initial ad hoc PowerShell Split-overload error was corrected and the check passed on retest. |
+| `git diff --check` | PASS: no tracked-change whitespace errors. |
+| Connected API/UI, Oracle, identity, partner, human UAT and accessibility | NOT RUN / blocked by the approval and environment prerequisites in Section 3.6.1. No application code changed in this continuation. |
+
+The inspector checks syntax, links, source-line bounds and catalog completeness;
+it does not validate every proposed DTO against an executable OpenAPI schema,
+render Mermaid diagrams or prove the semantic correctness of Oracle mapping.
+The extra focused assertions likewise do not replace implementation tests.
 
 Reproducible commands from workspace root:
 
@@ -1909,8 +2363,12 @@ at implementation kickoff:
 
 No vendor-certified EMS client matrix or live API bridge contract was verified.
 This does not block the abstract design or approved read-only slices; it blocks
-future real transport/partner activation. Exact NestJS/Fastify/Material/driver
-patch compatibility remains a kickoff gate rather than a verified installation.
+future real transport/partner activation. Exact local NestJS/Fastify/Material and
+compiler versions are installed and checked as recorded in the root README.
+The later read-only adapter installed node-oracledb and verified offline Thin
+loading/type compatibility as recorded in Section 10.3.3. Database version,
+network/auth/TLS, Oracle semantics and approved live access remain separate,
+unverified prerequisites; no driver was installed by the original local foundation.
 
 ### 11.3 Open Questions and Required Owners
 
@@ -1942,8 +2400,16 @@ are the target; Oracle is unchanged; TIBCO is represented by abstract API bridge
 contracts; batch is designed but excluded from implementation. The document does
 not approve architecture, API/UI contracts, deployment or production release.
 
+R01-PS-1.0 now provides a concrete source-backed first-slice review baseline in
+Sections 3.6.1, 4.6.1 and 10.3.1. Its intentional date-window/order changes,
+baseline privacy, cancellation, identity/time-zone and cursor decisions remain
+proposals. Only isolated implementation/test approval is recorded in Section 10.3.2.
+Full business-baseline approval, connected characterization and human acceptance
+remain pending.
+
 Next milestone: the user and `system_architect` approve this revision's scope and
-architecture/API/UI baseline, then select the read-only personal-shifts slice.
+architecture/API/UI baseline, with SEC/DBA resolving the named prerequisites,
+then implement the read-only personal-shifts slice.
 Its implementation entry criteria are approved identity/scope, existing metadata
 and Node/Oracle compatibility. Its exit criteria are correct baseline/override
 projection, Hebrew/RTL accessible loading/empty/error states and zero business,

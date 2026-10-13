@@ -258,3 +258,224 @@ trusted identity, agreed DTO/error conventions, CI and approved deployment
 configuration remain pending. R01, G1 and the first connected R04 slice remain
 blocked on user/architect API/UI decisions and SEC/DBA prerequisites. No measured
 business-slice velocity or calendar commitment is inferred from scaffold checks.
+
+## 11. Personal-Shifts Baseline Continuation
+
+Task ID: SHF-R01-PS-BASELINE-20261013. Status: review for the proposed baseline;
+the bounded source-analysis/documentation mission is complete, not G1 approval.
+
+The user requested continuation after the local foundation. The next safe work
+was a read-only source trace and draft baseline, not connected implementation.
+The same implementing assistant performed sequential architect, UI and QA design
+responsibilities; no parallel-agent acceleration or human sign-off is claimed.
+
+R01-PS-1.0 is contained in the existing technical design:
+
+- [Section 3.6.1](SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md#361-r01-personal-shifts-baseline-r01-ps-10): active personal-shifts source trace, identity/capabilities, bounded list/detail DTOs, privacy, errors and read sequence.
+- [Section 4.6.1](SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md#461-first-slice-personal-workspace-r01-ps-10): Hebrew/RTL first-screen controls, loading/empty/denied/failure/session states and focus/accessibility acceptance.
+- [Section 10.3.1](SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md#1031-first-slice-synthetic-acceptance-matrix): 17 proposed synthetic cases with exact outcomes and verification levels; none executed as business tests.
+
+The trace distinguishes the active UNION from commented-out NVL SQL, documents
+the strict lower-date predicate, absent upper bound and day-start sorting, and identifies
+different attendance join keys in personal-list versus detail source. The
+target's half-open date window, bounded pagination, provenance privacy and
+failure behavior are proposals requiring explicit approval, not existing parity.
+
+Missing prerequisites and accountable owners:
+
+| Prerequisite | Owner / blocked work |
+| --- | --- |
+| Approve architecture/API/UI R01-PS-1.0 and intentional date/order/privacy behavior | User/ARC/PO; business endpoint and feature-screen implementation. |
+| Trusted session/employment link and self-service permission semantics | SEC/business; `/me`, capability authorization and actor-scoped reads. |
+| Approved Oracle environment, least-privilege grants, identity/day/change cardinality and field types | DBA/platform; repository SQL, driver proof and live characterization. |
+| Cancellation and null-flag meaning; business time zone/DST interpretation | DBA/PO; effective projection and temporal acceptance results. |
+| Bounded cursor codec/context/size and concurrent-refresh behavior | ARC; final list pagination contract and generated consumers. |
+| Hebrew screen-reader/UAT environment and accountable acceptance | QA/PO; complete-process accessibility and business acceptance. |
+
+Documentation validation is static evidence only. The [root README](../readme.md)
+links the review artifacts and distinguishes these proposals from the previously
+verified disconnected scaffold. No application code, schema, driver, broker,
+legacy source or deployment was changed in this continuation.
+
+Executed static checks: scoped design validation passed (five JSON examples,
+1,125 local links and 776 source-line references); focused DTO/case-inventory
+assertions passed; 14 README/plan local links and anchors passed on retest after
+correcting an ad hoc PowerShell overload error; tracked whitespace check passed.
+These results are recorded in technical-design Section 10.5. The 17 planned
+business scenarios remain NOT RUN; no G1/G3/UAT/release gate is cleared.
+
+## 12. Approved Isolated Personal-Shifts Code
+
+Task ID: SHF-R01-PS-ISOLATED-20261013. Status: done for isolated code/test scope;
+connected feature and full baseline remain blocked/review.
+
+The user explicitly selected approval for isolated personal-shifts DTOs, pure
+mapping/filter rules and synthetic tests only. This supersedes the immediately
+preceding schema-only preparation direction, but does not approve live endpoints,
+Oracle connections, schema changes, identity decisions, partner transport or
+deployment. No standalone schema artifact or new dependency was introduced.
+
+Changed application paths:
+
+- [DTO contracts](../apps/api/src/personal-shifts/contracts.ts), owned by the
+  architect responsibility.
+- [Pure helpers](../apps/api/src/personal-shifts/personal-shifts.ts), owned by the
+  backend responsibility.
+- [Synthetic tests](../apps/api/test/personal-shifts.test.ts) and
+  [route-free regression](../apps/api/test/application.test.ts), owned by QA.
+- [API runner manifest](../apps/api/package.json), expanded to include both tests.
+
+One assistant performed these responsibilities sequentially. The inputs are
+resolved synthetic facts plus supplied scope, not Oracle metadata or identity
+evidence. Unknown inclusion, invalid facts and cursor requests fail explicitly.
+The helper does not decide cancellation, time zones or actual source overrides;
+it does not generate a fake cursor/HTTP success envelope. No AppModule wiring,
+business endpoint, SQL, driver, live partner call or legacy change was made.
+
+Executed evidence: 22 isolated personal-shifts tests plus two API foundation
+regressions passed; strict workspace type checks and both production builds
+passed. Lint initially caught an imprecise numeric literal in a rejection fixture;
+it was corrected and targeted lint/retest passed. Frontend tests/browser checks
+were not rerun because no frontend behavior changed.
+
+This partially advances the R01 fixture/rule foundation and R04 projection
+preparation; it is not an implemented Oracle projection, G3 parity result or
+business acceptance. Section 11's user/ARC/SEC/DBA prerequisites still block the
+connected slice. The [root README](../readme.md) and technical-design Section
+10.3.2 record the exact distinction.
+
+## 13. Operational Oracle Adapter, No Live Execution
+
+Task ID: SHF-ORACLE-READONLY-20261013. Status: done for real adapter implementation
+and offline checks; connected personal-shifts business reads remain blocked.
+
+The user requested real Oracle access, confirmed the target is production/shared,
+and explicitly selected **no live checks; implement the adapter without connecting**.
+No credential is included in this plan. The target alias is configured externally;
+its Oracle Net resolution, exact service/version/grants and approved read scope
+have not been verified. No connection, metadata or business SELECT was executed.
+
+Implemented:
+
+- [Configuration](../apps/api/src/oracle/configuration.ts): explicit enablement,
+  externally supplied credentials/TNS directory, no write mode or provider URL.
+- [Real read-only adapter](../apps/api/src/oracle/read-only-database.ts): lazy
+  private bounded Thin pool, only fixed connectivity/shift-column metadata SELECTs,
+  read-only transactions, rollback/release/drop, redacted errors and drained close.
+- [Nest registration](../apps/api/src/oracle/oracle.module.ts) and
+  [manual check](../apps/api/src/oracle/check.ts): no startup connection, no
+  business HTTP endpoint; manual real check remains disabled/not authorized.
+- [Offline tests](../apps/api/test/oracle-read-only.test.ts): isolated doubles,
+  not partner/Oracle simulation presented as real results.
+- Existing dependency manifests and root lockfile: node-oracledb 26.0.0,
+  @types/oracledb 7.0.3, and explicit check command.
+
+Evidence: 20 Oracle adapter tests plus the existing 24 backend tests passed,
+root lint/workspace types/both builds passed, actual driver import confirmed
+Thin mode offline, and the disabled CLI returned `ORACLE_DISABLED`/exit 1.
+Frontend behavior is unchanged. Actual database transaction enforcement, network,
+metadata, authentication and personal-shift parity are NOT RUN.
+
+No production mutation, business row read, metadata discovery, secret file,
+schema/grant change, Thick-mode fallback, transport or batch work was introduced.
+The supplied account's privileges are unknown; DBA should approve an existing
+least-privilege account and read window before activation. An environment flag
+does not constitute approval. SEC identity and DBA mapping/cancellation/time-zone
+proof still block the real business slice; the adapter is R03 foundation only.
+
+Final offline reproducibility check: clean `npm ci` and full `npm run check`
+passed, including 44 backend and three frontend tests (47 total), lint, strict
+types and both production builds. Five dependency install-script review warnings
+were reported without adding script approvals. Scoped documentation validation
+passed five JSON examples, 1,137 local links and 776 source references. All live
+Oracle checks remain NOT RUN in accordance with the user's explicit choice.
+
+## 14. Diagnostic Attempt and Approved Stub Redirect
+
+Task IDs: SHF-ORACLE-METADATA-20261013 (blocked), SHF-STUB-API-20261013.
+The user later explicitly authorized one connectivity and three-table column
+metadata diagnostic, without business rows or writes. Bounded local Oracle
+configuration searches found no TNS entry; the user supplied an Easy Connect
+address. A secure local credential prompt was used; no password was stored.
+
+The first VS Code shell task lost nested quoting and failed with ORACLE_DISABLED
+before any connection. A file-based PowerShell prompt fixed that invocation.
+The subsequent approved live attempt failed with **NJS-530 (host not found)**.
+The metadata step did not run; no business read or mutation occurred. DBA/network
+ownership of the correct reachable target remains the named blocker.
+
+The user then explicitly requested **stub data API responses**. This authorizes
+an opt-in synthetic read API, not real identity/Oracle/partner behavior:
+
+- [Stub module](../apps/api/src/stub/stub.module.ts) serves `/api/v1/me`,
+  capabilities, bounded personal shifts and scoped detail.
+- [Fixtures](../apps/api/src/stub/fixtures.ts) contain only invented values and
+  dates; personal projection/filter rules are reused.
+- Startup, headers and response bodies label the mode synthetic/unauthenticated.
+  Stub and enabled Oracle modes cannot coexist; no Oracle module is loaded in
+  stub mode, and failed Oracle reads never automatically become stub success.
+- Writes, partner completion and cursor pagination remain unavailable. Default
+  non-stub business routes remain absent; the UI is unchanged.
+- [Tests](../apps/api/test/stub-api.test.ts) cover markers, fixed demo identity,
+  filters, empty/error results, scope/redaction, insufficient-page rejection and
+  absent write routes.
+
+Diagnostic command/orchestrator and the secure prompt/task are retained but not
+rerun after the redirect. The [README](../readme.md) documents exact local stub
+startup and October 2026 fixture dates. No G1, real Oracle parity, identity,
+human UAT or release approval is inferred from synthetic API responses.
+
+Executed checks: full `npm run check` passed lint/types, 53 backend and three
+frontend tests (56 total), and both production builds. Scoped documentation
+validation passed five JSON examples, 1,140 links and 776 source references.
+Loopback HTTP smoke on temporary port 3100 passed: three synthetic shift items,
+explicit unauthenticated identity and no-store/source headers. The temporary
+server was stopped; no Oracle check was retried after the redirect.
+
+## 15. User-Approved Angular Stub Workflow
+
+Task ID: SHF-STUB-UI-20261013. Status: done for the synthetic read-only screen;
+real Oracle/identity/business acceptance remain blocked.
+
+The user explicitly selected implementation of the Angular personal-shifts screen
+with stub data. This scope is a demonstration workflow, not G1 approval of real
+business contracts, identity, database access, writes, partner transport or release.
+The UI responsibility changed only web consumers/tests/configuration and existing
+documentation; shared backend DTOs and API contracts were not changed.
+
+Implemented artifacts:
+
+- [API client](../apps/web/src/app/shifts-api.ts): same-origin read requests,
+  type-only reuse of existing DTOs and runtime rejection of unlabelled, malformed
+  or non-synthetic responses. No browser token/permission authority or fake fallback.
+- [Screen](../apps/web/src/app/personal-shifts.ts) and
+  [template](../apps/web/src/app/personal-shifts.html): Hebrew/RTL read-only
+  table/detail, inclusive date controls, one-to-31-day bounds, fixed October 2026
+  demo defaults, explicit loading/empty/error/retry states and preserved dates.
+- [Styles](../apps/web/src/app/personal-shifts.scss): logical layout, bounded
+  scrollable semantic table and responsive detail/filter controls.
+- [Proxy](../apps/web/proxy.conf.json): local Angular development `/api/**` to
+  port 3000; no CORS expansion or infrastructure/deployment change.
+- [Tests](../apps/web/src/app/personal-shifts.spec.ts): identity/capability gate,
+  calendar conversion, empty/failure distinction, malformed data rejection,
+  detail/redaction, stale request cancellation, invalid bounds and detail failure.
+  Existing shell tests were adapted to the actual HTTP-backed demo.
+
+Executed evidence: `npm run check` passed lint, strict workspace/templates,
+53 backend and 11 frontend tests (64 total), and both production builds.
+Browser checks used the updated UI at port 4201 because 4200 was already occupied.
+Port 3000 was also occupied by an existing API; its explicit synthetic and
+unauthenticated responses were verified before reuse. Neither existing user
+process was stopped. The temporary UI server was stopped after validation.
+
+Browser checks passed initial three shifts through the real local proxy, split
+details, skip-link/main focus, detail heading/row focus restoration,
+1280/768/320 CSS pixel page reflow and 200% text resizing. Empty and invalid
+filters, first-invalid-field focus, a browser-injected synthetic 503, retained
+dates and retry recovery passed. The expected injected 503 resource error is not
+a real Oracle failure. Manual Hebrew assistive-technology assessment, full AA
+conformance, real business parity and stakeholder UAT remain NOT RUN.
+
+No Oracle connection was attempted in this step; no write/partner/batch action
+or production capability was enabled. The next safe milestone is user review of
+the demonstrated workflow and selecting the next synthetic read capability.

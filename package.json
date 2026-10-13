@@ -13,7 +13,10 @@
   "packageManager": "npm@11.19.0",
   "scripts": {
     "dev:api": "npm start --workspace=@shf/api",
+    "dev:api:stub": "npm run start:stub --workspace=@shf/api",
     "dev:web": "npm start --workspace=shf-web",
+    "oracle:check": "npm run oracle:check --workspace=@shf/api",
+    "oracle:inspect-shifts": "npm run oracle:inspect-shifts --workspace=@shf/api",
     "build": "npm run build --workspaces",
     "typecheck": "npm run typecheck --workspaces",
     "test": "npm test --workspaces",
