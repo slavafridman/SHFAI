@@ -313,7 +313,7 @@ This is a fixed demo identity, not login or authorization evidence.
 | --- | --- |
 | `GET /api/v1/me` | Synthetic identity `00000001`; no authentication. |
 | `GET /api/v1/me/capabilities` | Demo reads only; writes/previews and integration unavailable. |
-| `GET /api/v1/me/shifts?from=2026-10-14&toExclusive=2026-10-18` | Three permitted synthetic shifts: baseline, split/home-work override and reassignment with redacted baseline. |
+| `GET /api/v1/me/shifts?from=2026-10-14&toExclusive=2026-10-18` | Five permitted synthetic shifts: baseline, split/home-work override, incoming reassignment, overnight and unknown/null values. |
 | `GET /api/v1/shifts/9007199254740993` | Scoped synthetic detail. Foreign, excluded and missing IDs return the same 404 problem. |
 
 Fixtures are fixed to October 14-17, 2026; other valid date ranges can return an
@@ -339,6 +339,21 @@ invalid and dependency-failure states, retains dates on failure, suppresses
 superseded reads and restores focus after closing details. It performs no write
 or real authentication; the real-mode API remains unavailable for business reads.
 The [web README](apps/web/README.md) explains the demo workflow and testing limits.
+
+The expanded fixtures retain October 14-17, 2026. Overnight shift
+`9007199254740998` starts October 16 at 23:00 and ends October 17 at 06:00;
+filtering October 17 alone does not include it merely because it ends that day.
+Shift `9007199254740999` has unknown site/activity/home-work/split data, displayed
+as `לא ידוע` rather than false or zero. Incoming reassignment hides the original
+owner; outgoing reassignment `9007199254741000` is absent and returns the same
+404 detail problem as a missing shift. Foreign and excluded fixtures stay hidden.
+UI detail labels now include start times to distinguish shifts on the same day.
+
+The latest edge-case check passes **56 backend and 14 frontend tests (70 total)**,
+lint, strict types/templates and both builds. Browser verification with isolated
+updated stub/UI servers covered overnight/null/reassignment detail, keyboard focus,
+start-date filtering, 320/768/1280 CSS pixel reflow and 200% text resizing. These
+are synthetic proofs, not Oracle, real authorization or business acceptance.
 
 Latest UI verification: full `npm run check` passed **53 backend and 11 frontend
 tests (64 total)**, lint, strict types/templates and both builds. Browser checks

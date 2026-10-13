@@ -58,6 +58,36 @@ synthetically injected dependency failure and retry, skip-link/detail focus,
 320/768/1280 CSS pixel reflow and 200% text resizing. Manual Hebrew screen-reader
 and full WCAG assessment remain not run.
 
+## Expanded Edge Fixtures
+
+The default range now returns five permitted synthetic shifts:
+
+| ID | Demonstration |
+| --- | --- |
+| `9007199254740993` | Original October 14 daytime shift. |
+| `9007199254740994` | October 15 split/home-work override. |
+| `9007199254740995` | October 16 incoming reassignment with redacted baseline. |
+| `9007199254740998` | October 16 23:00 through October 17 06:00, local wall times. |
+| `9007199254740999` | October 17 unknown/null site, activity, home-work and split fields; no baseline. |
+
+Foreign-owner, excluded and outgoing-reassignment fixtures are not listed.
+The table marks an end on a different date, and detail displays complete local
+start/end values without calculating an instant/duration. Nulls display
+`לא ידוע`, not false or a literal null. A missing baseline is distinguished from
+one redacted by demo scope. The client rejects contradictory responses that claim
+a hidden baseline while still supplying its values.
+
+Same-date detail actions include the start time in their Hebrew accessible name.
+Single-result announcements use singular Hebrew. Read-only and synthetic labels
+remain visible; no real authorization or business rules have been enabled.
+
+Latest checks: 14 Angular tests and 56 backend tests passed (70 total), full
+lint/types/builds passed. Browser verification covered overnight and null detail,
+redaction, opening/closing focus, start-date inclusion, 320/768/1280 reflow and
+200% text resizing on updated isolated local servers. A transient browser click
+timeout and an unavailable page interrupted initial attempts; fresh-page
+self-contained checks passed. No accessibility certification is claimed.
+
 Accessibility acceptance includes keyboard access to the skip link, focus on the
 main landmark, no horizontal overflow at 320 CSS pixels or 200% text resizing,
 visible focus, readable contrast and Hebrew screen-reader assessment. Automated

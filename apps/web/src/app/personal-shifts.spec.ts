@@ -172,4 +172,85 @@ describe('Personal shifts synthetic HTTP workflow', () => {
     expect(element.querySelectorAll('tbody tr').length).toBe(1);
     expect(element.textContent).toContain('אינם זמינים');
   });
+
+  it('displays overnight local end date in the table and detail without browser-zone conversion', async () => {
+    const overnight: PersonalShiftItem = {
+      ...shift, id: '9007199254740998', projection: 'baseline',
+      effective: {
+        ...shift.effective, startLocal: '2026-10-16T23:00:00', endLocal: '2026-10-17T06:00:00',
+        workFromHome: false, split: { enabled: false, gapStartLocal: null, gapEndLocal: null },
+      },
+    };
+    const fixture = start();
+    initialize().flush(list([overnight]));
+    await fixture.whenStable();
+    const element: HTMLElement = fixture.nativeElement;
+    const row = element.querySelector('tbody tr');
+    expect(row?.textContent).toContain('2026-10-16');
+    expect(row?.textContent).toContain('2026-10-17 06:00:00');
+    expect(row?.textContent).toContain('סיום ביום אחר');
+    expect(element.querySelector(`#shift-detail-${overnight.id}`)?.getAttribute('aria-label'))
+      .toBe('פרטי משמרת 2026-10-16 בשעה 23:00');
+    element.querySelector<HTMLButtonElement>(`#shift-detail-${overnight.id}`)?.click();
+    http.expectOne(`/api/v1/shifts/${overnight.id}`).flush({
+      ...marker, item: overnight, fetchedAt: '2026-10-13T11:00:00Z', businessTimeZone: 'Asia/Jerusalem',
+    });
+    await fixture.whenStable();
+    expect(element.querySelector('.detail')?.textContent).toContain('2026-10-16T23:00:00');
+    expect(element.querySelector('.detail')?.textContent).toContain('2026-10-17T06:00:00');
+  });
+
+  it('renders nullable flags and codes as unknown, not false, and missing baseline distinctly', async () => {
+    const unknown: PersonalShiftItem = {
+      ...shift, id: '9007199254740999', baselineAvailability: 'not-present',
+      effective: {
+        ...shift.effective, siteId: null, activityId: null, workFromHome: null,
+        split: { enabled: null, gapStartLocal: null, gapEndLocal: null },
+      },
+    };
+    const fixture = start();
+    initialize().flush(list([unknown]));
+    await fixture.whenStable();
+    const element: HTMLElement = fixture.nativeElement;
+    expect(element.querySelector('tbody tr')?.textContent).toContain('לא ידוע');
+    expect(element.querySelector('[role="status"]')?.textContent).toContain('נטענה משמרת הדגמה אחת');
+    element.querySelector<HTMLButtonElement>(`#shift-detail-${unknown.id}`)?.click();
+    http.expectOne(`/api/v1/shifts/${unknown.id}`).flush({
+      ...marker, item: unknown, fetchedAt: '2026-10-13T11:00:00Z', businessTimeZone: 'Asia/Jerusalem',
+    });
+    await fixture.whenStable();
+    const detail = element.querySelector('.detail');
+    const values = [...(detail?.querySelectorAll('dd') ?? [])].map(value => value.textContent?.trim());
+    expect(values.filter(value => value === 'לא ידוע').length).toBe(4);
+    expect(values).not.toContain('לא');
+    expect(detail?.textContent).toContain('אין תכנון מקורי זמין');
+    expect(detail?.textContent).not.toContain('פער בין חלקי המשמרת');
+    expect(detail?.textContent).not.toContain('null');
+    expect(detail?.textContent).not.toContain('undefined');
+  });
+
+  it('does not display reassignment baseline data or the original employee identity', async () => {
+    const incoming = { ...shift, id: '9007199254740995' };
+    const fixture = start();
+    initialize().flush(list([incoming]));
+    await fixture.whenStable();
+    const element: HTMLElement = fixture.nativeElement;
+    element.querySelector<HTMLButtonElement>(`#shift-detail-${incoming.id}`)?.click();
+    http.expectOne(`/api/v1/shifts/${incoming.id}`).flush({
+      ...marker, item: incoming, fetchedAt: '2026-10-13T11:00:00Z', businessTimeZone: 'Asia/Jerusalem',
+    });
+    await fixture.whenStable();
+    expect(element.querySelector('.detail')?.textContent).toContain('התכנון המקורי אינו מוצג');
+    expect(element.textContent).not.toContain('00000002');
+
+    element.querySelector<HTMLButtonElement>('button[type="submit"]')?.click();
+    http.expectOne(request => request.url === '/api/v1/me/shifts').flush(list([{
+      ...incoming, baseline: { ...incoming.effective, employeeId: '00000002' },
+    }]));
+    await fixture.whenStable();
+    expect(element.querySelector('tbody')).toBeNull();
+    expect(element.querySelector('.detail')).toBeNull();
+    expect(element.textContent).toContain('תגובת ההדגמה אינה תקינה');
+    expect(element.textContent).not.toContain('00000002');
+  });
 });

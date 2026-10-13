@@ -35,10 +35,15 @@ function schedule(value: unknown): value is ShiftSchedule {
 }
 
 function item(value: unknown): value is PersonalShiftItem {
-  return record(value) && typeof value['id'] === 'string' && /^[1-9]\d{0,37}$/.test(value['id'])
+  if (!record(value)) {
+    return false;
+  }
+  const availability = value['baselineAvailability'];
+  const validBaseline = availability === 'available' ? schedule(value['baseline'])
+    : (availability === 'not-authorized' || availability === 'not-present') && value['baseline'] === null;
+  return typeof value['id'] === 'string' && /^[1-9]\d{0,37}$/.test(value['id'])
     && (value['projection'] === 'baseline' || value['projection'] === 'override')
-    && schedule(value['effective']) && (value['baseline'] === null || schedule(value['baseline']))
-    && ['available', 'not-authorized', 'not-present'].includes(String(value['baselineAvailability']));
+    && schedule(value['effective']) && validBaseline;
 }
 
 function metadata(value: Record<string, unknown>): boolean {

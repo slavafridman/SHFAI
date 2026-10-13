@@ -479,3 +479,45 @@ conformance, real business parity and stakeholder UAT remain NOT RUN.
 No Oracle connection was attempted in this step; no write/partner/batch action
 or production capability was enabled. The next safe milestone is user review of
 the demonstrated workflow and selecting the next synthetic read capability.
+
+## 16. Approved Synthetic Edge-Case Expansion
+
+Task ID: SHF-STUB-EDGES-20261013. Status: done for the synthetic fixture/UI test
+scope; real Oracle, identity and business acceptance remain blocked.
+
+The user selected expansion for overnight, unknown/null and reassignment cases.
+Shared API/DTO contracts and pure business mapping rules remain unchanged.
+
+- [Fixtures](../apps/api/src/stub/fixtures.ts) now yield five visible shifts in
+  the existing October 14-17 range. Added overnight and unknown/null examples,
+  plus an outgoing reassignment that is deliberately inaccessible. Original IDs
+  and incoming-reassignment privacy remain stable.
+- [API tests](../apps/api/test/stub-api.test.ts) prove effective-start half-open
+  bounds, next-day end preservation, explicit nulls, list/detail parity and
+  incoming/outgoing owner scope. Missing and inaccessible detail responses agree.
+- [UI](../apps/web/src/app/personal-shifts.html) explicitly marks a different
+  end date, shows full local start/end/home-work detail, distinguishes unknown
+  and missing/redacted baseline, and labels same-day actions with start times.
+  Single-result feedback uses singular Hebrew.
+- [Client guard](../apps/web/src/app/shifts-api.ts) rejects a response supplying
+  baseline values while claiming they are redacted/not-present.
+- [UI tests](../apps/web/src/app/personal-shifts.spec.ts) prove overnight display,
+  four unknown fields, absent unknown split gap, reassignment redaction and
+  fail-closed contradictory baseline data.
+
+Checks: 56 backend plus 14 frontend tests (70 total), lint, strict types/templates
+and both production builds passed. Initial API test registration was accidentally
+nested in a method loop; it was corrected and the same runner passed on retest.
+Final UI labels/grammar were also retested. No test was weakened or excluded.
+
+Browser checks used a new stub on loopback port 3102 and UI on 4202 through a
+temporary session-only proxy, avoiding existing user servers. Five-row load,
+overnight/local detail, four unknown fields, redaction, focus restoration,
+effective-start filtering, 320/768/1280 CSS pixel page reflow and 200% text resize
+passed. Initial shared-page checks were interrupted by a click timeout and an
+unavailable page; self-contained fresh-page checks passed. Both temporary servers
+and the temporary proxy were cleaned up afterward.
+
+No Oracle call, real identity/data, write, partner, batch, schema or deployment
+work occurred. Full Hebrew assistive-technology/UAT and live parity remain
+NOT RUN. Review the expanded demonstration before choosing another capability.

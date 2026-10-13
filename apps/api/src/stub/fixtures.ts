@@ -18,6 +18,12 @@ export function createSyntheticShiftFacts(): readonly unknown[] {
   const split = schedule(employeeA, '2026-10-15');
   const transferred = schedule(employeeB, '2026-10-16');
   const foreign = schedule(employeeB, '2026-10-17');
+  const overnight = {
+    ...schedule(employeeA, '2026-10-16'),
+    startLocal: '2026-10-16T23:00:00',
+    endLocal: '2026-10-17T06:00:00',
+  };
+  const outgoing = schedule(employeeA, '2026-10-16');
   return [
     { id: '9007199254740993', projection: 'baseline', eligibility: 'included', baseline, effective: { ...baseline } },
     {
@@ -33,5 +39,21 @@ export function createSyntheticShiftFacts(): readonly unknown[] {
     },
     { id: '9007199254740996', projection: 'baseline', eligibility: 'included', baseline: foreign, effective: { ...foreign } },
     { id: '9007199254740997', projection: 'baseline', eligibility: 'excluded', baseline, effective: { ...baseline } },
+    {
+      id: '9007199254740998', projection: 'baseline', eligibility: 'included',
+      baseline: overnight, effective: { ...overnight },
+    },
+    {
+      id: '9007199254740999', projection: 'override', eligibility: 'included', baseline: null,
+      effective: {
+        ...schedule(employeeA, '2026-10-17'),
+        siteId: null, activityId: null, workFromHomeFlag: null,
+        split: { flag: null, gapStartLocal: null, gapEndLocal: null },
+      },
+    },
+    {
+      id: '9007199254741000', projection: 'override', eligibility: 'included',
+      baseline: outgoing, effective: { ...outgoing, employeeId: employeeB },
+    },
   ];
 }

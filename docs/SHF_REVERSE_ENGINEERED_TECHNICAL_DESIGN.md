@@ -271,6 +271,11 @@ mapped routes. Not every historical branch was executed or proven reachable.
 
 ### 3.2 Identity and Authorization Contract
 
+For the source trace, profile/activity mapping, organizational expansion,
+proposed login/session contracts and acceptance matrix, see the
+[user login and roles detailed design](SHF_LOGIN_AND_ROLES_DETAILED_DESIGN.md).
+That supplement is a review proposal, not approval to activate authentication.
+
 [LoginAction](../old/SHF/src/bzq/shf/actions/LoginAction.java#L79) sends the requested
 domain identity, an environment-adjusted application code, and client IP to the
 Noga proxy. It copies returned name and general authorization into the form,
@@ -2237,6 +2242,15 @@ full lint/type/build checks and targeted local browser workflows passed;
 real identity/Oracle parity, manual Hebrew screen-reader assessment and business
 UAT are not proven. See
 [UI execution record](plan-shfAiAgentDevelopment.prompt.md#15-user-approved-angular-stub-workflow).
+
+The later user-approved edge expansion adds overnight, null/unknown and outgoing
+reassignment fixtures without changing API/DTO contracts. Five shifts are visible
+in the demo range; outgoing/foreign/excluded rows remain inaccessible. UI tests
+and client guards distinguish unknown flags and missing/redacted baselines, and
+reject contradictory redaction data. The
+[edge execution record](plan-shfAiAgentDevelopment.prompt.md#16-approved-synthetic-edge-case-expansion)
+records 70 passing tests and targeted synthetic browser evidence, not real
+business/Oracle/identity proof.
 
 Require supported pinned runtimes/dependencies, clean type/lint/unit/contract
 checks, zero schema deltas, reviewed existing SQL/PLSQL mappings,

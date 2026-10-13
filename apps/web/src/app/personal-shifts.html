@@ -25,6 +25,7 @@
     @else if (ready() && !error() && !filterError() && items().length === 0) {
       <p>לא נמצאו משמרות בטווח התאריכים שנבחר.</p>
     }
+    @else if (items().length === 1) { <p>נטענה משמרת הדגמה אחת.</p> }
     @else if (items().length) { <p>נטענו {{ items().length }} משמרות הדגמה.</p> }
   </div>
   @if (error()) {
@@ -44,11 +45,16 @@
             <tr>
               <td><bdi dir="ltr">{{ shift.effective.startLocal.slice(0, 10) }}</bdi></td>
               <td><bdi dir="ltr">{{ shift.effective.startLocal.slice(11) }}</bdi></td>
-              <td><bdi dir="ltr">{{ shift.effective.endLocal.slice(0, 10) }} {{ shift.effective.endLocal.slice(11) }}</bdi></td>
+              <td>
+                <bdi dir="ltr">{{ shift.effective.endLocal.slice(0, 10) }} {{ shift.effective.endLocal.slice(11) }}</bdi>
+                @if (shift.effective.startLocal.slice(0, 10) !== shift.effective.endLocal.slice(0, 10)) {
+                  <span class="next-day-note">סיום ביום אחר</span>
+                }
+              </td>
               <td>{{ shift.projection === 'baseline' ? 'תכנון מקורי' : 'שינוי' }}</td>
               <td>{{ flag(shift.effective.workFromHome) }}</td>
               <td><button mat-button type="button" [id]="'shift-detail-' + shift.id"
-                [attr.aria-label]="'פרטי משמרת ' + shift.effective.startLocal.slice(0, 10)"
+                [attr.aria-label]="'פרטי משמרת ' + shift.effective.startLocal.slice(0, 10) + ' בשעה ' + shift.effective.startLocal.slice(11, 16)"
                 (click)="openDetail(shift.id)">פרטי משמרת</button></td>
             </tr>
           }
@@ -66,8 +72,11 @@
       <h3 id="detail-title" #detailHeading tabindex="-1">פרטי משמרת הדגמה</h3>
       <dl>
         <dt>מזהה</dt><dd><bdi dir="ltr">{{ shift.id }}</bdi></dd>
+        <dt>התחלה מקומית</dt><dd><bdi dir="ltr">{{ shift.effective.startLocal }}</bdi></dd>
+        <dt>סיום מקומי</dt><dd><bdi dir="ltr">{{ shift.effective.endLocal }}</bdi></dd>
         <dt>אתר (קוד)</dt><dd><bdi dir="ltr">{{ shift.effective.siteId ?? 'לא ידוע' }}</bdi></dd>
         <dt>פעילות (קוד)</dt><dd><bdi dir="ltr">{{ shift.effective.activityId ?? 'לא ידוע' }}</bdi></dd>
+        <dt>עבודה מהבית</dt><dd>{{ flag(shift.effective.workFromHome) }}</dd>
         <dt>משמרת מפוצלת</dt><dd>{{ flag(shift.effective.split.enabled) }}</dd>
         @if (shift.effective.split.enabled) {
           <dt>פער בין חלקי המשמרת</dt>
