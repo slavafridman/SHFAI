@@ -1,14 +1,14 @@
   Generate agents set for build new project names shifter(SHF) based on old code business logic and materials from /docs folder. Aprogect based on folowing technologies:
   - Server side API level: nodejs. 
   - Client side UI: Newest Angularjs framework and HTML,CSS with MATERIAL 3 elements.
-  - Database: use existing Oracle db shema.
+  - Database: use existing Oracle db shema: jdbc:oracle:thin:@wfmt_host:1526:wfmt.
   - EMS Tibco: For now -only abstract interfaces from API.
   - Batch processess: Temporary excluded from scope of new project  
 
 
 - agent named system_architect to buid right modern information system architecture.
 
-- ui designer to design user interface for shifts manage with design like "https://dribbble.com/shots/27119095-Medical-clinic-staff-management-saas-app".
+- ui designer to design user interface for shifts manage with modern design for staf shifts web  and responcive application design
 
 - server-side-developer to API and business logic backend development.
 

@@ -1,9 +1,11 @@
 param(
     [ValidateSet('Baseline', 'Inventory', 'Config', 'Export', 'Validate')]
-    [string]$Mode = 'Validate'
+    [string]$Mode = 'Validate',
+    [ValidateSet('All', 'CurrentProject')]
+    [string]$DocumentationScope = 'All'
 )
 $ErrorActionPreference = 'Stop'
-$root = Split-Path $PSScriptRoot -Parent
+$root = Join-Path (Split-Path $PSScriptRoot -Parent) 'old'
 $documentPath = Join-Path $PSScriptRoot 'SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md'
 $strutsPath = Join-Path $root 'SHFWeb\WebContent\WEB-INF\struts-config.xml'
 [xml]$struts = [IO.File]::ReadAllText($strutsPath)
@@ -195,7 +197,7 @@ if ($Mode -eq 'Export') {
         $source = 'SHF/src/' + $type.Replace('.', '/') + '.java'
         $label = $type
         if (Test-Path -LiteralPath (Join-Path $root $source)) {
-            $label = '[' + $type + '](../' + $source + ')'
+            $label = '[' + $type + '](../old/' + $source + ')'
         }
         $forwardList = @($route.SelectNodes('forward') | ForEach-Object {
                 $_.GetAttribute('name') + ': ' + $_.GetAttribute('path')
@@ -217,7 +219,7 @@ if ($Mode -eq 'Export') {
         $fields = 'Source not available at expected path'
         $label = $type
         if (Test-Path -LiteralPath (Join-Path $root $source)) {
-            $label = '[' + $type + '](../' + $source + ')'
+            $label = '[' + $type + '](../old/' + $source + ')'
             $text = [IO.File]::ReadAllText((Join-Path $root $source))
             $matches = [regex]::Matches($text, '(?m)^\s*(?:private|protected|public)\s+(?!static\b)([\w<>?,\[\].]+)\s+(\w+)\s*(?:=[^;]*)?;')
             $fields = @($matches | ForEach-Object { $_.Groups[2].Value + ': ' + $_.Groups[1].Value } | Sort-Object -Unique) -join '; '
@@ -245,19 +247,19 @@ if ($Mode -eq 'Export') {
                     if (-not $identifiers.ContainsKey($name)) {
                         $identifiers[$name] = New-Object 'System.Collections.Generic.List[string]'
                     }
-                    $identifiers[$name].Add('[' + $source + ':' + ($index + 1) + '](../' + $source + '#L' + ($index + 1) + ')')
+                    $identifiers[$name].Add('[' + $source + ':' + ($index + 1) + '](../old/' + $source + '#L' + ($index + 1) + ')')
                 }
                 foreach ($match in [regex]::Matches($lines[$index], '(?i)\b(?:FROM|JOIN|INTO|UPDATE)\s+((?:SHF_|WM_)[A-Z0-9_$#]+)\b')) {
                     $name = $match.Groups[1].Value.ToUpperInvariant()
                     if (-not $unqualified.ContainsKey($name)) {
                         $unqualified[$name] = New-Object 'System.Collections.Generic.List[string]'
                     }
-                    $unqualified[$name].Add('[' + $source + ':' + ($index + 1) + '](../' + $source + '#L' + ($index + 1) + ')')
+                    $unqualified[$name].Add('[' + $source + ':' + ($index + 1) + '](../old/' + $source + '#L' + ($index + 1) + ')')
                 }
                 if ($source -match '/model/|/batch/[^/]+\.java$|/servletListenersTasks/') {
                     $method = [regex]::Match($lines[$index], '^\s*public\s+(?:static\s+)?[^=;{}]+\s+(\w+)\s*\(')
                     if ($method.Success) {
-                        $methodRows.Add('| [' + $source + '](../' + $source + '#L' + ($index + 1) + ') | `' + $method.Groups[1].Value + '` |')
+                        $methodRows.Add('| [' + $source + '](../old/' + $source + '#L' + ($index + 1) + ') | `' + $method.Groups[1].Value + '` |')
                     }
                 }
             }
@@ -306,14 +308,54 @@ if ($Mode -eq 'Baseline' -or $Mode -eq 'Validate') {
         throw 'The source does not support the documented response persistence.'
     }
     $required = @(
+        '### 1.3 Current-Stage Requirements and Authority',
         '## 3. API and Application Services',
         '## 4. UI Design',
+        '### 4.6 Current-Stage Screen and State Contracts',
         '## 5. Database and Business Rules',
+        '### 5.7 Target Database Strategy',
         '## 6. Batch Processes',
-        '## 7. Interfaces'
+        '## 7. Interfaces',
+        '### 7.11 API Bridge Design and Current-Stage Abstract Ports',
+        '### 9.5 Proposed Repository and Deployment Boundaries',
+        '### 9.6 Reliable Operation State Machine',
+        '### 9.7 Existing Storage Capabilities and Gaps'
     )
     foreach ($section in $required) {
         if (-not $document.Contains($section)) { throw "Missing section: $section" }
+    }
+    $scope = [regex]::Match($document,
+        '(?s)### 1\.3 Current-Stage Requirements and Authority(.*?)(?=\r?\n## 2\.)')
+    $scopeRequirements = @('REQ-01', 'REQ-02', 'REQ-03', 'REQ-04', 'REQ-05', 'REQ-06')
+    foreach ($requirement in $scopeRequirements) {
+        $requirementPattern = '(?m)^\|\s*' + [regex]::Escape($requirement) + '\s*\|'
+        if ([regex]::Matches($scope.Value, $requirementPattern).Count -ne 1) {
+            throw "Missing or duplicate current-stage requirement: $requirement"
+        }
+    }
+    foreach ($boundary in @('No EMS clients', 'Exclude their code', 'No DDL',
+            'Process memory is not a durable substitute', 'must not return simulated completion')) {
+        if (-not $scope.Value.Contains($boundary)) {
+            throw "Missing current-stage boundary: $boundary"
+        }
+    }
+    $projectJsonFixtures = New-Object 'System.Collections.Generic.List[object]'
+    foreach ($fixture in [regex]::Matches($document, '(?s)```json\r?\n(.*?)\r?\n```')) {
+        try { $projectJsonFixtures.Add(($fixture.Groups[1].Value | ConvertFrom-Json)) }
+        catch { throw ('Invalid project JSON fixture: ' + $_.Exception.Message) }
+    }
+    $bridgeCommand = @($projectJsonFixtures | Where-Object { $_.kind -eq 'MANAGED_BREAKS_CHANGE' })
+    if ($bridgeCommand.Count -ne 1 -or
+        $bridgeCommand[0].shiftId -isnot [string] -or
+        $bridgeCommand[0].legacyTransactionId -isnot [string] -or
+        $bridgeCommand[0].commandId -eq $bridgeCommand[0].shiftId -or
+        $bridgeCommand[0].legacyTransactionId -eq $bridgeCommand[0].shiftId) {
+        throw 'Bridge example must keep command, transaction and shift identifiers distinct and lossless.'
+    }
+    $unavailable = @($projectJsonFixtures | Where-Object { $_.code -eq 'INTEGRATION_NOT_AVAILABLE' })
+    if ($unavailable.Count -ne 1 -or $unavailable[0].status -ne 503 -or
+        $unavailable[0].retryable -ne $false) {
+        throw 'Abstract bridge example must report an unavailable, non-retryable command.'
     }
     $links = [regex]::Matches($document, '\]\((\.\./[^)#]+)(?:#[^)]*)?\)')
     foreach ($link in $links) {
@@ -326,12 +368,25 @@ if ($Mode -eq 'Baseline' -or $Mode -eq 'Validate') {
         Result        = 'PASS'
         Actions       = $struts.SelectNodes('/struts-config/action-mappings/action').Count
         Sections      = $required.Count
+        Requirements  = $scopeRequirements.Count
+        JsonFixtures  = $projectJsonFixtures.Count
         EvidenceLinks = $links.Count
     } | ConvertTo-Json -Compress
 }
 
 if ($Mode -eq 'Validate') {
     $documentationFiles = @(Get-ChildItem -LiteralPath $PSScriptRoot -File -Filter '*.md')
+    if ($DocumentationScope -eq 'CurrentProject') {
+        $projectDocuments = @(
+            'AGENT_INSTRUCTION.md',
+            'SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md',
+            'SHF_SOURCE_CONTRACT_CATALOG.md'
+        )
+        $documentationFiles = @($documentationFiles | Where-Object { $_.Name -in $projectDocuments })
+        if ($documentationFiles.Count -ne $projectDocuments.Count) {
+            throw 'Current-project validation requires the brief, design and source catalog.'
+        }
+    }
     $lineCounts = @{}
     $anchors = @{}
     $linkCount = 0
@@ -417,7 +472,7 @@ if ($Mode -eq 'Validate') {
     $tibcoFixtureCount = 0
     $tibcoRejectionCount = 0
     $tibcoDesignPath = Join-Path $PSScriptRoot 'SHF_TIBCO_DOTNET_INTERFACE_DESIGN.md'
-    if (Test-Path -LiteralPath $tibcoDesignPath -PathType Leaf) {
+    if ($DocumentationScope -eq 'All' -and (Test-Path -LiteralPath $tibcoDesignPath -PathType Leaf)) {
         $tibcoDesign = [IO.File]::ReadAllText($tibcoDesignPath)
         $schemaSet = New-Object System.Xml.Schema.XmlSchemaSet
         $schemaSet.XmlResolver = $null
@@ -494,7 +549,7 @@ if ($Mode -eq 'Validate') {
     $restReferenceCount = 0
     $restOpenApiOperationCount = 0
     $restDesignPath = Join-Path $PSScriptRoot 'SHF_REST_API_DETAILED_DESIGN.md'
-    if (Test-Path -LiteralPath $restDesignPath -PathType Leaf) {
+    if ($DocumentationScope -eq 'All' -and (Test-Path -LiteralPath $restDesignPath -PathType Leaf)) {
         $restDesign = [IO.File]::ReadAllText($restDesignPath)
         $restRequiredSections = @(
             '## 1. Purpose and Design Authority',
@@ -671,7 +726,7 @@ if ($Mode -eq 'Validate') {
     $angularJsonFixtureCount = 0
     $angularNegativeCaseCount = 0
     $angularDesignPath = Join-Path $PSScriptRoot 'SHF_ANGULAR_UI_DETAILED_DESIGN.md'
-    if (Test-Path -LiteralPath $angularDesignPath -PathType Leaf) {
+    if ($DocumentationScope -eq 'All' -and (Test-Path -LiteralPath $angularDesignPath -PathType Leaf)) {
         if (-not (Test-Path -LiteralPath $restDesignPath -PathType Leaf)) {
             throw 'Angular design validation requires the REST design inventory.'
         }
@@ -760,9 +815,14 @@ if ($Mode -eq 'Validate') {
             $angularNegativeCaseCount++
         }
     }
+    $validationResult = 'FULL_VALIDATION_PASS'
+    if ($DocumentationScope -eq 'CurrentProject') { $validationResult = 'CURRENT_PROJECT_VALIDATION_PASS' }
     [pscustomobject]@{
-        Result                      = 'FULL_VALIDATION_PASS'
+        Result                      = $validationResult
+        DocumentationScope          = $DocumentationScope
         Documents                   = $documentationFiles.Count
+        Requirements                = $scopeRequirements.Count
+        ProjectJsonFixtures         = $projectJsonFixtures.Count
         LocalLinks                  = $linkCount
         SourceLineReferences        = $lineReferenceCount
         CapabilityRoutes            = $capabilityRoutes
