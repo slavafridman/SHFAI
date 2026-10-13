@@ -1,1 +1,12 @@
 old/.metadata/.plugins/com.ibm.datatools.db2.cloudscape.driver/SAMPLE/seg0/c20.dat
+
+node_modules/
+dist/
+dist-test/
+.angular/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+.env
+.env.*
+!.env.example

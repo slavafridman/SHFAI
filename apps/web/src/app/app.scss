@@ -1,0 +1,110 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+}
+
+.skip-link {
+  position: fixed;
+  inset-block-start: 0.5rem;
+  inset-inline-start: 0.5rem;
+  z-index: 10;
+  padding: 0.75rem 1rem;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-primary);
+  transform: translateY(-200%);
+
+  &:focus {
+    transform: translateY(0);
+  }
+}
+
+mat-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  block-size: auto;
+  min-block-size: 4rem;
+  padding-block: 1rem;
+  background: var(--mat-sys-surface-container);
+  white-space: normal;
+}
+
+.brand {
+  font-weight: 700;
+}
+
+.environment {
+  margin-inline-start: auto;
+  font: var(--mat-sys-label-large);
+}
+
+main {
+  inline-size: min(100%, 60rem);
+  margin-inline: auto;
+  padding: clamp(1rem, 4vw, 2.5rem);
+  flex: 1;
+}
+
+h1 {
+  margin-block-start: 0;
+  font: var(--mat-sys-headline-medium);
+}
+
+.introduction,
+.scope-note {
+  line-height: 1.7;
+}
+
+mat-card {
+  margin-block: 1.5rem;
+}
+
+mat-card-content {
+  padding-block-start: 1rem;
+}
+
+dl {
+  margin: 0;
+
+  div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 0.5rem 1.5rem;
+    padding-block: 1rem;
+    border-block-end: 1px solid var(--mat-sys-outline-variant);
+  }
+}
+
+dt {
+  font-weight: 700;
+}
+
+dd {
+  margin: 0;
+}
+
+button {
+  min-block-size: 3rem;
+  max-inline-size: 100%;
+  block-size: auto;
+  padding-block: 0.75rem;
+  white-space: normal;
+}
+
+footer {
+  padding: 1rem;
+  text-align: center;
+  font: var(--mat-sys-body-small);
+}
+
+@media (max-width: 36rem) {
+  dl div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .environment {
+    flex-basis: 100%;
+    margin-inline-start: 0;
+  }
+}

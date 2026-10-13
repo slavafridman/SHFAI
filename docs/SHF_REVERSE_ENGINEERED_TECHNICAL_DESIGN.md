@@ -1,7 +1,7 @@
 # Shifter (SHF) New Project Technical Design
 
 Document date: 2026-10-13
-Revision: 2.0 draft, aligned to the current-stage requirements.
+Revision: 2.1 draft, adding the R01 personal-shifts review baseline.
 Status: design for review; architecture, API/UI contracts and release are not approved.
 
 Reading guide:
@@ -28,8 +28,10 @@ The existing Oracle schema must remain unchanged. Batch processes are designed
 for a later stage, but are not part of the current implementation or deployment.
 Existing behavior and proposed behavior must not be treated as the same contract.
 
-This is a documentation-only deliverable. It does not create the application,
-authorize database access, implement a broker transport or deploy any component.
+This design does not authorize database access, broker transport or deployment.
+The user separately approved a local disconnected foundation on 2026-10-13;
+its installed versions and checks are recorded in the [root README](../readme.md).
+That limited approval does not approve this design or its business contracts.
 
 Evidence labels used throughout the document:
 
