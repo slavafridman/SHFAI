@@ -77,6 +77,14 @@
     <p role="alert">לא ניתן לטעון את תצוגת החריגות. יש לרענן את הדף ולנסות שוב.</p>
   }
 
+  @defer (on immediate) {
+    <app-reports />
+  } @placeholder {
+    <p role="status">טוען דוח כוח אדם ותחזית לדוגמה...</p>
+  } @error {
+    <p role="alert">לא ניתן לטעון את תצוגת הדוח. יש לרענן את הדף ולנסות שוב.</p>
+  }
+
   <mat-card appearance="outlined" aria-labelledby="connection-title">
     <mat-card-header>
       <mat-card-title id="connection-title">מצב החיבורים</mat-card-title>

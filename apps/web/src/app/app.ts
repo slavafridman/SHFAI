@@ -11,9 +11,10 @@ import { ShiftPreview } from './shift-preview';
 import { Replacement } from './replacement';
 import { Staffing } from './staffing';
 import { Exceptions } from './exceptions';
+import { Reports } from './reports';
 
 @Component({
-  imports: [MatButtonModule, MatCardModule, MatToolbarModule, PersonalShifts, PersonalMessages, Employees, Operational, Breaks, ShiftPreview, Replacement, Staffing, Exceptions],
+  imports: [MatButtonModule, MatCardModule, MatToolbarModule, PersonalShifts, PersonalMessages, Employees, Operational, Breaks, ShiftPreview, Replacement, Staffing, Exceptions, Reports],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',

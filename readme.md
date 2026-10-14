@@ -204,15 +204,45 @@ Important implementation boundaries:
 
 ## Real Oracle Adapter: Read-Only, Not Activated
 
+Latest full-host Thin retry, 2026-10-14 at 13:05 local (UTC+03:00): the user
+authorized `CTIDBT_WFMT.host:1521/WFMT`, retaining the latest port/service.
+`node-oracledb` 26.0.0 reported `thin: true`. Node hostname lookup returned
+`ENOTFOUND`; the actual secure-prompt Oracle diagnostic failed with **NJS-530**,
+exit 1, before authentication. No metadata/business query ran. The
+[credential-free task](.vscode/tasks.json) now targets this endpoint; no password
+was stored and stub mode remains unchanged.
+
+Earlier Thin-driver retry, 2026-10-14 at 12:54 local (UTC+03:00): the user
+authorized a connectivity-only check to `CTIDBT_WFMT:1521/WFMT` as `SHIFTER`.
+Runtime inspection confirmed `node-oracledb` 26.0.0 with `thin: true`; no Oracle
+Client initialization or Thick fallback was used. The secure-prompt diagnostic
+failed with **NJS-530**, exit 1, consistent with the preceding Node resolver's
+`ENOTFOUND` for this hostname. Listener/authentication and service validity
+remain unverified; no metadata/business query ran. The
+[credential-free task](.vscode/tasks.json) targeted that approved endpoint.
+Stub mode remains unchanged; DBA/network resolution is still required.
+
+Follow-up DNS diagnosis, 2026-10-14: both configured internal IPv4 DNS servers
+returned server failure for the short name `CTIDBT_WFMT`. A control SOA query
+for the configured suffix `bezeq.com` succeeded on the primary server, while
+`CTIDBT_WFMT.bezeq.com` returned NXDOMAIN (name does not exist). This narrows
+the immediate blocker to the supplied host/current DNS namespace, not a missing
+Thin driver or a proven general DNS outage. `CTIDBT_WFMT` may instead be a TNS
+alias; that remains unverified. Process `TNS_ADMIN`/`ORACLE_CONFIG_DIR` are unset,
+and no `tnsnames.ora` exists in the checked repository root, standalone Oracle
+app root or repository `network\admin` directory. These bounded checks do not
+exclude an Oracle Net file elsewhere. Obtain the actual HOST/PORT/SERVICE_NAME
+from a working client or DBA; no network settings or hosts file were changed.
+
 Full-host retry, 2026-10-14 at 08:59: the user supplied `CTIDBT_WFMT.host`.
 One connectivity-only attempt to `CTIDBT_WFMT.host:1521/SHIFTER` again failed
 with **NJS-530 (host not found)** and exit 1. Listener/authentication were not
 reached; credentials/service remain unverified. No metadata/business query ran.
-The credential-free VS Code task now contains this explicitly supplied hostname.
+At that checkpoint, the credential-free VS Code task targeted that hostname.
 Stub mode remains unchanged; a reachable DBA-provided FQDN/IP or corrected
 corporate DNS/VPN context is still required before another authorized attempt.
 
-Latest connectivity attempt, 2026-10-14: the user confirmed
+Earlier connectivity attempt, 2026-10-14: the user confirmed
 `CTIDBT_WFMT:1521/SHIFTER` and authorized one connectivity-only probe with a
 secure local credential prompt. It failed with **NJS-530 (host not found)**,
 exit code 1, before reaching the listener or authenticating. The password and
@@ -316,7 +346,7 @@ identity, verified metadata/mapping, business contracts and data scope are ready
 
 ### Progress and R06 Operational Schedule/Attendance Demo
 
-The [current progress report](docs/plan-shfAiAgentDevelopment.prompt.md#current-progress-snapshot-2026-10-14-after-r08-staffing-preview-demo)
+The [current progress report](docs/plan-shfAiAgentDevelopment.prompt.md#current-progress-snapshot-2026-10-14-after-r09-reporting-demo)
 records the overall plan status. R04/R05 and the new R06 range-read increment
 have working synthetic demos; full architecture/business baselines, trusted
 identity, Oracle mapping/parity and production acceptance are not complete.
@@ -547,6 +577,83 @@ passed; initial bundle remains **431.23 kB**. Browser checks passed suitable/
 blocked/unknown/duplicate, hypothetical zero, unchanged counts, errors/focus,
 narrow layouts and 200% resizing. Oracle, real matching/atomic capacity and
 business acceptance remain pending.
+
+### R09 Read-Only Exceptions and Time-Off
+
+The user approved synthetic full-day/timed exceptions and time-off, with original,
+changed/cancelled provenance. Restart the existing stub API/web commands:
+
+```text
+GET /api/v1/exceptions?from=2026-10-14&toExclusive=2026-10-18&limit=100
+GET /api/v1/exceptions/{id}
+GET /api/v1/employees/00000001/time-off?from=2026-10-14&toExclusive=2026-10-18
+```
+
+The [screen](apps/web/src/app/exceptions.ts) provides Hebrew calendars, full-day/
+timed filters, optional cancelled history, employee time-off and read-only detail.
+Five active demo records are visible; `includeCancelled=true` adds one cancelled
+record. Kind is `all`, `full-day` or `timed`. Date interval is bounded to 31 days,
+limit default 25/max 100; no cursor or scope override is available.
+
+Full-day records carry a business date, not invented midnight timestamps or a
+24-hour UTC duration. Timed intervals retain local start/end (end exclusive),
+including overnight. Filtering uses business/start date, not arbitrary overlap.
+Original and changed planning are distinct; redacted original data does not expose
+a prior owner. Null reasons stay unknown and remarks render as plain text.
+Cancelled history is explicitly non-active; it does not execute cancellation.
+
+Employee `00000001` has two active time-off records and three with history;
+`00000002` has a valid empty time-off list. Foreign-team employee/records are
+hidden and indistinguishable from absent IDs. Category/day/type mappings are
+synthetic—not verified Oracle metadata. There are no cancel, remark update,
+publication, export-producer or partner controls.
+
+Latest checks: **173 tests (87 backend + 86 frontend)**, lint, strict types/
+templates and builds passed; initial bundle **431.70 kB**. Browser checks passed
+full-day/timed/history/original/privacy/null/overnight, calendar/employee filters,
+empty/error/date-retention/retry, focus, narrow layouts and 200% resizing.
+R09 reporting, real Oracle/identity/metadata/parity and acceptance remain pending.
+
+### R09 Bounded Staffing Versus Forecast Report
+
+The approved [report screen](apps/web/src/app/reports.ts) uses the same stub
+startup commands after restarting the API. See the
+[execution record](docs/plan-shfAiAgentDevelopment.prompt.md#29-approved-r09-bounded-staffing-versus-forecast-report)
+for source evidence and current limitations.
+
+```text
+GET /api/v1/reports/staffing-forecast?fromLocal=2026-10-14T08:00:00&toExclusiveLocal=2026-10-14T10:00:00&includeBreaks=true&includeExceptions=true
+```
+
+Choose two Hebrew calendar dates, local times and deduction flags. End is
+exclusive; endpoints must align to quarter-hours and span 15–240 minutes.
+Closed synthetic staffing coverage is October 14 00:00 through October 15
+02:00, 2026; outside it returns an explicit source-unavailable error.
+
+Planned and modified staffing use exact integer overlap minutes per employee.
+Duplicate shifts and overlapping break/exception deductions are merged, not
+counted twice; inactive modified shifts are excluded. Equivalent staff is
+minutes / 15 rounded only for display, not totals or full-bucket headcount.
+Missing demand stays null, distinct from zero. Comparison totals use known
+forecast intervals only, while staffing totals cover the complete requested
+window. No known demand means no comparison summary.
+
+Default 08:00–10:00 shows seven minutes / 0.47 in the first modified interval,
+225/187 available baseline/modified minutes and known-only gaps -15/-53.
+Removing both deductions gives 240/202. Night 23:00–01:00 has 120 minutes;
+18:00–19:00 has entirely unknown forecast. Version/read timestamp are explicit
+synthetic provenance, not an Oracle snapshot. Portable wall-minute parsing is
+shared with the API; no browser Node I/O or real UTC/DST duration is introduced.
+
+Latest full checks: **185 tests (92 backend + 93 frontend)**, lint, strict
+types/templates and builds passed; initial bundle **432.35 kB** below unchanged
+500 kB warning. Focused report tests/lint passed again after stronger fixtures.
+Synthetic browser checks passed metrics/flags/null-zero/overnight/coverage,
+failure/date retention/retry, calendar/keyboard focus, 320/768/1280 reflow and
+200% resizing. Temporary verification servers/proxy were removed.
+No export, publication, batch producer, real forecast, activity weights, write
+or Oracle call exists. R09 real parity, identity, manual accessibility/UAT and
+release remain pending; R10 read-only scope needs separate approval.
 
 ### R05 Employee Skills, Events and Education Demo
 

@@ -2341,6 +2341,29 @@ changed. One hundred sixty-three tests and local browser checks passed.
 Real unit policy, source interval/skill/attendance mapping, atomic capacity and
 business acceptance remain unverified; no legacy apply/sequence code was invoked.
 
+The approved R09 read-only exception/time-off increment is documented in the
+[R09 execution record](plan-shfAiAgentDevelopment.prompt.md#28-approved-r09-read-only-exceptions-and-time-off-demo).
+Date-only full-day records are separate from half-open timed local intervals;
+active-only reads optionally include explicit cancelled history. Source
+[employee exception reads](../old/SHF/src/bzq/shf/model/EmployeeDataModel.java#L1345)
+inform that distinction, not verified Oracle category/day metadata.
+One hundred seventy-three tests and local browser checks passed for interval,
+provenance/redaction/history/null/scope behavior. No cancellation, remark update,
+real database read, reporting producer or partner action was enabled. R09
+reporting and real acceptance remain pending.
+
+The user subsequently approved the bounded synthetic staffing/forecast report.
+The [report execution record](plan-shfAiAgentDevelopment.prompt.md#29-approved-r09-bounded-staffing-versus-forecast-report)
+defines exact per-person union/clipped staff-minutes in quarter-hour buckets,
+separate baseline/modified projections, optional union deductions and known-only
+forecast comparison. This intentionally differs from legacy any-overlap full
+headcount paths and does not establish activity-weight/real forecast parity.
+Missing forecast remains null; source coverage failures are explicit, not fake
+zero staff. One hundred eighty-five tests, local synthetic browser checks and
+build/lint/types passed; initial bundle 432.35 kB. No Oracle, exports, BI/batch
+producer or write was enabled. R09 real mapping/parity, trusted identity,
+manual accessibility/UAT and release remain pending.
+
 Require supported pinned runtimes/dependencies, clean type/lint/unit/contract
 checks, zero schema deltas, reviewed existing SQL/PLSQL mappings,
 authorization/security tests, isolated abstract-port contract tests,

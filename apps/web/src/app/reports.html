@@ -1,0 +1,71 @@
+<section aria-labelledby="report-title">
+  <h2 id="report-title">כוח אדם מול תחזית — דוח הדגמה בלבד</h2>
+  <p>מקור סינתטי נפרד בתרחיש צוות א׳. דקות מדויקות ושקילות ממוצעת, לא נוכחות, שכר או תחזית אמיתית.
+    אין יצוא, פרסום BI, כתיבה או תהליך batch.</p>
+  <p>מקור שיבוצים ידוע בהדגמה: 14.10.2026 ועד 15.10.2026 בשעה 02:00. חלון עד 4 שעות; תכנון ושינויים מחושבים בנפרד.</p>
+  <form [formGroup]="form" (ngSubmit)="load()" aria-label="סינון דוח כוח אדם ותחזית לדוגמה">
+    <mat-form-field><mat-label>תאריך תחילת דוח</mat-label>
+      <input matInput id="report-from-date" [matDatepicker]="fromCalendar" formControlName="fromDate" dir="ltr" aria-describedby="report-error">
+      <mat-datepicker-toggle matIconSuffix [for]="fromCalendar" aria-label="לוח שנה לתחילת דוח" /><mat-datepicker #fromCalendar />
+    </mat-form-field>
+    <mat-form-field><mat-label>שעת תחילת דוח</mat-label>
+      <input matInput id="report-from-time" type="time" step="900" formControlName="fromTime" aria-describedby="report-error">
+    </mat-form-field>
+    <mat-form-field><mat-label>תאריך סיום דוח</mat-label>
+      <input matInput id="report-to-date" [matDatepicker]="toCalendar" formControlName="toDate" dir="ltr" aria-describedby="report-error">
+      <mat-datepicker-toggle matIconSuffix [for]="toCalendar" aria-label="לוח שנה לסיום דוח" /><mat-datepicker #toCalendar />
+    </mat-form-field>
+    <mat-form-field><mat-label>שעת סיום דוח (לא כלולה)</mat-label>
+      <input matInput id="report-to-time" type="time" step="900" formControlName="toTime" aria-describedby="report-error">
+    </mat-form-field>
+    <label><input type="checkbox" formControlName="includeBreaks"> ניכוי הפסקות לדוגמה</label>
+    <label><input type="checkbox" formControlName="includeExceptions"> ניכוי חריגות לדוגמה</label>
+    <button mat-flat-button type="submit" [disabled]="!ready()">הצגת דוח סינתטי</button>
+  </form>
+  <p>סיום אינו כלול. הפסקות וחריגות חופפות מנוכות פעם אחת בלבד; אין משקלי פעילות או חישוב רגעי UTC/שעון קיץ.</p>
+  <p id="report-error" [attr.role]="error() ? 'alert' : null">{{ error() }}</p>
+  @if (error()) { <button mat-stroked-button type="button" (click)="ready() ? load() : connect()">ניסיון נוסף לדוח</button> }
+  @if (loading()) { <p role="status">מחשב דוח הדגמה לקריאה בלבד...</p> }
+  @if (report(); as data) {
+    <p>גרסת מקור: <bdi dir="ltr">{{ data.sourceVersion }}</bdi> · מועד קריאה: <bdi dir="ltr">{{ fetchedAt() }}</bdi>. אינו SCN או צילום מצב מאומת.</p>
+    <p>חלון מוחזר: <bdi dir="ltr">{{ data.query.fromLocal }} – {{ data.query.toExclusiveLocal }}</bdi></p>
+    <p>הפסקות מנוכות: {{ data.query.includeBreaks ? 'כן' : 'לא' }}; חריגות מנוכות: {{ data.query.includeExceptions ? 'כן' : 'לא' }}.</p>
+    <div role="status" aria-live="polite">
+      <p>מספר רבעי שעה: {{ data.intervals.length }}; תחזית ידועה: {{ data.totals.knownForecastIntervals }}; תחזית לא ידועה: {{ data.totals.missingForecastIntervals }}.</p>
+      @if (!data.totals.knownForecastIntervals) { <p>אין מידע תחזית ידוע בהדגמה לטווח זה; לא חושבה השוואת דרישה.</p> }
+    </div>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="טבלת רבעי שעה בדוח סינתטי">
+      <table>
+        <caption>דקות כוח אדם מדויקות — השוואת תכנון ושינויים</caption>
+        <thead><tr><th scope="col">טווח מקומי</th><th scope="col">תכנון ברוטו (דקות)</th><th scope="col">תכנון זמין (דקות)</th>
+          <th scope="col">שינוי ברוטו (דקות)</th><th scope="col">שינוי זמין (דקות)</th>
+          <th scope="col">שקילות שינוי (תצוגה ל־2 ספרות)</th><th scope="col">דרישת תחזית (עובדים)</th>
+          <th scope="col">פער תכנון (דקות)</th><th scope="col">פער שינוי (דקות)</th></tr></thead>
+        <tbody>
+          @for (row of data.intervals; track row.startLocal) {
+            <tr><td><bdi dir="ltr">{{ row.startLocal }}</bdi><br><bdi dir="ltr">{{ row.endExclusiveLocal }}</bdi></td>
+              <td>{{ row.baselineGrossMinutes }}</td><td>{{ row.baselineAvailableMinutes }}</td>
+              <td>{{ row.modifiedGrossMinutes }}</td><td>{{ row.modifiedAvailableMinutes }}</td>
+              <td><bdi dir="ltr">{{ equivalent(row.modifiedAvailableMinutes) }}</bdi></td>
+              <td>{{ row.requiredHeadcount ?? 'לא ידוע' }}</td>
+              <td><bdi dir="ltr">{{ row.baselineGapMinutes ?? 'לא ידוע' }}</bdi></td>
+              <td><bdi dir="ltr">{{ row.modifiedGapMinutes ?? 'לא ידוע' }}</bdi></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <section class="summary" aria-labelledby="report-summary-title">
+      <h3 id="report-summary-title">סיכומי דקות מדויקים — ללא עיגול בחישוב</h3>
+      <p>תכנון ברוטו: {{ data.totals.baselineGrossMinutes }}; זמין: {{ data.totals.baselineAvailableMinutes }}.
+        שינויים ברוטו: {{ data.totals.modifiedGrossMinutes }}; זמין: {{ data.totals.modifiedAvailableMinutes }}.</p>
+      @if (data.totals.knownForecastIntervals) {
+        <p>השוואה לרבעי שעה עם תחזית ידועה בלבד: דרישה {{ data.totals.knownRequiredMinutes }},
+          תכנון זמין {{ data.totals.knownBaselineStaffMinutes }}, שינוי זמין {{ data.totals.knownModifiedStaffMinutes }}.</p>
+        <p>פער תכנון ידוע: <bdi dir="ltr">{{ data.totals.knownBaselineGapMinutes }}</bdi>;
+          פער שינוי ידוע: <bdi dir="ltr">{{ data.totals.knownModifiedGapMinutes }}</bdi>.
+          רבעי שעה ללא תחזית אינם נחשבים לדרישה אפס.</p>
+      }
+    </section>
+    @for (warning of data.warnings; track warning) { <p>{{ warning }}</p> }
+  }
+</section>

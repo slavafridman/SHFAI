@@ -7,7 +7,7 @@ Publication target: d:/AIProjects/SHFAI/docs/SHF_PROJECT_DIRECTIVES.md, ordinary
 
 ## 1. Confirmed Scope And Evidence
 
-### Current Progress Snapshot — 2026-10-14, After R08 Staffing Preview Demo
+### Current Progress Snapshot — 2026-10-14, After R09 Reporting Demo
 
 | Round | Current status | Evidence / next gate |
 | --- | --- | --- |
@@ -19,12 +19,13 @@ Publication target: d:/AIProjects/SHFAI/docs/SHF_PROJECT_DIRECTIVES.md, ordinary
 | R06 | Approved synthetic range-read demo done | Fixed-team schedule/attendance table/detail and calendars; current-instant/live reads, real scope and parity remain pending. No arrival/departure registration or corrections. |
 | R07 | Approved break and shift/split preview demos done / round partial | Pure synthetic calculations and scoped reads; full real policy, attendance/offer eligibility and zero-effect Oracle proof pending. |
 | R08 | Approved replacement and staffing read/preview demos done / round partial | Synthetic outcomes and conditional one-slot counts; full real policy, freshness/precondition/atomic-capacity evidence and acceptance remain pending. |
-| R09–R10 | Planned | Reports, exceptions and admin not implemented. |
+| R09 | Approved exceptions/time-off and bounded report demos done / round partial | Full-day/timed/provenance/history views and exact staffing/forecast minutes; real data/parity, activity weights and acceptance remain pending. |
+| R10 | Planned | Existing-result/admin views and deferred-producer register pending. |
 | R11 | Deferred / gated | No business writes authorized or enabled. |
 | R12–R13 | Pending | Full security/load/assistive-technology/UAT/recovery/release evidence and accountable sign-off pending. |
 
-Latest completed check: 84 backend + 79 frontend tests (163 total),
-lint/types/builds pass; initial UI bundle 431.23 kB. Synthetic browser checks
+Latest completed check: 92 backend + 93 frontend tests (185 total),
+lint/types/builds pass; initial UI bundle 432.35 kB. Synthetic browser checks
 cover responsive RTL, focus, errors and text resizing, not full AA certification.
 The 45–90 active-hour estimate remains provisional; no elapsed delivery date or
 percentage-complete claim is inferred from a working demonstration.
@@ -989,6 +990,87 @@ or partner action ran. Approved R08 demo scope is reviewable; full source-policy
 coverage, actual freshness/atomic capacity, real G4/G5/UAT and release are NOT RUN.
 Next candidate: separately approve R09 read-only exceptions/time-off or bounded
 reporting stubs; no write approval is inferred.
+
+## 28. Approved R09 Read-Only Exceptions and Time-Off Demo
+
+Task ID: SHF-R09-EXCEPTIONS-STUB-20261014. Status: done for approved synthetic
+exceptions/time-off list/detail increment. R09 reporting, real mapping/parity,
+authorization and human acceptance remain pending.
+
+The user explicitly approved full-day/timed records, original/changed/cancelled
+provenance and unknown values. Cancellation, remark update, Oracle access,
+report publication and partner requests remain disabled.
+
+### Source and Explicit Interval Contract
+
+[EmployeeDataModel.populateExceptions](../old/SHF/src/bzq/shf/model/EmployeeDataModel.java#L1345)
+reads timed exception rows and full-day employee-day rows separately, scopes
+effective employee ownership and excludes deleted/cancelled entries. Full-day
+rows use business date/date+1 and a legacy nominal duration. The
+[ExceptionDataModel list](../old/SHF/src/bzq/shf/model/ExceptionDataModel.java#L504)
+scopes employee/unit, timed ranges and cancellation. No cancellation/remark
+method was executed or wrapped as a read.
+
+The architect-owned [DTO](../apps/api/src/stub/exception-contracts.ts) makes
+intervals discriminated: full-day business date with null local start/end, or
+timed local start/end with null business date. Full-day does not mean a verified
+24-hour UTC duration; timed intervals are half-open. Filter semantics are the
+full-day business date or timed-start date within `[from, toExclusive)`, not
+arbitrary overlap. Overnight end is preserved.
+
+Records separate category, status, baseline/override provenance, original interval/
+availability and nullable reason/remark/cancellation reason. Original data may
+be unavailable/redacted and never reveals the prior owner. `time-off` category
+is a synthetic mapping, not verified Oracle day/type metadata.
+
+### Implementation and Evidence
+
+- [Fixtures](../apps/api/src/stub/exception-fixtures.ts) include five active team
+  records and one optional cancelled-history record, with full-day, changed timed,
+  overnight, null fields and redacted original planning. Foreign-unit data is
+  excluded. Fixtures are fresh/immutable and contain no real personal records.
+- [Controller](../apps/api/src/stub/exceptions.controller.ts) exposes
+  `GET /api/v1/exceptions`,
+  `GET /api/v1/exceptions/{id}`, and
+  `GET /api/v1/employees/{id}/time-off`.
+  List reads require bounded calendar dates (maximum 31 days), limit default
+  25/max 100, optional kind and explicit `includeCancelled=true`. Active-only
+  is default, consistent with observed exclusion; optional history is an approved
+  demo extension, not claimed legacy parity. Detail/history reads cause no write.
+  Foreign/missing record/employee responses agree; unsupported scope/cursor
+  selectors rejected and incomplete pages fail explicitly.
+- [Client](../apps/web/src/app/exceptions-api.ts) reuses existing employee scope
+  and date helpers, verifies interval discriminants and dates, range/kind/status/
+  employee/category context, synthetic markers and redaction consistency.
+- [UI](../apps/web/src/app/exceptions.ts) /
+  [template](../apps/web/src/app/exceptions.html) shows Hebrew calendars, interval
+  and history filters, employee time-off mode, original/current detail, explicit
+  null/empty/error/retry, cancelled-not-active labels and focus return. New
+  mode/filter reads cancel old list/detail work; there are no mutation controls.
+- [API tests](../apps/api/test/exceptions.test.ts) and
+  [UI tests](../apps/web/src/app/exceptions.spec.ts) prove date-only full-day
+  shape, timed/overnight start inclusion, original/redacted/history/null behavior,
+  scope, malformed/unmarked/filter-context rejection, read immutability and
+  absent cancellation/remark/write endpoints.
+
+Full `npm run check` passed **87 API + 86 Angular tests (173 total)**,
+lint, strict types/templates and both production builds. Initial UI bundle
+**431.70 kB** stays under unchanged 500 kB warning. The view is an immediate
+deferred chunk with explicit Hebrew loading/error feedback.
+
+Browser verification used updated isolated ports 3112/4212 and a session proxy.
+Five active/six history rows, date-only full-day, distinct changed/original
+planning, redacted prior owner, unknown reason, literal remark text, cancelled-
+not-active detail, calendar keyboard, employee-scoped overnight time-off,
+empty employee and injected 503/date-retention/retry passed. Detail/return
+focus, 1280/768/320 reflow and 200% resizing passed. Temporary servers/proxy
+were cleaned up; existing user processes were preserved.
+
+No Oracle/business data, cancellation, remark update, report publication,
+broker/batch or partner action occurred. Real category/type/schema/permission/
+timezone mapping and business acceptance remain NOT RUN. Next candidate:
+separately approve bounded synthetic reporting/forecast contract and reads to
+continue R09; do not infer an export producer, storage or write permission.
 Final UI labels/grammar were also retested. No test was weakened or excluded.
 
 Browser checks used a new stub on loopback port 3102 and UI on 4202 through a
@@ -1360,3 +1442,109 @@ overflow. The 41 UI tests, full lint and frontend build passed again afterward;
 the initial bundle remains 424.28 kB. Scoped documentation validation passed
 1,152 local links and 778 source-line references. A progress snapshot link typo
 was caught by the broader README anchor check, corrected and passed on retest.
+
+## 29. Approved R09 Bounded Staffing Versus Forecast Report
+
+Task ID: SHF-R09-STAFFING-REPORT-STUB-20261014. Status: done for the explicitly
+approved synthetic read-only report. R09 real mapping/parity and acceptance
+remain pending. Oracle, exports, BI publication, batch producers and writes
+were explicitly excluded and remain disabled.
+
+### Evidence and Deliberate Metric
+
+Read-only source evidence includes
+[partial break deductions](../old/SHF/src/bzq/shf/model/ForecastModel.java#L1330),
+[any-overlap headcount paths](../old/SHF/src/bzq/shf/model/ForecastModel.java#L1806),
+and [modified/exception buckets](../old/SHF/src/bzq/shf/model/ForecastModel.java#L2170).
+These paths do not establish universal legacy parity or deployed behavior.
+The approved demo deliberately calculates exact integer staff-minutes instead
+of crediting a whole person for every partly overlapping bucket.
+
+Within each half-open 15-minute bucket, merge shifts per permitted employee to
+avoid double counting. Clip the union of selected breaks/exceptions to that
+employee's shift union and deduct it once. Modified inactive/cancelled shifts
+are omitted. Baseline and modified projections are separate. Equivalent
+headcount is available minutes / 15, rounded to two decimals for display only;
+totals never sum rounded values. No activity weights or actual/payroll inference.
+
+### Contract and Implementation
+
+```text
+GET /api/v1/reports/staffing-forecast
+  ?fromLocal=2026-10-14T08:00:00
+  &toExclusiveLocal=2026-10-14T10:00:00
+  &includeBreaks=true&includeExceptions=true
+```
+
+Only these four fields are accepted; deduction flags default true. Strict local
+minute strings, quarter-hour boundaries and a 15–240 minute window limit output
+to 16 rows. Closed synthetic staffing coverage is October 14, 2026 00:00 through
+October 15 02:00. Outside coverage returns 503 `REPORT_SOURCE_UNAVAILABLE`,
+not zero staff. Bad query returns 400 `INVALID_REPORT_QUERY`; invalid source or
+unsafe integer arithmetic returns 503 `REPORT_SOURCE_INVALID`.
+
+Version `synthetic-report-source-1` covers three invented team-A employees;
+foreign-team rows are excluded and employee IDs/schedules are not exposed.
+Synthetic/unauthenticated body markers, source header and no-store remain
+mandatory. Missing forecast is null, distinct from explicit zero demand.
+Comparison totals include known-forecast buckets only; full-window staffing
+totals retain all buckets. All-missing demand has no comparison summary.
+
+- [Contracts](../apps/api/src/stub/report-contracts.ts),
+  [fixtures](../apps/api/src/stub/report-fixtures.ts),
+  [calculator](../apps/api/src/stub/report-calculation.ts) and
+  [GET controller](../apps/api/src/stub/reports.controller.ts) implement the
+  bounded aggregate without writes, reservations or allocated operation IDs.
+- [Client](../apps/web/src/app/reports-api.ts) verifies source/scope, query echo,
+  safe integer fields, contiguous quarter coverage and all recomputed totals.
+- [Screen](../apps/web/src/app/reports.ts) /
+  [template](../apps/web/src/app/reports.html) provides two Hebrew calendars,
+  time/checkbox filters, semantic table, provenance, precise summaries and
+  loading/error/retry. Superseding reads cancel earlier work; failures clear
+  stale data but retain dates. Invalid inputs focus their associated field.
+- Both sides deliberately reuse the existing portable
+  [wall-minute helper](../apps/api/src/personal-shifts/wall-time.ts). Its browser
+  import has no Node I/O/dependencies and does not turn wall minutes into real
+  Oracle instants or DST-aware paid duration.
+
+### Executed Verification
+
+[API tests](../apps/api/test/report-calculation.test.ts) cover exact partial
+overlap, union deductions, duplicate employee shifts, full-day unavailability,
+flags, totals, midnight, bounds, unsafe source arithmetic and immutable GET.
+[UI tests](../apps/web/src/app/reports.spec.ts) cover capability gating, seven
+minutes / 0.47 display, null versus zero, all-missing comparison, deduction
+filters, wrong query/scope/order/coverage/totals/types, invalid date/quarter/
+four-hour bounds, unmarked responses, cancellation and error retention.
+
+Full `npm run check` passed **92 backend + 93 frontend tests (185 total)**,
+lint, strict types/templates and both builds. Final strengthened UI guard/input
+tests were retested separately: seven report tests and full lint passed.
+Initial production bundle **432.35 kB**, below unchanged 500 kB warning.
+Reporting is the ninth immediate deferred feature with explicit loading/error.
+
+Default 08:00–10:00 yields first modified interval exactly seven minutes;
+baseline gross/available 240/225, modified 202/187. Seven known and one missing
+forecast bucket yield known demand 210, known baseline/modified 195/157 and
+known gaps -15/-53. Both deductions off yields 240/202 available minutes.
+23:00–01:00 yields 120 available minutes and zero known gap. 18:00–19:00 has
+unknown forecast throughout, not zero demand.
+
+Browser checks on isolated ports 3113/4213 verified those values, filters,
+overnight and all-missing ranges, coverage errors, injected 503/date retention/
+retry, invalid-time focus, calendar Escape/focus return, labelled keyboard
+table region, 320/768/1280 reflow and 200% text resizing. Initial UI responsiveness
+probe preceded dev compilation; retry after startup confirmed HTTP 200 for
+API/UI/proxy, synthetic source and no-store. Screenshot inspection performed.
+Temporary servers and named session proxy were removed; user processes and
+unrelated Oracle application work were preserved.
+
+Current-project design validation passed 1,161 local links and 780 source-line
+references. Separate README/plan checks passed 230 local links and 46 fragments,
+including the updated progress anchor. `git diff --check` passed.
+
+No Oracle or business-data read, export, BI/batch execution, schema change,
+partner call, deployment or write occurred. Real forecast/staff mapping,
+weights/timezone rules, identity, manual Hebrew assistive technology, UAT and
+release are NOT RUN. Next candidate: separately approve R10 existing-result/
+administrative read-only scope; no producer or command permission is inferred.

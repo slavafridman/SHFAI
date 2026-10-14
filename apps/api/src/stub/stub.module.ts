@@ -10,6 +10,7 @@ import { StubShiftPreviewsController } from './shift-previews.controller.js';
 import { StubReplacementController } from './replacement.controller.js';
 import { StubStaffingController } from './staffing.controller.js';
 import { StubExceptionsController } from './exceptions.controller.js';
+import { StubReportsController } from './reports.controller.js';
 
 const scope = { actorEmployeeId: '00000001', canViewBaseline: false };
 
@@ -46,6 +47,10 @@ export class StubController {
         write: { enabled: false, reason: 'READ_ONLY_STUB' },
       },
       integrationAvailable: false,
+      reports: {
+        read: { enabled: true, reason: 'SYNTHETIC_METRIC_ONLY' },
+        write: { enabled: false, reason: 'READ_ONLY_STUB' },
+      },
       exceptions: {
         read: { enabled: true, reason: 'SYNTHETIC_SCENARIO_ONLY' },
         write: { enabled: false, reason: 'READ_ONLY_STUB' },
@@ -136,5 +141,5 @@ export class StubController {
   }
 }
 
-@Module({ controllers: [StubController, StubEmployeesController, StubOperationalController, StubBreaksController, StubShiftPreviewsController, StubReplacementController, StubStaffingController, StubExceptionsController] })
+@Module({ controllers: [StubController, StubEmployeesController, StubOperationalController, StubBreaksController, StubShiftPreviewsController, StubReplacementController, StubStaffingController, StubExceptionsController, StubReportsController] })
 export class StubModule {}

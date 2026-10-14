@@ -10,9 +10,9 @@
         "-File",
         "${workspaceFolder}\\scripts\\Invoke-ShfOracleMetadata.ps1",
         "-ConnectString",
-        "CTIDBT_WFMT.host:1521/SHIFTER",
+        "CTIDBT_WFMT.host:1521/WFMT",
         "-UserName",
-        "shifter",
+        "SHIFTER",
         "-ConnectivityOnly"
       ],
       "options": {

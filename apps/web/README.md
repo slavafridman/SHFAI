@@ -1,5 +1,65 @@
 # SHF Web Synthetic Personal Workspace
 
+Latest R09 increment: [staffing versus forecast](src/app/reports.ts) adds a
+bounded aggregate report with two Hebrew calendars, local times and break/
+exception switches. Use the existing stub startup commands/proxy after an API
+restart. Default October 14, 2026 08:00–10:00 returns eight 15-minute rows.
+
+Exact integer staff-minutes are calculated from per-employee shift unions and
+clipped deduction unions; overlapping deductions count once. Baseline and
+modified staffing remain separate, with cancelled modified shifts excluded.
+Equivalent staff is minutes / 15 to two display decimals only. First modified
+interval has exactly seven minutes / 0.47, not one whole staff member.
+Default baseline/modified available totals are 225/187; disabling deductions
+gives 240/202. Forecast null is unknown, not zero. Known-only comparison gives
+gaps -15/-53; all-missing demand hides the comparison summary.
+
+Quarter-aligned exclusive-end windows must span 15–240 minutes and remain in
+closed synthetic staffing coverage October 14 00:00 through October 15 02:00.
+Night 23:00–01:00 returns 120 available minutes. 18:00–19:00 has entirely
+unknown forecast. Coverage failures do not manufacture zero staffing. Read
+timestamp/source version are demo provenance, not a real Oracle snapshot.
+
+The [client](src/app/reports-api.ts) checks synthetic/source/scope/query markers,
+contiguous coverage, safe integers and exact recomputed totals. The portable
+[wall-minute helper](../api/src/personal-shifts/wall-time.ts) is reused without
+Node I/O; these local wall minutes are not UTC/DST-aware durations.
+Invalid fields receive focus, superseded reads cancel, and errors clear stale
+reports while preserving input. The semantic wide table scrolls inside its
+labelled keyboard-focusable region. No export/publication/save action exists.
+
+Latest full checks: 93 Angular + 92 API tests (185 total), lint/types/builds
+passed; initial bundle 432.35 kB under unchanged 500 kB warning. Seven focused
+report tests and lint passed again after strengthening invalid-response/input
+cases. Synthetic browser metrics/flags/unknown/zero/overnight/coverage/error/
+retry/calendar/focus, 320/768/1280 reflow and 200% resize checks passed.
+Real forecast/Oracle/identity/weights, manual Hebrew assistive-technology, full
+WCAG conformance, UAT and release remain unverified.
+
+Latest R09 view: [exceptions/time-off](src/app/exceptions.ts) adds Hebrew calendar,
+full-day/timed and cancelled-history filters, plus scoped employee time-off mode.
+Use existing stub startup commands/proxy after restarting the API.
+
+Full-day is a date-only business record, not a 24-hour UTC duration. Timed records
+have explicit half-open local intervals; overnight end dates are not converted to
+browser time. Original/current planning and original redaction stay distinct.
+Cancelled entries require an explicit history filter and are labelled non-active.
+Five active/six history fixtures demonstrate unknown reasons and literal remarks.
+Employee B has an empty time-off example; A has active and overnight records.
+
+Typed discriminants/context and synthetic markers are checked before display.
+Wrong date range, kind, employee/category, hidden original or invented full-day
+timestamp responses are rejected. Mode/filter replacement cancels old list/detail
+reads; errors retain date inputs and detail close restores row focus. No cancellation,
+remark update, reporting/export producer or partner action exists.
+
+Current checks: 86 Angular + 87 API tests (173 total), lint/types/builds passed;
+initial bundle 431.70 kB under unchanged warning budget. Browser checks passed
+interval/history/original/redaction/text/null behavior, calendar and employee
+scope, empty/failure/retry, keyboard focus, 320/768/1280 reflow and 200% resizing.
+Real Oracle metadata, category/day mapping, permission/timezone parity, full
+assistive-technology and UAT remain pending.
+
 The existing staffing card now supports pure candidate eligibility/capacity
 calculations. Open a request, load its candidates and select “חישוב התאמה וקיבולת
 בלבד.” Suitable demo results show hypothetical one-slot counts; full/deadline/
