@@ -1,10 +1,22 @@
 import { Controller, Get, Header, HttpException, Param, Query, UseFilters } from '@nestjs/common';
 import { DEMO_EMPLOYEE_UNIT, syntheticEmployees } from './employee-fixtures.js';
 import { STUB_MARKER, stubProblem, StubProblemFilter } from './stub-http.js';
+import { syntheticEmployeeRecords } from './employee-records.js';
 
 @Controller('api/v1/employees')
 @UseFilters(StubProblemFilter)
 export class StubEmployeesController {
+  private requireEmployee(id: string) {
+    if (!/^\d{1,128}$/.test(id)) {
+      throw new HttpException(stubProblem(400, 'INVALID_QUERY', 'מזהה העובד אינו תקין.'), 400);
+    }
+    const item = syntheticEmployees().find(employee => employee.id === id && employee.orgUnit.id === DEMO_EMPLOYEE_UNIT);
+    if (!item) {
+      throw new HttpException(stubProblem(404, 'EMPLOYEE_NOT_FOUND', 'כרטיס העובד אינו זמין להצגה.'), 404);
+    }
+    return item;
+  }
+
   @Get()
   @Header('Cache-Control', 'no-store')
   @Header('X-SHF-Data-Source', 'synthetic-stub')
@@ -32,10 +44,32 @@ export class StubEmployeesController {
     if (!/^\d{1,128}$/.test(id) || Object.keys(query).length > 0) {
       throw new HttpException(stubProblem(400, 'INVALID_QUERY', 'מזהה העובד או הבקשה אינם תקינים.'), 400);
     }
-    const item = syntheticEmployees().find(employee => employee.id === id && employee.orgUnit.id === DEMO_EMPLOYEE_UNIT);
-    if (!item) {
-      throw new HttpException(stubProblem(404, 'EMPLOYEE_NOT_FOUND', 'כרטיס העובד אינו זמין להצגה.'), 404);
-    }
+    const item = this.requireEmployee(id);
     return { ...STUB_MARKER, item, fetchedAt: new Date().toISOString(), businessTimeZone: 'Asia/Jerusalem' };
+  }
+
+  @Get(':id/:section')
+  @Header('Cache-Control', 'no-store')
+  @Header('X-SHF-Data-Source', 'synthetic-stub')
+  records(@Param('id') id: string, @Param('section') section: string, @Query() query: Record<string, unknown>) {
+    if (section !== 'skills' && section !== 'events' && section !== 'education') {
+      throw new HttpException(stubProblem(404, 'EMPLOYEE_SECTION_NOT_FOUND', 'מדור העובד אינו זמין.'), 404);
+    }
+    if (Object.keys(query).some(key => key !== 'limit')) {
+      throw new HttpException(stubProblem(400, 'INVALID_QUERY', 'מסנן מדור העובד אינו תקין.'), 400);
+    }
+    const limit = query['limit'] ?? '25';
+    if (typeof limit !== 'string' || !/^[1-9]\d{0,2}$/.test(limit) || Number(limit) > 100) {
+      throw new HttpException(stubProblem(400, 'INVALID_QUERY', 'מגבלת רשומות אינה תקינה.'), 400);
+    }
+    this.requireEmployee(id);
+    const items = syntheticEmployeeRecords(id, section);
+    if (items.length > Number(limit)) {
+      throw new HttpException(stubProblem(503, 'STUB_PAGINATION_UNAVAILABLE', 'יש להגדיל את מגבלת התוצאות; דפדוף אינו זמין בהדגמה.'), 503);
+    }
+    return {
+      ...STUB_MARKER, employeeId: id, section, items, nextCursor: null,
+      fetchedAt: new Date().toISOString(), businessTimeZone: 'Asia/Jerusalem',
+    };
   }
 }

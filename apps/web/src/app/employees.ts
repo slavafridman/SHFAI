@@ -6,7 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Subscription } from 'rxjs';
-import { EmployeesApi, type DemoEmployee } from './employees-api';
+import { EmployeesApi, type DemoEmployee, type DemoEmployeeRecord, type EmployeeSection } from './employees-api';
 import { StubContractError } from './stub-response';
 
 function errorText(error: unknown): string {
@@ -30,7 +30,13 @@ export class Employees implements OnInit {
   private cardRequest?: Subscription;
   private initialization?: Subscription;
   private selectedId = '';
+  private recordsRequest?: Subscription;
 
+  protected readonly section = signal<EmployeeSection | null>(null);
+  protected readonly records = signal<readonly DemoEmployeeRecord[]>([]);
+  protected readonly recordsLoading = signal(false);
+  protected readonly recordsError = signal('');
+  protected readonly recordsFetchedAt = signal('');
   protected readonly search = new FormControl('', { nonNullable: true, validators: [Validators.maxLength(80)] });
   protected readonly ready = signal(false);
   protected readonly loading = signal(false);
@@ -42,6 +48,38 @@ export class Employees implements OnInit {
   protected readonly fetchedAt = signal('');
 
   ngOnInit(): void { this.connect(); }
+
+  private resetRecords(): void {
+    this.recordsRequest?.unsubscribe();
+    this.section.set(null);
+    this.records.set([]);
+    this.recordsLoading.set(false);
+    this.recordsError.set('');
+    this.recordsFetchedAt.set('');
+  }
+
+  protected sectionLabel(section: EmployeeSection): string {
+    return { skills: 'מיומנויות', events: 'אירועים', education: 'השכלה' }[section];
+  }
+
+  protected openSection(section: EmployeeSection): void {
+    const employee = this.card();
+    if (employee === null) { return; }
+    this.recordsRequest?.unsubscribe();
+    this.section.set(section);
+    this.records.set([]);
+    this.recordsError.set('');
+    this.recordsFetchedAt.set('');
+    this.recordsLoading.set(true);
+    this.recordsRequest = this.api.records(employee.id, section).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: result => {
+        this.records.set(result.items);
+        this.recordsFetchedAt.set(result.fetchedAt);
+        this.recordsLoading.set(false);
+      },
+      error: error => { this.recordsLoading.set(false); this.recordsError.set(errorText(error)); },
+    });
+  }
 
   protected connect(): void {
     this.initialization?.unsubscribe();
@@ -55,6 +93,7 @@ export class Employees implements OnInit {
   }
 
   protected load(): void {
+    this.resetRecords();
     this.listRequest?.unsubscribe();
     this.cardRequest?.unsubscribe();
     this.items.set([]);
@@ -78,6 +117,7 @@ export class Employees implements OnInit {
   }
 
   protected open(id: string): void {
+    this.resetRecords();
     this.cardRequest?.unsubscribe();
     this.selectedId = id;
     this.card.set(null);
@@ -94,6 +134,7 @@ export class Employees implements OnInit {
   }
 
   protected close(): void {
+    this.resetRecords();
     this.cardRequest?.unsubscribe();
     this.card.set(null);
     this.cardLoading.set(false);

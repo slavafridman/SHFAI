@@ -44,7 +44,51 @@
         <dt>תפקיד</dt><dd>{{ employee.jobName ?? 'לא ידוע' }}</dd>
       </dl>
       <p>אין כאן פרטי קשר, כתובת, מספר זהות או מידע על עובד אמיתי.</p>
-      <button mat-stroked-button type="button" (click)="close()">סגירת כרטיס עובד</button>
+      <div class="employee-sections" role="group" aria-label="מדורי כרטיס עובד לדוגמה">
+        <button mat-stroked-button type="button" (click)="openSection('skills')"
+          [attr.aria-pressed]="section() === 'skills'" aria-controls="employee-records">מיומנויות</button>
+        <button mat-stroked-button type="button" (click)="openSection('events')"
+          [attr.aria-pressed]="section() === 'events'" aria-controls="employee-records">אירועים</button>
+        <button mat-stroked-button type="button" (click)="openSection('education')"
+          [attr.aria-pressed]="section() === 'education'" aria-controls="employee-records">השכלה</button>
+      </div>
+      <section id="employee-records" aria-labelledby="employee-records-title">
+        @if (section(); as selected) {
+          <h4 id="employee-records-title">{{ sectionLabel(selected) }} — נתונים סינתטיים בלבד</h4>
+          @if (selected === 'education') {
+            <p>רשומות השכלה מומצאות להדגמת הממשק; אין מקור השכלה או קורסים מאומת.</p>
+          }
+          @if (selected === 'events') {
+            <p>אין אפשרות להוסיף, לבטל או לתקן אירועים.</p>
+          }
+          <div role="status" aria-live="polite">
+            @if (recordsLoading()) { <p>טוען רשומות הדגמה...</p> }
+            @else if (!recordsError() && records().length === 0) { <p>אין רשומות הדגמה במדור זה.</p> }
+            @else if (records().length) { <p>מספר רשומות הדגמה: {{ records().length }}</p> }
+          </div>
+          @if (recordsError()) {
+            <p role="alert">{{ recordsError() }}</p>
+            <button mat-stroked-button type="button" (click)="openSection(selected)">ניסיון נוסף לטעינת המדור</button>
+          }
+          <ul>
+            @for (item of records(); track item.id) {
+              <li>
+                <p><strong><bdi>{{ item.label }}</bdi></strong></p>
+                <p>{{ item.detail ?? 'פרטים לא ידועים' }}</p>
+                @if (item.dateLocal !== null) {
+                  <p>תאריך לדוגמה: <bdi dir="ltr">{{ item.dateLocal }}</bdi></p>
+                } @else { <p>תאריך לא ידוע</p> }
+              </li>
+            }
+          </ul>
+          @if (recordsFetchedAt()) {
+            <p>מועד קריאת המדור: <bdi dir="ltr">{{ recordsFetchedAt() }}</bdi></p>
+          }
+        } @else {
+          <h4 id="employee-records-title">בחירת מדור לקריאה בלבד</h4>
+        }
+      </section>
+      <button mat-stroked-button type="button" class="employee-close" (click)="close()">סגירת כרטיס עובד</button>
     </section>
   }
 </section>

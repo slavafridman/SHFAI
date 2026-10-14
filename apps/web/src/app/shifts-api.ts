@@ -11,7 +11,7 @@ function nullableString(value: unknown): boolean {
   return value === null || typeof value === 'string';
 }
 
-function schedule(value: unknown): value is ShiftSchedule {
+export function isShiftSchedule(value: unknown): value is ShiftSchedule {
   if (!record(value) || !record(value['split'])) {
     return false;
   }
@@ -24,16 +24,16 @@ function schedule(value: unknown): value is ShiftSchedule {
     && (split['gapEndLocal'] === null || local(split['gapEndLocal']));
 }
 
-function item(value: unknown): value is PersonalShiftItem {
+export function isPersonalShiftItem(value: unknown): value is PersonalShiftItem {
   if (!record(value)) {
     return false;
   }
   const availability = value['baselineAvailability'];
-  const validBaseline = availability === 'available' ? schedule(value['baseline'])
+  const validBaseline = availability === 'available' ? isShiftSchedule(value['baseline'])
     : (availability === 'not-authorized' || availability === 'not-present') && value['baseline'] === null;
   return typeof value['id'] === 'string' && /^[1-9]\d{0,37}$/.test(value['id'])
     && (value['projection'] === 'baseline' || value['projection'] === 'override')
-    && schedule(value['effective']) && validBaseline;
+    && isShiftSchedule(value['effective']) && validBaseline;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -59,7 +59,7 @@ export class ShiftsApi {
     return this.http.get<unknown>('/api/v1/me/shifts', { params: { from, toExclusive, limit: '100' } })
       .pipe(map(value => {
         if (!synthetic(value) || !metadata(value) || !Array.isArray(value['items'])
-          || !value['items'].every(item) || value['nextCursor'] !== null) {
+          || !value['items'].every(isPersonalShiftItem) || value['nextCursor'] !== null) {
           throw new StubContractError();
         }
         const response: PersonalShiftList = {
@@ -72,7 +72,7 @@ export class ShiftsApi {
 
   detail(id: string) {
     return this.http.get<unknown>(`/api/v1/shifts/${encodeURIComponent(id)}`).pipe(map(value => {
-      if (!synthetic(value) || !metadata(value) || !item(value['item']) || value['item'].id !== id) {
+      if (!synthetic(value) || !metadata(value) || !isPersonalShiftItem(value['item']) || value['item'].id !== id) {
         throw new StubContractError();
       }
       return value['item'];

@@ -29,6 +29,54 @@
     <p role="alert">לא ניתן לטעון את תצוגת העובדים. יש לרענן את הדף ולנסות שוב.</p>
   }
 
+  @defer (on immediate) {
+    <app-operational />
+  } @placeholder {
+    <p role="status">טוען תצוגה תפעולית לדוגמה...</p>
+  } @error {
+    <p role="alert">לא ניתן לטעון את התצוגה התפעולית. יש לרענן את הדף ולנסות שוב.</p>
+  }
+
+  @defer (on immediate) {
+    <app-breaks />
+  } @placeholder {
+    <p role="status">טוען תצוגת הפסקות לדוגמה...</p>
+  } @error {
+    <p role="alert">לא ניתן לטעון את תצוגת ההפסקות. יש לרענן את הדף ולנסות שוב.</p>
+  }
+
+  @defer (on immediate) {
+    <app-shift-preview />
+  } @placeholder {
+    <p role="status">טוען תצוגת הצעת משמרת לדוגמה...</p>
+  } @error {
+    <p role="alert">לא ניתן לטעון את תצוגת הצעת המשמרת. יש לרענן את הדף ולנסות שוב.</p>
+  }
+
+  @defer (on immediate) {
+    <app-replacement />
+  } @placeholder {
+    <p role="status">טוען תרחיש החלפה לדוגמה...</p>
+  } @error {
+    <p role="alert">לא ניתן לטעון את תרחיש ההחלפה. יש לרענן את הדף ולנסות שוב.</p>
+  }
+
+  @defer (on immediate) {
+    <app-staffing />
+  } @placeholder {
+    <p role="status">טוען תצוגת בקשות כוח אדם לדוגמה...</p>
+  } @error {
+    <p role="alert">לא ניתן לטעון את תצוגת הבקשות. יש לרענן את הדף ולנסות שוב.</p>
+  }
+
+  @defer (on immediate) {
+    <app-exceptions />
+  } @placeholder {
+    <p role="status">טוען חריגות והיעדרויות לדוגמה...</p>
+  } @error {
+    <p role="alert">לא ניתן לטעון את תצוגת החריגות. יש לרענן את הדף ולנסות שוב.</p>
+  }
+
   <mat-card appearance="outlined" aria-labelledby="connection-title">
     <mat-card-header>
       <mat-card-title id="connection-title">מצב החיבורים</mat-card-title>

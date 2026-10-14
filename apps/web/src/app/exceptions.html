@@ -1,0 +1,85 @@
+<section aria-labelledby="exceptions-title">
+  <h2 id="exceptions-title">חריגות והיעדרויות — הדגמה לקריאה בלבד</h2>
+  <p>נתונים סינתטיים בצוות הדגמה א׳. אין ביטול, עדכון הערה, דיווח או בקשת שותף.</p>
+  <div class="modes" role="group" aria-label="בחירת תצוגת חריגות והיעדרויות">
+    <button mat-stroked-button type="button" (click)="changeMode('exceptions')" [attr.aria-pressed]="mode() === 'exceptions'">כל חריגות ההדגמה</button>
+    <button mat-stroked-button type="button" (click)="changeMode('time-off')" [attr.aria-pressed]="mode() === 'time-off'">היעדרויות לעובד לדוגמה</button>
+  </div>
+  <form [formGroup]="filters" (ngSubmit)="load()" aria-label="סינון חריגות והיעדרויות לדוגמה">
+    <mat-form-field>
+      <mat-label>מתאריך חריגות</mat-label>
+      <input matInput id="exception-from" [matDatepicker]="fromCalendar" formControlName="from" dir="ltr" aria-describedby="exception-help exception-error">
+      <mat-datepicker-toggle matIconSuffix [for]="fromCalendar" aria-label="לוח שנה לתחילת טווח חריגות" /><mat-datepicker #fromCalendar />
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>עד לתאריך חריגות</mat-label>
+      <input matInput id="exception-to" [matDatepicker]="toCalendar" formControlName="to" dir="ltr" aria-describedby="exception-help exception-error">
+      <mat-datepicker-toggle matIconSuffix [for]="toCalendar" aria-label="לוח שנה לסיום טווח חריגות" /><mat-datepicker #toCalendar />
+    </mat-form-field>
+    <label for="exception-kind">סוג טווח</label>
+    <select id="exception-kind" formControlName="kind"><option value="all">כל הטווחים</option><option value="full-day">יום מלא</option><option value="timed">טווח שעות</option></select>
+    @if (mode() === 'time-off') {
+      <label for="exception-employee">עובד לדוגמה</label>
+      <select id="exception-employee" formControlName="employeeId">
+        @for (employee of employees(); track employee.id) { <option [value]="employee.id">{{ employee.displayName }} · {{ employee.id }}</option> }
+      </select>
+    }
+    <label class="cancelled-filter"><input type="checkbox" formControlName="includeCancelled"> כולל רשומות מבוטלות לדוגמה</label>
+    <button mat-flat-button type="submit" [disabled]="!ready()">הצגת חריגות והיעדרויות</button>
+  </form>
+  <p id="exception-help">תאריך הסיום כלול; עד 31 ימים בתבנית YYYY-MM-DD. סינון לפי היום העסקי או יום תחילת הטווח.
+    יום מלא אינו חישוב 24 שעות UTC; בטווח שעות הסיום אינו כלול.</p>
+  @if (error()) {
+    <p id="exception-error" role="alert">{{ error() }}</p>
+    <button mat-stroked-button type="button" (click)="ready() ? load() : connect()">ניסיון נוסף לחריגות והיעדרויות</button>
+  }
+  <div role="status" aria-live="polite">
+    @if (loading()) { <p>טוען חריגות והיעדרויות לדוגמה...</p> }
+    @else if (ready() && !error() && !items().length) { <p>אין רשומות הדגמה בטווח או במסנן שנבחר.</p> }
+    @else if (items().length) { <p>מספר רשומות הדגמה: {{ items().length }}</p> }
+  </div>
+  @if (items().length) {
+    <div class="table-scroll" tabindex="0" role="region" aria-label="טבלת חריגות והיעדרויות סינתטיות">
+      <table>
+        <caption>טווחים ומקור הרשומות — תצוגה בלבד</caption>
+        <thead><tr><th scope="col">עובד</th><th scope="col">קטגוריה</th><th scope="col">טווח</th>
+          <th scope="col">מקור</th><th scope="col">מצב</th><th scope="col">פרטים</th></tr></thead>
+        <tbody>
+          @for (item of items(); track item.id) {
+            <tr>
+              <td><bdi>{{ item.employeeName }}</bdi></td>
+              <td>{{ item.category === 'time-off' ? 'היעדרות' : 'חריגה' }}</td>
+              <td>{{ item.interval.kind === 'full-day' ? 'יום מלא' : 'טווח שעות' }}<br><bdi dir="ltr">{{ intervalText(item.interval) }}</bdi></td>
+              <td>{{ item.provenance === 'baseline' ? 'תכנון מקורי' : 'שינוי' }}</td>
+              <td>{{ item.status === 'active' ? 'פעיל בדוגמה' : 'מבוטל בדוגמה — היסטוריה בלבד' }}</td>
+              <td><button mat-button type="button" [id]="'exception-' + item.id" (click)="open(item.id)"
+                [attr.aria-label]="'פרטי רשומה ' + item.id">פרטי רשומה</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  @if (fetchedAt()) { <p>מועד קריאת נתוני ההדגמה: <bdi dir="ltr">{{ fetchedAt() }}</bdi></p> }
+  @if (detailLoading()) { <p role="status">טוען פרטי רשומת הדגמה...</p> }
+  @if (detailError()) { <p role="alert">{{ detailError() }}</p> }
+  @if (detail(); as item) {
+    <section class="exception-detail" aria-labelledby="exception-detail-title">
+      <h3 id="exception-detail-title" tabindex="-1">פרטי חריגה או היעדרות לדוגמה</h3>
+      <p><bdi>{{ item.employeeName }}</bdi> · <bdi dir="ltr">{{ item.id }}</bdi></p>
+      <p>טווח מוצג: <bdi dir="ltr">{{ intervalText(item.interval) }}</bdi></p>
+      @if (item.originalInterval; as original) {
+        <p>טווח תכנון קודם: <bdi dir="ltr">{{ intervalText(original) }}</bdi></p>
+      } @else if (item.originalAvailability === 'not-authorized') {
+        <p>תכנון קודם אינו מוצג בהרשאות ההדגמה; אין חשיפת בעלים קודם.</p>
+      } @else { <p>אין גרסת תכנון קודמת נפרדת.</p> }
+      <p>סיבה: {{ item.reason ?? 'לא ידוע' }}</p>
+      <p>הערה לקריאה בלבד: {{ item.remark ?? 'לא נרשמה הערה' }}</p>
+      @if (item.status === 'cancelled') {
+        <p>רשומה מבוטלת לדוגמה — אינה מוצגת כפעילה. סיבת ביטול: {{ item.cancellationReason ?? 'לא ידוע' }}</p>
+      }
+      <p>אין שינוי נתונים או פעולה עסקית מתצוגה זו.</p>
+      <button mat-stroked-button type="button" (click)="close()">סגירת פרטי רשומה</button>
+    </section>
+  }
+</section>

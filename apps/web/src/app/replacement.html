@@ -1,0 +1,55 @@
+<section aria-labelledby="replacement-title">
+  <h2 id="replacement-title">מועמדי החלפה ובדיקת התאמה — הדגמה</h2>
+  <p>תרחיש סינתטי נפרד מנתוני הנוכחות התפעוליים. אין כאן זמינות עובדים אמיתית, קבלת הצעה, שמירה או בקשת שותף.</p>
+  <p>מדיניות הדגמה בלבד: 660 דקות מנוחה בכל צד לשני המשתתפים, פער משכים עד 120 דקות ו־120 דקות מראש.
+    משמרת לילה בהדגמה מתחילה מ־22:00 או לפני 06:00 ודורשת אתר תואם.</p>
+  <button mat-stroked-button type="button" (click)="load()">רענון מועמדי הדגמה</button>
+  @if (loading()) { <p role="status">טוען מועמדי החלפה לדוגמה...</p> }
+  @if (error()) {
+    <p role="alert">{{ error() }}</p>
+    <button mat-stroked-button type="button" (click)="load()">ניסיון נוסף לטעינת מועמדים</button>
+  }
+  @if (data(); as list) {
+    <p>שעון תרחיש קפוא: <bdi dir="ltr">{{ list.clockLocal }}</bdi>. אינו השעה הנוכחית.</p>
+    <p>מקור סינתטי: <bdi>{{ list.source.employeeName }}</bdi> · <bdi dir="ltr">{{ list.source.id }}</bdi></p>
+    <p><bdi dir="ltr">{{ list.source.startLocal }} – {{ list.source.endLocal }}</bdi></p>
+    <p role="status">מספר מועמדי הדגמה: {{ list.items.length }}. עצם הצגתם אינה הוכחת התאמה.</p>
+    @if (!list.items.length) { <p>אין מועמדי הדגמה בתרחיש הנוכחי.</p> }
+    <div class="table-scroll" tabindex="0" role="region" aria-label="טבלת מועמדי החלפה סינתטיים">
+      <table>
+        <caption>משמרות מועמדים — טרם בדיקת התאמה</caption>
+        <thead><tr><th scope="col">מועמד לדוגמה</th><th scope="col">התחלה</th><th scope="col">סיום</th><th scope="col">בדיקת התאמה</th></tr></thead>
+        <tbody>
+          @for (candidate of list.items; track candidate.id) {
+            <tr>
+              <td><bdi>{{ candidate.shift.employeeName }}</bdi><br><bdi dir="ltr">{{ candidate.id }}</bdi></td>
+              <td><bdi dir="ltr">{{ candidate.shift.startLocal }}</bdi></td>
+              <td><bdi dir="ltr">{{ candidate.shift.endLocal }}</bdi></td>
+              <td><button mat-button type="button" [id]="'replacement-' + candidate.id" (click)="check(candidate.id)"
+                [attr.aria-label]="'בדיקת מועמד הדגמה ' + candidate.id">בדיקת התאמה בלבד</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  @if (calculating()) { <p role="status">מחשב התאמה סינתטית ללא שמירה...</p> }
+  @if (previewError()) { <p role="alert">{{ previewError() }}</p> }
+  @if (preview(); as result) {
+    <section class="replacement-result" aria-labelledby="replacement-result-title">
+      <h3 id="replacement-result-title" tabindex="-1">{{ label(result.eligibility) }}</h3>
+      <p>מועמד: <bdi dir="ltr">{{ result.candidateId }}</bdi>. תצוגה מקדימה בלבד — לא נשמרה ולא התקבלה.</p>
+      <h4>חסימות</h4>
+      @if (!result.blockers.length) { <p>לא נמצאו חסימות בבדיקות הסינתטיות שבוצעו.</p> }
+      <ul>@for (issue of result.blockers; track issue.code) { <li>{{ issue.message }}</li> }</ul>
+      <h4>אזהרות הדורשות בדיקה</h4>
+      @if (!result.warnings.length) { <p>אין אזהרות בנתוני התרחיש.</p> }
+      <ul>@for (issue of result.warnings; track issue.code) { <li>{{ issue.message }}</li> }</ul>
+      <h4>מידע לא ידוע</h4>
+      @if (!result.unknowns.length) { <p>לא חסר מידע בבדיקות התרחיש המצומצמות.</p> }
+      <ul>@for (issue of result.unknowns; track issue.code) { <li>{{ issue.message }}</li> }</ul>
+      <p>אין אפשרות לאשר, לקבל, לנקות הצעות או לבצע החלפה. אין בדיקת Oracle, נוכחות חיה, זכויות אמיתיות או מדיניות שעון קיץ.</p>
+      <button mat-stroked-button type="button" (click)="close()">סגירת בדיקת התאמה</button>
+    </section>
+  }
+</section>

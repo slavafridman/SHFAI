@@ -5,9 +5,15 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { PersonalShifts } from './personal-shifts';
 import { PersonalMessages } from './personal-messages';
 import { Employees } from './employees';
+import { Operational } from './operational';
+import { Breaks } from './breaks';
+import { ShiftPreview } from './shift-preview';
+import { Replacement } from './replacement';
+import { Staffing } from './staffing';
+import { Exceptions } from './exceptions';
 
 @Component({
-  imports: [MatButtonModule, MatCardModule, MatToolbarModule, PersonalShifts, PersonalMessages, Employees],
+  imports: [MatButtonModule, MatCardModule, MatToolbarModule, PersonalShifts, PersonalMessages, Employees, Operational, Breaks, ShiftPreview, Replacement, Staffing, Exceptions],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',

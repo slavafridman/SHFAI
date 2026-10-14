@@ -1,7 +1,8 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$ConnectString,
-    [string]$UserName = 'SHIFTER'
+    [string]$UserName = 'SHIFTER',
+    [switch]$ConnectivityOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -11,7 +12,11 @@ if (-not (Test-Path -LiteralPath $check -PathType Leaf)) {
     throw 'Build the API before running the approved Oracle diagnostic.'
 }
 
-$credential = Get-Credential -UserName $UserName -Message 'Approved Oracle connectivity and three-table column metadata only'
+$prompt = 'Approved Oracle connectivity and three-table column metadata only'
+if ($ConnectivityOnly) {
+    $prompt = 'Approved Oracle connectivity only; no metadata or business data'
+}
+$credential = Get-Credential -UserName $UserName -Message $prompt
 if ($null -eq $credential) {
     throw 'Credential prompt cancelled. No Oracle check performed.'
 }
@@ -28,7 +33,11 @@ try {
     $env:ORACLE_CONNECT_STRING = $ConnectString
     $env:ORACLE_READ_ONLY = 'true'
     $env:ORACLE_ENABLED = 'true'
-    & node $check '--metadata'
+    if ($ConnectivityOnly) {
+        & node $check
+    } else {
+        & node $check '--metadata'
+    }
     if ($LASTEXITCODE -ne 0) {
         throw 'Approved Oracle diagnostic failed. Review the redacted error code; no automatic retry is performed.'
     }

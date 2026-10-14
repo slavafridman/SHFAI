@@ -1,0 +1,108 @@
+<section aria-labelledby="staffing-title">
+  <h2 id="staffing-title">בקשות תגבור, שינוי שעות וצמצום — הדגמה</h2>
+  <p>נתונים סינתטיים לקריאה וחישוב בלבד בצוות הדגמה א׳. אין הרשמה, שיוך, אישור, ביטול או בקשת שותף.</p>
+  <p>שעון תרחיש קפוא: <bdi dir="ltr">2026-10-13T08:00:00</bdi>. קיבולת ומועדים הם דוגמאות, לא מצב בזמן אמת.</p>
+  <form (submit)="$event.preventDefault(); load()" aria-label="סינון סוג בקשת הדגמה">
+    <label for="staffing-kind">סוג בקשה</label>
+    <select id="staffing-kind" [formControl]="kind">
+      <option value="all">כל הסוגים</option><option value="reinforcement">תגבור</option>
+      <option value="time-change">שינוי שעות</option><option value="reduction">צמצום</option>
+    </select>
+    <button mat-stroked-button type="submit" [disabled]="!ready()">הצגת בקשות הדגמה</button>
+  </form>
+  @if (loading()) { <p role="status">טוען בקשות הדגמה...</p> }
+  @if (error()) {
+    <p role="alert">{{ error() }}</p>
+    <button mat-stroked-button type="button" (click)="ready() ? load() : connect()">ניסיון נוסף לטעינת בקשות</button>
+  }
+  @if (ready() && !loading() && !error()) {
+    <p role="status">מספר בקשות הדגמה: {{ items().length }}</p>
+    @if (!items().length) { <p>לא נמצאו בקשות הדגמה במסנן שנבחר.</p> }
+  }
+  @if (items().length) {
+    <div class="table-scroll" tabindex="0" role="region" aria-label="טבלת בקשות כוח אדם סינתטיות">
+      <table>
+        <caption>קיבולת ומצב בקשות לדוגמה — ללא ביצוע פעולות</caption>
+        <thead><tr><th scope="col">סוג ובקשה</th><th scope="col">טווח מקומי</th>
+          <th scope="col">מבוקש</th><th scope="col">אושר בדוגמה</th><th scope="col">נותר</th>
+          <th scope="col">עדכניות</th><th scope="col">פרטים</th></tr></thead>
+        <tbody>
+          @for (request of items(); track request.id) {
+            <tr>
+              <td>{{ kindLabel(request.kind) }} · {{ request.title }}</td>
+              <td><bdi dir="ltr">{{ request.startLocal }}</bdi><br><bdi dir="ltr">{{ request.endLocal }}</bdi></td>
+              <td>{{ request.requested ?? 'לא ידוע' }}</td><td>{{ request.approved ?? 'לא ידוע' }}</td>
+              <td>{{ request.remaining ?? 'לא ידוע' }}</td><td>{{ freshness(request.freshness) }}</td>
+              <td><button mat-button type="button" [id]="'staffing-' + request.id" (click)="open(request.id)"
+                [attr.aria-label]="'פרטי בקשה ' + request.id">פרטי בקשה</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  @if (fetchedAt()) { <p>מועד קריאת הבקשות: <bdi dir="ltr">{{ fetchedAt() }}</bdi></p> }
+  @if (detailLoading()) { <p role="status">טוען פרטי בקשת הדגמה...</p> }
+  @if (detailError()) { <p role="alert">{{ detailError() }}</p> }
+  @if (detail(); as request) {
+    <section class="staffing-detail" aria-labelledby="staffing-detail-title">
+      <h3 id="staffing-detail-title" tabindex="-1">{{ kindLabel(request.kind) }} — פרטי בקשת הדגמה</h3>
+      <p>{{ request.title }} · <bdi dir="ltr">{{ request.id }}</bdi></p>
+      <p>מבוקש: {{ request.requested ?? 'לא ידוע' }}; אושר בדוגמה: {{ request.approved ?? 'לא ידוע' }}; נותר: {{ request.remaining ?? 'לא ידוע' }}</p>
+      @if (request.remaining === 0) { <p>קיבולת מלאה בתרחיש ההדגמה — אין מקום שנותר בדוגמה.</p> }
+      <p>מועד אחרון לדוגמה: <bdi dir="ltr">{{ request.deadlineLocal ?? 'לא ידוע' }}</bdi> · {{ deadline(request.deadlineState) }}</p>
+      <p>{{ freshness(request.freshness) }}</p>
+      @if (request.note !== null) { <p>{{ request.note }}</p> }
+      <p>מועמד מוצג אינו זכאות, אישור או הקצאה. אין אפשרות לבצע פעולה בבקשה.</p>
+      <button mat-stroked-button type="button" (click)="loadCandidates()">הצגת מועמדי הבקשה לדוגמה</button>
+      @if (candidatesLoading()) { <p role="status">טוען מועמדי בקשה...</p> }
+      @if (candidateError()) {
+        <p role="alert">{{ candidateError() }}</p>
+        <button mat-stroked-button type="button" (click)="loadCandidates()">ניסיון נוסף למועמדי הבקשה</button>
+      }
+      @if (candidatesLoaded()) {
+        <section aria-labelledby="staffing-candidates-title">
+          <h4 id="staffing-candidates-title">מועמדים סינתטיים לקריאה בלבד</h4>
+          <p role="status">מספר מועמדי בקשה לדוגמה: {{ candidates().length }}</p>
+          @if (!candidates().length) { <p>אין מועמדי הדגמה לבקשה זו.</p> }
+          <ul>
+            @for (candidate of candidates(); track candidate.id) {
+              <li>
+                <p><strong><bdi>{{ candidate.employeeName }}</bdi></strong> · <bdi dir="ltr">{{ candidate.employeeId }}</bdi></p>
+                <p>{{ freshness(candidate.freshness) }} · מועד מקור: <bdi dir="ltr">{{ candidate.asOfLocal ?? 'לא ידוע' }}</bdi></p>
+                @if (candidate.note !== null) { <p>{{ candidate.note }}</p> }
+                <button mat-stroked-button type="button" (click)="checkCandidate(candidate.id)"
+                  [id]="'staffing-preview-' + candidate.id" [disabled]="!previewAvailable()"
+                  [attr.aria-label]="'חישוב התאמה וקיבולת למועמד ' + candidate.id">חישוב התאמה וקיבולת בלבד</button>
+              </li>
+            }
+          </ul>
+        </section>
+        @if (!previewAvailable()) { <p role="status">תצוגה מקדימה אינה זמינה בהרשאות ההדגמה שהתקבלו.</p> }
+      }
+      @if (previewLoading()) { <p role="status">מחשב התאמה וקיבולת ללא פעולה...</p> }
+      @if (previewError()) { <p role="alert">{{ previewError() }}</p> }
+      @if (preview(); as result) {
+        <section class="staffing-preview" aria-labelledby="staffing-preview-title">
+          <h4 id="staffing-preview-title" tabindex="-1">{{ outcome(result.outcome) }}</h4>
+          <p>חישוב מקום אחד בלבד. לא נשמר, לא שויך ולא אושר דבר.</p>
+          <p>קיבולת לפני: מבוקש {{ result.capacityBefore.requested ?? 'לא ידוע' }},
+            אושר בדוגמה {{ result.capacityBefore.approved ?? 'לא ידוע' }},
+            נותר {{ result.capacityBefore.remaining ?? 'לא ידוע' }}.</p>
+          @if (result.capacityIfApplied; as projected) {
+            <p>אם בוצעה פעולה עתידית שאינה זמינה כאן: מבוקש {{ projected.requested }},
+              מאושר היפותטית {{ projected.approved }}, נותר היפותטית {{ projected.remaining }}.
+              הקיבולת הנוכחית לא השתנתה.</p>
+          } @else { <p>לא חושבה קיבולת עתידית משום שהמידע חסר או קיים חוסם.</p> }
+          <h5>חסימות</h5>
+          <ul>@for (issue of result.blockers; track issue.code) { <li>{{ issue.message }}</li> }</ul>
+          <h5>מידע לא ידוע</h5>
+          <ul>@for (issue of result.unknowns; track issue.code) { <li>{{ issue.message }}</li> }</ul>
+          @for (warning of result.warnings; track warning) { <p>{{ warning }}</p> }
+          <button mat-stroked-button type="button" (click)="closePreview()">סגירת חישוב התאמה וקיבולת</button>
+        </section>
+      }
+      <button mat-stroked-button type="button" class="staffing-close" (click)="close()">סגירת פרטי בקשה</button>
+    </section>
+  }
+</section>

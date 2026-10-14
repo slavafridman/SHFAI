@@ -10,6 +10,8 @@ dt { font-weight: bold; }
 dd { margin: 0; }
 button { min-block-size: 3rem; max-inline-size: 100%; }
 [role="alert"] { color: var(--mat-sys-error); }
+.employee-sections { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.employee-sections [aria-pressed="true"] { background: var(--mat-sys-secondary-container); color: var(--mat-sys-on-secondary-container); }
 @media (max-width: 36rem) {
   dl { grid-template-columns: minmax(0, 1fr); }
   form button { inline-size: 100%; }

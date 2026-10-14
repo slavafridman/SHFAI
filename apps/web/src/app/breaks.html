@@ -1,0 +1,73 @@
+<section aria-labelledby="breaks-title">
+  <h2 id="breaks-title">הפסקות ותצוגה מקדימה — הדגמה</h2>
+  <p>נתונים סינתטיים בלבד. חישוב הצעה אינו שמירה, אישור או שליחה לשותף. אין מחיקת הצעות או שינוי נוכחות.</p>
+  <form (submit)="$event.preventDefault(); load()" aria-label="בחירת משמרת להפסקות הדגמה">
+    <label for="break-shift">משמרת לדוגמה</label>
+    <select id="break-shift" [formControl]="shiftId">
+      @for (shift of shifts(); track shift.id) {
+        <option [value]="shift.id">{{ shift.effective.startLocal }} · {{ shift.id }}</option>
+      }
+    </select>
+    <button mat-stroked-button type="submit" [disabled]="!ready()">הצגת הפסקות</button>
+  </form>
+  @if (loading()) { <p role="status">טוען הפסקות הדגמה...</p> }
+  @if (error()) {
+    <p role="alert">{{ error() }}</p>
+    <button mat-stroked-button type="button" (click)="ready() ? load() : connect()">ניסיון נוסף לטעינת הפסקות</button>
+  }
+  @if (view(); as data) {
+    <p>משמרת מקומית: <bdi dir="ltr">{{ data.shift.effective.startLocal }} – {{ data.shift.effective.endLocal }}</bdi></p>
+    <p>מדיניות הדגמה בלבד: 60 דקות מקצה המשמרת ו־60 דקות בין הפסקות. משך הצעה: 1–120 דקות; אפס אינו מחיקה.</p>
+    <div class="table-scroll" role="region" tabindex="0" aria-label="הפסקות מתוכננות ובפועל לדוגמה">
+      <table>
+        <caption>הפסקות מתוכננות מול נתוני ביצוע סינתטיים</caption>
+        <thead><tr><th scope="col">מזהה</th><th scope="col">התחלה מתוכננת</th><th scope="col">סיום מתוכנן</th>
+          <th scope="col">התחלה בפועל</th><th scope="col">סיום בפועל</th></tr></thead>
+        <tbody>
+          @for (item of data.breaks; track item.id) {
+            <tr><td><bdi dir="ltr">{{ item.id }}</bdi></td>
+              <td><bdi dir="ltr">{{ item.startLocal }}</bdi></td><td><bdi dir="ltr">{{ item.endLocal }}</bdi></td>
+              <td><bdi dir="ltr">{{ item.actualStartLocal ?? 'לא נרשם בהדגמה' }}</bdi></td>
+              <td><bdi dir="ltr">{{ item.actualEndLocal ?? 'לא נרשם בהדגמה' }}</bdi></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (!data.breaks.length) { <p role="status">אין הפסקות מתוכננות בנתוני ההדגמה למשמרת זו.</p> }
+    @if (!data.previewAvailable) {
+      <p role="status">תצוגה מקדימה אינה זמינה: מדיניות מקור, משמרת מפוצלת או ניהול שותף לא אומתו.</p>
+    }
+    <form [formGroup]="form" (ngSubmit)="calculate()" aria-label="חישוב הצעת הפסקה ללא שמירה">
+      <label for="preview-break">הפסקה להצעה</label>
+      <select id="preview-break" formControlName="breakId">
+        @for (item of data.breaks; track item.id) { <option [value]="item.id">{{ item.id }}</option> }
+      </select>
+      <mat-form-field>
+        <mat-label>תאריך התחלת ההפסקה</mat-label>
+        <input matInput id="break-date" [matDatepicker]="calendar" formControlName="date" dir="ltr" aria-describedby="break-preview-error">
+        <mat-datepicker-toggle matIconSuffix [for]="calendar" aria-label="לוח שנה להצעת הפסקה" />
+        <mat-datepicker #calendar />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>שעת התחלת ההפסקה</mat-label>
+        <input matInput id="break-time" type="time" step="60" formControlName="time" dir="ltr" aria-describedby="break-preview-error">
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>משך בדקות</mat-label>
+        <input matInput id="break-duration" type="number" min="1" max="120" step="1" formControlName="duration" aria-describedby="break-preview-error">
+      </mat-form-field>
+      <button mat-flat-button type="submit" [disabled]="!data.previewAvailable || calculating()">חישוב תצוגה מקדימה בלבד</button>
+    </form>
+    @if (calculating()) { <p role="status">מחשב הצעה ללא שמירה...</p> }
+    <p id="break-preview-error" [attr.role]="previewError() ? 'alert' : null">{{ previewError() }}</p>
+    @if (preview(); as result) {
+      <section class="preview" aria-labelledby="break-preview-title">
+        <h3 id="break-preview-title" tabindex="-1">הצעה מחושבת בלבד — לא נשמרה</h3>
+        <p>תכנון קיים: <bdi dir="ltr">{{ result.before.startLocal }} – {{ result.before.endLocal }}</bdi></p>
+        <p>הצעה שלא נשמרה: <bdi dir="ltr">{{ result.proposed.startLocal }} – {{ result.proposed.endLocal }}</bdi></p>
+        <p>משך מוצע: {{ result.durationMinutes }} דקות. נתוני הביצוע לא השתנו.</p>
+        @for (warning of result.warnings; track warning) { <p>{{ warning }}</p> }
+      </section>
+    }
+  }
+</section>

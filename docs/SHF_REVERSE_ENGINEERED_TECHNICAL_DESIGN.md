@@ -2275,6 +2275,72 @@ of 423.81 kB under the unchanged warning budget. Date fields retain inclusive/
 half-open behavior; real employee permissions, physical metadata and Oracle
 time interpretation remain unverified.
 
+The approved R05 child-view continuation adds scoped GET-only employee skills,
+events and education demo sections, documented in the
+[child-view execution record](plan-shfAiAgentDevelopment.prompt.md#21-approved-r05-employee-child-stub-views).
+Source [skills/events reads](../old/SHF/src/bzq/shf/model/EmployeeDataModel.java#L239)
+inform labels only; education remains explicitly invented because the inspected
+legacy view is a skills/courses container and courses is a placeholder.
+Ninety-six tests and targeted synthetic browser checks passed. No live employee
+metadata, child data, permissions, real event mutation or training integration
+was verified or enabled.
+
+The user subsequently approved R06 range-read operational schedule/attendance
+stubs. The [R06 execution record](plan-shfAiAgentDevelopment.prompt.md#22-progress-report-and-approved-r06-operational-demo)
+defines fixed synthetic team scope, shared effective-shift projection, planned
+versus nullable actual values and explicit zero/unknown handling. One hundred
+five tests and targeted local browser workflows passed; no real identity, Oracle
+metadata/parity or attendance mutation was enabled. Current-instant scheduling,
+configurable organizational scope and historical snapshots remain unimplemented.
+
+The approved R07 break demonstration adds planned/actual reads and a pure
+calculation POST with `previewOnly: true` and `saved: false`. The
+[R07 execution record](plan-shfAiAgentDevelopment.prompt.md#23-approved-r07-break-views-and-pure-preview-demo)
+distinguishes source-observed edges/gaps from fixed synthetic policy, including
+an explicitly invented positive duration bound, managed/split/source unavailability
+and local minute arithmetic without a DST instant claim. One hundred nineteen
+tests and targeted browser checks passed; no business mutation, correlation
+allocation, offer cleanup or partner completion was enabled. Full R07/G4 and
+real-policy acceptance remain pending.
+
+The next separately approved R07 increment adds pure synthetic shift-time and
+split-shift previews, documented in the
+[shift/split execution record](plan-shfAiAgentDevelopment.prompt.md#24-approved-shift-time-and-split-shift-pure-preview-demo).
+It deliberately excludes the offer-deletion branch observed in
+[validateUpdate](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L3604).
+Before/proposed schedules, exact local minute totals and explicit unsaved markers
+are returned; conflicting planned breaks are rejected, not altered.
+Fixed synthetic thresholds and source gating remain distinct from real unit/
+attendance/offer/DST policy. One hundred thirty-two tests and targeted local
+browser checks passed; no Oracle, write, allocation or partner effect was enabled.
+
+The user then approved the R08 replacement-candidate and eligibility demo.
+The [R08 execution record](plan-shfAiAgentDevelopment.prompt.md#25-approved-r08-replacement-candidates-and-eligibility-preview)
+separates source-observed blockers/warnings from synthetic four-gap rest,
+lead/duration/night policy and frozen-clock fixtures. Both source/candidate scope
+is checked; results are suitable-under-demo, blocked, confirmation-required or
+unknown, always unsaved and unaccepted. One hundred forty-three tests and
+targeted browser checks passed. No actual candidate availability, rest/attendance
+lookup, repository cleanup or partner acceptance was enabled; R08 remains partial.
+
+The user next approved synthetic staffing request/detail/candidate reads across
+reinforcement, time-change and reduction. The
+[staffing execution record](plan-shfAiAgentDevelopment.prompt.md#26-approved-r08-staffing-request-and-candidate-reads)
+defines separate nullable requested/approved/remaining counts, deadline/freshness
+facts and frozen-clock fixtures. One hundred fifty-two tests and local browser
+checks passed; full/unknown capacity, stale candidates and empty lists are distinct.
+No registration, assignment, approval, cancellation, real eligibility or live
+capacity precondition was enabled. R08 and real business acceptance remain partial.
+
+The user subsequently approved pure staffing eligibility/capacity previews.
+The [preview execution record](plan-shfAiAgentDevelopment.prompt.md#27-approved-r08-pure-staffing-eligibility-and-capacity-preview)
+defines synthetic capacity consistency, deadline/freshness/compatibility and
+duplicate gates with conditional one-slot output only for suitable demo results.
+All results stay unsaved/unassigned/unapproved; no slot is reserved or counter
+changed. One hundred sixty-three tests and local browser checks passed.
+Real unit policy, source interval/skill/attendance mapping, atomic capacity and
+business acceptance remain unverified; no legacy apply/sequence code was invoked.
+
 Require supported pinned runtimes/dependencies, clean type/lint/unit/contract
 checks, zero schema deltas, reviewed existing SQL/PLSQL mappings,
 authorization/security tests, isolated abstract-port contract tests,

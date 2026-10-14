@@ -1,5 +1,162 @@
 # SHF Web Synthetic Personal Workspace
 
+The existing staffing card now supports pure candidate eligibility/capacity
+calculations. Open a request, load its candidates and select “חישוב התאמה וקיבולת
+בלבד.” Suitable demo results show hypothetical one-slot counts; full/deadline/
+duplicate blockers or stale/unknown facts show no future capacity.
+
+All previews are explicitly unsaved, unassigned and unapproved. They never
+reserve capacity or update request/candidate rows. The UI validates before
+snapshot and exact conditional arithmetic and rejects saved or wrong-context
+responses. Pending calculations cancel on candidate refresh, card close or filter
+change, and result close returns focus to the candidate action. A false/missing
+preview capability leaves read views available but disables the calculation.
+
+Six requests include new populated reduction `93000007` while preserving empty
+`93000003`. Time-change `93000005` shows last-slot remaining 1 → hypothetical 0
+for candidate 1 and duplicate participation for candidate 5. Fixed 120-minute
+lead, frozen clock and resolved compatibility flags are synthetic policy, not
+real source/eligibility/atomic-capacity evidence.
+
+Current checks: 79 Angular + 84 API tests (163 total), lint/types/builds passed;
+initial bundle remains 431.23 kB. Local browser checks passed positive/full/
+unknown/stale/duplicate calculations, exact last slot, unchanged counters,
+failure retention, focus, 320/768/1280 reflow and 200% resizing. No Oracle,
+assignment, registration, approval, partner or production action occurred.
+
+Latest read-only R08 view: [staffing requests](src/app/staffing.ts) show
+reinforcement, time-change and reduction lists/details and on-demand candidates.
+The same stub startup commands/proxy apply; restart the API for updated routes.
+
+Five requests demonstrate available, full (zero) and unknown (null) capacity;
+counts requested/approved/remaining remain distinct. Deadlines and freshness use
+the frozen October 13 scenario clock, not current time. Stale/unknown candidates
+are labelled and never treated as authorized or assigned. A reduction example
+has no candidates. All values are invented and fixed-team scoped.
+
+Type filters, detail focus/return, retained search/filter on failure and
+cancellation of superseded list/detail/candidate reads follow the existing
+patterns. Notes render as plain text. The client validates request/recipient
+context, markers and count consistency. No editable deadline/date or mutating
+workflow control exists.
+
+Current checks: 72 Angular + 80 API tests (152 total), full lint/types/builds
+passed; initial bundle 431.23 kB under unchanged warning budget. Browser checks
+passed full/unknown capacity, deadline and stale states, type filter, safe note,
+empty/error/retry, keyboard focus, 320/768/1280 reflow and 200% resizing.
+Real Oracle, scope/eligibility/capacity preconditions, manual accessibility and
+UAT remain pending.
+
+Latest R08 addition: the [replacement demo](src/app/replacement.ts) lists four
+fixed-team synthetic candidates and calculates eligibility only. Separate
+scenario IDs and a frozen October 13 clock make this explicitly different from
+the operational attendance fixtures and current availability.
+
+Candidate outcomes are suitable-under-demo, blocked, review-required and unknown.
+The UI displays separate blockers, warnings and unknown facts, never an acceptance.
+All results remain unsaved/unaccepted; there are no confirm/save/cleanup actions.
+Changing candidate or refreshing cancels old work; failed previews retain the
+list and do not manufacture a suitable result. The client rejects wrong-context,
+real/unmarked, accepted and contradictory classifications.
+
+Restart the existing stub API and web commands for the added candidate/preview
+routes. Current checks: 65 Angular + 78 API tests (143 total), lint/types/builds
+passed; initial bundle 430.76 kB under unchanged warning budget. Browser checks
+passed all categories, keyboard focus/return, unchanged list, error/retry,
+320/768/1280 reflow and 200% resizing. No live neighbor-schedule/Oracle/policy,
+trusted identity, manual assistive-technology or UAT claim is made.
+
+Latest addition: [shift-time/split previews](src/app/shift-preview.ts) use explicit
+start/end local dates/times, optional split gap dates/times and a required demo
+reason. Four Hebrew calendar toggles are available for split proposals; two for
+plain shifts. The same stub API/proxy/start commands apply.
+
+Example on shift `9007199254740993`: 08:00-18:00 on October 14, gap 14:00-16:00,
+returns 600 span, 480 working and 120 gap minutes. A gap that overlaps the planned
+13:00 break is rejected without modifying anything. Overnight proposals preserve
+the next-day end date. Managed/unknown source policy is unavailable.
+
+All output is explicitly unsaved; no write/offer cleanup/partner/operation
+control exists. Draft edits clear old results and cancel requests, rejected drafts
+remain intact, and the client verifies exact submitted values and minute totals.
+Fixed synthetic thresholds are documented in the root README; they are not live
+Oracle/attendance/unit policy or DST instant/paid-duration calculations.
+
+Current checks: 58 Angular + 74 backend tests (132 total), full lint/types/builds
+passed. Initial bundle 428.07 kB under unchanged warning budget. Browser tests
+passed plain/split/overnight, calendar/segments, errors/draft/focus/cancellation,
+unavailable sources, 320/768/1280 reflow and 200% resizing. Full real-policy/G4,
+Oracle, trusted identity, manual assistive-technology and UAT remain pending.
+
+Latest R07 increment: [break reads/previews](src/app/breaks.ts) add a personal
+shift selector, planned/actual break table, local date/calendar/time/duration
+form and explicitly unsaved calculation. It uses the existing stub startup
+commands/proxy; restart the API for the new routes.
+
+Normal shift `9007199254740993` supports an exact-boundary `11:45` / 15-minute
+proposal; `11:46` is rejected by the synthetic 60-minute gap. Overnight shift
+`9007199254740998` supports `2026-10-17`, `01:45` / 15 minutes. Managed/split/
+unknown-source previews stay unavailable; actual seconds/nulls remain read data.
+The policy's 1–120-minute positive duration limit is synthetic, not recovered
+production configuration; zero is not a delete command.
+
+Draft edits cancel old previews and clear stale results. Rule errors preserve
+inputs, successful results focus the heading, and empty-source selection resets
+the previous shift's draft. Saved/completed or inconsistent-duration responses
+are rejected. Preview is the only calculation POST; it causes no save or partner
+request and never substitutes an acceptance/operation result.
+
+Current checks: 50 Angular + 69 backend tests (119 total), lint/types/builds
+passed; initial bundle 426.75 kB. Browser checks passed planned/actual separation,
+minute-edge/gap errors, explicit not-saved output, unchanged read table, calendar/
+overnight, unavailable policy, focus/draft and narrow/200% resize behavior.
+Real Oracle/policy/lead-time/DST/assistive-technology/UAT gates are not proven.
+
+Latest approved increment: the
+[operational screen](src/app/operational.ts) adds fixed-team schedule and
+attendance modes through `/api/v1/shifts` and `/api/v1/attendance`. The same
+existing startup commands/proxy apply; restart the stub API for its updated
+fixtures. The demo range October 14-17, 2026 returns seven team shifts.
+
+Planned start/end stay separate from actual stage/station arrival/exit.
+Nullable facts are never replaced by zero, current time or success-shaped data.
+The table preserves zero lateness, unknown lateness, missing reasons, reassigned
+ownership and overnight local departure. Original baselines remain hidden.
+No attendance registration, correction, unit/site selection or save action exists.
+Inline detail returns focus to its row when closed.
+
+Operational/personal date filters share the existing Hebrew calendar adapter and
+one-to-31-day inclusive range helper. Table overflow is contained in a labelled
+keyboard-focusable region; surrounding content reflows. Mode/filter replacement
+cancels older reads and clears stale rows/detail. Responses must be explicitly
+synthetic, unauthenticated and in fixed demo scope; UI capability is not real
+authorization.
+
+Current evidence: 41 Angular + 64 API tests (105 total), full lint/types/builds
+passed; initial bundle 424.28 kB under unchanged warning budget. Browser checks
+passed seven-row load, both modes, zero/null/overnight values, keyboard calendar,
+focus restore, date filter/empty/failure/retry, 320/768/1280 reflow and 200% text
+resizing. These do not establish real Oracle parity, manual Hebrew assistive-
+technology acceptance, full WCAG conformance or UAT.
+
+Latest R05 addition: employee cards now offer read-only skills, events and
+education sections via labelled pressed-state buttons. Sections load on demand
+through the existing stub proxy, cancel superseded reads, preserve the card on
+failure and expose loading/empty/error/retry feedback. No event mutation or
+course integration is implemented.
+
+Employee `00000001` has populated demo sections, `00000002` has empty sections,
+and `00000003` has unknown detail/date values. Education is explicitly invented
+UI data, not a verified legacy feed. No new editable date fields were introduced.
+The shared demo DTO and client validate employee/section identity as well as
+synthetic response markers. Text is interpolated literally, never as HTML.
+
+Current verification: 34 Angular + 62 backend tests (96 total), lint/types/builds
+passed; initial bundle remains 423.81 kB. Local browser checks passed section
+selection, safe text, empty/unknown/error/retry, card retention, keyboard/focus,
+320/768/1280 reflow and 200% resizing. These are synthetic checks, not real Oracle
+authorization, accessibility certification or UAT.
+
 Standalone Angular 22.2.2 with Angular Material/CDK and Material 3. This is a
 local Hebrew/RTL demonstration backed by the explicitly synthetic API, not a
 connected Oracle workforce application. Real authentication, business data and

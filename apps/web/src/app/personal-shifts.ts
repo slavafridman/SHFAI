@@ -9,28 +9,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { CALENDAR_PROVIDERS, calendarDateString, parseCalendarDate } from './calendar';
+import { CALENDAR_PROVIDERS, calendarDateString, calendarRange, parseCalendarDate } from './calendar';
 import { Subscription } from 'rxjs';
 import { ShiftsApi, StubContractError, type PersonalShiftItem } from './shifts-api';
-
-function date(value: string): Date | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value.startsWith('0000-')) {
-    return null;
-  }
-  const parsed = new Date(`${value}T00:00:00Z`);
-  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value ? parsed : null;
-}
-
-function range(from: string, to: string): string | null {
-  const start = date(from);
-  const end = date(to);
-  if (start === null || end === null || end < start || (end.getTime() - start.getTime()) / 86_400_000 >= 31) {
-    return null;
-  }
-  end.setUTCDate(end.getUTCDate() + 1);
-  const exclusive = end.toISOString().slice(0, 10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(exclusive) ? exclusive : null;
-}
 
 function errorText(error: unknown): string {
   if (error instanceof StubContractError) {
@@ -110,15 +91,14 @@ export class PersonalShifts implements OnInit {
     }
     const values = this.filters.getRawValue();
     const from = calendarDateString(values.from);
-    const to = calendarDateString(values.to);
-    const toExclusive = from !== null && to !== null ? range(from, to) : null;
-    if (this.filters.invalid || from === null || to === null || toExclusive === null) {
+    const interval = calendarRange(values.from, values.to);
+    if (this.filters.invalid || interval === null) {
       this.filterError.set('יש לבחור תאריכים תקינים בטווח של יום אחד עד 31 ימים.');
       this.document.getElementById(this.filters.controls.from.invalid || from === null ? 'shift-from' : 'shift-to')?.focus();
       return;
     }
     this.loading.set(true);
-    this.listRequest = this.api.list(from, toExclusive).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.listRequest = this.api.list(interval.from, interval.toExclusive).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: result => {
         this.items.set(result.items);
         this.fetchedAt.set(result.fetchedAt);

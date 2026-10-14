@@ -1,17 +1,25 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "SHF: approved one-shot Oracle shift metadata check",
-			"type": "shell",
-			"command": "powershell.exe",
-			"args": [
-				"-NoProfile",
-				"-Command",
-				"$ErrorActionPreference = 'Stop'; $credential = Get-Credential -UserName 'SHIFTER' -Message 'Approved Oracle connectivity and three-table column metadata only'; if ($null -eq $credential) { throw 'Credential prompt cancelled. No Oracle check performed.' }; $env:ORACLE_USER = $credential.UserName; $env:ORACLE_PASSWORD = $credential.GetNetworkCredential().Password; $env:ORACLE_CONNECT_STRING = 'SHIFTER/shfmorad@ctidbt_wfmt'; $env:ORACLE_READ_ONLY = 'true'; $env:ORACLE_ENABLED = 'true'; try { & node '.\\apps\\api\\dist\\oracle\\check.js' '--metadata'; if ($LASTEXITCODE -ne 0) { throw 'Approved Oracle diagnostic failed. Review only the redacted diagnostic error code.' } } finally { Remove-Item Env:ORACLE_PASSWORD -ErrorAction SilentlyContinue; Remove-Item Env:ORACLE_ENABLED -ErrorAction SilentlyContinue; Remove-Variable credential -ErrorAction SilentlyContinue }"
-			],
-			"isBackground": false,
-			"problemMatcher": []
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SHF: approved one-shot Oracle connectivity check",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}\\scripts\\Invoke-ShfOracleMetadata.ps1",
+        "-ConnectString",
+        "CTIDBT_WFMT.host:1521/SHIFTER",
+        "-UserName",
+        "shifter",
+        "-ConnectivityOnly"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": false,
+      "problemMatcher": []
+    }
+  ]
 }

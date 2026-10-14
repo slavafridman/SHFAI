@@ -28,6 +28,19 @@ export function parseCalendarDate(value: unknown): Date | null {
   return calendarDateString(result) === value ? result : null;
 }
 
+export function calendarRange(from: Date | null, to: Date | null): { from: string; toExclusive: string } | null {
+  const start = calendarDateString(from);
+  const end = calendarDateString(to);
+  if (start === null || end === null) { return null; }
+  const startDay = new Date(`${start}T00:00:00Z`);
+  const endDay = new Date(`${end}T00:00:00Z`);
+  const days = (endDay.getTime() - startDay.getTime()) / 86_400_000;
+  if (days < 0 || days >= 31) { return null; }
+  endDay.setUTCDate(endDay.getUTCDate() + 1);
+  const toExclusive = endDay.toISOString().slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(toExclusive) ? { from: start, toExclusive } : null;
+}
+
 @Injectable()
 export class IsoCalendarAdapter extends NativeDateAdapter {
   override parse(value: unknown): Date | null {

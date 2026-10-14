@@ -1,0 +1,13 @@
+:host { display: block; margin-block-start: 2rem; min-inline-size: 0; }
+.modes, form { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-block: 1rem; }
+mat-form-field { flex: 1 1 12rem; min-inline-size: 0; }
+.modes [aria-pressed="true"] { background: var(--mat-sys-secondary-container); color: var(--mat-sys-on-secondary-container); }
+.table-scroll { overflow: auto; max-inline-size: 100%; }
+table { border-collapse: collapse; inline-size: 100%; }
+caption { text-align: start; padding-block: 0.75rem; font-weight: bold; }
+th, td { text-align: start; padding: 0.75rem; border-block-end: 1px solid var(--mat-sys-outline-variant); }
+td bdi[dir="ltr"] { display: inline-block; white-space: nowrap; }
+.ops-detail { border: 1px solid var(--mat-sys-outline); padding: 1rem; border-radius: 0.75rem; margin-block: 1rem; }
+p, td { overflow-wrap: anywhere; line-height: 1.6; }
+button { min-block-size: 3rem; }
+[role="alert"] { color: var(--mat-sys-error); }

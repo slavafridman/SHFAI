@@ -30,7 +30,7 @@ describe('App', () => {
     expect(app).toBeTruthy();
     fixture.detectChanges();
     const blocks = await fixture.getDeferBlocks();
-    expect(blocks.length).toBe(2);
+    expect(blocks.length).toBe(8);
     for (const block of blocks) { await block.render(DeferBlockState.Complete); }
     failInitialization();
   });

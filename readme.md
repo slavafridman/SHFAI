@@ -204,6 +204,31 @@ Important implementation boundaries:
 
 ## Real Oracle Adapter: Read-Only, Not Activated
 
+Full-host retry, 2026-10-14 at 08:59: the user supplied `CTIDBT_WFMT.host`.
+One connectivity-only attempt to `CTIDBT_WFMT.host:1521/SHIFTER` again failed
+with **NJS-530 (host not found)** and exit 1. Listener/authentication were not
+reached; credentials/service remain unverified. No metadata/business query ran.
+The credential-free VS Code task now contains this explicitly supplied hostname.
+Stub mode remains unchanged; a reachable DBA-provided FQDN/IP or corrected
+corporate DNS/VPN context is still required before another authorized attempt.
+
+Latest connectivity attempt, 2026-10-14: the user confirmed
+`CTIDBT_WFMT:1521/SHIFTER` and authorized one connectivity-only probe with a
+secure local credential prompt. It failed with **NJS-530 (host not found)**,
+exit code 1, before reaching the listener or authenticating. The password and
+service validity therefore remain unverified. No metadata or business query ran.
+The DBA/network owner must provide a reachable FQDN/IP and required VPN/DNS
+context before a separately authorized retry. No automatic retry or stub-mode
+change was made.
+
+With explicit user approval, the existing credential-bearing task was replaced
+by a credential-free process task. The
+[secure prompt script](scripts/Invoke-ShfOracleMetadata.ps1) now supports
+`-ConnectivityOnly`; without that switch its earlier metadata behavior remains
+available only for separately approved scopes. No password is stored by the new
+task or script. Credentials previously shared in chat/files should be rotated
+through the credential owner; no rotation was performed here.
+
 The [Oracle module](apps/api/src/oracle/oracle.module.ts) is registered with the
 API, but construction/startup performs no database call. The
 [read-only adapter](apps/api/src/oracle/read-only-database.ts) creates one lazy
@@ -288,6 +313,280 @@ Business routes still return 404; the UI remains disconnected until trusted
 identity, verified metadata/mapping, business contracts and data scope are ready.
 
 ## Next Milestone
+
+### Progress and R06 Operational Schedule/Attendance Demo
+
+The [current progress report](docs/plan-shfAiAgentDevelopment.prompt.md#current-progress-snapshot-2026-10-14-after-r08-staffing-preview-demo)
+records the overall plan status. R04/R05 and the new R06 range-read increment
+have working synthetic demos; full architecture/business baselines, trusted
+identity, Oracle mapping/parity and production acceptance are not complete.
+Oracle host resolution remains blocked; this work made no new connection attempt.
+
+The user approved a fixed-team read-only operational screen, below the employee
+views, using:
+
+```text
+GET /api/v1/shifts?from=2026-10-14&toExclusive=2026-10-18&limit=100
+GET /api/v1/attendance?from=2026-10-14&toExclusive=2026-10-18&limit=100
+```
+
+The same demo startup commands serve these endpoints. Restart the API to load the
+new fixtures. Seven in-scope shifts reuse personal-shift effective projection and
+show both demo employees, including reassigned ownership. An outside-team row
+and excluded shift are hidden. Original baselines remain redacted.
+
+Switch between `סידור עבודה` and `נוכחות`. The Hebrew/RTL table distinguishes
+planned start/end from actual stage/station arrival/exit, zero versus unknown
+late minutes, missing reason and overnight departure. Actual values are explicit
+synthetic facts—not generated from current time or inferred attendance.
+Read-only inline detail and calendar filters reuse existing focus/date rules.
+Dates filter effective start, not every shift overlapping the interval.
+
+There are no arrival/departure, correction, save or partner actions. Unit/site
+selectors, current-instant queries, historical as-of snapshots and cursor
+pagination are not implemented. Labels identify demo scope, not real manager
+authority; the client rejects unmarked/incorrect-scope or malformed responses.
+
+Latest validation: **105 tests (64 backend, 41 frontend)**, lint, strict types/
+templates and both builds passed. Initial UI bundle **424.28 kB**, below the
+unchanged 500 kB warning. Local browser tests verified seven rows, planned/actual
+and null/zero distinctions, overnight detail, calendar/date filtering, focus,
+empty/error/retry, responsive reflow and 200% text resizing. Temporary servers
+were stopped; no real Oracle, identity, accessibility certification or UAT claim.
+
+### R07 Break Reads and Pure Preview Demo
+
+The user approved synthetic break views and pure change previews. The new
+[break screen](apps/web/src/app/breaks.ts) reuses the same startup commands.
+Choose a demo shift, inspect planned versus nullable actual timestamps, then
+enter a local date/calendar, time and duration for an existing break.
+
+```text
+GET /api/v1/shifts/{id}/breaks
+POST /api/v1/shifts/{id}/break-change-previews
+Body: { "breakId": "break-1", "startLocal": "2026-10-14T11:45:00", "durationMinutes": 15 }
+```
+
+Preview output is explicitly `previewOnly: true`, `saved: false`; it does not
+register an operation or change fixtures. No save/apply/delete route exists.
+Successful and rejected previews leave planned and actual values unchanged.
+Editing the draft clears stale results, and errors preserve the current input.
+All reads/previews remain explicitly synthetic, unauthenticated and no-store.
+
+Synthetic policy: 60 minutes from shift edges and between breaks, equality
+allowed; whole-minute proposals lasting 1–120 minutes. Zero is invalid, not
+deletion. Actual seconds are preserved for display. These fixed demo settings
+are not production parameters; 120 minutes is only a demo input bound.
+No DST instant, paid duration, lead-time or partner policy is inferred.
+
+Try normal shift `9007199254740993`: `11:45` for 15 minutes ends at `12:00`
+and leaves an exact 60-minute gap before the `13:00` break; `11:46` fails.
+For overnight `9007199254740998`, date `2026-10-17`, `01:45` for 15 minutes
+ends at `02:00`. Managed/split/unknown-source previews are unavailable, and
+unknown shift `9007199254740999` has an empty planned-break collection.
+
+Latest validation: **119 tests (69 backend + 50 frontend)**, lint, strict
+types/templates and builds passed; initial UI bundle **426.75 kB**. Browser
+checks passed rule boundaries, unchanged planned/actual rows, calendar/overnight,
+unavailable/empty cases, draft/focus behavior, 320/768/1280 reflow and 200% text
+resizing. Oracle and full real-policy/G4 validation remain blocked/not run.
+
+### R07 Shift-Time and Split-Shift Pure Preview
+
+The user approved a separate synthetic shift/split calculation screen.
+Use the same stub API/web commands and restart them for the added routes:
+
+```text
+GET /api/v1/shifts/{id}/shift-preview-context
+POST /api/v1/shifts/{id}/shift-change-previews
+Body: {
+  "startLocal": "2026-10-14T08:00:00",
+  "endLocal": "2026-10-14T18:00:00",
+  "reason": "synthetic demonstration",
+  "split": { "gapStartLocal": "2026-10-14T14:00:00", "gapEndLocal": "2026-10-14T16:00:00" }
+}
+```
+
+For shift `9007199254740993`, this calculates span 600, work 480 and gap 120
+minutes, with explicit first and second work segments. Use `split: null` for a
+plain proposal. The calendar/time form requires a reason and labels every result
+as **not saved**; it cannot apply, delete offers or invoke partners.
+
+Fixed demo policy: start dates October 14-17, span 240-960 minutes, work at least
+240 minutes, split first/gap/second parts at least 120 minutes, and second start
+at/after 16:00 on the start date. Existing breaks must remain inside shift work
+segments; conflicts are rejected without cleanup. The second-part minimum, fixed
+duration/window and reason length are demo choices, not verified live settings.
+Break-margin/offer/attendance eligibility and DST/paid-duration rules are not
+claimed. Wall-time arithmetic is not an Oracle timestamp conversion.
+
+The [pure implementation](apps/api/src/stub/shift-preview.ts) and
+[UI](apps/web/src/app/shift-preview.ts) preserve the read source, clear stale
+results on editing, retain rejected drafts and reject saved/malformed/wrong-minute
+responses. Managed/unknown sources stay unavailable.
+
+Latest validation: **132 tests (74 backend + 58 frontend)**, lint, strict types/
+templates and both builds passed. Initial bundle **428.07 kB**, under unchanged
+500 kB warning. Browser checks passed plain/split/overnight calculations, explicit
+segments, calendars, conflict/error/draft/focus, unavailable policy, narrow layouts
+and 200% text resizing. No Oracle, business write or live partner action occurred.
+
+### R08 Replacement Candidate and Eligibility Demo
+
+The user approved a separate synthetic candidate/eligibility workflow. The
+[replacement view](apps/web/src/app/replacement.ts) uses the same stub startup
+commands after restarting the API:
+
+```text
+GET /api/v1/replacement-candidates?limit=100
+POST /api/v1/replacement-eligibility-previews
+Body: { "candidateId": "candidate-1" }
+```
+
+The fixed demo source is `91000001`, separate from the operational attendance
+fixtures, and the scenario clock is frozen at `2026-10-13T08:00:00`.
+Four candidates demonstrate:
+
+| Candidate | Outcome |
+| --- | --- |
+| `candidate-1` | Suitable under the demo policy only—not approval. |
+| `candidate-2` | Blocked by known synthetic job/attendance/rest facts. |
+| `candidate-3` | Review/confirmation required; no confirmation action exists. |
+| `candidate-4` | Unknown facts; cannot be labelled eligible. |
+
+A foreign-team candidate stays hidden. Results always contain `previewOnly: true`,
+`saved: false`, `accepted: false` and separate blocker/warning/unknown reasons.
+Listing a candidate is not a verified eligibility result, and no acceptance,
+save, repository cleanup or partner action is available.
+
+Synthetic policy uses four resolved rest-gap facts (both sides for both
+participants), minimum 660 minutes, maximum duration difference 120 minutes,
+lead at least 120 minutes and matching sites for demo night starts (22:00-06:00).
+These numbers/equality rules are demo settings, not observed production values.
+Attendance/job/review/rest fixtures are not live neighboring schedules or actual
+availability. A known blocker remains blocking even when another fact is unknown.
+
+Latest validation: **143 tests (78 backend + 65 frontend)**, lint, strict types/
+templates and both builds passed. Initial bundle **430.76 kB**, under unchanged
+500 kB warning. Browser checks passed classifications, unsaved/unaccepted states,
+unchanged list, keyboard/focus, injected error/retry, narrow layouts and 200%
+text resizing. R08 staffing requests, real identity/data/policy and UAT remain pending.
+
+### R08 Staffing Request and Candidate Read Demo
+
+The user approved synthetic read-only reinforcement, time-change and reduction
+views. The [staffing screen](apps/web/src/app/staffing.ts) uses the same demo
+startup commands after restarting the API:
+
+```text
+GET /api/v1/staffing-requests?kind=all&limit=100
+GET /api/v1/staffing-requests/{id}
+GET /api/v1/staffing-requests/{id}/candidates?limit=100
+```
+
+Kind is `all`, `reinforcement`, `time-change` or `reduction`; default limit 25,
+maximum 100. Five visible fixed-team requests include capacity remaining 2,
+full capacity remaining 0, and unknown capacity null. Requested and approved
+counts remain separate. Deadlines and freshness are explicit facts relative to
+the frozen October 13 scenario clock, not the current operational time.
+
+Fixtures: `93000001` available reinforcement; `93000002` full/stale/time-change
+with elapsed deadline; `93000003` reduction with empty candidates; `93000004`
+unknown reinforcement; `93000005` time-change with a stale candidate. Foreign
+request/candidate data stays hidden. A displayed candidate is not eligibility,
+registration, approval or assignment. No registration/assignment/approval/
+cancellation or partner route/control exists.
+
+Detail/candidate failure preserves valid context, filters survive failures and
+superseded requests are cancelled. The client rejects inconsistent capacity,
+unmarked data, wrong kinds/units or a different request's candidates. Notes are
+plain text. No calendar is needed for these read-only deadline values.
+
+Latest checks: **152 tests (80 backend + 72 frontend)**, lint, strict types/
+templates and both builds passed; initial bundle **431.23 kB** under unchanged
+500 kB warning. Browser checks covered types, counts/deadlines/stale candidates,
+empty/unknown/error/retry, keyboard focus, responsive layouts and 200% resizing.
+No Oracle, real identity, eligibility verification, writes or UAT was enabled.
+
+### R08 Pure Staffing Eligibility and Capacity Preview
+
+The user approved pure candidate calculations on the existing staffing screen.
+Restart the stub API/web commands to load the added capability and route:
+
+```text
+POST /api/v1/staffing-requests/{id}/eligibility-previews
+Body: { "candidateId": "staff-candidate-1" }
+```
+
+Every calculation is unsaved, unassigned and unapproved. A suitable-under-demo
+result shows conditional one-slot capacity: requested unchanged, approved +1 and
+remaining -1 **only if a future unavailable command were applied**. The current
+request and candidate records never change. Blocked/unknown results have no
+projected capacity; calculations do not reserve slots.
+
+Synthetic checks require consistent exact counts, fresh request/candidate facts,
+known deadline and at least 120 minutes lead relative to the frozen scenario
+clock, compatible job/interval flags and no duplicate participation. These fixed
+values and resolved flags are not real unit rules or live candidate eligibility.
+Full, elapsed and duplicate cases block; stale/unknown data cannot qualify.
+
+Six requests now include populated reduction `93000007` for preview, preserving
+the earlier empty reduction `93000003`. Examples:
+- `93000001` / `staff-candidate-1`: conditional remaining 2 → 1.
+- `93000005` / `staff-candidate-1`: last-slot conditional remaining 1 → 0;
+  actual remains 1. `staff-candidate-5` demonstrates duplicate participation.
+- `93000007` / `staff-candidate-1`: reduction demo calculation, not cancellation.
+- `93000002`: full/elapsed blocker; `93000004`: unknown capacity/context.
+
+The UI retains read data on calculation failure, cancels stale work and verifies
+scope, before snapshot, unsaved flags and exact one-slot output arithmetic.
+No editable capacity/approval fields or assignment/save controls exist.
+
+Latest checks: **163 tests (84 backend + 79 frontend)**, full lint/types/builds
+passed; initial bundle remains **431.23 kB**. Browser checks passed suitable/
+blocked/unknown/duplicate, hypothetical zero, unchanged counts, errors/focus,
+narrow layouts and 200% resizing. Oracle, real matching/atomic capacity and
+business acceptance remain pending.
+
+### R05 Employee Skills, Events and Education Demo
+
+The user approved the next R05 synthetic child views. Open a demo employee card,
+then choose `מיומנויות`, `אירועים` or `השכלה`. Records are fetched on demand:
+
+```text
+GET /api/v1/employees/{id}/skills?limit=100
+GET /api/v1/employees/{id}/events?limit=100
+GET /api/v1/employees/{id}/education?limit=100
+```
+
+All three reuse the employee team's fixed demo scope, synthetic/no-store markers,
+uniform foreign/missing 404, default limit 25/max 100 and explicit insufficient-
+limit failure. No cursor, scope override or write endpoint is available.
+The [demo record DTO](apps/api/src/stub/employee-contracts.ts) includes only
+invented string ID/label, nullable detail and nullable local date.
+Responses include `employeeId` and `section`; the client verifies both.
+
+Employee `00000001` has populated examples, `00000002` has successful empty
+sections, and `00000003` has unknown detail/date examples. Skills represent active
+synthetic skill/language entries; events are invented attendance/employee-event
+examples, with no correction, cancellation or registration action. Education
+records are explicitly invented UI fixtures: the inspected legacy education page
+is a skills/courses container, and its courses model is a placeholder. This does
+not introduce a course/learning integration or claim a verified education source.
+
+The [employee card](apps/web/src/app/employees.html) uses keyboard-operable
+pressed-state section buttons, explicit loading/error/retry/empty states,
+literal text rendering and cancellation of old section reads on selection, card
+close or new employee search. There are no date-edit inputs in these read-only
+sections; existing shift calendars are unchanged.
+
+Latest checks: **62 backend + 34 frontend tests (96 total)**, full lint, strict
+types/templates and both builds passed. The initial bundle remains **423.81 kB**
+under the unchanged 500 kB warning budget. Browser checks through isolated local
+stub/UI ports 3105/4205 passed all three sections, empty/unknown fixtures, safe
+text, keyboard/focus restoration, 320/768/1280 page reflow, 200% resizing and an
+injected 503 with retry while preserving the card. Temporary servers/proxy were
+cleaned up. No Oracle, real personal records, identity, writes or partners were used.
 
 ### Approved Synthetic API Mode
 

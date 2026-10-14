@@ -4,6 +4,12 @@ import { createSyntheticShiftFacts } from './fixtures.js';
 import { syntheticPersonalMessages } from './message-fixtures.js';
 import { STUB_MARKER as marker, stubProblem as problem, StubProblemFilter } from './stub-http.js';
 import { StubEmployeesController } from './employees.controller.js';
+import { StubOperationalController } from './operational.controller.js';
+import { StubBreaksController } from './breaks.controller.js';
+import { StubShiftPreviewsController } from './shift-previews.controller.js';
+import { StubReplacementController } from './replacement.controller.js';
+import { StubStaffingController } from './staffing.controller.js';
+import { StubExceptionsController } from './exceptions.controller.js';
 
 const scope = { actorEmployeeId: '00000001', canViewBaseline: false };
 
@@ -28,7 +34,7 @@ export class StubController {
       ...marker,
       personalShifts: {
         read: { enabled: true, reason: 'SYNTHETIC_DEMO_ONLY' },
-        preview: { enabled: false, reason: 'NOT_IMPLEMENTED' },
+        preview: { enabled: true, reason: 'SYNTHETIC_POLICY_ONLY' },
         write: { enabled: false, reason: 'READ_ONLY_STUB' },
       },
       personalMessages: {
@@ -40,6 +46,29 @@ export class StubController {
         write: { enabled: false, reason: 'READ_ONLY_STUB' },
       },
       integrationAvailable: false,
+      exceptions: {
+        read: { enabled: true, reason: 'SYNTHETIC_SCENARIO_ONLY' },
+        write: { enabled: false, reason: 'READ_ONLY_STUB' },
+      },
+      staffing: {
+        read: { enabled: true, reason: 'SYNTHETIC_SCENARIO_ONLY' },
+        preview: { enabled: true, reason: 'SYNTHETIC_POLICY_ONLY' },
+        write: { enabled: false, reason: 'READ_ONLY_STUB' },
+      },
+      replacement: {
+        read: { enabled: true, reason: 'SYNTHETIC_SCENARIO_ONLY' },
+        preview: { enabled: true, reason: 'SYNTHETIC_POLICY_ONLY' },
+        write: { enabled: false, reason: 'READ_ONLY_STUB' },
+      },
+      breaks: {
+        read: { enabled: true, reason: 'SYNTHETIC_DEMO_ONLY' },
+        preview: { enabled: true, reason: 'SYNTHETIC_POLICY_ONLY' },
+        write: { enabled: false, reason: 'READ_ONLY_STUB' },
+      },
+      operationalReads: {
+        read: { enabled: true, reason: 'SYNTHETIC_DEMO_ONLY' },
+        write: { enabled: false, reason: 'READ_ONLY_STUB' },
+      },
     };
   }
 
@@ -107,5 +136,5 @@ export class StubController {
   }
 }
 
-@Module({ controllers: [StubController, StubEmployeesController] })
+@Module({ controllers: [StubController, StubEmployeesController, StubOperationalController, StubBreaksController, StubShiftPreviewsController, StubReplacementController, StubStaffingController, StubExceptionsController] })
 export class StubModule {}

@@ -7,6 +7,34 @@ Publication target: d:/AIProjects/SHFAI/docs/SHF_PROJECT_DIRECTIVES.md, ordinary
 
 ## 1. Confirmed Scope And Evidence
 
+### Current Progress Snapshot — 2026-10-14, After R08 Staffing Preview Demo
+
+| Round | Current status | Evidence / next gate |
+| --- | --- | --- |
+| R01 | Review / partial | Source-backed proposals and separately approved demo contracts; full business architecture/API/UI approval pending. |
+| R02 | Local foundation working / partial | Reproducible app commands, tests, lint, strict types and builds; CI, deployment and complete contract generation pending. |
+| R03 | Adapter implemented / real reads blocked | Read-only Oracle adapter tested offline; both approved hostname attempts failed NJS-530 before authentication. SEC identity and DBA metadata remain missing. |
+| R04 | Synthetic demo done | Personal shifts, calendars, details, overnight/null/reassignment cases; no real Oracle parity or G3 acceptance. |
+| R05 | Approved synthetic demo done | Messages, employee search/card and skills/events/education views; education explicitly invented, no writes or real employee data. |
+| R06 | Approved synthetic range-read demo done | Fixed-team schedule/attendance table/detail and calendars; current-instant/live reads, real scope and parity remain pending. No arrival/departure registration or corrections. |
+| R07 | Approved break and shift/split preview demos done / round partial | Pure synthetic calculations and scoped reads; full real policy, attendance/offer eligibility and zero-effect Oracle proof pending. |
+| R08 | Approved replacement and staffing read/preview demos done / round partial | Synthetic outcomes and conditional one-slot counts; full real policy, freshness/precondition/atomic-capacity evidence and acceptance remain pending. |
+| R09–R10 | Planned | Reports, exceptions and admin not implemented. |
+| R11 | Deferred / gated | No business writes authorized or enabled. |
+| R12–R13 | Pending | Full security/load/assistive-technology/UAT/recovery/release evidence and accountable sign-off pending. |
+
+Latest completed check: 84 backend + 79 frontend tests (163 total),
+lint/types/builds pass; initial UI bundle 431.23 kB. Synthetic browser checks
+cover responsive RTL, focus, errors and text resizing, not full AA certification.
+The 45–90 active-hour estimate remains provisional; no elapsed delivery date or
+percentage-complete claim is inferred from a working demonstration.
+
+Oracle remains paused. Required owners: DBA/network for a reachable host and
+approved metadata/data scope; SEC for trusted identity/employment/scope policy;
+user/ARC for real API/UI baselines; business/QA/operations for UAT and release.
+This snapshot supersedes earlier no-scaffold/no-runtime wording as current status;
+older sections remain historical execution evidence.
+
 - Node.js/TypeScript backend; supported modern Angular, Material/CDK/Material 3, HTML/CSS; Hebrew/RTL and Hebrew accessibility names.
 - Oracle Database 21c is user-confirmed, not live-verified; Thin mode is proposed. Existing schema remains unchanged: no DDL/migrations/new tables, columns, indexes, sequences, triggers or procedures and no field/status overloading.
 - TIBCO work is abstract API ports, DTOs, documented semantics and clearly isolated doubles only. No live broker/bridge transport, publisher/consumer, Java/.NET bridge or transport worker.
@@ -508,6 +536,459 @@ Shared API/DTO contracts and pure business mapping rules remain unchanged.
 Checks: 56 backend plus 14 frontend tests (70 total), lint, strict types/templates
 and both production builds passed. Initial API test registration was accidentally
 nested in a method loop; it was corrected and the same runner passed on retest.
+
+## 23. Approved R07 Break Views and Pure Preview Demo
+
+Task ID: SHF-R07-BREAK-PREVIEW-STUB-20261014. Status: done for the approved
+synthetic break-read/change-preview increment; R07 overall remains partial.
+
+The user explicitly approved synthetic break views and pure break-change previews
+with Hebrew/RTL controls and isolated tests. This authorizes calculations only,
+not saving, offer cleanup, Oracle access, ID allocation, partner requests or
+simulated command completion.
+
+### Rule Evidence and Explicit Synthetic Policy
+
+[checkValidBreakRangeWithShift](../old/SHF/src/bzq/shf/model/BreakDataModel.java#L3174)
+checks positive duration depending on source and margins from shift edges.
+[checkBreakRange](../old/SHF/src/bzq/shf/model/BreakDataModel.java#L3200) rejects
+a gap smaller than its allowed range.
+[checkShiftBreakForm](../old/SHF/src/bzq/shf/model/BreakDataModel.java#L3218)
+defaults the shift margin to 60 minutes and applies inter-break checks
+conditionally by source. The
+[constant](../old/SHF/src/bzq/shf/utils/SHFConstants.java#L56) is 60 minutes.
+These are source observations, not verified current unit/partner policy.
+
+The architect-owned [demo DTO](../apps/api/src/stub/break-contracts.ts) separates
+planned and nullable actual break local timestamps, policy/read eligibility,
+proposal input and explicitly unsaved preview output.
+`synthetic-break-policy-1` uses 60-minute edges and gaps, equality allowed,
+minute-precision proposal input and a synthetic duration bound 1–120 minutes.
+The 120-minute bound is a demo input limit, not an observed legacy requirement.
+Zero duration/deletion, arbitrary source flags, managed/split/unknown-source policy,
+lead-time rules and DST instant/paid-duration arithmetic are not implemented.
+
+Wall-time arithmetic uses a Gregorian UTC axis internally solely to add calendar
+minutes, without asserting an Oracle instant or timezone offset. Actual read
+timestamps retain seconds; proposals accept `:00` seconds only. Overnight proposals
+use an explicit calendar date and can end on the next day. The legacy method's
+same-shift-date parsing is not silently copied as an overnight restriction.
+
+### Implementation and Verification
+
+- [Fresh scoped fixtures](../apps/api/src/stub/break-fixtures.ts) reuse personal
+  effective-shift projection. Populated normal/overnight cases, nullable actuals,
+  unverified split/managed policy and an empty unknown source are explicit.
+- [Pure function](../apps/api/src/stub/break-preview.ts) validates exact body
+  fields, duration/calendar shape, shift margins and gap/overlap, and returns
+  before/proposed values without mutating input or generating operation IDs.
+- [GET/POST controller](../apps/api/src/stub/breaks.controller.ts) exposes
+  `/api/v1/shifts/{id}/breaks` and
+  `/api/v1/shifts/{id}/break-change-previews`. POST returns 200 calculation,
+  `previewOnly: true`, `saved: false`, policy version and warnings—not 201/202
+  acceptance or completion. Scoped missing/foreign IDs agree; save/delete/apply
+  endpoints remain absent. Both responses are synthetic/unauthenticated/no-store.
+- [Client](../apps/web/src/app/breaks-api.ts) rejects malformed, saved/completed,
+  wrong-shift/proposal and inconsistent-duration responses.
+  [Screen](../apps/web/src/app/breaks.ts) /
+  [template](../apps/web/src/app/breaks.html) shows planned/actual table, an
+  explicit local-date calendar/time/duration draft, unsaved result, rule errors,
+  focus and unavailable policy. Draft edits cancel stale requests and clear
+  old results. Shift replacement cancels preview and resets an empty source's
+  previous draft instead of retaining another shift's date.
+- [API/unit tests](../apps/api/test/break-preview.test.ts) cover exact and
+  one-minute boundaries, overlap, zero/oversize/invalid/seconds inputs, duration
+  extremes, overnight, unsupported policies, repeated immutable output and
+  GET before/after both successful and rejected POST. These pure/isolated checks
+  do not constitute database-side zero-effect evidence.
+- [UI tests](../apps/web/src/app/breaks.spec.ts) cover marker/shape checks, explicit
+  unsaved result, retained error draft, unavailable submit, local input rejection,
+  draft/shift cancellation, saved/inconsistent-result rejection and empty reset.
+
+Latest checks: 69 backend + 50 frontend tests (119 total), full lint,
+strict types/templates and production builds passed. Initial production bundle
+426.75 kB remains under unchanged 500 kB warning; breaks is an immediate deferred
+chunk with Hebrew loading/error states. A test initially selected the calendar
+button instead of submit; its locator was corrected and the same unavailable-
+submit assertion passed. No assertions were weakened or cases skipped.
+
+Browser checks used updated isolated API/UI ports 3107/4207 and a session proxy.
+Actual seconds/nulls, an exact 60-minute-gap preview, a rejected 59-minute gap,
+retained draft, focus on the preview, unchanged read table, stale-result clearing,
+overnight next-day preview, calendar keyboard operation, split-policy unavailable
+and empty source passed. 1280/768/320 page reflow and 200% resizing passed.
+Shared-page/pointer interruptions were resolved with fresh self-contained checks.
+Temporary servers/proxy were cleaned up; existing user processes were preserved.
+
+No Oracle, business write, offer deletion, sequence/function allocation, broker
+or live partner request occurred. Real-policy mapping, source/managed lead-time
+and deletion semantics, full shift/split previews and G4 live proof remain pending.
+Review this bounded demo before authorizing the next R07 policy increment.
+
+## 24. Approved Shift-Time and Split-Shift Pure Preview Demo
+
+Task ID: SHF-R07-SHIFT-SPLIT-PREVIEW-STUB-20261014. Status: done for approved
+synthetic calculation scope; real R07/G4/business acceptance remain pending.
+
+The user explicitly approved synthetic shift-time and split-shift previews,
+calculating an unsaved proposal only. No Oracle, saving, offer cleanup, ID
+allocation or partner request is authorized. Scope is personal demo employee A.
+
+### Evidence, Synthetic Policy and Deliberate Limits
+
+[validateUpdate](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L3604) parses new
+start/end, checks missing reason, relative date bounds, unit minimum duration,
+offers and optional split validation. Its `cancelBreakSwitch` branch can delete
+break candidates while validating. That mutation is excluded entirely.
+[validateSplitShift](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L5739)
+checks split order/range, first-part minimum 120 minutes, gap minimum 120 minutes,
+and second-part start no earlier than a calendar time based on 16:00.
+Production parameters/time interpretation and safe write ownership are unverified.
+
+The architect-owned [demo DTO](../apps/api/src/stub/shift-preview-contracts.ts)
+defines explicit minute-precision start/end local strings, nonblank reason up to
+200 characters and `split: null` or explicit local gap endpoints.
+`synthetic-shift-policy-1` uses:
+
+- Start dates October 14-17, 2026, bounded overnight end; no relative live clock.
+- Span 240-960 minutes and at least 240 proposed work minutes. These fixed
+  thresholds/window and reason bound are demo choices, not recovered unit values.
+- Split first part and gap at least 120 minutes, second-part start at/after
+  16:00 on the start date. A second-part minimum of 120 minutes is an explicit
+  additional synthetic constraint, not observed in the inspected legacy method.
+- Existing planned breaks must remain inside the proposed shift and not overlap
+  the split gap (half-open intervals). Conflict is rejected, not cleaned up.
+  This is containment/gap compatibility, not full break-margin/offer policy.
+- Unknown-source and partner-managed policy remains unavailable. No actual
+  attendance, availability, offers, unit parameter or live-source eligibility is
+  asserted. DST/UTC/paid-duration decisions remain blocked.
+
+### Implementation
+
+- [Shared wall-time parser](../apps/api/src/personal-shifts/wall-time.ts)
+  centralizes strict Gregorian minute parsing for break and shift previews. UTC
+  is an arithmetic axis only, not a source timezone or real business instant;
+  existing break regressions passed after extraction.
+- [Pure shift calculation](../apps/api/src/stub/shift-preview.ts) uses fresh
+  scoped source/break facts, validates order/window/span/split/break compatibility,
+  and clones before/proposed schedules. It allocates no operation/correlation IDs.
+- [Controller](../apps/api/src/stub/shift-previews.controller.ts) exposes
+  `GET /api/v1/shifts/{id}/shift-preview-context` and
+  `POST /api/v1/shifts/{id}/shift-change-previews`. POST returns 200 with
+  `previewOnly: true`, `saved: false`, policy version, minute totals and warnings,
+  never apply/acceptance/completion. Normal write routes remain absent.
+- Existing personal-shifts capability advertises synthetic preview only; writes
+  remain false. Responses preserve synthetic/unauthenticated/no-store markers.
+- [Client](../apps/web/src/app/shift-preview-api.ts) verifies context/actor/ID,
+  submitted values, split endpoints, unsaved markers and exact minute consistency.
+  It rejects completion-shaped or internally inconsistent responses.
+- [UI](../apps/web/src/app/shift-preview.ts) /
+  [template](../apps/web/src/app/shift-preview.html) supplies start/end calendars
+  and local times, optional split gap calendars/times, reason, retained draft,
+  unavailable policy, errors and focus-managed before/proposed result.
+  Draft changes cancel in-flight work and remove stale results.
+
+### Verification and Status
+
+[Unit/API tests](../apps/api/test/shift-preview.test.ts) passed for plain/split
+minute totals, exact and one-minute boundaries, strict body/date/reason inputs,
+overnight, policy gating, break-conflict rejection, scope and repeated immutable
+POST/GET. [UI tests](../apps/web/src/app/shift-preview.spec.ts) passed calendar/
+body/segment rendering, retained rejected draft, cancellation, unsaved and wrong-
+minute result rejection, and unavailable source. No real database effects were
+tested or inferred.
+
+Full `npm run check` passed **74 backend + 58 Angular tests (132 total)**,
+lint, strict types/templates and both builds. Initial bundle **428.07 kB**,
+below unchanged 500 kB warning. The new view is an immediate deferred feature
+with explicit Hebrew chunk loading/error feedback.
+
+Browser verification used updated isolated API/UI ports 3108/4208 and a session
+proxy. Plain 600-minute and split 480-work/120-gap results, two explicit segments,
+four calendars, focus, stale-result removal, conflict rejection with retained
+draft, overnight 480-minute result, unavailable source, 1280/768/320 reflow and
+200% resizing passed. An initial assertion preceded Angular's checkbox render;
+condition-based hidden/visible waits passed without altering product behavior.
+Temporary servers/proxy were cleaned up; existing user processes were preserved.
+
+No original shift/break/offer was changed, no transaction/sequence allocated,
+and no Oracle or partner request ran. Full real rule characterization, unit
+configuration, attendance/offer eligibility, durable preconditions and G4 proof
+remain pending. Next candidate is R08 read/eligibility workflow design and
+synthetic fixtures, requiring a separate user scope/contract decision.
+
+Additional focused check: all 10 break/shift preview unit/API tests passed under
+`America/Los_Angeles`, preserving local calendar arithmetic in a UTC-negative
+runtime. Scoped documentation validation passed 1,155 local links and 779 source
+references; README/plan anchors and tracked whitespace passed. These are isolated
+checks, not new live database or business timezone evidence.
+
+## 25. Approved R08 Replacement Candidates and Eligibility Preview
+
+Task ID: SHF-R08-REPLACEMENT-STUB-20261014. Status: done for the approved
+synthetic candidate-list/eligibility increment; R08 overall remains partial.
+
+The user explicitly selected replacement candidates and eligibility preview.
+No acceptance, saving, Oracle access, repository cleanup or partner request was
+approved. These fixtures form a separate, clearly labelled scenario, not live
+availability or a reinterpretation of the operational attendance demo.
+
+### Source Evidence and Synthetic Contract
+
+[SwitchModel.validateReplace](../old/SHF/src/bzq/shf/model/SwitchModel.java#L69)
+checks distinct times, switchable inner jobs, rest/attendance for both shifts,
+and confirmable repository/exception/extension conditions.
+[CheckValidDate.checkSwitch](../old/SHF/src/bzq/shf/utils/CheckValidDate.java#L323)
+queries an employee's other effective shifts using a configured minimum hours.
+[ReplaceModel.checkShiftsForSwitch](../old/SHF/src/bzq/shf/model/ReplaceModel.java#L991)
+filters lead time, duration difference, jobs, night/site, own shifts and attendance.
+Source filters and warning booleans are not proof of runtime policy or authority
+to call `removeLimit` or mutate offers.
+
+The architect-owned [DTOs](../apps/api/src/stub/replacement-contracts.ts) define
+minimal synthetic source/candidate shifts, reason-code/text arrays and four
+eligibility outcomes:
+
+- `eligible-under-demo-policy`: only the listed synthetic checks pass; not approval.
+- `blocked`: at least one known blocker, even if other facts remain unknown.
+- `confirmation-required`: synthetic review flag with no known blockers/unknowns;
+  confirmation/cleanup is not implemented.
+- `unknown`: incomplete facts cannot become eligible.
+
+All previews retain `previewOnly: true`, `saved: false`, `accepted: false`.
+No operation/correlation or accepted state is returned.
+
+`synthetic-replacement-policy-1` fixes rest at 660 minutes on four sides
+(source before/after and candidate before/after), allowed duration difference
+120 minutes, minimum lead 120 minutes and night starts at/after 22:00 or before
+06:00 with matching sites. Equality passes these demo thresholds. These numbers,
+night definition and equality rules are synthetic choices, not verified live
+parameters. Clock is frozen at `2026-10-13T08:00:00`, not current request time.
+Rest/compatibility/attendance/review facts are supplied resolved fixtures, not
+computed from a real neighboring schedule or read from Oracle.
+
+### Implementation and Verification
+
+- [Scenario fixtures](../apps/api/src/stub/replacement-fixtures.ts) define a
+  source shift `91000001` for demo employee A and four team-A candidates:
+  suitable, blocked, review-required and unknown. A foreign-team candidate is
+  omitted. Separate IDs avoid contradictory claims about previous attendance
+  fixtures; profile internals and four rest values are not exposed in the list.
+- [Pure policy](../apps/api/src/stub/replacement-preview.ts) separates blockers,
+  warnings and unknowns; it never mutates input or performs lookup/cleanup.
+- [GET/POST controller](../apps/api/src/stub/replacement.controller.ts) exposes
+  `GET /api/v1/replacement-candidates?limit=100` and
+  `POST /api/v1/replacement-eligibility-previews` with body `{candidateId}` only.
+  Fixed source/team ownership and candidate scope are enforced before calculation.
+  Default limit 25/max 100; insufficient page size fails explicitly. Foreign and
+  absent candidate IDs return identical 404; actor/unit/confirm overrides rejected.
+- [Client](../apps/web/src/app/replacement-api.ts) checks synthetic markers,
+  both-entity context, scope, unaccepted flags and agreement between classification
+  and blocker/warning/unknown arrays. It rejects a result labelled eligible while
+  carrying blockers.
+- [UI](../apps/web/src/app/replacement.ts) /
+  [template](../apps/web/src/app/replacement.html) shows a read-only candidate
+  comparison table and focus-managed outcome with separate reasons. Candidate
+  selection/refresh cancels old previews; errors retain the list without invented
+  eligibility. There is no acceptance/confirmation/save control.
+- [Unit/API tests](../apps/api/test/replacement-preview.test.ts) verify all four
+  outcomes, each side's rest boundary, mixed known-short/unknown facts, owner/time/
+  duration/lead/night/attendance checks, immutable repeated reads, hidden scope
+  and absent acceptance endpoints.
+- [UI tests](../apps/web/src/app/replacement.spec.ts) verify categories, safe text,
+  scope and context rejection, unaccepted/contradictory results, stale cancellation,
+  empty/failure list behavior and no write/acceptance calls.
+
+Full `npm run check` passed **78 backend + 65 Angular tests (143 total)**,
+lint, strict types/templates and both builds. Initial bundle **430.76 kB**,
+under unchanged 500 kB warning. Replacement is an immediate deferred view with
+Hebrew loading/error states.
+
+Browser checks on isolated updated ports 3109/4209 passed four categories,
+unsaved/unaccepted labels, unchanged four-row list, keyboard result/return focus,
+1280/768/320 reflow and 200% resizing. Injected 503 retained candidates, showed
+an explicit error and recovered a demo-only suitable result on retry.
+Temporary servers/proxy were cleaned up; existing user servers were preserved.
+
+No live Oracle/attendance/neighbor-schedule or partner call, business mutation,
+offer cleanup or release occurred. Rest and other policies need real mappings,
+both-resource authorization and characterization before live use.
+Next candidate: R08 staffing-request read stubs, under a separate user decision.
+
+## 26. Approved R08 Staffing Request and Candidate Reads
+
+Task ID: SHF-R08-STAFFING-READ-STUB-20261014. Status: done for approved
+synthetic reinforcement/time-change/reduction list/detail/candidate reads.
+Full R08 and real eligibility/write/release gates remain pending.
+
+The user explicitly approved all three read-only request types. No registration,
+assignment, approval, cancellation, Oracle access or partner request is authorized.
+
+### Source Evidence and Minimal Demo Contract
+
+- [populateShiftAddRequests](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L1965)
+  reads reinforcement request dates, requested/original counts and allowed-unit scope.
+- [populateShiftChangeRequests](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L4674)
+  reads time-change requests and counts approved candidates; candidate options
+  are projected by
+  [populateChangeRequestOptions](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L4919).
+- [populateReduceRequest](../old/SHF/src/bzq/shf/model/ReduceDataModel.java#L68),
+  [approved counts](../old/SHF/src/bzq/shf/model/ReduceDataModel.java#L616) and
+  [candidate reads](../old/SHF/src/bzq/shf/model/ReduceDataModel.java#L668)
+  distinguish request capacity from approved results.
+  [checkTimeForReduceShift](../old/SHF/src/bzq/shf/model/ReduceDataModel.java#L386)
+  uses a unit-configured lead-time parameter. No mutating approval/reduction
+  code was executed or copied as a read.
+
+The architect-owned [DTO](../apps/api/src/stub/staffing-contracts.ts) includes
+synthetic string request ID, type, fixed unit, title, local interval, nullable
+requested/approved/remaining counts, nullable deadline, explicit deadline/
+freshness states and nullable text note. Candidate rows expose invented ID/name,
+explicit current/stale/unknown freshness and nullable source timestamp/note.
+No live eligibility, authority, assignment or real personal record is implied.
+
+Clock remains frozen at `2026-10-13T08:00:00`. Capacity and deadline/freshness
+facts are invented, not production parameter calculations. Zero remaining is
+distinct from unknown/null; an approved count in a fixture is not approval
+performed by this app. Current means current within the frozen scenario, not live.
+
+### Implementation and Checks
+
+- [Fixtures](../apps/api/src/stub/staffing-fixtures.ts) define five visible
+  requests: available reinforcement, full/stale/elapsed time-change, reduction
+  with empty candidates, unknown capacity/deadline/freshness, and a second time-
+  change with stale candidates. Foreign-unit request/candidate fixtures are hidden.
+- [Controller](../apps/api/src/stub/staffing.controller.ts) exposes:
+  `GET /api/v1/staffing-requests?kind=all&limit=100`,
+  `GET /api/v1/staffing-requests/{id}`, and
+  `GET /api/v1/staffing-requests/{id}/candidates?limit=100`.
+  Kind filtering, default 25/max 100, fixed team scope, uniform foreign/missing
+  404 and explicit insufficient-page failure apply. Unsupported selectors and
+  cursor input are rejected. No mutating route exists.
+- [Client](../apps/web/src/app/staffing-api.ts) validates synthetic clock/markers,
+  unit/context, exact capacity consistency and filtered kinds. Candidate scope
+  and request identity must agree; unknown data is not converted to zero.
+- [UI](../apps/web/src/app/staffing.ts) /
+  [template](../apps/web/src/app/staffing.html) provides type filter, scan-oriented
+  counts/status table, focus-managed detail, on-demand candidate reads and explicit
+  empty/error/retry. Full capacity, elapsed deadline and stale candidates are
+  labelled; no register/assign/approve/cancel controls exist. No new editable date
+  field was introduced; displayed deadlines are read-only.
+- [API tests](../apps/api/test/staffing.test.ts) and
+  [UI tests](../apps/web/src/app/staffing.spec.ts) cover all types, scope,
+  no writes, read immutability, counts/nulls, stale/unknown/empty candidates,
+  literal note text, malformed/contradictory/wrong-context data, filter preservation
+  and cancellation of old list/detail/candidate reads.
+
+Full `npm run check` passed **80 backend + 72 Angular tests (152 total)**,
+lint, strict types/templates and both builds. Initial bundle **431.23 kB**,
+below unchanged 500 kB warning. The screen is an immediate deferred feature
+with Hebrew loading/error feedback. Initial strict compilation exposed a fixture
+freshness literal and nullable-capacity narrowing; proper explicit types/guards
+were added and checks passed without casts or weakened assertions.
+
+Browser checks used updated isolated API/UI ports 3110/4210 and a session proxy.
+Five-request load, kind filter, zero/full versus unknown capacity, elapsed deadline,
+stale/unknown candidates, literal note, empty reduction candidates, keyboard detail/
+return focus, 1280/768/320 reflow and 200% resizing passed. Injected 503 retained
+detail, displayed no fake candidates and recovered two scoped candidates on retry.
+An unavailable shared page was replaced with a fresh self-contained browser check.
+Temporary servers/proxy were cleaned up; existing user processes were preserved.
+
+No Oracle or real staffing workflow ran. Candidate listing is not eligibility,
+nor registration/approval evidence. Request/candidate freshness requires real
+precondition revalidation before any future command. Staffing capacity/eligibility
+previews, real business characterization and G4/G5/UAT/release remain pending.
+Next candidate: separately approve staffing eligibility/capacity preview design,
+or R09 read-only exceptions/reporting; do not infer a write approval.
+
+## 27. Approved R08 Pure Staffing Eligibility and Capacity Preview
+
+Task ID: SHF-R08-STAFFING-PREVIEW-STUB-20261014. Status: done for the explicitly
+approved pure synthetic preview increment. Full R08 business parity, real policy,
+authorization, atomic capacity and acceptance remain pending.
+
+The user approved completing the demo with pure staffing eligibility/capacity
+previews, no assignment or approval. Every result is a calculation only and
+includes `previewOnly: true`, `saved: false`, `assigned: false`, `approved: false`.
+
+### Source and Synthetic Boundaries
+
+[Reinforcement apply](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L3307)
+allocates a sequence and decrements capacity while inserting employee-day data.
+Those effects are excluded. Time-change
+[validateChangeRequest](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L4524)
+checks interval/length constraints from unit parameters; reduction
+[checkTimeForReduceShift](../old/SHF/src/bzq/shf/model/ReduceDataModel.java#L386)
+checks configured lead time. Prior request/approved-count reads distinguish
+capacity from successful actions. No legacy mutating path or query was executed.
+
+`synthetic-staffing-policy-1` uses a frozen October 13 clock and fixed 120-minute
+lead, with deadline equality allowed. These are demo choices, not verified live
+parameters. Job/interval/duplicate-participation flags are resolved invented
+facts, not full live matching or flexible time-change-range characterization.
+Current request/candidate freshness and the exact scenario timestamp are required.
+Stale/unknown facts are unknown, not eligible; known blockers take precedence.
+Counts must be nonnegative exact integers with `remaining = requested - approved`.
+Zero/full capacity, elapsed deadline and duplicate participation block.
+
+Only a suitable-under-demo result has `capacityIfApplied`: requested unchanged,
+approved hypothetically +1 and remaining hypothetically -1. Blocked/unknown
+results return null, never negative or invented capacity. This is not a reserved
+slot, assignment or precondition proof; repeated/concurrent hypothetical results
+leave actual fixture counts unchanged. A future real command needs authorized
+same-transaction revalidation and verified existing-schema concurrency/recovery.
+
+### Implementation and Evidence
+
+- [Shared DTO](../apps/api/src/stub/staffing-contracts.ts) adds isolated facts,
+  capacity snapshots and explicitly unassigned/unapproved preview output.
+- [Pure function](../apps/api/src/stub/staffing-preview.ts) calculates from
+  supplied immutable facts using the shared strict wall-time parser. No I/O,
+  ID allocation, workflow invocation or resource write occurs.
+- Existing [fixtures](../apps/api/src/stub/staffing-fixtures.ts) preserve earlier
+  cases, add visible populated reduction request `93000007`, and demonstrate
+  duplicate candidate `staff-candidate-5` for time-change `93000005`. Six requests
+  are now visible; empty reduction `93000003` and foreign request `93000006`
+  retain their meanings.
+- Existing [controller](../apps/api/src/stub/staffing.controller.ts) adds
+  `POST /api/v1/staffing-requests/{id}/eligibility-previews` with exact body
+  `{candidateId}` only. Request and candidate must both be in fixed demo scope.
+  Foreign/missing resources agree on 404; submitted capacity/approval fields
+  are rejected. No assignment/registration/approval route was added.
+- Existing [client](../apps/web/src/app/staffing-api.ts) checks markers/context,
+  before counts against the displayed request, outcome against blocker/unknown
+  arrays, and exact conditional one-slot arithmetic. Saved/assigned/approved
+  or contradictory results are rejected. Read-only capability remains usable
+  when preview capability is absent or false, with explicit unavailable feedback.
+- Existing [screen](../apps/web/src/app/staffing.ts) /
+  [template](../apps/web/src/app/staffing.html) adds focus-managed per-candidate
+  calculation and conditional counts, without mutating the existing request/
+  candidate display. Candidate, card and filter refresh cancel pending previews.
+- [Unit/API tests](../apps/api/test/staffing-preview.test.ts) and
+  [UI tests](../apps/web/src/app/staffing-preview.spec.ts) verify all types,
+  positive/full/unknown/stale/duplicate, exact last-slot/lead/deadline boundaries,
+  before/after and concurrent immutability, both-resource scope, strict body,
+  unassigned/unsaved guards, cancellation and failures.
+
+Full `npm run check` passed **84 backend + 79 Angular tests (163 total)**,
+lint, strict types/templates and builds. Initial bundle **431.23 kB** stays
+under unchanged 500 kB warning. Existing staffing feature chunk owns the new
+UI, rather than adding a separate screen framework.
+
+Browser checks used updated isolated API/UI ports 3111/4211 and a session proxy.
+Six-request list, hypothetical reinforcement/reduction capacity, full/expired
+block, unknown context, duplicate block, unchanged table/counters, focus/return,
+last-slot zero projection and stale candidate unknown passed. Injected 503 kept
+detail/candidates and displayed no fake projection. 1280/768/320 page reflow and
+200% text resizing passed. Temporary servers/proxy were cleaned up; existing
+user processes were preserved.
+
+No Oracle, live staffing/identity, assignment, registration, approval, cancellation
+or partner action ran. Approved R08 demo scope is reviewable; full source-policy
+coverage, actual freshness/atomic capacity, real G4/G5/UAT and release are NOT RUN.
+Next candidate: separately approve R09 read-only exceptions/time-off or bounded
+reporting stubs; no write approval is inferred.
 Final UI labels/grammar were also retested. No test was weakened or excluded.
 
 Browser checks used a new stub on loopback port 3102 and UI on 4202 through a
@@ -673,3 +1154,209 @@ No database or partner request, business mutation, production deployment or real
 identity occurred. Full Hebrew assistive-technology/UAT and real employee parity
 remain NOT RUN. R05 skills/events/education and all real connected gates remain
 pending; the next read-only stub capability needs user selection.
+
+## 19. Oracle Connectivity Retry, 2026-10-14
+
+Task ID: SHF-ORACLE-CONNECTIVITY-20261014. Status: blocked by host resolution.
+
+The user requested a real connection retry and confirmed service `SHIFTER` at
+`CTIDBT_WFMT:1521`. The operational/shared classification is retained. Scope was
+one constant SELECT connectivity probe only: no metadata, business rows, writes
+or schema changes. The user explicitly approved replacing the existing
+credential-bearing VS Code task with a secure prompt, without retaining or
+reproducing its secret.
+
+Changed: [prompt script](../scripts/Invoke-ShfOracleMetadata.ps1) adds
+`-ConnectivityOnly`; [VS Code task](../.vscode/tasks.json) uses process invocation,
+external password entry and the confirmed host/port/service. Existing metadata
+mode is unchanged unless the connectivity-only switch is supplied. Environment
+values are restored after the command. No secret is embedded in the new task.
+
+Executed checks: script syntax and credential-free task assertions passed,
+the API build passed, and seven existing diagnostic-orchestrator tests passed.
+The one live connectivity attempt then returned `ORACLE_READ_FAILED` /
+**NJS-530 (host not found)** and exit 1. No listener connection, authentication,
+metadata SELECT or business-data read succeeded. The supplied credentials and
+service name are not verified merely because they were configured.
+
+Blocker owner: DBA/network platform. Required input: reachable FQDN/IP for the
+approved server and any required corporate VPN/DNS context. Do not guess domains,
+scan hosts, change local DNS/hosts, change credentials or retry automatically.
+Keep the existing explicitly synthetic application mode unchanged. Credential
+rotation for secrets previously shared/stored belongs to the credential owner;
+this task did not rotate passwords or edit history.
+
+## 20. Explicit Full-Host Retry, 2026-10-14
+
+Task ID: SHF-ORACLE-FULLHOST-20261014. Status: blocked by host resolution.
+
+The user explicitly requested `CTIDBT_WFMT.host`; the previously confirmed port
+1521 and service SHIFTER were retained. Only the credential-free task's host
+was changed. Task target/scope assertions and prompt-script syntax passed.
+One secure-prompt connectivity-only attempt at 08:59 returned
+`ORACLE_READ_FAILED` / **NJS-530 (host not found)** and exit 1.
+
+The listener and authentication were not reached; neither credentials nor
+service are runtime-verified. No metadata/business read, write, schema action,
+host scan or automatic retry was performed. Existing stub application mode is
+unchanged. DBA/network owner must supply a resolvable/reachable FQDN/IP or the
+required corporate VPN/DNS context. Passwords are not stored in the task or logs.
+
+## 21. Approved R05 Employee Child Stub Views
+
+Task ID: SHF-R05-EMPLOYEE-CHILDREN-20261014. Status: done for the approved
+synthetic skills/events/education increment. R05 real data, authorization,
+legacy parity and human acceptance remain blocked; G3 is not cleared.
+
+The user explicitly selected skills/events/education demo views after Oracle
+host resolution failed. No Oracle retries, business rows, writes, partner,
+schema, batch or deployment actions are authorized by this increment.
+
+Source evidence:
+
+- [EmployeeDataAction](../old/SHF/src/bzq/shf/actions/EmployeeDataAction.java#L134)
+  routes employee events to `populateEvents`, skills to `populateSkills(-1)`,
+  and education to a view container.
+- [populateSkills](../old/SHF/src/bzq/shf/model/EmployeeDataModel.java#L239)
+  selects active skills, optionally language-filtered.
+  [populateEvents](../old/SHF/src/bzq/shf/model/EmployeeDataModel.java#L291)
+  combines attendance reasons and other employee events.
+- [Education JSP](../old/SHFWeb/WebContent/jsp/employeeCard/employee_education.jsp)
+  hosts skills/courses; `populateCourses` is an empty placeholder. Therefore the
+  education demo is explicitly invented UI data, not a recovered live contract
+  or permission to implement learning/courses.
+
+Implemented:
+
+- Architect-owned [demo DTOs](../apps/api/src/stub/employee-contracts.ts) add
+  section names and record ID/label/nullable detail/date. No rich personal data.
+- [Child fixtures](../apps/api/src/stub/employee-records.ts) provide populated,
+  empty and unknown cases for existing demo employees.
+- Existing [controller](../apps/api/src/stub/employees.controller.ts) exposes
+  scoped GET-only skills/events/education endpoints, reusing the employee
+  gate and fixed team A scope. Responses include employee/section context,
+  synthetic/no-store markers, bounded limit and explicit unsupported pagination.
+- Existing [client](../apps/web/src/app/employees-api.ts) verifies employee ID,
+  section, row shapes and synthetic metadata.
+  [Card UI](../apps/web/src/app/employees.html) adds on-demand labelled sections,
+  pressed-state buttons, loading/error/retry/empty/unknown feedback and literal
+  text. Reads are cancelled on section change, card replacement/close or search.
+- [API tests](../apps/api/test/stub-employee-records.test.ts) and existing
+  [UI tests](../apps/web/src/app/employees.spec.ts) cover all three sections,
+  recipient scope, minimized records, list immutability, absent writes,
+  wrong-employee response rejection, cancellation, empty/error/retry and safe text.
+
+Verification: full `npm run check` passed 62 backend + 34 Angular tests
+(96 total), lint, strict types/templates and both builds. The initial production
+bundle remains 423.81 kB under unchanged warning limits. The initial existing
+close-button test clicked the newly first section button; its locator was
+corrected to the close action, then the same acceptance passed on retest.
+
+Browser checks used isolated updated API/UI ports 3105/4205 and a session proxy:
+all three sections, literal HTML-like event text, explicit education disclaimer,
+empty and unknown fixtures, keyboard selection, close focus return,
+1280/768/320 reflow and 200% resizing passed. An injected synthetic 503 retained
+the card, cleared stale section rows and recovered two events on retry. Temporary
+servers/proxy were cleaned up; existing user processes were preserved.
+
+R05 synthetic messages, employee search/card and child views now provide a
+reviewable demo. This does not mean real R05 completion or approved production
+permissions. Next candidate: separately approve R06 operational schedule/attendance
+read stubs after reviewing this increment. Oracle resolution remains DBA/network
+owned; no live check was attempted here.
+
+## 22. Progress Report and Approved R06 Operational Demo
+
+Task ID: SHF-R06-OPERATIONAL-STUB-20261014. Status: done for the explicitly
+approved synthetic range-read schedule/attendance increment. Full real R06/G3,
+identity, Oracle parity, UAT and release remain pending.
+
+The user requested a progress report and approved operational schedule/attendance
+stub APIs with Hebrew/RTL read-only views. The current progress snapshot is saved
+near the start of this plan. Approval excludes arrival/departure registration,
+correction, Oracle access and real organizational authorization.
+
+### Evidence and Demo Contract
+
+[AttendanceDataModel.populateAttendance](../old/SHF/src/bzq/shf/model/AttendanceDataModel.java#L55)
+selects stage arrival, station arrival/exit, late/missing fields and joins
+attendance by employee-day ID. The
+[list projection](../old/SHF/src/bzq/shf/model/AttendanceDataModel.java#L365)
+retains baseline/override and attendance fields.
+[Current-shift SQL](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L987)
+uses effective ownership/day type and an instant interval. These source references
+do not establish runtime Oracle metadata, identity or deployed behavior.
+
+The architect-owned [R06 demo contracts](../apps/api/src/stub/operational-contracts.ts)
+reuse the existing `PersonalShiftItem` with an invented employee display name.
+Attendance adds nullable local stage/station-arrival/exit strings, nullable exact
+nonnegative integer late minutes and nullable synthetic missing reason.
+Zero is not null; missing time is labelled not recorded in the demo, not inferred
+absence. No actual duration/payroll/state transition is calculated.
+
+Endpoints:
+
+- `GET /api/v1/shifts?from=...&toExclusive=...&limit=100`
+- `GET /api/v1/attendance?from=...&toExclusive=...&limit=100`
+
+Both use fixed synthetic team A, half-open effective-start calendar bounds,
+maximum 31 days, limit default 25/max 100 and deterministic start/ID order.
+Client actor/unit/site overrides and cursor input are not supported. Responses
+include synthetic/unauthenticated markers, `unitId`, items, null next cursor,
+fresh read timestamp and display business zone. Oversized matching pages fail
+explicitly instead of fake truncation. Read time is not a verified historical
+snapshot or Oracle SCN. Current-instant queries and configurable unit/site filters
+are not claimed implemented by this range-only demo.
+
+### Implementation and Checks
+
+- [Fixtures](../apps/api/src/stub/operational-fixtures.ts) reuse the existing
+  pure effective projection per fixed team employee. Seven permitted shifts
+  include transferred ownership and overnight work. A synthetic outside-team
+  row and excluded shift remain absent. Baselines stay redacted.
+- [Controller](../apps/api/src/stub/operational.controller.ts) exposes only
+  approved reads with existing stub transport/errors. Attendance values are
+  explicit fixtures; undefined fixture mappings fail rather than invent defaults.
+- [UI client](../apps/web/src/app/operational-api.ts) validates synthetic/unit/
+  employee scope, shared item shapes and actual nullable types; it rejects
+  baseline leakage or malformed late-minute values.
+- [UI](../apps/web/src/app/operational.ts) /
+  [template](../apps/web/src/app/operational.html) provides schedule/attendance
+  mode buttons, scan-oriented planned/actual table, inline focus-managed detail,
+  calendars, empty/loading/error/retry and freshness. There are no registration,
+  correction or other business commands.
+- Calendar range validation was extracted into the existing
+  [calendar helper](../apps/web/src/app/calendar.ts) for both personal/operational
+  views, preserving inclusive-end semantics. Shared shift guards were reused,
+  not replaced with a second business projection.
+- [API tests](../apps/api/test/stub-operational.test.ts) and
+  [UI tests](../apps/web/src/app/operational.spec.ts) cover mode cancellation,
+  scope, planned/actual parity, zero/null/missing values, overnight exit, bounds,
+  empty/error cases and absent writes. Calendar regression covers the shared range.
+
+`npm run check` passed: **64 backend + 41 frontend tests (105 total)**,
+lint, strict types/templates and both production builds. Initial production
+bundle **424.28 kB**, below unchanged 500 kB warning budget. The operational
+feature is an immediate deferred chunk with Hebrew loading/error states.
+
+Browser checks used isolated updated ports 3106/4206 and a session proxy.
+Seven-row schedule/attendance, zero versus unknown lateness, next-day actual
+departure, detail/return focus, 1280/768/320 page reflow, 200% text resizing,
+single-day three-row filtering, calendar keyboard dismissal, empty results and
+injected 503/retry passed. An initial Escape assertion ran before calendar focus
+was ready; retry used a focused calendar-day control with condition-based waits
+and passed. The injected 503 is synthetic test evidence, not Oracle failure.
+Temporary servers/proxy were cleaned up; existing user servers were preserved.
+
+No Oracle connection, metadata/business query, write, real identity or production
+operation occurred. Next candidate is R07 pure preview/break design and synthetic
+fixtures, only after a separate user scope/contract decision. Do not mark the
+real business gates complete based on this demonstration.
+
+Final presentation retest kept timestamps/IDs unbroken inside the labelled
+horizontal table region rather than wrapping technical values mid-number.
+At 320px, the 1,223px table stayed inside its 273px scroll region with no page
+overflow. The 41 UI tests, full lint and frontend build passed again afterward;
+the initial bundle remains 424.28 kB. Scoped documentation validation passed
+1,152 local links and 778 source-line references. A progress snapshot link typo
+was caught by the broader README anchor check, corrected and passed on retest.

@@ -1,0 +1,82 @@
+<section aria-labelledby="ops-title">
+  <h2 id="ops-title">סידור עבודה ונוכחות — הדגמה תפעולית</h2>
+  <p>צוות הדגמה א׳ בלבד · נתונים סינתטיים · תצוגה בלבד. אין הרשאות מנהל אמיתיות או רישום נוכחות.</p>
+  <div class="modes" role="group" aria-label="בחירת תצוגה תפעולית">
+    <button mat-stroked-button type="button" (click)="changeMode('schedule')" [attr.aria-pressed]="mode() === 'schedule'">סידור עבודה</button>
+    <button mat-stroked-button type="button" (click)="changeMode('attendance')" [attr.aria-pressed]="mode() === 'attendance'">נוכחות</button>
+  </div>
+  <form [formGroup]="filters" (ngSubmit)="load()" aria-label="סינון תפעולי לפי תאריכים">
+    <mat-form-field>
+      <mat-label>מתאריך תפעולי</mat-label>
+      <input matInput id="ops-from" [matDatepicker]="fromCalendar" formControlName="from" dir="ltr" aria-describedby="ops-help ops-error">
+      <mat-datepicker-toggle matIconSuffix [for]="fromCalendar" aria-label="לוח שנה לתחילת טווח תפעולי" />
+      <mat-datepicker #fromCalendar />
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>עד לתאריך תפעולי</mat-label>
+      <input matInput id="ops-to" [matDatepicker]="toCalendar" formControlName="to" dir="ltr" aria-describedby="ops-help ops-error">
+      <mat-datepicker-toggle matIconSuffix [for]="toCalendar" aria-label="לוח שנה לסיום טווח תפעולי" />
+      <mat-datepicker #toCalendar />
+    </mat-form-field>
+    <button mat-flat-button type="submit" [disabled]="!ready()">הצגת נתונים תפעוליים</button>
+  </form>
+  <p id="ops-help">תאריכי הדגמה: 14–17.10.2026. תאריך הסיום כלול; עד 31 ימים, לפי תאריך התחלת המשמרת. תבנית YYYY-MM-DD.</p>
+  @if (error()) {
+    <p id="ops-error" role="alert">{{ error() }}</p>
+    <button mat-stroked-button type="button" (click)="ready() ? load() : connect()">ניסיון נוסף לתצוגה התפעולית</button>
+  }
+  <div role="status" aria-live="polite">
+    @if (loading()) { <p>טוען נתונים תפעוליים לדוגמה...</p> }
+    @else if (ready() && !error() && rows().length === 0) { <p>לא נמצאו משמרות הדגמה בטווח התפעולי.</p> }
+    @else if (rows().length) { <p>מספר משמרות הדגמה תפעוליות: {{ rows().length }}</p> }
+  </div>
+  @if (rows().length) {
+    <div class="table-scroll" role="region" tabindex="0" aria-label="טבלת סידור עבודה ונוכחות לדוגמה">
+      <table>
+        <caption>{{ mode() === 'schedule' ? 'תכנון משמרות אפקטיבי' : 'תכנון מול נוכחות בפועל' }} — נתונים סינתטיים</caption>
+        <thead><tr>
+          <th scope="col">עובד לדוגמה</th><th scope="col">התחלה מתוכננת</th><th scope="col">סיום מתוכנן</th>
+          @if (mode() === 'attendance') {
+            <th scope="col">הגעה למתחם</th><th scope="col">הגעה לעמדה</th><th scope="col">יציאה מעמדה</th>
+            <th scope="col">איחור בדקות</th><th scope="col">סיבת היעדרות</th>
+          } @else {
+            <th scope="col">מקור</th><th scope="col">אתר (קוד)</th>
+          }
+          <th scope="col">פרטים</th>
+        </tr></thead>
+        <tbody>
+          @for (row of rows(); track row.shift.id) {
+            <tr>
+              <td><bdi>{{ row.employeeName }}</bdi><br><bdi dir="ltr">{{ row.shift.effective.employeeId }}</bdi></td>
+              <td><bdi dir="ltr">{{ row.shift.effective.startLocal }}</bdi></td>
+              <td><bdi dir="ltr">{{ row.shift.effective.endLocal }}</bdi></td>
+              @if (mode() === 'attendance') {
+                <td><bdi dir="ltr">{{ row.attendance?.stageArrivalLocal ?? 'לא נרשם בנתוני ההדגמה' }}</bdi></td>
+                <td><bdi dir="ltr">{{ row.attendance?.stationArrivalLocal ?? 'לא נרשם בנתוני ההדגמה' }}</bdi></td>
+                <td><bdi dir="ltr">{{ row.attendance?.stationExitLocal ?? 'לא נרשם בנתוני ההדגמה' }}</bdi></td>
+                <td>{{ row.attendance?.lateMinutes ?? 'לא ידוע' }}</td>
+                <td>{{ row.attendance?.missingReason ?? 'לא נרשמה סיבה' }}</td>
+              } @else {
+                <td>{{ row.shift.projection === 'baseline' ? 'תכנון מקורי' : 'שינוי' }}</td>
+                <td><bdi dir="ltr">{{ row.shift.effective.siteId ?? 'לא ידוע' }}</bdi></td>
+              }
+              <td><button mat-button type="button" [id]="'ops-row-' + row.shift.id" (click)="open(row)"
+                [attr.aria-label]="'פרטי משמרת תפעולית ' + row.shift.id">פרטי משמרת</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  @if (fetchedAt()) { <p>מועד קריאת ההדגמה: <bdi dir="ltr">{{ fetchedAt() }}</bdi>. אינו תמונת מצב היסטורית מאומתת.</p> }
+  @if (selected(); as row) {
+    <section class="ops-detail" aria-labelledby="ops-detail-title">
+      <h3 id="ops-detail-title" tabindex="-1">פרטי משמרת תפעולית לדוגמה</h3>
+      <p><bdi>{{ row.employeeName }}</bdi> · <bdi dir="ltr">{{ row.shift.id }}</bdi></p>
+      <p>פעילות (קוד): <bdi dir="ltr">{{ row.shift.effective.activityId ?? 'לא ידוע' }}</bdi></p>
+      <p>משמרת מפוצלת: {{ row.shift.effective.split.enabled === null ? 'לא ידוע' : row.shift.effective.split.enabled ? 'כן' : 'לא' }}</p>
+      <p>התכנון המקורי אינו מוצג בתצוגה התפעולית. אין כאן אישור לביצוע פעולה.</p>
+      <button mat-stroked-button type="button" (click)="close()">סגירת פרטים תפעוליים</button>
+    </section>
+  }
+</section>

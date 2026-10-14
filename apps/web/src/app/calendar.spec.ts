@@ -1,10 +1,21 @@
 import { TestBed } from '@angular/core/testing';
 import { DateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
 import { MatDatepickerIntl } from '@angular/material/datepicker';
-import { CALENDAR_PROVIDERS, calendarDateString, parseCalendarDate } from './calendar';
+import { CALENDAR_PROVIDERS, calendarDateString, calendarRange, parseCalendarDate } from './calendar';
 
 describe('Hebrew calendar date-only adapter', () => {
   beforeEach(() => TestBed.configureTestingModule({ providers: CALENDAR_PROVIDERS }));
+
+  it('shares inclusive calendar bounds across personal and operational views without midnight offset arithmetic', () => {
+    expect(calendarRange(parseCalendarDate('2026-10-01'), parseCalendarDate('2026-10-31')))
+      .toEqual({ from: '2026-10-01', toExclusive: '2026-11-01' });
+    expect(calendarRange(parseCalendarDate('2026-10-24'), parseCalendarDate('2026-10-25')))
+      .toEqual({ from: '2026-10-24', toExclusive: '2026-10-26' });
+    expect(calendarRange(parseCalendarDate('2026-10-01'), parseCalendarDate('2026-11-01'))).toBeNull();
+    expect(calendarRange(parseCalendarDate('2026-10-02'), parseCalendarDate('2026-10-01'))).toBeNull();
+    expect(calendarRange(null, parseCalendarDate('2026-10-01'))).toBeNull();
+    expect(calendarRange(parseCalendarDate('9999-12-31'), parseCalendarDate('9999-12-31'))).toBeNull();
+  });
 
   it('preserves calendar dates through local date components, including leap and DST-adjacent days', () => {
     for (const input of ['2024-02-29', '2000-02-29', '2026-10-25', '0001-01-01', '9999-12-31']) {
