@@ -73,9 +73,12 @@ export class ExceptionsApi {
       if (!synthetic(value) || !metadata(value) || !Array.isArray(value['items']) || value['items'].length > 100
         || !value['items'].every(item) || value['nextCursor'] !== null
         || (filters.mode === 'time-off' && value['employeeId'] !== filters.employeeId)) { throw new StubContractError(); }
-      if (value['items'].some(record => (!filters.includeCancelled && record.status === 'cancelled')
+      if (value['items'].some(record => {
+        const date = record.interval.kind === 'full-day' ? record.interval.date : record.interval.startLocal.slice(0, 10);
+        return date < filters.from || date >= filters.toExclusive || (!filters.includeCancelled && record.status === 'cancelled')
         || (filters.kind !== 'all' && record.interval.kind !== filters.kind)
-        || (filters.mode === 'time-off' && (record.employeeId !== filters.employeeId || record.category !== 'time-off')))) {
+        || (filters.mode === 'time-off' && (record.employeeId !== filters.employeeId || record.category !== 'time-off'));
+      })) {
         throw new StubContractError();
       }
       return { items: value['items'], fetchedAt: String(value['fetchedAt']) };
