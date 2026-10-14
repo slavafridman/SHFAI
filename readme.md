@@ -346,7 +346,7 @@ identity, verified metadata/mapping, business contracts and data scope are ready
 
 ### Progress and R06 Operational Schedule/Attendance Demo
 
-The [current progress report](docs/plan-shfAiAgentDevelopment.prompt.md#current-progress-snapshot-2026-10-14-after-r09-reporting-demo)
+The [current progress report](docs/plan-shfAiAgentDevelopment.prompt.md#current-progress-snapshot-2026-10-14-after-r10-buildings-demo)
 records the overall plan status. R04/R05 and the new R06 range-read increment
 have working synthetic demos; full architecture/business baselines, trusted
 identity, Oracle mapping/parity and production acceptance are not complete.
@@ -613,6 +613,40 @@ templates and builds passed; initial bundle **431.70 kB**. Browser checks passed
 full-day/timed/history/original/privacy/null/overnight, calendar/employee filters,
 empty/error/date-retention/retry, focus, narrow layouts and 200% resizing.
 R09 reporting, real Oracle/identity/metadata/parity and acceptance remain pending.
+
+### R10 Read-Only Synthetic Building Directory
+
+The approved [building screen](apps/web/src/app/buildings.ts) adds ID/name
+search, a fixed-unit table and read-only detail. Restart the stub API/web using
+the existing startup commands; no Oracle connection is required.
+
+```text
+GET /api/v1/buildings?search=&limit=100
+GET /api/v1/buildings/94000001
+```
+
+Three invented records demonstrate seat capacities 72, zero and unknown/null.
+Addresses are synthetic; HTML-like text displays literally. Capacity is a
+stored demo count, not live occupancy/availability. Both list/detail enforce
+the same fixed unit, unlike the inspected legacy ID-only detail query.
+Foreign and missing buildings return the same 404.
+
+Search is bounded to 80 characters and matches ID/name; limit default 25/max
+100, with an explicit insufficient-limit error rather than silent truncation.
+No cursor, unit override, add/update/delete, team assignment or managed dispatch
+exists. The UI has no actual administrator authority. Synthetic/no-store,
+read timestamp, scope/query/shape guards and lossless identifiers are retained.
+Superseding reads cancel; errors preserve search, detail errors preserve list,
+and closing detail returns focus to its row.
+
+Latest full verification: **195 tests (95 backend + 100 frontend)**,
+lint/types/builds passed; initial bundle **432.73 kB** under unchanged 500 kB
+warning. Synthetic browser checks passed zero/null/literal/detail/search/empty,
+failure retention/retry, keyboard/focus, 320/768/1280 reflow and 200% resizing.
+Temporary validation servers/proxy were removed. See the
+[execution record](docs/plan-shfAiAgentDevelopment.prompt.md#30-approved-r10-synthetic-building-directory).
+R10 CTI/learning/other admin views and real permissions/parity/UAT remain pending.
+Oracle remains paused; no new database attempt was made for this increment.
 
 ### R09 Bounded Staffing Versus Forecast Report
 

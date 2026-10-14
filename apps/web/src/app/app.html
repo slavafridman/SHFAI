@@ -85,6 +85,14 @@
     <p role="alert">לא ניתן לטעון את תצוגת הדוח. יש לרענן את הדף ולנסות שוב.</p>
   }
 
+  @defer (on immediate) {
+    <app-buildings />
+  } @placeholder {
+    <p role="status">טוען תצוגת מבנים לדוגמה...</p>
+  } @error {
+    <p role="alert">לא ניתן לטעון את תצוגת המבנים. יש לרענן את הדף ולנסות שוב.</p>
+  }
+
   <mat-card appearance="outlined" aria-labelledby="connection-title">
     <mat-card-header>
       <mat-card-title id="connection-title">מצב החיבורים</mat-card-title>

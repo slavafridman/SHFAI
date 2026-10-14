@@ -1,5 +1,32 @@
 # SHF Web Synthetic Personal Workspace
 
+Latest R10 increment: [buildings](src/app/buildings.ts) provides ID/name search,
+fixed-unit table and read-only detail through `/api/v1/buildings` and
+`/api/v1/buildings/{id}`. Use the existing stub startup commands/proxy after
+restarting the API. Three synthetic records have capacities 72, zero and
+unknown; a foreign-unit record is excluded from both list and detail.
+
+Addresses are invented and interpolated as literal text. Unknown capacity/
+address stays distinct from zero. Capacity is not live occupancy or availability.
+No actual admin authority, add/update/delete, team assignment, dispatch or
+producer control exists. There are no editable date fields in this increment.
+
+The [client](src/app/buildings-api.ts) rejects unmarked, wrong-scope/query/ID,
+duplicate, unsafe capacity, malformed nullable or extra item-field responses.
+The typed 80-character search retains input on failure; superseding reads
+cancel earlier list/detail work. Detail failure retains the list; detail opens
+with heading focus and close restores its row button. Wide-table scrolling is
+contained in a labelled keyboard-focusable region.
+
+Latest full checks: **100 Angular + 95 API tests (195 total)**, lint/types/builds
+passed; initial bundle **432.73 kB** below unchanged 500 kB warning. Focused
+checks exposed an unwired reactive form; the FormGroup fix passed the same
+tests on retest. Browser checks passed search/empty/zero/unknown/literal text,
+detail/list error retention/retry, keyboard/focus, 320/768/1280 reflow and 200%
+text resizing; mobile screenshot inspected. Temporary servers/proxy removed.
+Real Oracle/metadata/elevated scope, manual assistive technology, UAT and
+release remain unverified; R10 is partial.
+
 Latest R09 increment: [staffing versus forecast](src/app/reports.ts) adds a
 bounded aggregate report with two Hebrew calendars, local times and break/
 exception switches. Use the existing stub startup commands/proxy after an API

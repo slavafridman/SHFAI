@@ -2364,6 +2364,18 @@ build/lint/types passed; initial bundle 432.35 kB. No Oracle, exports, BI/batch
 producer or write was enabled. R09 real mapping/parity, trusted identity,
 manual accessibility/UAT and release remain pending.
 
+The user approved the next R10 synthetic building list/detail increment.
+The [building execution record](plan-shfAiAgentDevelopment.prompt.md#30-approved-r10-synthetic-building-directory)
+traces [allowed-unit list reads](../old/SHF/src/bzq/shf/model/BuildingModel.java#L40)
+and [ID-only legacy detail](../old/SHF/src/bzq/shf/model/BuildingModel.java#L81).
+The approved demo intentionally scopes both reads and preserves unknown
+capacity/address separately from zero. Three invented buildings, explicit
+synthetic/no-store transport, bounded search and read-only Hebrew UI passed
+195 tests, lint/types/builds and local browser checks; initial bundle 432.73 kB.
+No real elevated authorization, Oracle, mutation, team reassignment, dispatch
+or batch producer was enabled. R10 other admin/CTI/learning/deferred-register
+work and real scope/metadata/parity/manual accessibility/UAT remain pending.
+
 Require supported pinned runtimes/dependencies, clean type/lint/unit/contract
 checks, zero schema deltas, reviewed existing SQL/PLSQL mappings,
 authorization/security tests, isolated abstract-port contract tests,

@@ -12,9 +12,10 @@ import { Replacement } from './replacement';
 import { Staffing } from './staffing';
 import { Exceptions } from './exceptions';
 import { Reports } from './reports';
+import { Buildings } from './buildings';
 
 @Component({
-  imports: [MatButtonModule, MatCardModule, MatToolbarModule, PersonalShifts, PersonalMessages, Employees, Operational, Breaks, ShiftPreview, Replacement, Staffing, Exceptions, Reports],
+  imports: [MatButtonModule, MatCardModule, MatToolbarModule, PersonalShifts, PersonalMessages, Employees, Operational, Breaks, ShiftPreview, Replacement, Staffing, Exceptions, Reports, Buildings],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',

@@ -7,7 +7,7 @@ Publication target: d:/AIProjects/SHFAI/docs/SHF_PROJECT_DIRECTIVES.md, ordinary
 
 ## 1. Confirmed Scope And Evidence
 
-### Current Progress Snapshot — 2026-10-14, After R09 Reporting Demo
+### Current Progress Snapshot — 2026-10-14, After R10 Buildings Demo
 
 | Round | Current status | Evidence / next gate |
 | --- | --- | --- |
@@ -20,12 +20,12 @@ Publication target: d:/AIProjects/SHFAI/docs/SHF_PROJECT_DIRECTIVES.md, ordinary
 | R07 | Approved break and shift/split preview demos done / round partial | Pure synthetic calculations and scoped reads; full real policy, attendance/offer eligibility and zero-effect Oracle proof pending. |
 | R08 | Approved replacement and staffing read/preview demos done / round partial | Synthetic outcomes and conditional one-slot counts; full real policy, freshness/precondition/atomic-capacity evidence and acceptance remain pending. |
 | R09 | Approved exceptions/time-off and bounded report demos done / round partial | Full-day/timed/provenance/history views and exact staffing/forecast minutes; real data/parity, activity weights and acceptance remain pending. |
-| R10 | Planned | Existing-result/admin views and deferred-producer register pending. |
+| R10 | Approved synthetic buildings reads done / round partial | Scoped building list/detail and zero/unknown capacity; CTI/learning, other admin views, deferred-producer register and real permissions remain pending. |
 | R11 | Deferred / gated | No business writes authorized or enabled. |
 | R12–R13 | Pending | Full security/load/assistive-technology/UAT/recovery/release evidence and accountable sign-off pending. |
 
-Latest completed check: 92 backend + 93 frontend tests (185 total),
-lint/types/builds pass; initial UI bundle 432.35 kB. Synthetic browser checks
+Latest completed check: 95 backend + 100 frontend tests (195 total),
+lint/types/builds pass; initial UI bundle 432.73 kB. Synthetic browser checks
 cover responsive RTL, focus, errors and text resizing, not full AA certification.
 The 45–90 active-hour estimate remains provisional; no elapsed delivery date or
 percentage-complete claim is inferred from a working demonstration.
@@ -1548,3 +1548,106 @@ partner call, deployment or write occurred. Real forecast/staff mapping,
 weights/timezone rules, identity, manual Hebrew assistive technology, UAT and
 release are NOT RUN. Next candidate: separately approve R10 existing-result/
 administrative read-only scope; no producer or command permission is inferred.
+
+## 30. Approved R10 Synthetic Building Directory
+
+Task ID: SHF-R10-BUILDINGS-STUB-20261014. Status: done for the approved
+synthetic read-only building list/detail increment; R10 remains partial.
+The user explicitly approved fixed demo-unit scope, name/address/capacity,
+Hebrew/RTL presentation and tests. Oracle, elevated real permissions,
+add/update/delete, team reassignment, dispatch and batch remain excluded.
+
+### Source Evidence and Intentional Differences
+
+The [catalog route](SHF_SOURCE_CONTRACT_CATALOG.md#1-complete-struts-route-catalog)
+maps `/admin/manageBuildings` to
+[ManageBuildingsAction](../old/SHF/src/bzq/shf/actions/ManageBuildingsAction.java#L34).
+Its `view` branch calls
+[getAllBuildings](../old/SHF/src/bzq/shf/model/BuildingModel.java#L40), which reads
+`SHIFTER.shf_building` constrained to allowed units. The
+[form mapping](../old/SHF/src/bzq/shf/forms/BuildingForm.java#L22) identifies
+ID/name/unit/address/seat count; physical Oracle metadata is unverified.
+The legacy [detail lookup](../old/SHF/src/bzq/shf/model/BuildingModel.java#L81)
+filters only by ID. The explicitly approved demo corrects that scope omission:
+both reads enforce the same fixed unit and foreign/missing IDs share a 404.
+Legacy add/update/delete and team-building assignment are not invoked.
+
+Legacy capacity is a primitive Java integer. The demo deliberately preserves
+null as unknown rather than inventing zero; real null/mapping behavior is still
+unverified. String IDs remain lossless. The 38-digit ID, 80-character query and
+safe nonnegative capacity guards are demo input contracts, not physical column
+precision evidence. Addresses and all fixture labels are invented.
+
+### Contract and Implementation
+
+```text
+GET /api/v1/buildings?search=&limit=100
+GET /api/v1/buildings/94000001
+```
+
+List accepts only `search` (ID/name, at most 80 characters, trim/lowercase
+matching) and `limit` (default 25, maximum 100). A valid unmatched search is
+empty; insufficient limit returns 503 `STUB_PAGINATION_UNAVAILABLE` rather than
+silently truncating. Unknown scope/cursor or invalid filters return 400.
+Detail accepts no query fields; invalid ID returns 400 and foreign/missing ID
+returns identical 404 `BUILDING_NOT_FOUND`.
+
+DTO: string ID/name, fixed demo orgUnit, nullable address and nullable safe
+nonnegative integer seatCapacity. Synthetic/unauthenticated marker, no-store
+and source header are retained. Read timestamps are technical provenance,
+not Oracle SCNs, historical snapshots, occupancy or available-seat measurements.
+`buildings.read` is enabled only in the opt-in stub; write is false. This is
+not real authentication, elevated authorization or a production admin screen.
+
+- [DTO](../apps/api/src/stub/building-contracts.ts),
+  [fixtures](../apps/api/src/stub/building-fixtures.ts) and
+  [controller](../apps/api/src/stub/buildings.controller.ts): three visible
+  records with capacities 72/0/null; a fourth foreign record stays hidden.
+- [Client](../apps/web/src/app/buildings-api.ts): markers, scope, ID/shape,
+  nullable fields, safe capacity, duplicate IDs, query matching and unsupported
+  item-field leakage are checked before display.
+- [Screen](../apps/web/src/app/buildings.ts) /
+  [template](../apps/web/src/app/buildings.html): typed reactive search,
+  semantic table, literal address text, null/empty/error/retry, read timestamps
+  and focus-managed detail. List refresh cancels list/detail work; detail
+  failure keeps the list and search. No date-edit fields require calendars.
+- The shell adds a tenth immediate deferred feature with explicit Hebrew
+  loading/error states, retaining the initial bundle budget.
+
+### Executed Verification and Limits
+
+[Three API tests](../apps/api/test/buildings.test.ts) passed scoped list/detail
+and uniform foreign/missing errors, synthetic/no-store, ID/name query bounds,
+empty/insufficient-limit cases, read immutability, absent mutation routes and
+disabled real-mode routes.
+[Seven UI tests](../apps/web/src/app/buildings.spec.ts) plus shell tests passed
+capability gating, zero/unknown, literal text/focus return, normalized/empty
+search, unsafe/malformed/scope/query/duplicate rejection, cancellation,
+80-character bounds, wrong detail ID and failures/retries.
+The first UI check caught a missing reactive form binding: search submissions
+did not run. Wiring the existing FormGroup pattern fixed it; the same ten
+focused UI/shell tests passed on retest, without weakening assertions.
+
+Full `npm run check` passed **95 backend + 100 frontend tests (195 total)**,
+lint, strict types/templates and both builds. Initial UI bundle **432.73 kB**
+is below the unchanged 500 kB warning. No dependencies were changed.
+
+Isolated ports 3114/4214 returned HTTP 200 through the synthetic/no-store proxy.
+Browser checks passed three rows, capacities 72/0/unknown, literal HTML-like
+address, detail/return focus, normalized search, unknown detail, empty and
+stale-detail clearing, injected list/detail 503 retention/retry, keyboard row
+action, 320/768/1280 reflow and 200% text resize. At 320px the feature remained
+273px wide with no feature/page overflow; mobile screenshot inspected. The
+previously shared browser page was unavailable; a fresh page passed the same
+checks. Own servers and named session proxy were stopped/removed afterward.
+
+Scoped design validation passed 1,164 local links and 782 source-line
+references. Separate README/plan checks passed 249 links and 52 fragments;
+updated progress and execution anchors resolved. `git diff --check` passed.
+
+No Oracle, real building/address data, schema change, mutation, reassignment,
+partner/dispatch, producer/batch or deployment occurred. Physical metadata,
+real elevated identity/scope, manual Hebrew assistive technology, UAT and
+release are NOT RUN. Next candidate: separately approve one R10 read-only
+job/parameter or existing-result view; no wider admin/producer permission
+is inferred.
