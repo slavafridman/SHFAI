@@ -3,6 +3,8 @@ export type OracleReadOnlyErrorCode =
   | 'ORACLE_CONFIG_INVALID'
   | 'ORACLE_CLOSED'
   | 'ORACLE_THIN_REQUIRED'
+  | 'ORACLE_THICK_REQUIRED'
+  | 'ORACLE_CLIENT_INIT_FAILED'
   | 'ORACLE_READ_FAILED'
   | 'ORACLE_CLEANUP_FAILED'
   | 'ORACLE_RESULT_INVALID'
@@ -13,6 +15,8 @@ const messages: Record<OracleReadOnlyErrorCode, string> = {
   ORACLE_CONFIG_INVALID: 'Oracle configuration is invalid.',
   ORACLE_CLOSED: 'Oracle access is shutting down or closed.',
   ORACLE_THIN_REQUIRED: 'This adapter requires Oracle Thin mode.',
+  ORACLE_THICK_REQUIRED: 'The configured Oracle Thick mode was not initialized.',
+  ORACLE_CLIENT_INIT_FAILED: 'Oracle Client initialization failed. Check the external client configuration and process mode.',
   ORACLE_READ_FAILED: 'Oracle read failed.',
   ORACLE_CLEANUP_FAILED: 'Oracle connection cleanup failed.',
   ORACLE_RESULT_INVALID: 'Oracle read result or required shift metadata is invalid.',

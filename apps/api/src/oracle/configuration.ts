@@ -1,4 +1,5 @@
 import { OracleReadOnlyError } from './errors.js';
+import { isAbsolute } from 'node:path';
 
 export type OracleReadOnlyConfiguration =
   | { readonly enabled: false }
@@ -8,7 +9,10 @@ export type OracleReadOnlyConfiguration =
     readonly password: string;
     readonly connectString: string;
     readonly configDir?: string;
-  };
+  } & (
+    | { readonly mode: 'thin' }
+    | { readonly mode: 'thick'; readonly clientLibDir: string }
+  );
 
 function required(environment: Readonly<Record<string, string | undefined>>, name: string): string {
   const value = environment[name];
@@ -46,8 +50,20 @@ export function loadOracleConfiguration(
   if (alias && !configDir) {
     throw new OracleReadOnlyError('ORACLE_CONFIG_INVALID', null, 'ORACLE_CONFIG_DIR or TNS_ADMIN');
   }
+  const mode = environment['ORACLE_MODE'] ?? 'thin';
+  const clientLibDir = environment['ORACLE_CLIENT_LIB_DIR']?.trim();
+  if (mode !== 'thin' && mode !== 'thick') {
+    throw new OracleReadOnlyError('ORACLE_CONFIG_INVALID', null, 'ORACLE_MODE (thin or thick)');
+  }
+  if (mode === 'thin' && clientLibDir !== undefined) {
+    throw new OracleReadOnlyError('ORACLE_CONFIG_INVALID', null, 'ORACLE_CLIENT_LIB_DIR (requires thick mode)');
+  }
+  if (mode === 'thick' && (!clientLibDir || !isAbsolute(clientLibDir))) {
+    throw new OracleReadOnlyError('ORACLE_CONFIG_INVALID', null, 'ORACLE_CLIENT_LIB_DIR (absolute path required)');
+  }
   return {
     enabled: true, user, password, connectString,
     ...(configDir ? { configDir } : {}),
+    ...(mode === 'thick' && clientLibDir ? { mode, clientLibDir } : { mode: 'thin' }),
   };
 }

@@ -12,6 +12,8 @@ import { StubStaffingController } from './staffing.controller.js';
 import { StubExceptionsController } from './exceptions.controller.js';
 import { StubReportsController } from './reports.controller.js';
 import { StubBuildingsController } from './buildings.controller.js';
+import { StubInternalJobsController } from './internal-jobs.controller.js';
+import { StubSystemParametersController } from './system-parameters.controller.js';
 
 const scope = { actorEmployeeId: '00000001', canViewBaseline: false };
 
@@ -48,6 +50,14 @@ export class StubController {
         write: { enabled: false, reason: 'READ_ONLY_STUB' },
       },
       integrationAvailable: false,
+      systemParameters: {
+        read: { enabled: true, reason: 'SYNTHETIC_ALLOWLIST_ONLY' },
+        write: { enabled: false, reason: 'READ_ONLY_STUB' },
+      },
+      internalJobs: {
+        read: { enabled: true, reason: 'SYNTHETIC_CATALOG_ONLY' },
+        write: { enabled: false, reason: 'READ_ONLY_STUB' },
+      },
       buildings: {
         read: { enabled: true, reason: 'SYNTHETIC_DEMO_ONLY' },
         write: { enabled: false, reason: 'READ_ONLY_STUB' },
@@ -146,5 +156,5 @@ export class StubController {
   }
 }
 
-@Module({ controllers: [StubController, StubEmployeesController, StubOperationalController, StubBreaksController, StubShiftPreviewsController, StubReplacementController, StubStaffingController, StubExceptionsController, StubReportsController, StubBuildingsController] })
+@Module({ controllers: [StubController, StubEmployeesController, StubOperationalController, StubBreaksController, StubShiftPreviewsController, StubReplacementController, StubStaffingController, StubExceptionsController, StubReportsController, StubBuildingsController, StubInternalJobsController, StubSystemParametersController] })
 export class StubModule {}

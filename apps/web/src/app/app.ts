@@ -13,9 +13,11 @@ import { Staffing } from './staffing';
 import { Exceptions } from './exceptions';
 import { Reports } from './reports';
 import { Buildings } from './buildings';
+import { InternalJobs } from './internal-jobs';
+import { SystemParameters } from './system-parameters';
 
 @Component({
-  imports: [MatButtonModule, MatCardModule, MatToolbarModule, PersonalShifts, PersonalMessages, Employees, Operational, Breaks, ShiftPreview, Replacement, Staffing, Exceptions, Reports, Buildings],
+  imports: [MatButtonModule, MatCardModule, MatToolbarModule, PersonalShifts, PersonalMessages, Employees, Operational, Breaks, ShiftPreview, Replacement, Staffing, Exceptions, Reports, Buildings, InternalJobs, SystemParameters],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',

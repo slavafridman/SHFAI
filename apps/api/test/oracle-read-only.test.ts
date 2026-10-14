@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import type { BindParameters, ExecuteOptions, PoolAttributes } from 'oracledb';
+import type { BindParameters, ExecuteOptions, InitialiseOptions, PoolAttributes } from 'oracledb';
 import { loadOracleConfiguration } from '../src/oracle/configuration.js';
 import { OracleReadOnlyError, safeOracleDriverCode } from '../src/oracle/errors.js';
 import {
@@ -29,6 +29,8 @@ interface Scenario {
   acquisitionFailure?: Error;
   poolFailure?: Error;
   poolCloseFailure?: Error;
+  clientInitFailure?: Error;
+  keepThin?: boolean;
   beforeQuery?: () => Promise<void>;
   beforePoolClose?: () => Promise<void>;
 }
@@ -66,6 +68,9 @@ class FakeConnection implements ReadOnlyOracleConnection {
   }
 
   async close(options?: { drop: boolean }) {
+    if (arguments.length > 0 && options === undefined) {
+      throw Object.assign(new Error('Explicit undefined is not a valid Thick close option.'), { code: 'NJS-005' });
+    }
     this.events.push('release');
     this.dropped = options?.drop === true;
     if (this.scenario.releaseFailure !== undefined) {
@@ -100,10 +105,17 @@ class FakePool implements ReadOnlyOraclePool {
 
 class FakeFactory implements ReadOnlyOracleFactory {
   readonly options: PoolAttributes[] = [];
+  readonly initializations: InitialiseOptions[] = [];
   readonly pool: FakePool;
 
-  constructor(private readonly scenario: Scenario = {}, readonly thin = true) {
+  constructor(private readonly scenario: Scenario = {}, public thin = true) {
     this.pool = new FakePool(scenario);
+  }
+
+  initOracleClient(options: InitialiseOptions) {
+    this.initializations.push(options);
+    if (this.scenario.clientInitFailure) { throw this.scenario.clientInitFailure; }
+    if (!this.scenario.keepThin) { this.thin = false; }
   }
 
   async createPool(options: PoolAttributes) {
@@ -179,6 +191,85 @@ test('TNS aliases require an external config directory and reject embedded crede
   }).enabled);
 });
 
+  test('Thin remains default; Thick requires explicit mode and an absolute external client directory', () => {
+    const thin = loadOracleConfiguration(syntheticEnvironment);
+    assert.ok(thin.enabled);
+    assert.equal(thin.mode, 'thin');
+    for (const environment of [
+      { ORACLE_MODE: 'automatic' },
+      { ORACLE_MODE: 'THICK' },
+      { ORACLE_MODE: 'thick' },
+      { ORACLE_MODE: 'thick', ORACLE_CLIENT_LIB_DIR: 'relative-client' },
+      { ORACLE_CLIENT_LIB_DIR: 'D:\\SyntheticClient' },
+    ]) {
+      assert.throws(() => loadOracleConfiguration({ ...syntheticEnvironment, ...environment }), isError('ORACLE_CONFIG_INVALID'));
+    }
+    const thick = loadOracleConfiguration({
+      ...syntheticEnvironment, ORACLE_MODE: 'thick', ORACLE_CLIENT_LIB_DIR: 'D:\\SyntheticClient',
+    });
+    assert.ok(thick.enabled && thick.mode === 'thick');
+    assert.equal(thick.clientLibDir, 'D:\\SyntheticClient');
+  });
+
+  test('Thick initializes lazily once before concurrent pool use with external client/Net settings', async () => {
+    const factory = new FakeFactory();
+    const database = new OracleReadOnlyDatabase(loadOracleConfiguration({
+      ...syntheticEnvironment, ORACLE_MODE: 'thick', ORACLE_CLIENT_LIB_DIR: 'D:\\SyntheticClient',
+    }), factory, { error: () => {} });
+    assert.equal(factory.initializations.length, 0);
+    await Promise.all([database.checkConnectivity(), database.checkConnectivity()]);
+    assert.deepEqual(factory.initializations, [{ libDir: 'D:\\SyntheticClient', configDir: 'D:\\SyntheticOracleNet' }]);
+    assert.equal(factory.options.length, 1);
+    assert.equal(factory.options[0]?.configDir, undefined);
+    assert.equal(factory.options[0]?.connectTimeout, undefined);
+    assert.equal(factory.options[0]?.poolMax, 2);
+    assert.ok(factory.pool.connections.every(connection => connection.callTimeout === 5000));
+    assert.ok(factory.pool.connections.every(connection =>
+      connection.events.join(',') === 'read-only,select,rollback,release'));
+    await database.close();
+    assert.deepEqual(factory.pool.closeCalls, [10]);
+  });
+
+  test('Thick initialization errors are redacted, never create pools and never fall back to Thin', async () => {
+    for (const scenario of [
+      { clientInitFailure: Object.assign(new Error(syntheticEnvironment.ORACLE_PASSWORD), { code: 'DPI-1047' }) },
+      { keepThin: true },
+    ]) {
+      const factory = new FakeFactory(scenario);
+      const logs: string[] = [];
+      const database = new OracleReadOnlyDatabase(loadOracleConfiguration({
+        ...syntheticEnvironment, ORACLE_MODE: 'thick', ORACLE_CLIENT_LIB_DIR: 'D:\\SyntheticClient',
+      }), factory, { error: message => { logs.push(message); } });
+      await assert.rejects(database.checkConnectivity(),
+        isError('keepThin' in scenario ? 'ORACLE_THICK_REQUIRED' : 'ORACLE_CLIENT_INIT_FAILED'));
+      assert.equal(factory.options.length, 0);
+      assert.ok(!JSON.stringify(logs).includes(syntheticEnvironment.ORACLE_PASSWORD));
+      if ('clientInitFailure' in scenario) { assert.ok(logs.some(log => log.includes('DPI-1047'))); }
+      await database.close();
+    }
+  });
+
+  test('Thin connection failure does not initialize Oracle Client or retry in Thick mode', async () => {
+    const { database, factory } = fixture({
+      acquisitionFailure: Object.assign(new Error('Unsupported synthetic server'), { code: 'NJS-138' }),
+    });
+    await assert.rejects(database.checkConnectivity(), isError('ORACLE_READ_FAILED'));
+    assert.equal(factory.initializations.length, 0);
+    assert.equal(factory.options.length, 1);
+    await database.close();
+  });
+
+  test('disabled Thick configuration never loads native client libraries', async () => {
+    const factory = new FakeFactory();
+    const database = new OracleReadOnlyDatabase(loadOracleConfiguration({
+      ORACLE_ENABLED: 'false', ORACLE_MODE: 'thick', ORACLE_CLIENT_LIB_DIR: 'D:\\SyntheticClient',
+    }), factory, { error: () => {} });
+    await assert.rejects(database.checkConnectivity(), isError('ORACLE_DISABLED'));
+    await database.close();
+    assert.equal(factory.initializations.length, 0);
+    assert.equal(factory.options.length, 0);
+  });
+
 test('disabled adapter and construction/shutdown make no driver calls', async () => {
   const factory = new FakeFactory();
   const database = new OracleReadOnlyDatabase({ enabled: false }, factory, { error: () => {} });
@@ -222,7 +313,7 @@ test('each probe starts read-only, never commits, and rolls back/releases after 
   await database.close();
 });
 
-test('Thick mode is rejected before any pool is created', async () => {
+test('default Thin configuration rejects an already Thick driver before pool creation', async () => {
   const factory = new FakeFactory({}, false);
   const database = new OracleReadOnlyDatabase(loadOracleConfiguration(syntheticEnvironment), factory, { error: () => {} });
   await assert.rejects(database.checkConnectivity(), isError('ORACLE_THIN_REQUIRED'));
@@ -241,6 +332,8 @@ test('metadata read uses only fixed table binds and omits business data/defaults
     owner: 'SHIFTER', days: 'SHF_EMPLOYEE_DAY', changes: 'SHF_DAY_CHANGES', employees: 'SHF_EMPLOYEES',
   });
   assert.ok(statement.sql.includes('FROM all_tab_columns'));
+  assert.match(statement.sql, /^SELECT \* FROM \([\s\S]+ORDER BY table_name, column_id\s+\) WHERE ROWNUM <= 513$/);
+  assert.doesNotMatch(statement.sql, /FETCH FIRST|OFFSET/i);
   assert.ok(!/DATA_DEFAULT|ALL_SOURCE|EMP_ID_NUMBER/i.test(statement.sql));
   await database.close();
 });

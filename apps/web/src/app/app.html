@@ -93,6 +93,22 @@
     <p role="alert">לא ניתן לטעון את תצוגת המבנים. יש לרענן את הדף ולנסות שוב.</p>
   }
 
+  @defer (on immediate) {
+    <app-internal-jobs />
+  } @placeholder {
+    <p role="status">טוען קטלוג תפקידים לדוגמה...</p>
+  } @error {
+    <p role="alert">לא ניתן לטעון את קטלוג התפקידים. יש לרענן את הדף ולנסות שוב.</p>
+  }
+
+  @defer (on immediate) {
+    <app-system-parameters />
+  } @placeholder {
+    <p role="status">טוען תצוגת פרמטרים לדוגמה...</p>
+  } @error {
+    <p role="alert">לא ניתן לטעון את תצוגת הפרמטרים. יש לרענן את הדף ולנסות שוב.</p>
+  }
+
   <mat-card appearance="outlined" aria-labelledby="connection-title">
     <mat-card-header>
       <mat-card-title id="connection-title">מצב החיבורים</mat-card-title>

@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import oracledb from 'oracledb';
-import type { BindParameters, ExecuteOptions, PoolAttributes } from 'oracledb';
+import type { BindParameters, ExecuteOptions, InitialiseOptions, PoolAttributes } from 'oracledb';
 import type { OracleReadOnlyConfiguration } from './configuration.js';
 import { OracleReadOnlyError, safeOracleDriverCode } from './errors.js';
 
@@ -20,6 +20,7 @@ export interface ReadOnlyOraclePool {
 
 export interface ReadOnlyOracleFactory {
   readonly thin: boolean;
+  initOracleClient(options: InitialiseOptions): void;
   createPool(options: PoolAttributes): Promise<ReadOnlyOraclePool>;
 }
 
@@ -44,13 +45,14 @@ const operations = {
     binds: {},
   },
   shiftColumns: {
-    sql: `SELECT table_name AS "tableName", column_name AS "columnName",
+    sql: `SELECT * FROM (
+      SELECT table_name AS "tableName", column_name AS "columnName",
       data_type AS "dataType", data_precision AS "precision", data_scale AS "scale",
       nullable AS "nullable"
       FROM all_tab_columns
       WHERE owner = :owner AND table_name IN (:days, :changes, :employees)
       ORDER BY table_name, column_id
-      FETCH FIRST 513 ROWS ONLY`,
+      ) WHERE ROWNUM <= 513`,
     binds: { owner: 'SHIFTER', days: TABLES[0], changes: TABLES[1], employees: TABLES[2] },
   },
 };
@@ -87,6 +89,7 @@ export class OracleReadOnlyDatabase {
   #poolPromise: Promise<ReadOnlyOraclePool> | undefined;
   #closePromise: Promise<void> | undefined;
   #closed = false;
+  #clientInitialized = false;
 
   constructor(
     configuration: OracleReadOnlyConfiguration,
@@ -140,7 +143,21 @@ export class OracleReadOnlyDatabase {
     if (!configuration.enabled) {
       throw new OracleReadOnlyError('ORACLE_DISABLED');
     }
-    if (!this.#factory.thin) {
+    if (configuration.mode === 'thick' && !this.#clientInitialized) {
+      try {
+        this.#factory.initOracleClient({
+          libDir: configuration.clientLibDir,
+          ...(configuration.configDir ? { configDir: configuration.configDir } : {}),
+        });
+      } catch (error: unknown) {
+        throw new OracleReadOnlyError('ORACLE_CLIENT_INIT_FAILED', safeOracleDriverCode(error));
+      }
+      if (this.#factory.thin) {
+        throw new OracleReadOnlyError('ORACLE_THICK_REQUIRED');
+      }
+      this.#clientInitialized = true;
+    }
+    if (configuration.mode === 'thin' && !this.#factory.thin) {
       throw new OracleReadOnlyError('ORACLE_THIN_REQUIRED');
     }
     if (this.#poolPromise === undefined) {
@@ -148,10 +165,12 @@ export class OracleReadOnlyDatabase {
         user: configuration.user,
         password: configuration.password,
         connectString: configuration.connectString,
-        ...(configuration.configDir ? { configDir: configuration.configDir } : {}),
+        ...(configuration.mode === 'thin' ? {
+          ...(configuration.configDir ? { configDir: configuration.configDir } : {}),
+          connectTimeout: 10, transportConnectTimeout: 5, retryCount: 0,
+        } : {}),
         poolMin: 0, poolMax: 2, poolIncrement: 1,
         queueMax: 10, queueTimeout: 5_000,
-        connectTimeout: 10, transportConnectTimeout: 5, retryCount: 0,
         stmtCacheSize: 20,
       });
     }
@@ -207,7 +226,11 @@ export class OracleReadOnlyDatabase {
           this.report(failure, 'rollback');
         }
         try {
-          await connection.close(drop ? { drop: true } : undefined);
+          if (drop) {
+            await connection.close({ drop: true });
+          } else {
+            await connection.close();
+          }
         } catch (error: unknown) {
           const failure = new OracleReadOnlyError('ORACLE_CLEANUP_FAILED', safeOracleDriverCode(error));
           failures.push(failure);

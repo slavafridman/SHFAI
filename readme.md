@@ -77,7 +77,7 @@ official support documentation on 2026-10-13:
 | RxJS | 7.8.2 |
 | Frontend unit runner | Vitest 5.0.4 with jsdom 30.1.2 |
 | Backend unit runner | Node.js built-in test runner |
-| Oracle Thin driver / TypeScript declarations | node-oracledb 26.0.0 / @types/oracledb 7.0.3 |
+| Oracle driver (default Thin, opt-in Thick) / TypeScript declarations | node-oracledb 26.0.0 / @types/oracledb 7.0.3 |
 
 Do not upgrade TypeScript independently to the latest major: the published
 Angular compiler/build peer range does not allow TypeScript 7.
@@ -204,6 +204,183 @@ Important implementation boundaries:
 
 ## Real Oracle Adapter: Read-Only, Not Activated
 
+### Current Oracle 11g Compatibility
+
+The application adapter now supports **explicit opt-in Thick mode** for the
+runtime-confirmed Oracle **11.2.0.4.0**, using the locally verified Oracle Client
+**19.3.0.0.0**. Thin remains the default; Oracle access remains disabled unless
+explicitly enabled. No automatic Thin/Thick retry or fallback is implemented.
+Native initialization is lazy, after enabled configuration validation and before
+pool creation. Disabled/startup-only paths do not load OCI or open connections.
+The process cannot change mode after initialization; use a fresh process for
+different modes/client/Net settings. Initialization errors are explicit and redacted.
+
+The existing three-table column query now uses ordered inline-view `ROWNUM <= 513`
+instead of `FETCH FIRST`. The 513th row remains an overflow sentinel; at most
+512 metadata rows are accepted, and missing required tables fail explicitly.
+The SQL subsequently passed the separately approved three-table metadata
+check documented below. No business endpoints are wired to Oracle.
+
+Full `npm run check` passed **107 backend + 116 frontend tests (223 total)**,
+lint, strict types and both builds. Initial UI bundle remains **433.73 kB**.
+Twenty-five focused Oracle tests cover mode/config/client errors, no fallback,
+lazy/concurrent pool use, read-only setup, bounds and cleanup.
+A real connection-only check through the modified pooled adapter succeeded:
+READ ONLY, constant SELECT, rollback, release and pool close. The first live
+run exposed `close(undefined)` failing with NJS-005 in Thick mode; changing the
+normal release to `close()` fixed it, and the test double now checks this exact
+argument distinction. Failure was reported, not presented as connected success.
+
+The [secure diagnostic](scripts/Invoke-ShfOracleMetadata.ps1) adds explicit
+`-Mode thick`, `-ClientLibDir`, optional `-ConfigDir` and
+`-UseEnvironmentPassword`. Its default still prompts with Get-Credential.
+Environment-password mode requires a nonempty `ORACLE_PASSWORD` before any
+connection and restores previous process settings afterward. The
+[VS Code task](.vscode/tasks.json) now uses a masked password input with no
+saved default, supplying it through the child process environment rather than
+command arguments. That exact environment-password flow passed a live
+connection-only check. No actual password is stored in project files.
+
+Live checks used a temporary isolated TNS descriptor with 10-second connect,
+5-second transport-connect and retry-count-zero settings. The temporary file
+was deleted. The persistent task references the original external Oracle Net
+directory, not the session path; the previously identified unrelated TNS syntax
+error still requires owner correction/verification before using that full file.
+In Thick mode, connection establishment timeouts/retries are controlled by the
+approved Oracle Net/TNS configuration, **not** Thin-only pool options. Set bounded
+CONNECT_TIMEOUT/TRANSPORT_CONNECT_TIMEOUT/RETRY_COUNT there. Queue/call timeouts
+and pool-size limits remain application-controlled; a call timeout is not a
+total request deadline. No external Oracle Net or system settings were modified.
+
+This confirms bounded connectivity and the separately approved column metadata,
+not least privilege, full vendor support, business mappings/parity or release
+readiness. Additional metadata and any business-data read still require separate
+environment/read-scope approval.
+
+### Approved Three-Table Column Metadata, 2026-10-14
+
+With explicit approval, the existing compiled diagnostic ran its constant
+connectivity SELECT and fixed-bind column query against the confirmed Oracle
+11.2.0.4.0 target in Thick mode. Each read used a READ ONLY transaction with
+rollback/release, then pool cleanup. The complete diagnostic succeeded at
+12:08:57 UTC (15:08:57 local UTC+03:00).
+
+| Table in SHIFTER | Returned columns |
+| --- | --- |
+| SHF_EMPLOYEE_DAY | 25 |
+| SHF_DAY_CHANGES | 26 |
+| SHF_EMPLOYEES | 37 |
+| Total | 88 |
+
+Returned fields are table/column name, data type, declared numeric precision/
+scale and nullability only. Types: 28 NUMBER, 19 DATE and 41 VARCHAR2. No
+business rows, defaults, procedure source, grants, constraints, indexes, triggers
+or additional tables were queried. The 88 rows are below the 512-row accepted
+bound; the adapted ordered ROWNUM query is now live-verified for this scope.
+
+Important observed distinctions: SHF_EMPLOYEES.EMPLOYEE_ID is non-null NUMBER
+with precision/scale unspecified; EMP_ID_NUMBER is non-null VARCHAR2 there but
+nullable VARCHAR2 in SHF_EMPLOYEE_DAY. Do not infer JavaScript safe-integer
+limits, actual identifier values, uniqueness/foreign keys, VARCHAR2 lengths,
+DATE time-zone semantics or business ownership from this limited metadata.
+The full bounded JSON report is retained as a session artifact, not copied
+into fixtures or exposed through application endpoints.
+
+Password came from the masked VS Code input into the child process environment;
+no real password was saved. The temporary wrapper/TNS file were removed and the
+persistent task restored to connectivity-only. The original Oracle Net file was
+not edited. No application code changed in this step: the preceding 223-test
+baseline remains; only diagnostic syntax/report shape and documentation checks
+were performed here. The subsequent source-to-column review is documented below;
+identity/read-scope and mapping-policy approval are still gates, not automatic
+business-data access.
+
+### Personal-Shift Oracle Mapping Review
+
+The [R01-PS-ORACLE-MAP-0.1 review](docs/SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md#362-oracle-personal-shift-mapping-review-r01-ps-oracle-map-01)
+maps the approved saved column metadata through the active legacy personal-shift
+UNION/detail/getters to the existing normalized API contract. This is design
+review, not a new SQL repository, contract approval or real business connection.
+Offline checks confirmed all 33 selected columns (15 baseline, 15 override, 3
+employee), all 13 selected DATE fields, and NUMBER(10,0) NOT NULL day keys in both
+schedule/change tables. No additional database query was made.
+
+Key findings: nullable physical shift times cannot be silently forced into the
+required DTO; internal EMPLOYEE_ID and full/prefix EMP_ID_NUMBER are different
+domains; NOT NULL flags do not prove valid Y/N values; type-compatible day IDs
+do not prove unique overrides or employee links. Large synthetic IDs are
+transport robustness fixtures, not valid examples of this ten-digit day key.
+The active UNION also omits DTO source/home/split fields, filters/orders dates
+differently and does not explicitly apply the commented cancellation predicate.
+
+The review records field candidates, null fallback, transfer/baseline redaction,
+eligibility differences, Oracle DATE policy and a verification/owner matrix.
+Current constraints/flag values/prefix uniqueness/timezone and authoritative
+identity remain unresolved. Existing synthetic behavior and real-read gates are
+unchanged; the prior 223-test baseline was not rerun for documentation-only work.
+Next step is approval of raw-row mapping policies and missing prerequisites,
+not business-data sampling or production API activation.
+
+### Historical Oracle Checks
+
+Successful isolated Thick connectivity check, 2026-10-14: with explicit user
+approval, a temporary diagnostic loaded Oracle Client **19.3.0.0.0** through
+node-oracledb 26.0.0 in Thick mode and authenticated to the approved target.
+The connection reported Oracle Database **11.2.0.4.0**, now runtime-verified.
+It executed only `SET TRANSACTION READ ONLY` and `SELECT 1 FROM DUAL`
+(`autoCommit: false`), then rollback and close, both completed successfully.
+No metadata, business data, DML, procedure, sequence or partner call was executed
+by the diagnostic; database-side logon behavior is not characterized by this
+check. Success does not establish least privilege, full driver/database feature
+compatibility, security certification or production readiness.
+
+The one-shot used the approved HOST/PORT/SID in an explicit connect descriptor
+with bounded connection timeouts, retry count zero and a 5-second per-call
+timeout, avoiding the unrelated original TNS syntax error. Credentials came
+from the secure prompt and were not stored in code or command arguments.
+Temporary scripts were removed and the original credential-free task restored.
+That task and the main application adapter remain Thin-only and will not connect
+to Oracle 11.2 unchanged; this success is not an automatic application fallback
+or authorization to wire real data. Existing metadata SQL also uses
+`FETCH FIRST`, which requires an Oracle 11g compatibility change before any
+separately approved metadata execution. The existing Oracle schema is unchanged.
+
+Offline Oracle Client check, 2026-10-14: the user corrected the database version
+to **11.2, patch level unknown**, superseding the earlier user-declared 21c
+target. This is user-confirmed, not a queried server version. With explicit
+approval for a local load check only, a separate Node.js v24.21.0 x64 process
+loaded the installed `oci.dll` through `node-oracledb` 26.0.0
+`initOracleClient`. The runtime reported `thin: false` and Oracle Client
+**19.3.0.0.0**; the DLL file version is 19.3.0.0. The process exited successfully.
+No connection/pool was created, no credentials were used and no database query
+ran. Successful local loading does not establish database patch-level
+interoperability, authentication, least privilege or release support. A
+separately approved bounded Thick connectivity diagnostic is the next step;
+the application adapter remains unchanged and Thin-only. See the official
+[driver installation requirements](https://node-oracledb.readthedocs.io/en/latest/user_guide/installation.html).
+
+TNS retry, 2026-10-14 at 14:48–14:51 local (UTC+03:00): the user supplied the
+external Oracle Client network/admin directory. The relevant alias is
+`CTIDBT_WFMT.world`, with TCP HOST `wfmt_host`, PORT 1521 and SID `wfmt`
+(not a verified SERVICE_NAME). The real host resolved successfully. The first
+Thin connectivity-only attempt returned NJS-514. Local installed-driver parser
+checks found the selected entry valid but another entry beginning at line 473
+invalid; parsing the complete TNS file therefore failed. No external file was
+modified or unrelated entry contents published.
+
+With explicit approval, a temporary session-only TNS file containing only the
+selected descriptor was used for one further secure-prompt connection attempt.
+It passed the prior lookup/parser blockers but returned **NJS-138**: the server
+version is not supported in node-oracledb Thin mode. Exact database version and
+successful authentication remain unverified; this conflicts with treating the
+earlier user-declared 21c version as runtime evidence. No connectivity SELECT,
+metadata or business read completed. No Thick fallback was attempted. A
+DBA-confirmed target/version and separately approved Oracle Client compatibility
+check are needed before a Thick-mode attempt; the existing adapter remains
+Thin-only. The temporary TNS file was deleted, and the credential-free task now
+uses the exact alias and original external directory (which still needs its
+unrelated syntax error corrected). Stub mode and database contents are unchanged.
+
 Latest full-host Thin retry, 2026-10-14 at 13:05 local (UTC+03:00): the user
 authorized `CTIDBT_WFMT.host:1521/WFMT`, retaining the latest port/service.
 `node-oracledb` 26.0.0 reported `thin: true`. Node hostname lookup returned
@@ -262,67 +439,66 @@ through the credential owner; no rotation was performed here.
 The [Oracle module](apps/api/src/oracle/oracle.module.ts) is registered with the
 API, but construction/startup performs no database call. The
 [read-only adapter](apps/api/src/oracle/read-only-database.ts) creates one lazy
-bounded Thin pool only when an explicitly invoked read needs it. It provides:
+bounded pool in the explicitly configured mode only when an invoked read needs it. It provides:
 
 - A constant `SELECT 1 FROM DUAL` connectivity probe.
 - A bounded, fixed-bind column-metadata query for `SHIFTER.SHF_EMPLOYEE_DAY`,
   `SHF_DAY_CHANGES` and `SHF_EMPLOYEES`, excluding business rows, defaults and
-  stored source text. This operation has not been run.
+  stored source text. The separately approved read returned 88 columns; see above.
 - `SET TRANSACTION READ ONLY` before each allowlisted SELECT, `autoCommit: false`,
   rollback and release on every leased-connection path. A failed rollback drops
   the lease. There is no public arbitrary-SQL, commit, DML or PL/SQL operation.
-- Pool maximum 2, queue maximum 10, 5-second queue/call timeout settings,
-  10-second connect and 5-second transport-connect settings, no driver retries
-  and a 10-second shutdown drain. Call timeout is per round-trip, not a total
-  request deadline. Cleanup errors remain explicit and redacted.
+- Pool maximum 2, queue maximum 10, 5-second queue/call timeout settings and
+  10-second shutdown drain. Thin supplies 10-second connect and 5-second
+  transport-connect settings with no retries; Thick requires equivalent limits
+  in approved Oracle Net configuration. Call timeout is per round-trip, not a
+  total request deadline. Cleanup errors remain explicit and redacted.
 
-These are code/mocked-test properties, not live Oracle enforcement evidence.
+Live constant SELECT and three-table column metadata with cleanup were verified
+in Thick mode; negative/failure paths remain mocked evidence.
 An account named `SHIFTER` does not establish least privilege, and these controls
 do not prevent database-side logon triggers. Prefer a DBA-approved existing read-only account.
-No grants, schema changes, production queries or privilege discovery were run.
+No grants, schema changes, business queries or privilege discovery were run.
 
 ### External Configuration
 
-Oracle access defaults to disabled. No credentials or Oracle Net files were
-created or inspected, and the supplied password was not copied into code/logs.
+Oracle access defaults to disabled. External TNS address fields were inspected
+with approval and a temporary credential-free TNS file was used and removed.
+No password was copied into code/logs.
 The [configuration loader](apps/api/src/oracle/configuration.ts) requires:
 
 | Variable | Meaning |
 | --- | --- |
 | `ORACLE_ENABLED` | Unset/`false` disables access; `true` permits adapter calls only after separate environment/read-scope approval. |
+| `ORACLE_MODE` | `thin` by default; explicit `thick` loads OCI lazily. Invalid modes fail; there is no automatic fallback. |
+| `ORACLE_CLIENT_LIB_DIR` | Required absolute client-library directory for Thick (Windows: the directory containing oci.dll). Rejected in Thin mode. Never credentials. |
 | `ORACLE_READ_ONLY` | Optional `true`; any other provided value is rejected. There is no write mode. |
 | `ORACLE_USER` | Externally supplied approved account. |
 | `ORACLE_PASSWORD` | Externally supplied secret, never part of the connection string. |
 | `ORACLE_CONNECT_STRING` | TNS alias such as `ctidbp_wfmp`, or approved host/port/service Easy Connect string. |
 | `ORACLE_CONFIG_DIR` / `TNS_ADMIN` | External directory containing the approved `tnsnames.ora` for an alias; required for a bare TNS alias. |
 
-Alias resolution, service/port, TLS/authentication compatibility, actual database
-version/grants and live read scope are unverified. No Thick-mode fallback or
-remote configuration provider is implemented. Setting a variable is not approval.
+The selected target/SID, authentication and server version were verified by the
+approved Thick constant check; grants, TLS, full client support, schema mappings
+and business read scope remain unverified. No automatic fallback or remote
+configuration provider is implemented. Setting a variable is not approval.
 
 After a separately approved connectivity window, use a local terminal to obtain
 the password without putting it in a command line or repository file:
 
 ```powershell
-$credential = Get-Credential -UserName 'SHIFTER' -Message 'Approved Oracle read-only account'
-$env:ORACLE_USER = $credential.UserName
-$env:ORACLE_PASSWORD = $credential.GetNetworkCredential().Password
-$env:ORACLE_CONNECT_STRING = 'ctidbp_wfmp'
-$env:ORACLE_CONFIG_DIR = '<approved external Oracle Net configuration directory>'
-$env:ORACLE_READ_ONLY = 'true'
-$env:ORACLE_ENABLED = 'true'
-try {
-  npm run oracle:check
-} finally {
-  Remove-Item Env:ORACLE_PASSWORD
-  Remove-Item Env:ORACLE_ENABLED
-  Remove-Variable credential
-}
+.\scripts\Invoke-ShfOracleMetadata.ps1 `
+  -ConnectString 'CTIDBT_WFMT.world' -UserName 'SHIFTER' `
+  -Mode thick -ClientLibDir '<approved absolute Oracle Client library directory>' `
+  -ConfigDir '<approved Oracle Net directory with valid bounded TNS configuration>' `
+  -ConnectivityOnly
 ```
 
-Do not execute this against the operational environment under the current
-**no-live-checks** instruction. It performs a real connection and constant SELECT,
-not a simulation. The command prints success only after read and pool cleanup.
+This performs a real connection and constant SELECT, not a simulation; invoke
+only within an explicitly approved connectivity window. For a pre-supplied
+process `ORACLE_PASSWORD`, add `-UseEnvironmentPassword`; do not put a password
+literal in a command or committed file. The default prompts securely.
+The command prints success only after read and pool cleanup.
 Arrange password rotation through the credential owner if it was shared in chat.
 
 ### Offline Verification
@@ -346,7 +522,7 @@ identity, verified metadata/mapping, business contracts and data scope are ready
 
 ### Progress and R06 Operational Schedule/Attendance Demo
 
-The [current progress report](docs/plan-shfAiAgentDevelopment.prompt.md#current-progress-snapshot-2026-10-14-after-r10-buildings-demo)
+The [current progress report](docs/plan-shfAiAgentDevelopment.prompt.md#current-progress-snapshot-2026-10-14-after-oracle-column-metadata)
 records the overall plan status. R04/R05 and the new R06 range-read increment
 have working synthetic demos; full architecture/business baselines, trusted
 identity, Oracle mapping/parity and production acceptance are not complete.
@@ -613,6 +789,78 @@ templates and builds passed; initial bundle **431.70 kB**. Browser checks passed
 full-day/timed/history/original/privacy/null/overnight, calendar/employee filters,
 empty/error/date-retention/retry, focus, narrow layouts and 200% resizing.
 R09 reporting, real Oracle/identity/metadata/parity and acceptance remain pending.
+
+### R10 Allowlisted Synthetic System Parameters
+
+The approved [parameter screen](apps/web/src/app/system-parameters.ts) adds
+code/name search and read-only detail for three non-sensitive scheduling keys.
+Restart the existing stub API/web commands; no Oracle connection is required.
+
+```text
+GET /api/v1/system-parameters?search=&limit=100
+GET /api/v1/system-parameters/shf.param.minutesArrivalBeforeStation
+```
+
+Only station-arrival timing, inter-shift difference and minimum-shift-duration
+keys are allowlisted. The fixed unit's raw value/default/effective value and
+selection source remain separate. `'0'` overrides default `'5'`; a missing unit
+value falls back to exact `'11.50'`; missing both stays unknown, not zero.
+Raw strings retain precision, leading zeros and scale. Units and physical
+mapping are explicitly unverified, and these values do not alter other preview
+policies. No lock/managed/pool/SMS/IWD flags or modification-user data are served.
+
+Search is max 80 characters; limit defaults to 25/max 100 with explicit insufficient-
+limit failure. Unsupported/absent codes share a 404; unit/hierarchy/default
+overrides and cursor are rejected. The client verifies allowlist/source/scope/
+query, nullable formats and exact recomputed effective value/provenance.
+Read timestamp is not modification time, cache freshness or an Oracle snapshot.
+
+Latest full checks: **218 tests (102 backend + 116 frontend)**, lint,
+types/templates and builds passed; initial bundle **433.73 kB** under unchanged
+500 kB warning. Four focused API tests passed again after tightening a scope
+assertion. Browser checks passed zero/default/decimal/unknown/search/empty,
+contradictory-data rejection, failures/retry, focus/keyboard, narrow reflow and
+200% resizing. Temporary servers/proxy removed. See the
+[execution record](docs/plan-shfAiAgentDevelopment.prompt.md#32-approved-r10-allowlisted-synthetic-system-parameters).
+Oracle, parameter edits, policy changes, flag activation, cache reload and batch
+remain disabled. R10 existing-result/deferred-design work and real permissions/
+mapping/parity/manual accessibility/UAT remain pending.
+
+### R10 Read-Only Synthetic Internal Job Directory
+
+The approved [job screen](apps/web/src/app/internal-jobs.ts) adds ID/name/status
+filters, a scoped table and read-only detail. Restart the existing stub API/web
+commands to load its routes and capability.
+
+```text
+GET /api/v1/internal-jobs?search=&status=all&limit=100
+GET /api/v1/internal-jobs/95000001
+```
+
+Statuses are all/active/inactive/unknown. False is not unknown; group code `'0'`
+is not missing. Three invented jobs include active/group12, inactive/group0,
+and unknown status/group with lossless ID `9007199254740997`. HTML-like names
+display literally. Foreign/missing jobs share a 404 on scoped details.
+Search is at most 80 characters; limit defaults to 25/max 100, with explicit
+insufficient-limit failure. No group filter/assignment or scope override exists.
+
+Version/read timestamp identify the synthetic catalog, not legacy cached-table
+freshness, live Oracle or real administrator permissions. Active/group facts
+do not prove staffing eligibility, availability or skills. The client validates
+markers/source/scope/query/status/nullable types, duplicates and extra item
+fields; pure status/version helpers are shared without importing server I/O
+or fixtures. Filters cancel older reads; failures preserve inputs/list context
+and detail close restores row focus. No editable dates require calendars.
+
+Latest full validation: **206 tests (98 backend + 108 frontend)**, lint,
+strict types/templates and builds passed; initial bundle **433.22 kB** under
+the unchanged 500 kB warning. Browser checks passed filters/large IDs/zero-null/
+literal names/empty/detail/focus/error retention/retry, keyboard, narrow reflow
+and 200% resizing. Temporary servers/proxy were removed. See the
+[execution record](docs/plan-shfAiAgentDevelopment.prompt.md#31-approved-r10-synthetic-internal-job-directory).
+Oracle, edits, group assignment, cache reload, dispatch and batch remain
+disabled. R10 parameters/CTI/learning/deferred-register and real metadata/
+permissions/parity/UAT remain pending.
 
 ### R10 Read-Only Synthetic Building Directory
 

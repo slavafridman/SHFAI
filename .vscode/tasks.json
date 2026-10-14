@@ -10,16 +10,33 @@
         "-File",
         "${workspaceFolder}\\scripts\\Invoke-ShfOracleMetadata.ps1",
         "-ConnectString",
-        "CTIDBT_WFMT.host:1521/WFMT",
+        "CTIDBT_WFMT.world",
         "-UserName",
         "SHIFTER",
+        "-Mode",
+        "thick",
+        "-ClientLibDir",
+        "C:\\app\\client\\30610488\\product\\19.0.0\\client_1\\bin",
+        "-UseEnvironmentPassword",
         "-ConnectivityOnly"
       ],
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "ORACLE_PASSWORD": "${input:shfOraclePassword}",
+          "ORACLE_CONFIG_DIR": "C:\\app\\client\\30610488\\product\\19.0.0\\client_1\\network\\admin"
+        }
       },
       "isBackground": false,
       "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "shfOraclePassword",
+      "type": "promptString",
+      "description": "Oracle password for this approved one-shot connection only",
+      "password": true
     }
   ]
 }

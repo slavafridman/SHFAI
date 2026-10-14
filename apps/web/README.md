@@ -1,5 +1,65 @@
 # SHF Web Synthetic Personal Workspace
 
+Latest R10 increment: [system parameters](src/app/system-parameters.ts) adds a
+three-key scheduling allowlist, code/name search and read-only detail. Use
+existing stub startup commands/proxy after restarting the API. No editable date
+fields or calendar changes were needed.
+
+Unit/default/effective values and provenance are separate. Unit `'0'` wins over
+default `'5'`; a null unit uses exact default `'11.50'`; null/null is unknown.
+Raw decimal strings retain leading zeros, precision and scale. Units/mappings
+are unverified; this separate demo source does not modify other preview rules.
+No administrator authority, edits, lock/managed/pool/SMS/IWD flags, modification-
+user data, reload or process activation is exposed.
+
+The [client](src/app/system-parameters-api.ts) validates source/scope/query,
+allowlist/duplicates/nullable formats and recomputes resolution using the same
+pure contract helper as the API, without importing fixtures or Node I/O.
+Contradictory effective values/provenance are rejected, not quietly corrected.
+Typed reactive search cancels superseded list/detail reads; failures retain
+search/list context, and detail close restores row focus. Read timestamps do
+not claim cache freshness or parameter modification time.
+
+Latest full checks: **116 Angular + 102 API tests (218 total)**,
+lint/types/builds passed; initial bundle **433.73 kB** below unchanged 500 kB
+warning. Focused API4/UI8+shell3 passed; four API tests passed again after
+tightening the scope assertion. Browser zero/default/decimal/unknown, search/
+empty, contradictory data, 503 retention/retry, focus/keyboard, 320/768/1280
+reflow and 200% resize passed. A stalled response-fetch interception was replaced
+by a fixed synthetic response; the same rejection assertion passed. Mobile
+viewport screenshot inspected; temporary servers/proxy removed.
+Real Oracle/units/hierarchy/defaults/permissions, manual assistive technology,
+UAT and release remain unverified; R10 is partial.
+
+Latest R10 increment: [internal jobs](src/app/internal-jobs.ts) adds ID/name and
+all/active/inactive/unknown status filters, scoped table and read-only card.
+Use existing stub startup commands/proxy after restarting the API.
+Three invented jobs demonstrate active/group12, inactive/group0 and unknown
+status/group; a foreign job is hidden from both list/detail. ID
+`9007199254740997` remains a string throughout search, display and detail.
+
+False and unknown status remain distinct; group `'0'` is not null. Names render
+literally, including HTML-like synthetic text. Group/status are catalog facts,
+not staffing eligibility/availability. Source version/read time are synthetic
+provenance, not legacy cache freshness, Oracle snapshots or actual admin rights.
+There are no editable dates, edits, group assignment, reload or dispatch controls.
+
+The [client](src/app/internal-jobs-api.ts) checks markers/source/scope/filter
+echo, status membership, nullable field types, IDs, duplicates and extra item
+fields. Pure status/version helpers are reused from the shared contract without
+Node I/O or fixtures. Typed reactive filters cancel superseded list/detail work;
+failures retain input, detail errors retain the list and close restores row
+focus. Wide table scrolling stays in a labelled keyboard-focusable region.
+
+Latest full checks: **108 Angular + 98 API tests (206 total)**,
+lint/types/builds passed; initial bundle **433.22 kB**, below unchanged 500 kB
+warning. Focused API3/UI8+shell3 passed. Synthetic browser filters/lossless ID/
+group-zero/null/literal/detail/empty/error/retry/focus/keyboard, 320/768/1280
+reflow and 200% resize checks passed. A timing-sensitive browser assertion was
+retested with response/render waits; viewport screenshot inspected.
+Temporary servers/proxy removed. R10 other views, real mapping/identity/cache
+freshness, manual assistive technology, UAT and release remain unverified.
+
 Latest R10 increment: [buildings](src/app/buildings.ts) provides ID/name search,
 fixed-unit table and read-only detail through `/api/v1/buildings` and
 `/api/v1/buildings/{id}`. Use the existing stub startup commands/proxy after

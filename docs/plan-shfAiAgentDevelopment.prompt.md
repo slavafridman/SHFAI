@@ -7,37 +7,38 @@ Publication target: d:/AIProjects/SHFAI/docs/SHF_PROJECT_DIRECTIVES.md, ordinary
 
 ## 1. Confirmed Scope And Evidence
 
-### Current Progress Snapshot — 2026-10-14, After R10 Buildings Demo
+### Current Progress Snapshot — 2026-10-14, After Oracle Column Metadata
 
 | Round | Current status | Evidence / next gate |
 | --- | --- | --- |
 | R01 | Review / partial | Source-backed proposals and separately approved demo contracts; full business architecture/API/UI approval pending. |
 | R02 | Local foundation working / partial | Reproducible app commands, tests, lint, strict types and builds; CI, deployment and complete contract generation pending. |
-| R03 | Adapter implemented / real reads blocked | Read-only Oracle adapter tested offline; both approved hostname attempts failed NJS-530 before authentication. SEC identity and DBA metadata remain missing. |
+| R03 | Thick connectivity/column metadata verified; R01 mapping review drafted / round partial | Oracle11.2.0.4.0/Client19.3; 88 columns observed,33 mapped offline to source/DTO candidates. Mapping-policy approval, identity, cardinality/eligibility/timezone and business read scope remain gated. |
 | R04 | Synthetic demo done | Personal shifts, calendars, details, overnight/null/reassignment cases; no real Oracle parity or G3 acceptance. |
 | R05 | Approved synthetic demo done | Messages, employee search/card and skills/events/education views; education explicitly invented, no writes or real employee data. |
 | R06 | Approved synthetic range-read demo done | Fixed-team schedule/attendance table/detail and calendars; current-instant/live reads, real scope and parity remain pending. No arrival/departure registration or corrections. |
 | R07 | Approved break and shift/split preview demos done / round partial | Pure synthetic calculations and scoped reads; full real policy, attendance/offer eligibility and zero-effect Oracle proof pending. |
 | R08 | Approved replacement and staffing read/preview demos done / round partial | Synthetic outcomes and conditional one-slot counts; full real policy, freshness/precondition/atomic-capacity evidence and acceptance remain pending. |
 | R09 | Approved exceptions/time-off and bounded report demos done / round partial | Full-day/timed/provenance/history views and exact staffing/forecast minutes; real data/parity, activity weights and acceptance remain pending. |
-| R10 | Approved synthetic buildings reads done / round partial | Scoped building list/detail and zero/unknown capacity; CTI/learning, other admin views, deferred-producer register and real permissions remain pending. |
+| R10 | Approved synthetic building/job/allowlisted-parameter reads done / round partial | Scoped directories and explicit zero/unknown/default provenance; CTI/learning, deferred-producer register and real permissions/mappings remain pending. |
 | R11 | Deferred / gated | No business writes authorized or enabled. |
 | R12–R13 | Pending | Full security/load/assistive-technology/UAT/recovery/release evidence and accountable sign-off pending. |
 
-Latest completed check: 95 backend + 100 frontend tests (195 total),
-lint/types/builds pass; initial UI bundle 432.73 kB. Synthetic browser checks
+Latest completed check: 107 backend + 116 frontend tests (223 total),
+lint/types/builds pass; initial UI bundle 433.73 kB. Synthetic browser checks
 cover responsive RTL, focus, errors and text resizing, not full AA certification.
 The 45–90 active-hour estimate remains provisional; no elapsed delivery date or
 percentage-complete claim is inferred from a working demonstration.
 
-Oracle remains paused. Required owners: DBA/network for a reachable host and
-approved metadata/data scope; SEC for trusted identity/employment/scope policy;
+Oracle business reads remain paused; bounded Thick connectivity passed.
+Required owners: DBA for additional metadata/data scope and valid bounded Net
+configuration; SEC for trusted identity/employment/scope policy;
 user/ARC for real API/UI baselines; business/QA/operations for UAT and release.
 This snapshot supersedes earlier no-scaffold/no-runtime wording as current status;
 older sections remain historical execution evidence.
 
 - Node.js/TypeScript backend; supported modern Angular, Material/CDK/Material 3, HTML/CSS; Hebrew/RTL and Hebrew accessibility names.
-- Oracle Database 21c is user-confirmed, not live-verified; Thin mode is proposed. Existing schema remains unchanged: no DDL/migrations/new tables, columns, indexes, sequences, triggers or procedures and no field/status overloading.
+- Oracle Database 11.2.0.4.0 is runtime-verified, superseding the earlier user-declared 21c target. Explicit opt-in Thick mode/Client19.3 connectivity passed; Thin remains the default for other approved targets, with no fallback. Existing schema remains unchanged: no DDL/migrations/new tables, columns, indexes, sequences, triggers or procedures and no field/status overloading.
 - TIBCO work is abstract API ports, DTOs, documented semantics and clearly isolated doubles only. No live broker/bridge transport, publisher/consumer, Java/.NET bridge or transport worker.
 - Batch CTI/SAP/BI and scheduled SMS/IWD/pool are designed but excluded from current implementation, scheduling, packaging, deployment and batch-only tests.
 - old/ is read-only evidence, never a build/execution target. Protect user changes, credentials and personal data. Database reads/metadata/test mutations each need approved environment, permissions and data scope. Never mutate production business data.
@@ -248,7 +249,7 @@ These readiness timeboxes are not total future-development estimates. No new sto
 ## 9. Blockers And Publication
 
 - User/ARC: architecture/API/UI and release approvals.
-- DBA/platform: confirmed Oracle21c environment/patch/support, metadata/PLSQL/grants, scoped data/test access and competing-writer behavior.
+- DBA/platform: Oracle11.2.0.4.0/Client19.3 patch/support review, metadata/PLSQL/grants, scoped data/test access and competing-writer behavior; bounded connectivity is already verified, not business/schema access.
 - SEC/business: trusted identity and organizational/session policies.
 - DBA/ARC: per-write durable retry/audit/precondition/local-apply recovery under unchanged schema.
 - EXT: future partner contract, transport, local/remote recovery and runtime tests.
@@ -1651,3 +1652,449 @@ real elevated identity/scope, manual Hebrew assistive technology, UAT and
 release are NOT RUN. Next candidate: separately approve one R10 read-only
 job/parameter or existing-result view; no wider admin/producer permission
 is inferred.
+
+## 31. Approved R10 Synthetic Internal Job Directory
+
+Task ID: SHF-R10-INTERNAL-JOBS-STUB-20261014. Status: done for the explicitly
+approved synthetic read-only job directory; R10 remains partial. The user
+approved ID/name/status filters, list/detail, fixed unit, active/inactive/unknown
+states, group code including zero/unknown, Hebrew/RTL UI and tests. Oracle,
+edits, group assignment, cache reload, dispatch and batch remain excluded.
+
+### Source Evidence and Unverified Mapping
+
+The [catalog route](SHF_SOURCE_CONTRACT_CATALOG.md#1-complete-struts-route-catalog)
+maps `/admin/manageInnerJobs` to
+[SystemAdminAction](../old/SHF/src/bzq/shf/actions/SystemAdminAction.java#L263).
+The `view` branch reads the cached `innerJobCode` table and filters entries
+against allowed units. The `viewUpdate` branch resolves code through the
+[cached lookup](../old/SHF/src/bzq/shf/utils/SHFTableUtils.java#L285), which has no
+unit predicate; the new demo enforces scope on both list and detail. Maintenance
+branches call add/update/delete and table reload; none are implemented or run.
+The [bean mapping](../old/SHF/src/bzq/shf/bean/InnerJobBean.java#L10) identifies
+unit/active/group fields with primitive integer active/group properties.
+[Group reads](../old/SHF/src/bzq/shf/model/SystemAdminModel.java#L932) group cached
+jobs by unit and group ID; the demo displays codes only, not assignment or
+equivalence/eligibility rules.
+
+Actual Oracle metadata, active-code encoding, cache load/reload freshness and
+real elevated authorization are unverified. The mapped JSP was not located as
+a loose file in the checked legacy source tree; no archive was opened or legacy
+application executed. This is not a recovered visual/parity claim. Nullable
+booleans/groups and the status search are explicitly approved synthetic
+contracts, not inferred physical column mappings. Group zero stays a code;
+neither a group nor active status proves compatibility, availability or skill.
+
+### Contract and Implementation
+
+```text
+GET /api/v1/internal-jobs?search=&status=all&limit=100
+GET /api/v1/internal-jobs/95000001
+```
+
+List accepts only search (ID/name, maximum 80 characters, trim/lowercase),
+status (`all`, `active`, `inactive`, `unknown`, default all) and limit (default
+25/max 100). Known false matches inactive only; null matches unknown only.
+Valid unmatched combinations return empty. Bad query/status/ID is 400;
+insufficient limit is 503 `STUB_PAGINATION_UNAVAILABLE`, not silent truncation.
+Detail rejects all query fields and gives identical 404
+`INTERNAL_JOB_NOT_FOUND` for foreign and missing IDs.
+
+DTO: lossless positive decimal ID string, name, fixed orgUnit, nullable boolean
+active, nullable canonical nonnegative decimal groupCode string. Zero is `'0'`,
+not null. Code/ID bounds are demo contracts, not physical Oracle precision.
+Version `synthetic-job-catalog-1` and technical read timestamp are explicit
+synthetic provenance, not legacy cache refresh time, SCN or live data.
+Responses retain synthetic/unauthenticated markers, source header and no-store.
+`internalJobs.read` is enabled only in the opt-in stub; write is false.
+
+- [Contract](../apps/api/src/stub/internal-job-contracts.ts) shares pure status
+  matching/version between [controller](../apps/api/src/stub/internal-jobs.controller.ts)
+  and [client](../apps/web/src/app/internal-jobs-api.ts), without Node I/O or
+  runtime fixture imports in the browser.
+- [Fixtures](../apps/api/src/stub/internal-job-fixtures.ts) include active group
+  12, inactive group 0, unknown status/group with lossless ID
+  `9007199254740997`, and one hidden foreign job. HTML-like name is literal text.
+- [Screen](../apps/web/src/app/internal-jobs.ts) /
+  [template](../apps/web/src/app/internal-jobs.html) reuse typed reactive forms,
+  signals, semantic table/card, Hebrew labels and mixed-direction code isolation.
+  Source/filter echo, nullable fields, duplicate IDs, unsupported item fields
+  and wrong scope/status/ID are rejected before display.
+- Superseding list/filter work cancels list/detail reads; failures retain inputs,
+  detail errors keep the list, and closing detail restores row focus. Invalid
+  filters focus their field. No editable dates require calendar controls.
+- This is the eleventh immediate deferred feature with explicit loading/error
+  states. No edit, assignment, reload or producer/dispatch action exists.
+
+### Executed Verification and Limits
+
+[Three API tests](../apps/api/test/internal-jobs.test.ts) passed scoped shape/
+detail, large ID, false/null and group-zero/null separation, exact status and
+ID/name filters, bounded/duplicate/malformed queries, uniform foreign/missing
+404, immutability, read-only capability and absent edit/group/reload/real routes.
+[Eight UI tests](../apps/web/src/app/internal-jobs.spec.ts) plus three shell tests
+passed capability gating/disabled/unmarked rejection, lossless/status/group
+rendering, exact filter/query matching, empty/literal/detail/focus behavior,
+wrong source/scope/type/duplicate/extra-field rejection, cancellation, input
+bounds, failed-list/detail retention and retry.
+
+Full `npm run check` passed **98 backend + 108 frontend tests (206 total)**,
+lint, strict types/templates and both production builds. Initial UI bundle
+**433.22 kB** remains below unchanged 500 kB warning. No dependency changes.
+
+Synthetic servers on isolated 3115/4215 returned HTTP 200 with source/no-store.
+Browser checks passed three rows, all three status filters, exact large-ID and
+normalized name search, group-zero detail versus unknown, literal HTML-like
+name, focus return, valid empty combinations, injected list/detail 503 with
+filter/list retention/retry, keyboard row action, 320/768/1280 reflow and 200%
+text resize. At 320px the feature stayed within 273px, with table scrolling
+contained. The old shared page was unavailable; a fresh page was used. An
+initial status assertion preceded rendering; response/filter-echo waits passed
+the same checks without weakening them. Element screenshot scroll timed out;
+a viewport screenshot succeeded and was inspected. Own servers and named
+session proxy were stopped/removed.
+
+Scoped design validation passed 1,167 local links and 784 source-line
+references. Separate README/plan validation passed 266 links and 58 fragments,
+including the updated progress/execution anchors. `git diff --check` passed.
+
+No Oracle or real job/identity data, schema change, mutation, group assignment,
+cache reload, staffing dispatch, partner/batch or deployment occurred. Real
+active/group mapping, cache freshness, elevated scope, manual Hebrew assistive
+technology, UAT and release are NOT RUN. Next candidate: separately approve
+one bounded parameter/existing-result view or the deferred-producer design
+register; it does not authorize producer implementation or runtime activation.
+
+## 32. Approved R10 Allowlisted Synthetic System Parameters
+
+Task ID: SHF-R10-PARAMETERS-STUB-20261014. Status: done for the explicitly
+approved synthetic read-only parameter view; R10 remains partial. The user
+approved three non-sensitive scheduling keys, code/name search, list/detail,
+raw unit/default/effective values and provenance. Units/mappings are unverified.
+Oracle, edits, lock/managed/pool/SMS/IWD flags, reload and batch remain excluded.
+This separate source does not alter any previously approved preview policy.
+
+### Source Evidence and Boundary
+
+The [catalog](SHF_SOURCE_CONTRACT_CATALOG.md#1-complete-struts-route-catalog)
+maps `/admin/viewMokedParameters` to
+[SystemAdminAction](../old/SHF/src/bzq/shf/actions/SystemAdminAction.java#L72).
+[SystemAdminModel](../old/SHF/src/bzq/shf/model/SystemAdminModel.java#L104)
+distinguishes unit/moked and division/agaf parameters; its
+[view method](../old/SHF/src/bzq/shf/model/SystemAdminModel.java#L143) populates
+the form from parameter getters. The
+[cache helper](../old/SHF/src/bzq/shf/utils/SHFParameters.java#L29) finds
+code/unit records and clears the unit value when the selected record belongs
+elsewhere. Its missing-result dereference and cache-order behavior are not
+ported or presented as a verified hierarchy.
+
+[SystemParameterForm.getValue](../old/SHF/src/bzq/shf/forms/SystemParameterForm.java#L127)
+uses the unit value unless null, then the default. It does not convert strings
+or treat zero as missing. The
+[getters](../old/SHF/src/bzq/shf/utils/SHFParameters.java#L52) identify the three
+allowlisted source codes:
+
+- `shf.param.minutesArrivalBeforeStation`
+- `shf.param.differenceBetweenShifts`
+- `shf.param.minimalShiftDuration`
+
+Only source names and the null-only fallback are reused. Physical Oracle types,
+real values/defaults, units, scope hierarchy, cache freshness, change metadata
+and elevated permissions remain unverified. No legacy action/cache or save path
+was executed. Unknown supplied values/defaults remain explicit; failed lookups
+are not represented as successful defaults.
+
+### Contract and Implementation
+
+```text
+GET /api/v1/system-parameters?search=&limit=100
+GET /api/v1/system-parameters/shf.param.minutesArrivalBeforeStation
+```
+
+Only search (code/name, max 80 characters, trim/lowercase) and limit (default
+25/max 100) are accepted. No unit/hierarchy/default override or cursor. Invalid
+query/code syntax is 400; insufficient limit is 503
+`STUB_PAGINATION_UNAVAILABLE`; valid unmatched search is empty. Unsupported
+well-formed codes, including excluded flags, share a 404 `PARAMETER_NOT_FOUND`
+with absent codes. Detail accepts no query fields.
+
+DTO: allowlisted code, synthetic name/fixed unit, nullable string unitValue and
+defaultValue, nullable string effectiveValue, resolution `unit`/`default`/
+`unknown`, and literal measurement `unverified`. Demo numeric strings allow
+1–38 digits plus optional 1–9 fractional digits; leading zeros and scale stay
+unchanged. These are transport guards, not physical Oracle precision or units.
+The shared resolver rejects malformed values instead of substituting defaults.
+Non-null unit value wins even at `'0'`; default is used only for null unit value;
+both null give null/unknown.
+
+- [Contract/resolver](../apps/api/src/stub/system-parameter-contracts.ts) owns
+  allowlist, format, source version and null-only resolution. Both sides reuse
+  this pure module without server I/O or browser fixture imports.
+- [Fixtures](../apps/api/src/stub/system-parameter-fixtures.ts) give unit0 over
+  default5, fallback `'11.50'`, and unknown. A foreign unit's record is deliberately
+  first and must not leak into list/detail or default resolution.
+- [Controller](../apps/api/src/stub/system-parameters.controller.ts) enforces
+  fixed scope/allowlist and existing synthetic/unauthenticated, no-store/source
+  transport. Capability `systemParameters.read` is demo-only; write is false.
+- [Client](../apps/web/src/app/system-parameters-api.ts) checks scope/source/query,
+  duplicates/allowlist, nullable formats, unsupported item fields and recomputed
+  effective value/provenance. Numeric JSON values or inferred verified units
+  are rejected. No process flags or modification-user data are exposed.
+- [Screen](../apps/web/src/app/system-parameters.ts) /
+  [template](../apps/web/src/app/system-parameters.html) show separate raw/default/
+  selected strings and provenance with Hebrew/RTL labels. Search retains input
+  on failure, superseding reads cancel list/detail, detail errors keep the list,
+  and focus moves to detail/returns to its row. No editable dates need calendars.
+- Technical version `synthetic-parameter-catalog-1` and read timestamp are not
+  modification time, cache refresh time, real policy or an Oracle snapshot.
+  This is the twelfth immediate deferred feature, not a parameter editor.
+
+### Executed Verification and Limits
+
+[Four API tests](../apps/api/test/system-parameters.test.ts) passed pure zero/
+default/unknown resolution, raw precision/scale, invalid input rejection,
+scope/allowlist/foreign exclusion, query/limit bounds, flag exclusion, immutable
+reads and absent edit/reload/apply/real-mode routes.
+[Eight UI tests](../apps/web/src/app/system-parameters.spec.ts) plus three shell
+tests passed capability gating, precise raw strings, zero/default/unknown,
+search/empty, literal detail/focus, malformed/off-scope/off-allowlist/extra-field
+and contradictory provenance rejection, cancellation and errors/retry.
+
+Full `npm run check` passed **102 backend + 116 frontend tests (218 total)**,
+lint, strict types/templates and both builds. Initial UI bundle **433.73 kB**,
+below unchanged 500 kB warning; no dependencies changed. A foreign-value test
+was tightened to compare parsed scoped fields rather than searching for digits
+that could occur in a timestamp; all four API tests passed again afterward.
+
+Isolated synthetic ports 3116/4216 returned HTTP 200 with no-store/source markers.
+Browser checks passed unit0 over default5, exact `'11.50'`, unknown detail,
+normalized search/empty flag search, provenance, detail/return focus, contradictory
+source rejection/retry, injected list/detail503 with search/list retention,
+keyboard row action, 320/768/1280 reflow and 200% text resize. Mobile feature
+width/scroll were both 273px; viewport screenshot inspected. The first response
+interception using route.fetch stalled; direct API/proxy health checks remained
+200, and a fixed synthetic response passed the unchanged rejection assertion.
+Own servers and named session proxy were stopped/removed.
+
+Scoped design validation passed 1,171 local links and 787 source-line references.
+Separate README/plan checks passed 285 links and 66 fragments, including the
+updated progress/execution anchors. `git diff --check` passed.
+
+No real parameter/Oracle read, schema change, write, preview-rule change, flag
+activation, cache reload, partner/batch or deployment occurred. Actual units/
+hierarchy/defaults/mappings, elevated scope, manual Hebrew assistive technology,
+UAT and release are NOT RUN. Next candidate: separately approve an R10 existing-
+result view or deferred-producer dependency/recovery design register, without
+producer implementation or activation.
+
+## 33. Approved Oracle 11g Thick Adapter Compatibility
+
+Task ID: SHF-ORACLE11G-THICK-20261014. Status: done for explicit mode support,
+11g-compatible metadata SQL and approved connection-only verification.
+Metadata/business execution, permissions, API mappings and release remain gated.
+The user authorized Thick support after isolated client/connectivity checks,
+then explicitly selected process-environment password transport without storing
+the secret in the project. No new schema or real business routes are approved.
+
+### Runtime Evidence and Decisions
+
+The earlier 21c statement was corrected by the user to 11.2. An isolated approved
+Thick diagnostic returned server **11.2.0.4.0**, client **19.3.0.0.0** and performed
+READ ONLY + constant SELECT + rollback/close. Thin had failed NJS-138.
+The external TNS alias `CTIDBT_WFMT.world` resolves HOST `wfmt_host`, port1521,
+SID `wfmt`; treating the alias as a host caused the earlier DNS failures.
+The chosen TNS entry parsed correctly, but another entry beginning at line473
+failed Thin's complete-file parsing. The original external file was not edited.
+
+The approved implementation keeps Thin as default, disabled unless enabled.
+Thick requires `ORACLE_MODE=thick` and absolute `ORACLE_CLIENT_LIB_DIR`; there is
+no automatic fallback or retry between modes. OCI initializes lazily on first
+explicit read, not construction/startup/shutdown of an unused adapter.
+`configDir` goes to initOracleClient for Thick and createPool for Thin. Mode/
+client/Net initialization is process-global; conflicting options fail explicitly
+and require a fresh process, not a mode reset. This does not certify full vendor
+support or compatibility beyond the measured operations.
+
+### Changed Surfaces and Focused Checks
+
+- [Configuration](../apps/api/src/oracle/configuration.ts): validates opt-in mode,
+  absolute external client directory and the existing credential/connect-string
+  restrictions. A client directory in Thin mode is rejected, not ignored.
+- [Adapter](../apps/api/src/oracle/read-only-database.ts): mode-specific lazy
+  initialization and bounded shared pool, fixed allowlisted operations, READ ONLY,
+  no autoCommit, rollback/release/drain. Initialization failures retain only safe
+  driver codes through [errors](../apps/api/src/oracle/errors.ts).
+- Metadata SQL orders an inline view by table/column position, then applies
+  `ROWNUM <= 513`. The accepted limit remains512; row513 rejects overflow.
+  Fixed owner/three-table binds and excluded defaults/source/business rows are
+  unchanged. No metadata query was run against the real database.
+- Pool/queue limits2/10 and queue/call5s/drain10s remain. Thin supplies connect10s,
+  transport5s/retry0 via supported attributes. Thick does not receive Thin-only
+  attributes: approved Net descriptors/files must supply connect/transport/
+  retry limits. Neither a per-call timeout nor queue wait is a total deadline.
+- [Secure script](../scripts/Invoke-ShfOracleMetadata.ps1): explicit Mode,
+  ClientLibDir, optional ConfigDir and UseEnvironmentPassword; restores previous
+  process settings. Default CLI remains Get-Credential. Missing environment
+  password fails before any connection.
+- [VS Code task](../.vscode/tasks.json): explicit Thick/client path and
+  connectivity-only scope. Password comes from a masked promptString with no
+  default into child-process `ORACLE_PASSWORD`, not command arguments or source.
+  No literal real password was saved. Original external Net directory remains
+  configured after temporary verification files were removed.
+- [Oracle tests](../apps/api/test/oracle-read-only.test.ts): 25 focused cases,
+  including default Thin, explicit invalid mode/lib paths, disabled/no native
+  initialization, concurrent lazy Thick initialization, redacted initialization/
+  mode failures, no fallback on NJS-138, existing cleanup/error cases and 11g
+  SQL shape/overflow. The double rejects `close(undefined)` exactly as Thick does.
+
+### Executed Verification and Limits
+
+Full `npm run check` passed **107 backend + 116 frontend tests (223 total)**,
+lint, strict types and both builds. Initial bundle remains **433.73 kB**.
+No frontend behavior or dependency was changed in this increment.
+PowerShell parser/task JSON checks passed. Offline masked-input/no-default and
+missing-environment-password rejection checks passed without a connection.
+
+The first live call through the modified adapter completed its read/rollback
+but failed release NJS-005 because the previous implementation passed explicit
+undefined to close. It was reported as failure, not connected success. The fix
+calls `close()` with no argument for normal release and `close({drop:true})`
+only for a dirty lease. Focused tests/build and the complete suite passed again.
+The corrected pooled adapter then passed a live constant connectivity check
+through the secure prompt and again via the masked-input/environment-password
+flow: READ ONLY, SELECT1, rollback/release/pool drain completed.
+
+Live attempts used an isolated temporary TNS descriptor for the previously
+approved HOST/PORT/SID with connect10s/transport5s/retry0. It was removed and the
+task's temporary ConfigDir argument deleted. The original external TNS file's
+unrelated syntax issue and timeout settings require owner verification before
+using that complete file; no unrelated file/system/network configuration was
+changed. Password transport was not exposed in logs/files. The credentials
+already shared in chat should be rotated by their owner.
+
+No metadata/business read, DML/procedure/sequence, schema mutation, EMS/partner,
+batch or deployment occurred. Database-side logon actions and least privilege
+are uncharacterized; a READ ONLY constant test is not a full permission audit.
+Next gate: separately approve three-table column metadata in this environment,
+then review verified mappings/identity/scope before wiring any real business API.
+
+Current-project documentation validation passed 1,172 local links and 787
+source-line references. Separate README/plan validation passed 268 links and
+66 fragments. Task JSON, masked environment input, missing-password guard,
+temporary-file cleanup and `git diff --check` passed.
+
+## 34. Approved Three-Table Oracle Column Metadata
+
+Task ID: SHF-ORACLE-COLUMN-METADATA-20261014. Status: done for the explicitly
+approved bounded column inspection only. The user approved the next three-table
+metadata check after successful Thick adapter connectivity. This is not approval
+to read business records, discover privileges or wire real business endpoints.
+
+The existing compiled [diagnostic](../apps/api/src/oracle/diagnostics.ts) ran
+connectivity then the allowlisted query in the
+[adapter](../apps/api/src/oracle/read-only-database.ts). Oracle11g ordered ROWNUM
+top-N syntax executed successfully against the previously verified target.
+READ ONLY setup, rollback/release on each read and pool cleanup completed.
+Report capture timestamp: 2026-10-14T12:08:57.2546049Z (15:08:57 local UTC+03:00).
+
+| SHIFTER table | Column records returned |
+| --- | --- |
+| SHF_EMPLOYEE_DAY | 25 |
+| SHF_DAY_CHANGES | 26 |
+| SHF_EMPLOYEES | 37 |
+| Total | 88 |
+
+The fixed-bind query returned table/column names, dataType, precision, scale and
+nullable only. Types observed: NUMBER28, DATE19, VARCHAR2 41. The result was
+complete under the approved512-row limit, all three required tables were present,
+and the adapter reported no overflow/missing-table/result/cleanup error.
+
+Observed mapping evidence: SHF_EMPLOYEES.EMPLOYEE_ID is NOT NULL NUMBER with
+unspecified numeric precision/scale; SHF_EMPLOYEES.EMP_ID_NUMBER is NOT NULL
+VARCHAR2; SHF_EMPLOYEE_DAY.EMP_ID_NUMBER is nullable VARCHAR2. The full88-column
+JSON is preserved as a session artifact with capture time and approved scope,
+not as synthetic application fixtures. No personal/business values were read.
+Numeric safe-integer bounds, actual identifier contents, string lengths, Oracle
+DATE timezone semantics, unique/foreign-key constraints, indexes, triggers,
+grants, defaults, source and authoritative ownership remain unverified.
+
+The task used the existing masked-password-to-process-environment flow. A
+temporary wrapper captured/validated the bounded JSON and printed counts only;
+it used an isolated TNS descriptor with approved HOST/PORT/SID and bounded
+connect/transport/retry settings, without modifying the original external file.
+The wrapper and TNS file were deleted, and the persistent VS Code task was
+restored to connectivity-only. No real secret was saved in project artifacts.
+
+No application code changed: the prior full223-test lint/types/build baseline
+remains; it was not rerun for this documentation/diagnostic-only step. Wrapper
+PowerShell syntax/task JSON and live report connectivity/readOnly/scope/count
+validation passed. No business SELECT, DML/procedure/sequence, DDL, EMS/partner,
+batch or deployment occurred. Next gate: source-to-column mapping and trusted
+identity/read-scope review; any business-data sample needs separate approval.
+
+## 35. Oracle Personal-Shift Source-to-DTO Mapping Review
+
+Task ID: SHF-R01-ORACLE-MAPPING-20261014. Status: done for the user-approved
+analysis/documentation step; implementation/policy gates remain blocked by
+their named owners. No new Oracle query or application/schema/contract change.
+The existing technical design is revision2.2 draft and contains
+[R01-PS-ORACLE-MAP-0.1](SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md#362-oracle-personal-shift-mapping-review-r01-ps-oracle-map-01).
+This revision is not G1 approval or approval to replace synthetic APIs.
+
+Started at the [catalog personal-shift route](SHF_SOURCE_CONTRACT_CATALOG.md#1-complete-struts-route-catalog),
+followed [my_result](../old/SHF/src/bzq/shf/actions/ShiftDataAction.java#L141)
+to [active UNION](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L1233),
+[detail](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L150),
+[bean mappings/getters](../old/SHF/src/bzq/shf/bean/AgentDayBean.java#L49) and
+[profile identity](../old/SHF/src/bzq/shf/actions/BaseAction.java#L170).
+Compared the saved approved 88-column JSON with the existing
+[DTO](../apps/api/src/personal-shifts/contracts.ts) and
+[normalized projection](../apps/api/src/personal-shifts/personal-shifts.ts#L171).
+Legacy source was read only, never built or executed.
+
+Offline checks passed all 33 selected fields (day 15/change 15/employee 3),
+13 DATE fields and both NUMBER(10,0) NOT NULL day-key columns. The review maps
+every schedule/selection/provenance field or explicitly identifies it as a
+derived authorization/transport fact rather than an Oracle column.
+Findings requiring review:
+
+- Day-key type/precision is verified; PK/UK/FK and one-change-per-day are not.
+  The very large synthetic IDs exceed this physical target and remain tests
+  of string transport, not real-data fixtures.
+- EMPLOYEE_ID is an unspecified-precision NUMBER, while full and schedule owner
+  EMP_ID_NUMBER fields are VARCHAR2. Prefix matching and the current digit-string
+  actor contract do not establish an authenticated, unique employment link.
+- Physical shift endpoints allow null; normalized DTO endpoints do not.
+  Unknown/malformed raw rows require explicit errors, not guessed midnight/end.
+- Joined override-row presence, new-field null fallback and eligibility must be
+  separated. Active UNION day-type filtering differs from bean getter fallback.
+  Do not resurrect baseline rows suppressed by the changed-day branch.
+- Home/split columns are NOT NULL VARCHAR2 in their own rows, not proven
+  booleans. Absent join rows and invalid tokens are different facts. Independent
+  split endpoint fallbacks must not conceal contradictory gaps.
+- DATE types are confirmed, but wall-time/timezone/NLS/DST interpretation is not.
+  Day-start ORDER BY3 and strict lower bounds differ from normalized effective-
+  start half-open range and deterministic ID tie-breaking.
+- Source attendance join compares mismatched identifier domains; attendance is
+  outside the DTO/metadata scope. Removing the legacy org-unit inner join also
+  needs approved existence/scope semantics, not just leaving out a table.
+- Cancellation is not explicitly filtered by the active UNION; the predicate in
+  its commented predecessor is not an approved inclusion policy.
+
+Owner gates: SEC for trusted identity, baseline visibility and employment scope;
+DBA for constraints/uniqueness/exact fetch representations and any additional
+metadata/data permission; PO for cancellation/day-type/null/timezone behavior;
+ARC for raw-row/API mapping baseline; BE/QA for synthetic raw-row and eventual
+approved SQL characterization. No public DTO/route or demo-policy change was
+made. Paid/work/attendance/contact/audit fields remain excluded.
+
+No application code changed and no live checks were run. The preceding 223-test
+lint/types/build baseline remains, not claimed rerun. The new checks are offline
+metadata consistency and documentation references only. Next gate is explicit
+policy/input approval for an isolated raw-row mapper; any real business-data
+sample, SQL execution or API activation requires separate approval.
+
+Executed documentation checks passed: current-project validator 1,184 local
+links and 795 source-line references; separate README/plan checks 280 links and
+75 fragments. `git diff --check` passed. No application suite was rerun because
+this step changed documentation only.

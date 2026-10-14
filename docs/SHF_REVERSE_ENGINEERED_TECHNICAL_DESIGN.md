@@ -1,7 +1,7 @@
 # Shifter (SHF) New Project Technical Design
 
 Document date: 2026-10-13
-Revision: 2.1 draft, adding the R01 personal-shifts review baseline.
+Revision: 2.2 draft, adding the metadata-backed R01 Oracle mapping review.
 Status: design for review; architecture, API/UI contracts and release are not approved.
 
 Reading guide:
@@ -443,9 +443,10 @@ part of the first slice. No new storage or integration transport is required.
 After this draft was prepared, the user explicitly approved isolated DTO/rule
 implementation and synthetic tests only. The
 [DTO contracts](../apps/api/src/personal-shifts/contracts.ts) and
-[pure helpers](../apps/api/src/personal-shifts/personal-shifts.ts) are not wired
-into the API. They consume resolved synthetic facts and supplied scope, not raw
-Oracle columns or an authenticated session. Full G1, identity, Oracle mapping,
+[pure helpers](../apps/api/src/personal-shifts/personal-shifts.ts) are used by the
+separately approved synthetic API, not wired to real Oracle business reads.
+They consume resolved synthetic facts and supplied scope, not raw Oracle
+columns or an authenticated session. Full G1, identity, Oracle mapping,
 cancellation, time-zone and cursor prerequisites remain pending.
 
 #### Source Trace and Compatibility Decisions
@@ -558,15 +559,18 @@ Required item fields:
   row; return `baseline: null` with the applicable reason.
 
 Local schedule strings use `YYYY-MM-DDTHH:mm:ss` **without** an invented offset.
-Oracle DATE/time-zone metadata and legacy JVM/NLS interpretation are unverified.
+The approved column inspection confirms DATE types for the mapped schedule
+fields; their time-zone meaning and legacy JVM/NLS interpretation remain unverified.
 Propose `Asia/Jerusalem` for business display, but require owner confirmation.
 Do not append `Z`, use the browser time zone, or infer UTC instants from local
 wall times. DST ambiguity and any later instant/duration calculation need an
 approved policy; this DTO does not promise UTC duration arithmetic.
 
-Numeric/identifier nullability, baseline/override row cardinality, source flags,
-date types and cancellation semantics require authorized metadata before SQL
-implementation. Paid/work minutes and attendance are deliberately omitted
+The bounded column inspection now supplies types/nullability for the three
+approved tables; Section 3.6.2 records the exact mapping evidence and gaps.
+Baseline/override cardinality, actual flag values, identity links and cancellation
+semantics still need owner-approved evidence before SQL implementation.
+Paid/work minutes and attendance are deliberately omitted
 because their zero/null/rewarded semantics are not settled by this first trace.
 
 Synthetic list example; all IDs/data below are invented for contract review,
@@ -646,6 +650,140 @@ problem after cleanup; there is no write, commit-dependent business operation,
 EMS wait or fallback to legacy endpoints. Implementation requires G1 approval
 of R01-PS-1.0, SEC identity/employment policy, DBA environment/grants/metadata,
 cancellation semantics and owner-approved time-zone/cursor/privacy decisions.
+
+### 3.6.2 Oracle Personal-Shift Mapping Review, R01-PS-ORACLE-MAP-0.1
+
+**Status: evidence-backed design for review, not an approved real API or
+implemented repository.** The user approved mapping the saved three-table
+column report against legacy reads and current DTOs. No new database query,
+application code, shared contract, production configuration or schema was changed.
+The physical evidence was captured at 2026-10-14T12:08:57.2546049Z; the
+[metadata execution record](plan-shfAiAgentDevelopment.prompt.md#34-approved-three-table-oracle-column-metadata)
+states its exact environment/scope. This review does not replace the broader
+source catalog or infer permission to use real employee data.
+
+#### Evidence Chain and Actual Contract Boundary
+
+The [catalog route](SHF_SOURCE_CONTRACT_CATALOG.md#1-complete-struts-route-catalog)
+leads to [my_result](../old/SHF/src/bzq/shf/actions/ShiftDataAction.java#L141),
+[active personal UNION](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L1233)
+and [trusted-profile binds](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L1348).
+[Detail](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L150) instead selects
+baseline plus overrides by day ID. [Bean field mapping](../old/SHF/src/bzq/shf/bean/AgentDayBean.java#L49)
+and [effective getters](../old/SHF/src/bzq/shf/bean/AgentDayBean.java#L968)
+explain intended baseline fallback, not physical constraints or modern permission.
+
+The current [DTO](../apps/api/src/personal-shifts/contracts.ts) accepts a
+normalized schedule, not an Oracle row. The
+[projection helper](../apps/api/src/personal-shifts/personal-shifts.ts#L171)
+requires resolved effective owner, eligibility, baseline/override provenance,
+valid timestamps, string identifiers and flag/split facts. A future repository
+must produce these facts only after the unresolved rules below are approved.
+No guessed identity/default/eligibility can be used to make a raw row fit.
+
+#### Physical Column to DTO Candidate Map
+
+`d` = SHIFTER.SHF_EMPLOYEE_DAY, `c` = SHIFTER.SHF_DAY_CHANGES,
+`e` = SHIFTER.SHF_EMPLOYEES. Types/nullability below are **observed metadata**;
+field selection/fallback is **source-observed** unless explicitly proposed.
+Candidate use in the normalized DTO remains **proposed**.
+
+| DTO / internal fact | Confirmed columns and physical types | Candidate mapping and boundary |
+| --- | --- | --- |
+| `id` / baseline-change association | `d.SHF_EMPLOYEE_DAY_ID` and `c.SHF_EMPLOYEE_DAY_ID`: NUMBER(10,0), NOT NULL | Stable day ID as canonical decimal string; never use WM_SHIFT_ID as the day key. Matching column types do not prove PK/UK/FK or one override per day. Positive/integer-domain checks remain explicit. |
+| `projection` | Presence of `c.SHF_EMPLOYEE_DAY_ID`; `d.SOURCE`: nullable VARCHAR2 | Determine baseline/override by joined change-row presence, not by whether one NEW field is non-null. SOURCE is a separate legacy origin field, not an authorization token or this enum. Keep it internal if needed; do not invent its values. |
+| `effective.employeeId`, `baseline.employeeId`, `actorEmployeeId` | `e.EMPLOYEE_ID`: NUMBER, precision/scale unspecified, NOT NULL; `e.EMP_ID_NUMBER`: VARCHAR2 NOT NULL; `d.EMP_ID_NUMBER` / `c.NEW_EMPLOYEE_ID`: nullable VARCHAR2 | Legacy binds profile ID to full e.EMP_ID_NUMBER and joins its first8 characters to the schedule owner string. These are distinct domains. Proposed API employee identity must be one approved canonical employment ID, resolved separately for original/effective owner; do not bind the fixture actor directly or equate a prefix with internal EMPLOYEE_ID. |
+| activity eligibility | `d.WM_DAY_TYPE`: NUMBER, unspecified precision/scale0, NOT NULL; `c.NEW_DAY_TYPE`: NUMBER, unspecified precision/scale0, nullable | Source constant DAY_TYPE_ACTIVITY=4. Active UNION tests d type for unchanged rows and c type for changed rows. Getter fallback for null/nonpositive NEW_DAY_TYPE is a different path, not permission to include those rows. Eligibility must be decided before emitting normalized `included`. |
+| `startLocal` | `d.WM_SHIFT_START_DATETIME` / `c.NEW_SHIFT_START`: nullable DATE | Getter uses non-null new shift start, otherwise baseline. DTO requires a real non-null start; unresolved null becomes a contract error, not now/midnight or silent row removal. |
+| `endLocal` | `d.WM_SHIFT_END_DATETIME` / `c.NEW_SHIFT_END`: nullable DATE | Same field-level fallback; DTO requires a non-null end with valid ordering. Preserve the actual local end date, including overnight. |
+| business/day timestamps, not shift bounds | `d.WM_DATE`: DATE NOT NULL; `d.WM_START_DATETIME` / `WM_END_DATETIME`, `c.NEW_DAY_START` / `NEW_DAY_END`: nullable DATE | Do not substitute business/day timestamps for missing shift start/end. The third UNION column is day start; ORDER BY3 is not effective-shift-start ordering. No day timestamp is added to the current DTO. |
+| `siteId` | `d.WM_SITE_ID`: NUMBER(10,0) NOT NULL; `c.NEW_SITE_ID`: nullable NUMBER with unspecified precision/scale | Source getter falls back on null new site. Preserve as validated identifier string without floating-point coercion; override domain/integrality and site dictionary are not proven. Numeric zero is not a null test. |
+| `activityId` | `d.WM_SCH_ACTIVITY_ID_DATA` / `c.NEW_ACTIVITY`: nullable VARCHAR2 | Source getter uses new text when non-null, else baseline text. Preserve text/null; no numeric conversion or dictionary label is inferred. Actual representation and character lengths are unverified. |
+| `workFromHome` | `d.WORK_FROM_HOME` / `c.NEW_WORK_FROM_HOME`: VARCHAR2 NOT NULL | Source getter prefers non-null new flag and recognizes Y case-insensitively, otherwise false. Metadata NOT NULL does not prove allowed Y/N values; an absent joined c row still yields null. Proposed normalized mapping accepts only approved Y/N/null semantics and rejects unknown tokens, rather than importing the legacy false-for-anything shortcut. |
+| `split.enabled` | `d.SPLIT_SHIFT` / `c.NEW_SPLIT_SHIFT`: VARCHAR2 NOT NULL | Same row-presence/flag distinction. Do not infer false from malformed input or assume a NEW flag's database default (not read). Actual flag domain remains unverified. |
+| `split.gapStartLocal` / `gapEndLocal` | `d.SPLIT_START` / `SPLIT_END`, `c.NEW_SPLIT_START` / `NEW_SPLIT_END`: nullable DATE | Source getters fall back independently when a new boundary is null. Split work lengths confirm the interval is the nonworking gap. Validate the resolved pair inside the shift only when enabled; mixed/stale boundaries cannot silently become a valid split. |
+| current scope / employment-unit evidence | `e.ORG_UNIT_ID`: nullable VARCHAR2 | Source reads join SHF_ORG_UNIT, outside the approved metadata set. Do not substitute demo-team scope or assume an org-unit FK/existence. Employment validity and real organizational policy need SEC/DBA approval. |
+| cancellation/reassignment evidence, not public fields | `c.CANCEL_REASON_CODE`: nullable VARCHAR2; `c.SWITCH_DAY_ID`: nullable NUMBER(10,0) | Active UNION does not explicitly filter cancellation; the commented NVL predecessor does. Reason-code nullability does not establish cancellation rules. SWITCH_DAY_ID is not a new primary key, eligibility result or permission to expose the previous owner. |
+| `baseline` / `baselineAvailability` | Baseline schedule plus independent owner resolution, not a single physical flag | Determine original existence/owner internally and apply explicit baseline visibility before serialization. A successful reassignment join is not authority to reveal another employee's schedule. Preserve not-present vs not-authorized. |
+| `nextCursor`, `fetchedAt`, `businessTimeZone` | No direct mapping in these tables | Cursor remains gated; technical fetch time is not modification time or SCN. Business timezone is owner-approved configuration, not inferred from Oracle DATE or current browser/client timezone. |
+
+All 33 selected physical columns exist exactly once in the saved report: 15 in d,
+15 in c and 3 in e. All 13 selected temporal columns are DATE. No missing column
+was found in this bounded mapping. The report does not include character
+length/semantics, constraints, indexes, triggers, defaults, grants or actual
+values. NOT NULL is not an allowed-value domain or cardinality guarantee.
+
+The observed day key has 10 decimal digits, so the large synthetic shift-ID
+fixtures deliberately exceed this target column's capacity. Keep those fixtures
+as transport/normalization robustness tests; never use them as real IDs or proof
+of physical capacity. Do not narrow/change approved public demo contracts solely
+because the sampled target schema has a smaller key. EMPLOYEE_ID and NEW_SITE_ID
+have unspecified precision/scale; their values are not proven safe JS integers.
+Any future NUMBER fetch/bind mapping must preserve exact decimal strings before
+validation, not convert through Number and then stringify.
+
+#### Non-Equivalent Legacy Paths and Proposed Resolution Order
+
+1. Resolve a trusted authenticated actor and approved employment link before
+   any repository call. [BaseAction profile copy](../old/SHF/src/bzq/shf/actions/BaseAction.java#L170)
+   is source evidence for session ownership, not a reusable modern trust chain.
+   Reject missing/ambiguous identity links; do not accept employee/unit overrides.
+2. Validate bounded dates/limit before acquiring a connection. For a future
+   authorized repository, use explicit columns/binds and the same day association
+   for list/detail. Do not copy `SELECT d.*`, the attendance join, or private
+   name/contact/modification-user fields into a minimized shift read.
+3. Preserve change-row presence independently of nullable NEW fields. The active
+   UNION excludes any changed day from its baseline branch via MINUS, even if
+   its nullable change fields would fail the changed branch. Do not silently
+   resurrect a baseline activity when the changed branch is absent.
+4. Resolve cancellation/activity eligibility using an approved rule, then map
+   original/effective owner and field-level schedule fallbacks. The pure helper's
+   `eligibility` string is an input fact, not a rule discovered from metadata.
+   Duplicate change rows/ambiguous employee joins must produce an explicit
+   DATA_CONTRACT_UNVERIFIED outcome, not DISTINCT, MAX(date) or first-row wins.
+5. Keep date filtering/order intentional: normalized helpers use half-open
+   effective-start dates and start-desc/day-ID-desc ordering. Legacy uses
+   strictly-greater start, no upper bound and ORDER BY day-start column3.
+   A future query must bound the effective result, not truncate baseline rows
+   first and miss overrides moving into/out of the requested window.
+6. Resolve wall-time policy before Oracle-to-DTO serialization. DATE metadata
+   confirms no stored timezone/offset field; it does not prove UTC/Jerusalem or
+   midnight-only business dates. Plan explicit owner-approved local components
+   with deterministic NLS-independent conversion, not driver/browser toISOString.
+   No UTC offset, DST duration or paid minutes may be invented.
+7. Enforce effective ownership on detail as well as list, then baseline redaction.
+   A caller knowing a day ID receives no additional authority. Missing and
+   foreign details share the approved uniform404 after policy is established.
+   Perform raw-row validation and redacted failure reporting before returning a
+   bounded result; no Oracle exception becomes a synthetic/empty success.
+
+The source list's changed attendance join compares NEW_EMPLOYEE_ID with the
+attendance day key, whereas detail joins by day ID. That identifier-domain
+mismatch is not copied; attendance is outside this DTO and its physical metadata
+was not inspected. The list also omits home/split/source fields and flattens
+baseline/override values, so its raw result alone cannot supply the new DTO.
+Removing its organizational-table join without an approved policy could change
+which rows exist; three-table metadata does not authorize that behavior change.
+
+#### Verification Matrix and Remaining Owners
+
+| Discriminating check before a real repository | Evidence now / remaining gate |
+| --- | --- |
+| Physical field presence, types and nullable boundaries | PASS offline against saved 88-column report: 33 selected fields, 13 DATE fields, matching NUMBER(10,0) NOT NULL day keys. No database call in this review. |
+| IDs with leading zeros; distinct internal/full/prefix owner identity | Existing synthetic string-ID normalization only. SEC/DBA must approve one-to-one employment mapping and prefix-collision handling; real identity values were not read. |
+| New start/end/site/activity null; valid zero code; malformed schedule | Current normalized helper rejects malformed resolved facts; a raw Oracle mapper does not exist. BE/QA must add synthetic raw-row cases once fallback/inclusion rules are approved. |
+| Change exists but NEW_DAY_TYPE/owner/start is null | Legacy UNION/detail differ; PO/DBA must decide inclusion. Test exclusion/error explicitly, never automatic baseline resurrection. |
+| Transferred-out/in owner, hidden baseline, missing/foreign detail | Synthetic projection coverage exists; real link uniqueness and request-local scope remain SEC gates. No real-data parity claim. |
+| Cancelled/nonactivity row, duplicate changes or duplicate employee-prefix links | Metadata confirms relevant fields only. Constraints and authorized data characterization remain DBA/PO gates. Reject ambiguity rather than choose an arbitrary row. |
+| Both split flags, one new gap endpoint, stale gaps, overnight and DST | Synthetic resolved-gap tests exist; actual flag domain/local-time semantics and raw-row mapping remain PO/DBA/BE gates. |
+| Effective-start range edge, override crossing dates, equal-start ID tie and limit overflow | Existing pure helper covers bounded resolved selection. Future 11g query/order/pagination requires isolated SQL/mapping tests, not just reusing the old UNION. |
+| Extra legacy attendance/org-unit joins and wide employee fields | Source-observed, excluded from this minimized DTO; approve an independent scope/existence rule before replacing inner joins. No broader metadata or business reads approved here. |
+
+**Next implementation gate:** approve the raw-row mapping policy and missing
+identity/inclusion/timezone decisions before adding an offline repository mapper.
+Any real business-data sample, additional metadata, SQL execution or live API
+activation needs its own environment/permissions/data-scope approval. This
+review changes no DTO, fixture, route, schema, database contents or UI behavior.
 
 ### 3.7 Example Change-Proposal DTO
 
@@ -1801,21 +1939,40 @@ or an application-driven database redesign.
 
 ### 9.2 Blocking Compatibility Gates
 
-**Oracle gate:** the user confirmed on 2026-10-13 that the existing database was
-upgraded to **Oracle Database 21c**. This is user-confirmed environment evidence,
-not a runtime-verified connection, patch-level or schema-metadata check.
+**Oracle gate:** the earlier user-declared 21c target was corrected on
+2026-10-14. An approved isolated Thick connection reported **Oracle 11.2.0.4.0**.
+Oracle Client **19.3.0.0.0**, node-oracledb 26.0.0 and Node.js v24.21.0 x64
+successfully loaded and performed the constant read-only connectivity check.
+This is bounded runtime evidence, not vendor lifecycle certification or schema/
+business compatibility proof. Thin requires Oracle 12.1+ and cannot connect
+to this target; its NJS-138 result must never trigger automatic fallback.
 
-Oracle 21c meets the documented node-oracledb Thin-mode database minimum of
-12.1+. **Proposed default: Thin mode**, which does not require Oracle Client
-libraries. The earlier unknown/older-server assumption is no longer a
-version-level blocker. Consider Thick mode only if required features or
-authentication need it, with a verified supported client/OS/CPU combination.
+The user approved explicit opt-in Thick support. `ORACLE_MODE` defaults to
+`thin`; `thick` requires an absolute external `ORACLE_CLIENT_LIB_DIR`.
+Disabled/startup-only paths load no OCI or pool. Initialization occurs lazily
+before pool creation; mode/client configuration is process-scoped and failures
+are redacted and explicit. Thick Net files configure connect timeouts/retries;
+Thin-only pool attributes are not passed or presented as effective in Thick.
+The metadata query now uses ordered inline-view ROWNUM top-N syntax for 11g;
+513 rows detect overflow beyond the unchanged 512-row accepted bound.
+The separately approved three-table column metadata read subsequently passed:
+SHF_EMPLOYEE_DAY25, SHF_DAY_CHANGES26 and SHF_EMPLOYEES37 columns (88 total).
+Only names/types/numeric precision-scale/nullability were fetched; no business
+rows, constraints, indexes, triggers, defaults or procedure sources were queried.
+EMPLOYEE_ID in SHF_EMPLOYEES is non-null NUMBER with unspecified precision/scale;
+EMP_ID_NUMBER is non-null VARCHAR2 there and nullable VARCHAR2 in
+SHF_EMPLOYEE_DAY. These observations do not establish safe numeric conversion,
+lengths, referential integrity, time zones, identity or business scope.
+The [metadata execution record](plan-shfAiAgentDevelopment.prompt.md#34-approved-three-table-oracle-column-metadata)
+separates this physical-column evidence from outstanding business mapping gates.
+The [compatibility execution record](plan-shfAiAgentDevelopment.prompt.md#33-approved-oracle-11g-thick-adapter-compatibility)
+documents mocked/static/live distinctions and the Thick release-argument fix.
 
 Retain the existing Oracle schema unchanged; no DDL or migrations are authorized.
 Before enabling persistence, the DBA/backend owners must verify the selected
 Node.js/driver releases, authentication, network/TLS, character set/NLS,
 SQL/PLSQL and bind behavior, transaction ownership and vendor support on an
-explicitly approved environment. The confirmed upgrade alone does not authorize
+explicitly approved environment. Connectivity alone does not authorize
 database access or prove those runtime checks passed.
 
 **API bridge gate:** current scope requires contracts, not a certified EMS client
@@ -2375,6 +2532,32 @@ synthetic/no-store transport, bounded search and read-only Hebrew UI passed
 No real elevated authorization, Oracle, mutation, team reassignment, dispatch
 or batch producer was enabled. R10 other admin/CTI/learning/deferred-register
 work and real scope/metadata/parity/manual accessibility/UAT remain pending.
+
+The approved R10 synthetic internal-job directory is documented in the
+[job execution record](plan-shfAiAgentDevelopment.prompt.md#31-approved-r10-synthetic-internal-job-directory).
+The [legacy view](../old/SHF/src/bzq/shf/actions/SystemAdminAction.java#L263)
+filters a cached catalog by allowed units; the
+[code lookup](../old/SHF/src/bzq/shf/utils/SHFTableUtils.java#L285) has no unit
+predicate. The new demo scopes both reads and explicitly separates inactive/
+unknown and zero/missing group codes. Source version/read time are synthetic,
+not verified cache freshness or physical active/group mappings. Two hundred
+six tests, lint/types/builds and local browser checks passed; initial bundle
+433.22 kB. No edit, group assignment, cache reload, Oracle, dispatch or batch
+was enabled. R10 parameter/CTI/learning/deferred-register and real elevated
+identity/metadata/parity/manual accessibility/UAT remain pending.
+
+The next approved R10 increment is the allowlisted synthetic parameter view.
+The [parameter execution record](plan-shfAiAgentDevelopment.prompt.md#32-approved-r10-allowlisted-synthetic-system-parameters)
+traces the [unit/division read](../old/SHF/src/bzq/shf/model/SystemAdminModel.java#L143),
+[cached lookup](../old/SHF/src/bzq/shf/utils/SHFParameters.java#L29), and
+[null-only default selection](../old/SHF/src/bzq/shf/forms/SystemParameterForm.java#L127).
+Three scheduling codes expose raw unit/default/selected strings and provenance,
+preserving zero/decimal precision and unknowns. Actual units, hierarchy, defaults,
+schema and permissions remain unverified; this source changes no preview policy.
+Two hundred eighteen tests, lint/types/builds and synthetic browser checks passed;
+initial bundle 433.73 kB. No real parameter read, edit, lock/managed/pool/SMS/IWD
+flag exposure/activation, cache reload or batch work was enabled. R10 existing-
+result/deferred-register, real scope/parity/manual accessibility/UAT remain pending.
 
 Require supported pinned runtimes/dependencies, clean type/lint/unit/contract
 checks, zero schema deltas, reviewed existing SQL/PLSQL mappings,
