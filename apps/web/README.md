@@ -115,6 +115,39 @@ layouts, 200% resizing and injected empty/503/retry cases. No Oracle, trusted
 identity, manual Hebrew assistive-technology assessment, full WCAG conformance or
 human business acceptance is established by these synthetic checks.
 
+## Hebrew Calendars and Employee Demo
+
+Shift start/end filter controls now have visible Material calendar toggles with
+Hebrew names, month/week labels and keyboard behavior. Typed input remains ISO
+`YYYY-MM-DD`; the [adapter](src/app/calendar.ts) rejects impossible dates and
+serializes local date components, not a UTC-converted selection. Inclusive-end
+and one-to-31-day range rules are preserved. Only these existing date inputs need
+calendars; employee search has no date/age fields.
+
+The [employee screen](src/app/employees.ts) adds read-only synthetic search and
+card display below messages. Search accepts up to 80 characters for a name or
+internal string ID, within a fixed invented team scope. Three fixtures include
+leading-zero IDs, long Hebrew/English names and an unknown job. A foreign-team
+fixture is inaccessible. No identity/contact/address data or write controls exist.
+
+The [client](src/app/employees-api.ts) uses the shared minimal demo DTO and response
+guards. Card heading focus and return-to-row focus, cancellation of superseded
+reads, search preservation and empty/error/retry states match the established demo
+patterns. This client is not a real employee authorization implementation.
+
+Shift/calendar and employee components are immediate deferred features, with
+visible loading/error states rather than silent chunk failures. The initial
+production bundle measures 423.81 kB, below the unchanged 500 kB warning budget;
+calendar/employee code loads separately immediately after shell render.
+
+Current checks: 31 Angular tests and 60 backend tests (91 total) pass with full
+lint/type/template/build checks. Calendar unit tests also pass in UTC-positive
+and UTC-negative zones. Browser verification passed Hebrew calendar selection,
+navigation/Escape/focus return, narrow popup layout, inclusive API filtering,
+employee keyboard search/card/privacy/minimized data, empty/failure/retry,
+320/768/1280 page reflow and 200% text resizing. Oracle, real identity, full
+assistive-technology assessment and UAT remain unverified.
+
 Accessibility acceptance includes keyboard access to the skip link, focus on the
 main landmark, no horizontal overflow at 320 CSS pixels or 200% text resizing,
 visible focus, readable contrast and Hebrew screen-reader assessment. Automated

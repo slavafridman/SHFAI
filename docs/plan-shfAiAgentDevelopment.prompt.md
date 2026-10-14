@@ -590,3 +590,86 @@ headers. Full accessibility/human UAT, real identity/Oracle message parity,
 concurrency/write proof and release remain NOT RUN. Next milestone: review the
 messages demo, then select an approved employee-card or operational read stub
 increment; do not claim all R05 work complete.
+
+## 18. Calendars and Approved R05 Employee Stub
+
+Task ID: SHF-CALENDAR-EMPLOYEES-STUB-20261013. Status: done for calendars and
+synthetic employee search/card only; broader R05 and real data remain pending.
+
+The user requested calendar elements for relevant inputs and explicitly selected
+the next read-only employee search/card stub API/UI increment. No real identity,
+Oracle access, writes, schema, deployment or partner scope was approved.
+
+### Calendar Controls
+
+- [Calendar adapter](../apps/web/src/app/calendar.ts) and
+  [tests](../apps/web/src/app/calendar.spec.ts): visible Material datepickers for
+  both shift bounds, Hebrew locale/assistive labels, strict ISO parsing, leap/day
+  validation and local-component date-only serialization. Invalid formatting
+  fails explicitly; no UTC conversion of a selected local day.
+- [Shift template](../apps/web/src/app/personal-shifts.html) and
+  [screen](../apps/web/src/app/personal-shifts.ts): accessible calendar toggles
+  while preserving inclusive end, maximum 31 days and half-open request semantics.
+  Invalid input prevents the request and receives focus.
+
+### Employee Evidence and Minimal Demo Contract
+
+- [Catalog](SHF_SOURCE_CONTRACT_CATALOG.md#1-complete-struts-route-catalog)
+  identifies employee search/card routes.
+  [EmployeeDataAction](../old/SHF/src/bzq/shf/actions/EmployeeDataAction.java#L54)
+  separates scoped search from self/card permission paths.
+- [populateEmployeeList](../old/SHF/src/bzq/shf/model/EmployeeDataModel.java#L587)
+  includes name/job/status/unit filters, a 500-row cap and allowed-unit scope;
+  [populate](../old/SHF/src/bzq/shf/model/EmployeeDataModel.java#L736) reads a rich
+  card by employee ID. These source observations do not prove database metadata
+  or deployed authorization. Rich identity/address/contact fields are not copied.
+- The architect responsibility owns the
+  [demo DTO](../apps/api/src/stub/employee-contracts.ts): exact string ID,
+  invented display name, synthetic unit ID/name and nullable job name only.
+  Demo name/ID substring search is not claimed to reproduce legacy name-prefix
+  or all employee filters.
+
+### Implementation and Verification
+
+- [Employee controller](../apps/api/src/stub/employees.controller.ts) /
+  [fixtures](../apps/api/src/stub/employee-fixtures.ts): three visible team-A
+  fixtures and an inaccessible team-B record. Bounded search length 80,
+  limit default 25/max 100, fixed demo scope, minimized card and uniform denied/
+  absent 404. No user-selected unit/actor, fake pagination or mutating endpoint.
+- [UI client](../apps/web/src/app/employees-api.ts) /
+  [screen](../apps/web/src/app/employees.ts) /
+  [template](../apps/web/src/app/employees.html): Hebrew read-only search/card,
+  long/mixed names, unknown job, synthetic labels, visible errors, preserved
+  search, stale-request cancellation and focus behavior.
+- Existing stub response/error transport was extracted into
+  [shared HTTP helpers](../apps/api/src/stub/stub-http.ts) so employee endpoints
+  reuse labels, redacted rejection logging and Problem Details.
+- [API tests](../apps/api/test/stub-employees.test.ts) and
+  [UI tests](../apps/web/src/app/employees.spec.ts) cover scoped/minimized data,
+  exact IDs, bounds, search, privacy, safe text, failures and cancellation.
+
+Full checks passed: 60 API + 31 Angular tests (91 total), lint, strict types/
+templates and both production builds. Calendar-only tests also passed under
+`Pacific/Auckland` and `America/Los_Angeles`. These are isolated runtime zones,
+not approval of Oracle/JVM business-time interpretation.
+
+The initial calendar build exceeded the unchanged 500 kB warning budget at
+676.76 kB. Loading shifts/calendar immediately after the shell reduced it to
+508.56 kB; also deferring the employee feature reduced the measured initial
+bundle to **423.81 kB**. Budgets were not increased. Both immediate deferred
+features have Hebrew loading/error states and shell tests render both chunks.
+Relevant tests/builds passed after each adjustment.
+
+Browser verification used isolated updated stub/UI ports 3104/4204 and a session
+proxy. Calendar selection preserved ISO day/inclusive filtering; Hebrew month
+navigation, keyboard open/Escape/focus return and 296px RTL popup at 320px passed.
+Employee keyboard search/card, exact ID, mixed name, unknown job, empty/failure/
+retry, 1280/768/320 reflow and 200% text resizing passed. Initial pointer/shared-
+page interruption and a premature month-change assertion were corrected with
+fresh self-contained checks and condition-based calendar waits.
+
+Temporary servers/proxy were cleaned up; existing user servers were preserved.
+No database or partner request, business mutation, production deployment or real
+identity occurred. Full Hebrew assistive-technology/UAT and real employee parity
+remain NOT RUN. R05 skills/events/education and all real connected gates remain
+pending; the next read-only stub capability needs user selection.

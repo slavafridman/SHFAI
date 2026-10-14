@@ -2264,6 +2264,17 @@ exists. The [R05 execution record](plan-shfAiAgentDevelopment.prompt.md#17-appro
 records 79 passing tests and synthetic UI evidence. Real message schema/identity
 mapping and business acceptance are still pending; this does not clear G3.
 
+The later user-approved calendar/employee increment adds Hebrew Material date
+controls with strict local date-only serialization, plus scoped synthetic employee
+search/card. The
+[employee DTO](../apps/api/src/stub/employee-contracts.ts) exposes only invented
+name, string ID, unit and nullable job; no rich legacy personal record is copied.
+The [combined execution record](plan-shfAiAgentDevelopment.prompt.md#18-calendars-and-approved-r05-employee-stub)
+records 91 passing tests, calendar/employee browser evidence and an initial bundle
+of 423.81 kB under the unchanged warning budget. Date fields retain inclusive/
+half-open behavior; real employee permissions, physical metadata and Oracle
+time interpretation remain unverified.
+
 Require supported pinned runtimes/dependencies, clean type/lint/unit/contract
 checks, zero schema deltas, reviewed existing SQL/PLSQL mappings,
 authorization/security tests, isolated abstract-port contract tests,

@@ -1,0 +1,50 @@
+<section aria-labelledby="employees-title">
+  <h2 id="employees-title">חיפוש וכרטיס עובד — הדגמה</h2>
+  <p>נתונים סינתטיים לקריאה בלבד. היקף צוות הדגמה א׳ אינו הרשאה אמיתית. אין מידע אישי או פעולות עדכון.</p>
+  <form (submit)="$event.preventDefault(); load()" aria-label="חיפוש עובדי הדגמה">
+    <mat-form-field>
+      <mat-label>שם או מזהה עובד לדוגמה</mat-label>
+      <input matInput id="employee-search" [formControl]="search" maxlength="80"
+        aria-describedby="employee-search-help employee-search-error" [attr.aria-invalid]="search.invalid ? 'true' : null">
+    </mat-form-field>
+    <button mat-stroked-button type="submit" [disabled]="!ready()">חיפוש עובדים</button>
+  </form>
+  <p id="employee-search-help">חיפוש לפי שם או מזהה פנימי סינתטי. עד 80 תווים; אין חיפוש לפי מספר זהות.</p>
+  <p id="employee-search-error" role="alert">{{ error() }}</p>
+  <div role="status" aria-live="polite">
+    @if (loading()) { <p>טוען עובדי הדגמה...</p> }
+    @else if (ready() && !error() && items().length === 0) { <p>לא נמצאו עובדים בחיפוש שנבחר.</p> }
+    @else if (items().length === 1) { <p>נטען עובד הדגמה אחד.</p> }
+    @else if (items().length) { <p>נטענו {{ items().length }} עובדי הדגמה.</p> }
+  </div>
+  @if (error()) {
+    <button mat-stroked-button type="button" (click)="ready() ? load() : connect()">ניסיון נוסף לטעינת עובדים</button>
+  }
+  <ul>
+    @for (employee of items(); track employee.id) {
+      <li>
+        <h3><bdi>{{ employee.displayName }}</bdi></h3>
+        <p>מזהה: <bdi dir="ltr">{{ employee.id }}</bdi> · {{ employee.orgUnit.name }}</p>
+        <p>תפקיד: {{ employee.jobName ?? 'לא ידוע' }}</p>
+        <button mat-button type="button" [id]="'employee-open-' + employee.id"
+          [attr.aria-label]="'כרטיס עובד: ' + employee.displayName" (click)="open(employee.id)">כרטיס עובד</button>
+      </li>
+    }
+  </ul>
+  @if (fetchedAt()) { <p>מועד קריאת עובדי ההדגמה: <bdi dir="ltr">{{ fetchedAt() }}</bdi></p> }
+  @if (cardLoading()) { <p role="status">טוען כרטיס עובד לדוגמה...</p> }
+  @if (cardError()) { <p role="alert">{{ cardError() }}</p> }
+  @if (card(); as employee) {
+    <section class="employee-card" aria-labelledby="employee-card-title">
+      <h3 id="employee-card-title" #cardHeading tabindex="-1">כרטיס עובד לדוגמה</h3>
+      <dl>
+        <dt>שם לדוגמה</dt><dd><bdi>{{ employee.displayName }}</bdi></dd>
+        <dt>מזהה פנימי לדוגמה</dt><dd><bdi dir="ltr">{{ employee.id }}</bdi></dd>
+        <dt>יחידה לדוגמה</dt><dd>{{ employee.orgUnit.name }}</dd>
+        <dt>תפקיד</dt><dd>{{ employee.jobName ?? 'לא ידוע' }}</dd>
+      </dl>
+      <p>אין כאן פרטי קשר, כתובת, מספר זהות או מידע על עובד אמיתי.</p>
+      <button mat-stroked-button type="button" (click)="close()">סגירת כרטיס עובד</button>
+    </section>
+  }
+</section>

@@ -8,6 +8,8 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { CALENDAR_PROVIDERS, calendarDateString, parseCalendarDate } from './calendar';
 import { Subscription } from 'rxjs';
 import { ShiftsApi, StubContractError, type PersonalShiftItem } from './shifts-api';
 
@@ -42,7 +44,8 @@ function errorText(error: unknown): string {
 
 @Component({
   selector: 'app-personal-shifts',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatDatepickerModule],
+  providers: CALENDAR_PROVIDERS,
   templateUrl: './personal-shifts.html',
   styleUrl: './personal-shifts.scss',
 })
@@ -58,8 +61,8 @@ export class PersonalShifts implements OnInit {
   private readonly detailHeading = viewChild<ElementRef<HTMLElement>>('detailHeading');
 
   protected readonly filters = new FormGroup({
-    from: new FormControl('2026-10-14', { nonNullable: true, validators: [Validators.required] }),
-    to: new FormControl('2026-10-17', { nonNullable: true, validators: [Validators.required] }),
+    from: new FormControl<Date | null>(parseCalendarDate('2026-10-14'), { validators: [Validators.required] }),
+    to: new FormControl<Date | null>(parseCalendarDate('2026-10-17'), { validators: [Validators.required] }),
   });
   protected readonly ready = signal(false);
   protected readonly loading = signal(false);
@@ -105,11 +108,13 @@ export class PersonalShifts implements OnInit {
     if (!this.ready()) {
       return;
     }
-    const { from, to } = this.filters.getRawValue();
-    const toExclusive = range(from, to);
-    if (this.filters.invalid || toExclusive === null) {
+    const values = this.filters.getRawValue();
+    const from = calendarDateString(values.from);
+    const to = calendarDateString(values.to);
+    const toExclusive = from !== null && to !== null ? range(from, to) : null;
+    if (this.filters.invalid || from === null || to === null || toExclusive === null) {
       this.filterError.set('יש לבחור תאריכים תקינים בטווח של יום אחד עד 31 ימים.');
-      this.document.getElementById(date(from) === null ? 'shift-from' : 'shift-to')?.focus();
+      this.document.getElementById(this.filters.controls.from.invalid || from === null ? 'shift-from' : 'shift-to')?.focus();
       return;
     }
     this.loading.set(true);

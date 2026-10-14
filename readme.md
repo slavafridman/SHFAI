@@ -388,6 +388,45 @@ status, safe text rendering, detail/close focus, 320/768/1280 reflow, 200% text
 resizing and injected synthetic empty/failure/retry states. Temporary servers and
 session proxy were cleaned up. No live database or real authorization was tested.
 
+### Calendars and R05 Employee Search/Card Demo
+
+Both shift date inputs now include visible Angular Material calendar buttons.
+Calendar month/day and assistive labels are Hebrew/RTL; typed dates use the
+documented `YYYY-MM-DD` format. Impossible/ambiguous dates are rejected.
+The [calendar adapter](apps/web/src/app/calendar.ts) converts selected local date
+components to ISO dates without using `toISOString()` on the selected value,
+avoiding an off-by-one day across time zones. The existing inclusive end-date,
+31-day maximum and half-open API range remain unchanged.
+
+The user approved the next synthetic employee increment:
+
+| Stub route | Contract |
+| --- | --- |
+| `GET /api/v1/employees?search=Demo%20ABC&limit=100` | Bounded name/internal-ID substring search within fixed synthetic team A. Search maximum 80 characters; limit defaults to 25, maximum 100. |
+| `GET /api/v1/employees/00000003` | Minimal synthetic card; foreign-team and absent IDs return the same 404 problem. |
+
+The [employee DTO](apps/api/src/stub/employee-contracts.ts) exposes only exact
+string `id`, invented `displayName`, synthetic `orgUnit` ID/name and nullable
+`jobName`. No identity numbers, phones, addresses or real personal records are
+included. The [screen](apps/web/src/app/employees.ts) shows three scoped fixtures,
+handles long mixed-direction names, preserves search on failure and manages card
+focus. Writes, skill/event/course/taxi integrations and real identity remain
+unavailable. This is a demo team scope, not proof of organizational authorization.
+
+Shift/calendar and employee features are loaded with Angular immediate deferred
+blocks after shell render, with explicit loading/error feedback. Adding calendar
+code initially exceeded the 500 kB initial-bundle warning; budgets were not raised.
+The measured initial production bundle is now **423.81 kB**, below that threshold.
+This is build evidence, not a production latency or capacity measurement.
+
+Checks: **60 backend + 31 frontend tests (91 total)**, lint, strict types/templates
+and both builds passed. Calendar-only tests also passed under `Pacific/Auckland`
+and `America/Los_Angeles`. Browser checks covered actual calendar day selection,
+inclusive filtering, Hebrew navigation, keyboard open/Escape/focus return and a
+296px RTL calendar on a 320px viewport. Employee keyboard search/card, leading
+zeros, null jobs, empty/failure/retry, long-name reflow and 200% text resizing
+passed against the isolated local stub. No Oracle or real business checks were run.
+
 Latest UI verification: full `npm run check` passed **53 backend and 11 frontend
 tests (64 total)**, lint, strict types/templates and both builds. Browser checks
 against the local stub/proxy passed detail and keyboard focus, 320/768/1280 CSS

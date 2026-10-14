@@ -13,8 +13,21 @@
     נתוני עובדים ומשמרות אמיתיים אינם מחוברים. נתוני ההדגמה לקריאה בלבד ואינם תוצאות עסקיות.
   </p>
 
-  <app-personal-shifts />
+  @defer (on immediate) {
+    <app-personal-shifts />
+  } @placeholder {
+    <p role="status">טוען תצוגת משמרות ולוח שנה...</p>
+  } @error {
+    <p role="alert">לא ניתן לטעון את תצוגת המשמרות. יש לרענן את הדף ולנסות שוב.</p>
+  }
   <app-personal-messages />
+  @defer (on immediate) {
+    <app-employees />
+  } @placeholder {
+    <p role="status">טוען תצוגת עובדי הדגמה...</p>
+  } @error {
+    <p role="alert">לא ניתן לטעון את תצוגת העובדים. יש לרענן את הדף ולנסות שוב.</p>
+  }
 
   <mat-card appearance="outlined" aria-labelledby="connection-title">
     <mat-card-header>

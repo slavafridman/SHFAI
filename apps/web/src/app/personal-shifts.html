@@ -7,18 +7,22 @@
   <form [formGroup]="filters" (ngSubmit)="load()" aria-label="סינון משמרות לפי תאריכים">
     <mat-form-field>
       <mat-label>מתאריך</mat-label>
-      <input matInput id="shift-from" type="date" formControlName="from" dir="ltr"
+      <input matInput id="shift-from" [matDatepicker]="fromCalendar" formControlName="from" dir="ltr"
         aria-describedby="range-help filter-error" [attr.aria-invalid]="filterError() ? 'true' : null">
+      <mat-datepicker-toggle matIconSuffix [for]="fromCalendar" aria-label="בחירת תאריך התחלה בלוח שנה" />
+      <mat-datepicker #fromCalendar />
     </mat-form-field>
     <mat-form-field>
       <mat-label>עד לתאריך</mat-label>
-      <input matInput id="shift-to" type="date" formControlName="to" dir="ltr"
+      <input matInput id="shift-to" [matDatepicker]="toCalendar" formControlName="to" dir="ltr"
         aria-describedby="range-help filter-error" [attr.aria-invalid]="filterError() ? 'true' : null">
+      <mat-datepicker-toggle matIconSuffix [for]="toCalendar" aria-label="בחירת תאריך סיום בלוח שנה" />
+      <mat-datepicker #toCalendar />
     </mat-form-field>
     <button mat-flat-button type="submit" [disabled]="!ready()">הצגת משמרות</button>
     <button mat-stroked-button type="button" (click)="load()" [disabled]="!ready()">רענון</button>
   </form>
-  <p id="range-help">תאריך הסיום כלול בטווח. ניתן להציג עד 31 ימים.</p>
+  <p id="range-help">תאריך הסיום כלול בטווח. ניתן להציג עד 31 ימים. בחירה בלוח שנה או הקלדה בתבנית YYYY-MM-DD.</p>
   <p id="filter-error" class="error" [attr.role]="filterError() ? 'alert' : null">{{ filterError() }}</p>
   <div role="status" aria-live="polite">
     @if (loading()) { <p>טוען נתוני הדגמה...</p> }

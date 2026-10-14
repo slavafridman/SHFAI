@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { DeferBlockState, TestBed } from '@angular/core/testing';
 import { App } from './app';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -24,17 +24,22 @@ describe('App', () => {
     });
   }
 
-  it('should create the app', () => {
+  it('should create the app', async () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
     expect(app).toBeTruthy();
     fixture.detectChanges();
+    const blocks = await fixture.getDeferBlocks();
+    expect(blocks.length).toBe(2);
+    for (const block of blocks) { await block.render(DeferBlockState.Complete); }
     failInitialization();
   });
 
   it('renders Hebrew landmarks and truthful disconnected states', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
+    const blocks = await fixture.getDeferBlocks();
+    for (const block of blocks) { await block.render(DeferBlockState.Complete); }
     failInitialization();
     await fixture.whenStable();
     const element: HTMLElement = fixture.nativeElement;
@@ -50,6 +55,8 @@ describe('App', () => {
   it('does not offer a working sign-in or business action', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
+    const blocks = await fixture.getDeferBlocks();
+    for (const block of blocks) { await block.render(DeferBlockState.Complete); }
     failInitialization();
     await fixture.whenStable();
     const element: HTMLElement = fixture.nativeElement;

@@ -253,4 +253,20 @@ describe('Personal shifts synthetic HTTP workflow', () => {
     expect(element.textContent).toContain('תגובת ההדגמה אינה תקינה');
     expect(element.textContent).not.toContain('00000002');
   });
+
+  it('exposes calendars on both date fields and rejects an impossible typed date without requesting shifts', async () => {
+    const fixture = start();
+    initialize().flush(list());
+    await fixture.whenStable();
+    const element: HTMLElement = fixture.nativeElement;
+    expect(element.querySelectorAll('mat-datepicker-toggle button').length).toBe(2);
+    const from = element.querySelector<HTMLInputElement>('#shift-from');
+    if (!from) { throw new Error('Missing calendar input.'); }
+    from.value = '2026-02-30';
+    from.dispatchEvent(new Event('input'));
+    element.querySelector<HTMLButtonElement>('button[type="submit"]')?.click();
+    await fixture.whenStable();
+    expect(element.textContent).toContain('יש לבחור תאריכים תקינים');
+    http.expectNone(request => request.url === '/api/v1/me/shifts');
+  });
 });

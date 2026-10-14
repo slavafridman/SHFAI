@@ -1,35 +1,11 @@
-import {
-  ArgumentsHost, Catch, Controller, ExceptionFilter, Get, Header, HttpException,
-  Logger, Module, Param, Query, UseFilters,
-} from '@nestjs/common';
-import type { FastifyReply } from 'fastify';
-import { parsePersonalShiftQuery, PersonalShiftsError, projectPersonalShift, selectPersonalShifts } from '../personal-shifts/personal-shifts.js';
+import { Controller, Get, Header, HttpException, Module, Param, Query, UseFilters } from '@nestjs/common';
+import { parsePersonalShiftQuery, projectPersonalShift, selectPersonalShifts } from '../personal-shifts/personal-shifts.js';
 import { createSyntheticShiftFacts } from './fixtures.js';
 import { syntheticPersonalMessages } from './message-fixtures.js';
+import { STUB_MARKER as marker, stubProblem as problem, StubProblemFilter } from './stub-http.js';
+import { StubEmployeesController } from './employees.controller.js';
 
-const marker = { mode: 'stub', synthetic: true, authenticated: false } as const;
 const scope = { actorEmployeeId: '00000001', canViewBaseline: false };
-
-function problem(status: number, code: string, title: string) {
-  return { type: 'about:blank', status, code, title, ...marker };
-}
-
-@Catch(PersonalShiftsError, HttpException)
-class StubProblemFilter implements ExceptionFilter {
-  catch(error: PersonalShiftsError | HttpException, host: ArgumentsHost): void {
-    const reply = host.switchToHttp().getResponse<FastifyReply>();
-    const status = error instanceof PersonalShiftsError
-      ? error.code === 'INVALID_QUERY' ? 400 : 503
-      : error.getStatus();
-    const payload = error instanceof PersonalShiftsError
-      ? { ...problem(status, error.code, error.message), errors: error.errors }
-      : error.getResponse();
-    Logger.warn(JSON.stringify({ event: 'stub_request_rejected', status }), 'StubApi');
-    void reply.code(status).header('Cache-Control', 'no-store')
-      .header('X-SHF-Data-Source', 'synthetic-stub')
-      .type('application/problem+json').send(payload);
-  }
-}
 
 @Controller('api/v1')
 @UseFilters(StubProblemFilter)
@@ -56,6 +32,10 @@ export class StubController {
         write: { enabled: false, reason: 'READ_ONLY_STUB' },
       },
       personalMessages: {
+        read: { enabled: true, reason: 'SYNTHETIC_DEMO_ONLY' },
+        write: { enabled: false, reason: 'READ_ONLY_STUB' },
+      },
+      employees: {
         read: { enabled: true, reason: 'SYNTHETIC_DEMO_ONLY' },
         write: { enabled: false, reason: 'READ_ONLY_STUB' },
       },
@@ -127,5 +107,5 @@ export class StubController {
   }
 }
 
-@Module({ controllers: [StubController] })
+@Module({ controllers: [StubController, StubEmployeesController] })
 export class StubModule {}
