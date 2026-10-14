@@ -7,13 +7,13 @@ Publication target: d:/AIProjects/SHFAI/docs/SHF_PROJECT_DIRECTIVES.md, ordinary
 
 ## 1. Confirmed Scope And Evidence
 
-### Current Progress Snapshot — 2026-10-14, After Oracle Column Metadata
+### Current Progress Snapshot — 2026-10-14, After Unverified SSO Simulation
 
 | Round | Current status | Evidence / next gate |
 | --- | --- | --- |
 | R01 | Review / partial | Source-backed proposals and separately approved demo contracts; full business architecture/API/UI approval pending. |
 | R02 | Local foundation working / partial | Reproducible app commands, tests, lint, strict types and builds; CI, deployment and complete contract generation pending. |
-| R03 | Thick connectivity/column metadata verified; R01 mapping review drafted / round partial | Oracle11.2.0.4.0/Client19.3; 88 columns observed,33 mapped offline to source/DTO candidates. Mapping-policy approval, identity, cardinality/eligibility/timezone and business read scope remain gated. |
+| R03 | Thick connectivity/metadata verified; isolated raw-row mapper tested / round partial | 88 columns observed,33 mapped offline; approved cancellation/type/owner policies implemented in pure mapper. Real fetch/identity/cardinality/Oracle DATE semantics and business read scope remain gated. |
 | R04 | Synthetic demo done | Personal shifts, calendars, details, overnight/null/reassignment cases; no real Oracle parity or G3 acceptance. |
 | R05 | Approved synthetic demo done | Messages, employee search/card and skills/events/education views; education explicitly invented, no writes or real employee data. |
 | R06 | Approved synthetic range-read demo done | Fixed-team schedule/attendance table/detail and calendars; current-instant/live reads, real scope and parity remain pending. No arrival/departure registration or corrections. |
@@ -21,10 +21,10 @@ Publication target: d:/AIProjects/SHFAI/docs/SHF_PROJECT_DIRECTIVES.md, ordinary
 | R08 | Approved replacement and staffing read/preview demos done / round partial | Synthetic outcomes and conditional one-slot counts; full real policy, freshness/precondition/atomic-capacity evidence and acceptance remain pending. |
 | R09 | Approved exceptions/time-off and bounded report demos done / round partial | Full-day/timed/provenance/history views and exact staffing/forecast minutes; real data/parity, activity weights and acceptance remain pending. |
 | R10 | Approved synthetic building/job/allowlisted-parameter reads done / round partial | Scoped directories and explicit zero/unknown/default provenance; CTI/learning, deferred-producer register and real permissions/mappings remain pending. |
-| R11 | Deferred / gated | No business writes authorized or enabled. |
+| R11 | Bounded test remark candidate selected / blocked | User identifies target as test and selects day1255 REMARK; existing corporate SSO/gateway trust and per-command concurrency/audit/schema evidence unresolved. No business API/write enabled. |
 | R12–R13 | Pending | Full security/load/assistive-technology/UAT/recovery/release evidence and accountable sign-off pending. |
 
-Latest completed check: 107 backend + 116 frontend tests (223 total),
+Latest completed check: 126 backend + 116 frontend tests (242 total),
 lint/types/builds pass; initial UI bundle 433.73 kB. Synthetic browser checks
 cover responsive RTL, focus, errors and text resizing, not full AA certification.
 The 45–90 active-hour estimate remains provisional; no elapsed delivery date or
@@ -2098,3 +2098,240 @@ Executed documentation checks passed: current-project validator 1,184 local
 links and 795 source-line references; separate README/plan checks 280 links and
 75 fragments. `git diff --check` passed. No application suite was rerun because
 this step changed documentation only.
+
+## 36. Approved Personal-Shift Read Mapping Decisions
+
+Task ID: SHF-R01-MAPPING-POLICY-20261014. Status: done for user-triggered policy
+agreement and evidence-backed documentation, not mapper implementation or
+real data activation. Current technical design revision2.3 draft includes
+[R01-PS-ORACLE-MAP-0.2](SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md#363-approved-read-mapping-policy-r01-ps-oracle-map-02).
+The draft is approved only for the explicitly recorded decisions, not G1/release.
+
+The user separately approved:
+
+1. Fail-closed on unknown inclusion, ambiguous owner, duplicate changes or invalid
+   required data; no silent omission/remaining-rows-with-warning substitute.
+2. Explicit unambiguous owner link to canonical internal EMPLOYEE_ID, never a
+   first-eight-character lookup, EMP_ID_NUMBER substitution or demo owner.
+3. After rejecting the first proposal to accept a supplied synthetic eligibility
+   verdict, source-backed agreement of the real read classification: sentinel
+   NEW_EMPLOYEE_ID `'99999999'` OR non-null CANCEL_REASON_CODE excludes a cancelled
+   change, independent of dates/day type.
+4. Noncancelled controlling day type comes from baseline only when no change
+   exists; otherwise NEW_DAY_TYPE is mandatory, without fallback. Type4 is a
+   candidate, known1/2/3/5/6/7 exclude, null/unknown/error fails.
+5. First isolated mapper accepts strict local YYYY-MM-DDTHH:mm:ss strings only,
+   no Date/UTC/offset guessing. Real Oracle DATE extraction/timezone remains a
+   separate approval/compatibility boundary.
+
+Read-only evidence extended the existing catalog trace to
+[constants](../old/SHF/src/bzq/shf/utils/SHFConstants.java#L48),
+[cancelShift update/insert](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L3732),
+[cancelled-reader sentinel](../old/SHF/src/bzq/shf/model/ShiftCancelledModel.java#L112)
+and [active-reader null reason](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L987).
+The cancellation method also changes source, cancels day parts and prepares
+managed-break SoftPhone deletion requests. None was executed; agreement applies
+to read classification only, not a cancellation command or preview that writes.
+
+Design records ordered structure/ambiguity checks, cancellation precedence,
+row-presence day-type selection, included-schedule validation and existing
+authorization/redaction. Cancellation markers do not require fabricated shift
+dates or a real employee link for the sentinel. Duplicate/structural ambiguity
+still fails, rather than being hidden by a known cancellation.
+Fifteen discriminating acceptance scenarios are specified for future synthetic
+raw-row tests, including sentinel-only/reason-only/zero-text reason, changed null
+type, unknown types, duplicates, explicit identity, malformed dates and privacy.
+These scenarios were not executed as automated tests.
+
+No code, public DTO, fixture, Oracle/EMS call, schema, system configuration or UI
+behavior changed. No application tests were rerun for this documentation-only
+step; the prior223-test baseline is unchanged. Next step: implement/review the
+isolated mapper with synthetic raw rows under this approved policy. Trusted
+identity, actual row cardinality/flags, Oracle DATE semantics and any permitted
+real business sample or endpoint remain separately gated.
+
+Validation passed: current-project documentation 1,192 local links and 803
+source-line references; separate README/plan 286 links and 81 fragments.
+`git diff --check` passed. These are documentation checks, not executed mapper
+tests or runtime approval of business data.
+
+## 37. Approved Isolated Oracle Personal-Shift Mapper
+
+Task ID: SHF-R01-ORACLE-ISOLATED-MAPPER-20261014. Status: done for the user-
+approved pure mapper and synthetic tests under R01-PS-ORACLE-MAP-0.2.
+The [implementation evidence](SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md#364-isolated-raw-row-mapper-implementation)
+records exact input/representation/validation boundaries. Technical design
+revision2.4 remains draft beyond specifically approved isolated behavior.
+No repository SELECT, authentication, real DATE conversion, HTTP/business
+activation or schema change was authorized or performed.
+
+- [Mapper](../apps/api/src/personal-shifts/oracle-shift-mapping.ts) accepts one
+  named-column day, zero/one associated change and explicit exact-key owner
+  links. Returns existing PersonalShiftItem or null for known exclusions/
+  foreign ownership; ambiguity/unknown/malformed input throws redacted
+  DATA_CONTRACT_UNVERIFIED.
+- Implements sentinel OR non-null reason cancellation before day type/date
+  mapping; known nonactivity excludes, type4 is mapped only after validation,
+  changed null/unknown type fails without baseline resurrection.
+- Internal IDs are canonical decimal strings; owner keys retain exact strings
+  without prefix matching. Day/site key guards reflect observed day/site
+  precision where known, without altering the broader existing demo contracts.
+- Explicit null new start/end/site/activity/gap endpoints inherit independently;
+  undefined/missing is not defaulted. Present raw home/split flags require Y/N.
+  Strict local strings pass through unchanged, not driver/browser Date conversion.
+- Reuses the [existing projection](../apps/api/src/personal-shifts/personal-shifts.ts#L171)
+  for normalized schedules, gap consistency and baseline redaction. Full original/
+  effective schedules are validated before actual owner filtering, including
+  hidden originals and malformed foreign included rows. Incomplete originals
+  are errors rather than a fabricated not-present baseline.
+- The existing DTO, projection implementation, capabilities, stub fixtures,
+  application wiring and Oracle adapter were not modified.
+
+[Fifteen new tests](../apps/api/test/oracle-shift-mapping.test.ts) passed baseline/
+override/transfer, unchanged source fixtures, individual null fallback, site0,
+large internal IDs, exact day types, null/unknown errors, all known exclusions,
+sentinel-only/reason-only/zero-text reasons, duplicates/wrong associations,
+missing/competing/prefix-only links, invalid IDs/flags/times, split gaps,
+overnight seconds, baseline privacy and static redacted errors. A mapped sequence
+containing an invalid row throws, rather than returning accumulated partial
+success. Tests import no driver or external runtime.
+
+The first compile failed because a plain object check did not narrow to Record;
+adding a real type predicate fixed it without casts. The focused mapper plus
+existing22 projection tests passed **37 checks**. Subsequent strengthened
+incomplete-baseline/gap-offset cases passed within the full suite.
+Full `npm run check` passed **122 backend + 116 frontend tests (238 total)**,
+lint, strict types/templates and both builds. Initial bundle remains
+**433.73 kB**, below unchanged500kB warning. No packages changed.
+No browser run was required because there is no UI or route behavior change.
+Source-reference search confirms no production caller imports the new mapper.
+
+No real Oracle connection/data read, mutation/sequence, constraint/index
+discovery, partner/EMS, batch, deploy or user-data fixture was involved.
+Remaining owner gates: SEC for trusted authentication/employment/baseline scope;
+DBA/business for real cardinality, flag values and Oracle DATE meaning; ARC/BE/QA
+for an approved exact fetch representation and any subsequent authorized SQL
+characterization. Next step must not infer real API activation from this pure
+mapper's passing tests.
+
+Documentation validation passed: current-project checker1,195 local links and
+804 source-line references; separate README/plan293 links and85 fragments.
+Updated progress/implementation anchors and `git diff --check` passed.
+
+## 38. Real API Request: Test Scope and Corporate SSO Investigation
+
+Task ID: SHF-REAL-API-SSO-REMARK-GATE-20261014. Status: blocked; owner SSO/gateway
+for verified identity ingress/callback and accessible SOAP contract. No real
+business-data read/write or production deployment performed.
+
+User requested full real read/write API access without schema changes. Required
+clarifications confirmed:
+
+- Current target is test, correcting prior working/shared classification for
+  proposed checks; actual isolation/partner effects are not independently proven.
+- First operation is a remark change, restricted to SHF_EMPLOYEE_DAY_ID1255 and
+  field REMARK. Other rows/actions/privilege discovery/DDL remain outside this
+  concrete scope; a successful one-row check would not authorize full access.
+- Existing corporate authorization must be used; user rejected the proposed
+  isolated local-token identity option.
+- env=t obtains identity via
+  `http://tauths.bezeq.com/obtainuserid/default.asp`.
+- User states gateway guarantees user/domain_user provenance, but has no
+  document/settings; requested inspection of old sources instead.
+
+Read-only trace from the [catalog](SHF_SOURCE_CONTRACT_CATALOG.md#1-complete-struts-route-catalog)
+followed [LoginAction](../old/SHF/src/bzq/shf/actions/LoginAction.java#L53),
+[obtainuserid JSP](../old/SHFWeb/WebContent/jsp/shf_obtainUserId.jsp),
+[Nemo proxy](../old/SHF/src/bzq/shf/profile/SSOWebProxyNoga.java#L44),
+[Login.load](../old/SHF/src/bzq/shf/model/Login.java#L38) and accessible WebSphere
+binding/extension. The JSP submits copied parameters to the env-prefixed host.
+LoginAction uses domain_user for `getAuthorizationBean(id,semel,clientIp)`;
+env=t gives SHT application code, while the visible Nemo host is hardcoded.
+Login.load uses separate user for the profile/employee/unit link and combines
+Nemo general authorization with security/activity tables and cached hierarchy.
+UserProfile is then stored in session with5400-second idle timeout.
+
+No verified provenance/binding check was found in the readable login path.
+The accessible web files do not establish gateway transport/ingress policy.
+Some deployment search results were suppressed by organizational content
+exclusion: no alternative access or content reconstruction was attempted.
+Loose obtainuserid server source and a complete readable SOAP WSDL were not
+located in the inspected paths; no legacy archive was opened/executed.
+Absence from readable source is not proof that external protection does not exist,
+but is insufficient to trust browser-supplied user/domain_user in a new API.
+
+The [remark writer](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L5664)
+updates the field by day ID with binds. No ownership/concurrency guarantee can
+be inferred for the new command; account-level database access is not application
+authorization. Its write code was inspected only, never called.
+
+The [design gate](SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md#731-real-api-request-and-corporate-gateway-trust-blocker)
+lists exact missing inputs: authenticated gateway provenance/bypass prevention;
+protected identity/callback/session binding; accessible Nemo SOAP and test
+settings; real remark permission/resource policy. DBA/business/ARC subsequently
+must verify lengths/null behavior, constraints/triggers/co-writers, atomic
+preconditions, audit/retry/unknown-commit and authorized restoration without DDL.
+No inferred OIDC migration, local fallback identity or full-data permission.
+
+No code, auth/Oracle configuration, secrets, session, database call/UPDATE,
+schema, broker/batch or deployment changed. The existing read-only guard and
+unavailable real APIs remain intact. Prior238 tests were not rerun; this step is
+source/document evidence, not successful SSO or write validation. Resume only
+after the required trust/contract artifact or approved equivalent input changes.
+
+Bounded documentation checks passed for the three new source/gate sections:
+21 local links,12 source-line references in previously accessible files and4
+Markdown anchors. `git diff --check` passed. The broader source validator was
+not run for this step to avoid accessing excluded deployment material; no
+restricted configuration, SSO endpoint or database was accessed.
+
+## 39. Approved Unverified SSO Claim Simulation
+
+Task ID: SHF-SSO-UNVERIFIED-SIMULATION-20261014. Status: done for the explicit
+user choice to accept ordinary POST fields as unverified SSO imitation **without
+real rights**. Real corporate gateway/SOAP trust and day1255 remark writes remain
+blocked; this is not approval to bypass them or use a local real-data test token.
+
+[Controller](../apps/api/src/stub/sso-simulation.controller.ts) adds only:
+
+```text
+POST /api/v1/auth/sso-simulation
+{ "user": "synthetic-user", "domain_user": "DEMO\\synthetic-domain-user" }
+```
+
+Request accepts exactly two nonblank strings of max128 characters, no C0/DEL
+controls and no query fields. Extra role/employee/password/authenticated fields
+are invalid400 INVALID_SSO_SIMULATION; values are never echoed in static Hebrew
+errors or the result. Synthetic/no-store/source headers apply.
+HTTP200 means valid shape accepted, not verified login: simulationOnly=true,
+claimsAccepted=true, identityAssurance=unverified, authenticated=false,
+sessionCreated=false, permissions=[], oracleAccess=false, nemoContacted=false,
+nextStep=VERIFIED_SSO_REQUIRED and technical read time only.
+
+The [stub registration](../apps/api/src/stub/stub.module.ts) exposes preview-only
+capability, false write. It does not update actor identity, capabilities or a
+session; the real AppModule never registers it, and stub/Oracle simultaneous
+activation remains rejected. No cookie/token/operation IDs, network redirects,
+SSO/Nemo/Oracle calls, record reads/writes, schema changes or frontend login.
+Values are processed for validation only, without storage; use synthetic input.
+
+[Four tests](../apps/api/test/sso-simulation.test.ts) passed successful exact
+response/markers/privacy, input/query/length/control/extra-field rejection,
+cookie/token claims not granting identity, unchanged me/capabilities, absent
+remark write, real-mode404 and stub/Oracle exclusion.
+The first full check failed lint no-control-regex; character-code validation
+replaced the regex without disabling a rule or accepting controls. The same
+focused tests/lint passed, then full `npm run check` passed **126 backend+116
+frontend tests (242 total)**, strict types, lint and both production builds.
+Initial bundle unchanged **433.73 kB**. No dependency changes or browser check
+required for a backend-only simulation.
+
+Updated [contract/evidence](SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md#732-approved-unverified-post-claim-simulation)
+and README. The existing blocked real integration task remains blocked; this
+isolated simulation cannot satisfy gateway/identity, schema-side effects,
+concurrency/audit or live data-authorization gates.
+
+Bounded documentation validation passed three new sections,10 local links,
+3 contract/execution anchors and the updated progress anchor; diff whitespace
+passed. No excluded deployment source was accessed. No live server, SSO/gateway,
+Nemo or database check was run for this synthetic endpoint.

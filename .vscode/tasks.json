@@ -1,42 +1,54 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "SHF: approved one-shot Oracle connectivity check",
-      "type": "process",
-      "command": "powershell.exe",
-      "args": [
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}\\scripts\\Invoke-ShfOracleMetadata.ps1",
-        "-ConnectString",
-        "CTIDBT_WFMT.world",
-        "-UserName",
-        "SHIFTER",
-        "-Mode",
-        "thick",
-        "-ClientLibDir",
-        "C:\\app\\client\\30610488\\product\\19.0.0\\client_1\\bin",
-        "-UseEnvironmentPassword",
-        "-ConnectivityOnly"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}",
-        "env": {
-          "ORACLE_PASSWORD": "${input:shfOraclePassword}",
-          "ORACLE_CONFIG_DIR": "C:\\app\\client\\30610488\\product\\19.0.0\\client_1\\network\\admin"
-        }
-      },
-      "isBackground": false,
-      "problemMatcher": []
-    }
-  ],
-  "inputs": [
-    {
-      "id": "shfOraclePassword",
-      "type": "promptString",
-      "description": "Oracle password for this approved one-shot connection only",
-      "password": true
-    }
-  ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "SHF: approved one-shot Oracle connectivity check",
+			"type": "process",
+			"command": "powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-File",
+				"${workspaceFolder}\\scripts\\Invoke-ShfOracleMetadata.ps1",
+				"-ConnectString",
+				"CTIDBT_WFMT.world",
+				"-UserName",
+				"SHIFTER",
+				"-Mode",
+				"thick",
+				"-ClientLibDir",
+				"C:\\app\\client\\30610488\\product\\19.0.0\\client_1\\bin",
+				"-UseEnvironmentPassword",
+				"-ConnectivityOnly"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"env": {
+					"ORACLE_PASSWORD": "${input:shfOraclePassword}",
+					"ORACLE_CONFIG_DIR": "C:\\app\\client\\30610488\\product\\19.0.0\\client_1\\network\\admin"
+				}
+			},
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "SHF: approved read-only remark preflight",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-File",
+				"C:\\Users\\30610488\\.copilot\\session-state\\9a6588d4-103b-41d6-9e04-da509d1b453b\\files\\Invoke-RemarkPreflight.ps1"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	],
+	"inputs": [
+		{
+			"id": "shfOraclePassword",
+			"type": "promptString",
+			"description": "Oracle password for this approved one-shot connection only",
+			"password": true
+		}
+	]
 }

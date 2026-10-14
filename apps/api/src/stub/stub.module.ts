@@ -14,6 +14,7 @@ import { StubReportsController } from './reports.controller.js';
 import { StubBuildingsController } from './buildings.controller.js';
 import { StubInternalJobsController } from './internal-jobs.controller.js';
 import { StubSystemParametersController } from './system-parameters.controller.js';
+import { StubSsoSimulationController } from './sso-simulation.controller.js';
 
 const scope = { actorEmployeeId: '00000001', canViewBaseline: false };
 
@@ -50,6 +51,10 @@ export class StubController {
         write: { enabled: false, reason: 'READ_ONLY_STUB' },
       },
       integrationAvailable: false,
+      ssoSimulation: {
+        preview: { enabled: true, reason: 'UNVERIFIED_CLAIMS_ONLY' },
+        write: { enabled: false, reason: 'NO_AUTHENTICATION_OR_REAL_RIGHTS' },
+      },
       systemParameters: {
         read: { enabled: true, reason: 'SYNTHETIC_ALLOWLIST_ONLY' },
         write: { enabled: false, reason: 'READ_ONLY_STUB' },
@@ -156,5 +161,5 @@ export class StubController {
   }
 }
 
-@Module({ controllers: [StubController, StubEmployeesController, StubOperationalController, StubBreaksController, StubShiftPreviewsController, StubReplacementController, StubStaffingController, StubExceptionsController, StubReportsController, StubBuildingsController, StubInternalJobsController, StubSystemParametersController] })
+@Module({ controllers: [StubController, StubEmployeesController, StubOperationalController, StubBreaksController, StubShiftPreviewsController, StubReplacementController, StubStaffingController, StubExceptionsController, StubReportsController, StubBuildingsController, StubInternalJobsController, StubSystemParametersController, StubSsoSimulationController] })
 export class StubModule {}

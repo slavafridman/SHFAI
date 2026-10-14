@@ -1,7 +1,7 @@
 # Shifter (SHF) New Project Technical Design
 
 Document date: 2026-10-13
-Revision: 2.2 draft, adding the metadata-backed R01 Oracle mapping review.
+Revision: 2.4 draft, adding the isolated R01 raw-row mapper implementation evidence.
 Status: design for review; architecture, API/UI contracts and release are not approved.
 
 Reading guide:
@@ -785,6 +785,202 @@ Any real business-data sample, additional metadata, SQL execution or live API
 activation needs its own environment/permissions/data-scope approval. This
 review changes no DTO, fixture, route, schema, database contents or UI behavior.
 
+### 3.6.3 Approved Read-Mapping Policy, R01-PS-ORACLE-MAP-0.2
+
+**Approval scope: user-approved decisions for the next isolated raw-row mapper,
+not permission to execute legacy cancellation, sample business data, implement
+authentication or activate Oracle-backed HTTP routes.** On 2026-10-14 the user
+approved fail-closed behavior and explicit internal employee links, rejected an
+externally supplied synthetic eligibility verdict as the first solution, and
+instead approved the read inclusion algorithm below after inspecting source.
+Strict local-string dates were approved for the first mapper only. This section
+supersedes the corresponding proposed decisions in mapping review0.1;
+the physical evidence and remaining real-environment gates there still apply.
+The document remains draft outside this specifically approved policy scope.
+
+#### Source Evidence for Cancellation, Not an Executed Operation
+
+[DAY_TYPE constants](../old/SHF/src/bzq/shf/utils/SHFConstants.java#L48) define
+1 day-off,2 time-off,3 no-activity,4 activity,5 exception,6 meal,7 break.
+The [reserved cancellation ID](../old/SHF/src/bzq/shf/utils/SHFConstants.java#L58)
+is99999999. In
+[cancelShift update/insert](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L3732),
+the source sets NEW_DAY_TYPE to day-off and NEW_EMPLOYEE_ID to that marker,
+and stores the supplied cancellation code/remark. A separate
+[cancelled-shift read](../old/SHF/src/bzq/shf/model/ShiftCancelledModel.java#L112)
+selects this marker. An
+[active current-shift read](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L987)
+requires CANCEL_REASON_CODE IS NULL, unlike the active personal UNION.
+
+These inconsistent read predicates motivate the explicitly approved new
+read policy; they do not prove universal deployed legacy equivalence.
+The [legacy action](../old/SHF/src/bzq/shf/actions/ShiftDataAction.java#L1010)
+invokes cancellation validation and the write method. That method changes
+schedule/source data, [cancels day parts](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L3780)
+and constructs managed-break
+[SoftPhone deletion messages](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L3825).
+None of those methods was executed, imported or exposed as validation/preview.
+This task read source only; approval covers classification of read records.
+
+#### Approved Ordered Decision Procedure
+
+1. **Fail closed on ambiguity.** Missing/ambiguous owner links, duplicate change
+   rows, invalid raw structure or malformed mandatory included-row data yield
+   DATA_CONTRACT_UNVERIFIED. Do not return remaining rows with warnings, choose
+   the first/latest row, fabricate a DTO or turn failure into an empty list.
+   Distinguish a valid known exclusion from a failed/unknown mapping.
+2. **Use explicit owner links only.** Map each original/effective owner key
+   through an explicit unambiguous link to a canonical internal EMPLOYEE_ID
+   string. Do not search first8 characters, equate EMP_ID_NUMBER with
+   EMPLOYEE_ID, coerce through JavaScript Number or supply a demo owner.
+   For isolated tests the links are synthetic inputs. Real authentication and
+   authoritative employment/scope resolution remain independent prerequisites.
+   The cancellation marker is not an employee requiring an identity lookup.
+3. **Recognize cancellation before day-type/date classification.** A change row
+   is excluded as cancelled when NEW_EMPLOYEE_ID is the exact marker string
+   `'99999999'` **OR** CANCEL_REASON_CODE is non-null. Either marker is
+   sufficient, even when dates are missing or the stored day type is4/null.
+   Do not require both, require type1, or reinterpret the reason code's numeric/
+   truthy value. A structural type error remains an error; this is not permission
+   to coerce arbitrary JSON into a valid cancellation marker. No mutation occurs.
+4. **Select the controlling day type by row presence.** Without a change row,
+   use WM_DAY_TYPE. With a change row, use NEW_DAY_TYPE only. Never fall back
+   to WM_DAY_TYPE when the controlling NEW_DAY_TYPE is null/unknown and never
+   resurrect a baseline suppressed by a change row.
+5. **Classify a noncancelled controlling type.** Type4 is a candidate for
+   inclusion. Known types1/2/3/5/6/7 are excluded. Null or any unknown code
+   yields DATA_CONTRACT_UNVERIFIED. Known nonactivity does not claim
+   cancellation history; it simply is not a personal activity shift.
+6. **Validate/resolve the included schedule.** Passing type4 is not permission,
+   eligibility for commands or a valid DTO by itself. Require resolved owner,
+   valid required fields, approved field-level override mapping, split bounds
+   and effective ownership/baseline redaction. A known cancelled/nonactivity
+   exclusion does not fabricate timestamps to satisfy a DTO that will not be
+   returned. Duplicate/structural ambiguity cannot be hidden by cancellation.
+7. **Keep dates at the approved isolated boundary.** The first mapper accepts
+   strict calendar-valid `YYYY-MM-DDTHH:mm:ss` local strings only, not Date
+   instances, offset/Z strings, guessed midnight/current time or automatic UTC/
+   timezone conversion. Oracle DATE extraction/serialization is a separate
+   future boundary; real wall-time/NLS/DST semantics remain unapproved.
+
+The existing public DTO, personal-shift scope and baseline-visibility contract
+are unchanged. These decisions define read inclusion only, not cancel/restore
+commands, a history API, real authorization or paid-duration arithmetic.
+
+#### Discriminating Acceptance Cases for Implementation
+
+These acceptance cases were proposed during policy agreement and subsequently
+covered by the isolated synthetic tests documented in Section 3.6.4. They use
+synthetic raw rows and no Oracle/partner application; they are not live parity
+or real-data acceptance evidence.
+
+| Case | Expected result under approved policy |
+| --- | --- |
+| No change, WM_DAY_TYPE4, valid schedule and explicit owner link | Candidate maps through existing normalized projection and authorization. |
+| Change exists, NEW_DAY_TYPE4, baseline any known type, no cancellation marker | Candidate uses the change-row branch; baseline type cannot override it. |
+| Change NEW_DAY_TYPE NULL, baseline type4 | DATA_CONTRACT_UNVERIFIED; no baseline resurrection or silent exclusion. |
+| Noncancelled controlling type0/negative/unknown8/invalid representation | DATA_CONTRACT_UNVERIFIED, not type4 or default day-off. |
+| Noncancelled known type1/2/3/5/6/7 | Known exclusion; no active-shift DTO. |
+| Sentinel owner with NULL reason and missing dates/NEW_DAY_TYPE | Cancelled exclusion; no owner lookup for the sentinel and no guessed dates. |
+| Non-null reason with ordinary owner and NEW_DAY_TYPE4 | Cancelled exclusion regardless of activity type. |
+| Both cancellation markers, or reason text `'0'` | Cancelled exclusion; do not test the reason's truthiness/numeric value. |
+| Sentinel/reason marker combined with duplicate change rows | Explicit ambiguity error before producing a result. |
+| Included activity with absent or competing owner links | DATA_CONTRACT_UNVERIFIED; never prefix matching or demo identity. |
+| Internal ID/full identity/prefix have similar digits | Resolve only the explicitly linked internal ID; retain strings/leading-zero owner keys. |
+| Included activity with malformed required dates or flags | Explicit contract error, not partial output, current time, false or empty success. |
+| Date instance, offset/Z timestamp, invalid calendar date | Reject at isolated mapper boundary; no implicit conversion. |
+| Foreign effective owner or unauthorized baseline after valid mapping | Existing self-service filtering/redaction still applies; no prior-owner disclosure. |
+| Same mapping operation repeated | Same result, no modified fixtures, database, cache, partner or operation IDs. |
+
+Implementation must reuse existing validators/projection where possible and
+add focused raw-row tests without changing current synthetic API behavior.
+The policy-agreement step itself implemented no mapper; the subsequent isolated
+implementation is recorded below. Remaining real-environment gates:
+ARC/BE/QA for its reviewed input representation and field fallback tests; SEC
+for actual actor/employment/scope; DBA/business owner for real Oracle DATE
+meaning, constraints, actual flag values and any permitted data characterization.
+The approved business classification is now explicit; those unknowns may not
+be silently replaced by successful defaults.
+
+### 3.6.4 Isolated Raw-Row Mapper Implementation
+
+**Status: user-approved isolated implementation complete and tested against
+synthetic inputs, not a SQL repository or real API activation.** The
+[mapper](../apps/api/src/personal-shifts/oracle-shift-mapping.ts) implements
+R01-PS-ORACLE-MAP-0.2 using the existing
+[normalized projection](../apps/api/src/personal-shifts/personal-shifts.ts#L171).
+No public DTO, existing projection behavior, HTTP route, fixture source,
+Oracle adapter or database schema was changed.
+
+`mapOraclePersonalShift(input, scope)` accepts a named-column row group:
+
+- `day`: one original day row with its stable SHF_EMPLOYEE_DAY_ID and included-
+  schedule fields using the uppercase column names from the mapping table.
+- `changes`: an array containing zero or one change row. Multiple rows, malformed
+  entries or a different day association fail before known exclusion.
+- `ownerLinks`: explicit `{ ownerKey, employeeId }` pairs. Duplicate owner keys
+  fail even when repeated with the same ID; keys are matched exactly, without
+  trimming/case/prefix normalization. The reserved cancellation marker cannot
+  appear as an ordinary owner link.
+- `scope`: existing PersonalShiftScope, with canonical internal actor ID and
+  an explicit boolean baseline permission. It is an isolated supplied scope,
+  not newly implemented authentication or employment lookup.
+
+Raw day IDs must be positive canonical decimal strings up to10 digits,
+matching observed NUMBER(10,0). Internal employee IDs remain positive canonical
+decimal strings up to38 digits; owner keys retain their text/leading zeros
+(bounded to128 characters, not claimed physical VARCHAR2 length). Included
+baseline site is a nonnegative canonical decimal string up to10 digits;
+new site is null or equivalent text up to38 digits. No ID/site passes through
+JavaScript Number. Day types accept exact known integer numbers or canonical
+single-digit strings1–7, with the approved classification and error cases.
+These are deliberate strict isolated representations, not an implemented
+node-oracledb fetch handler or proof that real data satisfies the guards.
+
+Cancellation checks use exact string sentinel OR non-null reason, including
+reason text `'0'`, without truthiness or inferred codes. Reason/owner predicate
+fields must be present and string-or-null; known exclusions do not require
+invented dates or a sentinel employee lookup. Invalid scope, row association
+or owner-link structure/duplicates still fail rather than becoming exclusion.
+Noncancelled change-row null/unknown type never falls back to baseline.
+
+Included start/end/site/activity and split-gap endpoints inherit individual
+baseline values only when the corresponding new field is explicitly null,
+not missing/undefined. Present raw rows' home/split flags must be exact Y/N,
+case-insensitive, reflecting the observed NOT NULL columns and rejecting unknown
+tokens. The normalized projection performs calendar/time, interval, nullable
+activity and split-shape validation; Date/offset/Z values are never converted.
+Full baseline and effective schedules are validated for included rows, even
+when baseline is redacted. Consequently a valid new start does not hide a null
+or malformed original start; supporting incomplete baseline provenance would
+need an explicit contract decision, not pretending the original is absent.
+
+The mapper validates the candidate with its resolved effective owner before
+actual scope filtering, so a foreign malformed included row is not silently
+hidden. It then returns the projected PersonalShiftItem only for the actual
+actor; otherwise null. Known cancellation/nonactivity also returns null;
+unknown/malformed mapping throws PersonalShiftsError
+DATA_CONTRACT_UNVERIFIED with static Hebrew text/field names and no raw IDs,
+values, address or SQL. Existing baseline visibility and redaction are reused.
+No cancelled-history or command result is added to the public shape.
+
+[Fifteen mapper tests](../apps/api/test/oracle-shift-mapping.test.ts) exercise the
+approved acceptance cases plus exact numeric-string guards, null field fallback,
+split inheritance/stale gaps, source-field minimization, redacted errors,
+repeated immutability and malformed foreign included rows. The focused command
+also ran the existing22 projection tests: **37 passed**. Initial compilation
+identified a missing Record type predicate; a proper guard fixed it without
+casts or relaxing validation, and the same focused checks passed.
+
+Full `npm run check` passed **122 backend + 116 frontend tests (238 total)**,
+lint, strict types/templates and both builds. Initial UI bundle remains
+**433.73 kB**. No dependency/UI change or browser verification was needed.
+Source-reference inspection confirms the mapper is not imported by any
+controller/service; no live database or partner check ran in this step.
+Actual employee mapping, SQL cardinality, raw flags/domains and Oracle DATE
+semantics still need evidence/approval before implementing a repository fetch
+boundary or enabling real personal shifts.
+
 ### 3.7 Example Change-Proposal DTO
 
 Synthetic example; field types and error behavior are proposed, not a legacy payload:
@@ -1533,13 +1729,150 @@ The WSDL, complete generated proxy contract, timeouts, authentication to the
 service, certificate policy and fault details are not available as a full readable
 contract. NogaProxy JAR presence does not prove current production behavior.
 
-**Target:** configure URL and application-code mapping per environment; use
-HTTPS with verified certificates where the partner supports it; isolate any
-temporary HTTP compatibility network. Authenticate the human via enterprise
-OIDC before mapping application permissions. Use bounded lookup timeouts, fail
+**Target:** retain the user-selected corporate SSO/gateway and Nemo permission
+integration, subject to a verified authentication/trust contract. OIDC remains
+an alternative requiring separate approval, not an imposed replacement.
+Configure URL and application-code mapping per environment; use HTTPS with
+verified certificates where supported and an explicitly approved isolated
+compatibility boundary for any required HTTP. Use bounded lookup timeouts, fail
 closed for unknown identity/scope, cache only under an approved permission TTL,
 and invalidate on privilege changes. Preserve the existing special unit/profile
 semantics until approved for change.
+
+#### 7.3.1 Real-API Request and Corporate Gateway Trust Blocker
+
+The user requested real read/write API integration without schema changes and
+subsequently confirmed the current database is **test**, correcting the earlier
+shared-operational classification for the proposed checks. This is a user
+environment assertion, not verified isolation from production/partner systems.
+The first explicitly selected operation is reading/updating only
+`SHF_EMPLOYEE_DAY.REMARK` for test day **1255**. The user rejected a local secret-
+token test identity and selected existing corporate SSO, with `env=t`:
+`http://tauths.bezeq.com/obtainuserid/default.asp`. No real API/data access or
+mutation was enabled. Full access is not unrestricted SQL or blanket authority
+to update unrelated rows, schema, partner processes or batch.
+
+**Readable source trace:**
+
+- [Route catalog](SHF_SOURCE_CONTRACT_CATALOG.md#1-complete-struts-route-catalog)
+  leads to [LoginAction](../old/SHF/src/bzq/shf/actions/LoginAction.java#L53).
+  Without domain_user it returns the
+  [obtainuserid JSP](../old/SHFWeb/WebContent/jsp/shf_obtainUserId.jsp).
+  The JSP takes the first environment character for the host, copies request
+  parameters into hidden fields and submits the form. It does not itself verify
+  a signed assertion, one-time ticket or gateway identity.
+- [LoginAction permission lookup](../old/SHF/src/bzq/shf/actions/LoginAction.java#L88)
+  sends domain_user, application code and request remote address to
+  [SSOWebProxyNoga](../old/SHF/src/bzq/shf/profile/SSOWebProxyNoga.java#L44).
+  env=t yields application code SHT through getNogaSemel; the visible proxy
+  still selects the same hardcoded Nemo HTTP endpoint, not a separately
+  demonstrated test host. No endpoint/service was contacted.
+- The proxy calls `getAuthorizationBean(id, semel, clientIp)` and requires a
+  successful response. LoginAction reads first/last name and the first general
+  authorization element, then
+  [Login.load](../old/SHF/src/bzq/shf/model/Login.java#L38) uses the separate
+  LoginForm.user as profile ID. [LoginForm](../old/SHF/src/bzq/shf/forms/LoginForm.java)
+  has independently assignable user/domain_user/ssoMessage/ssoExtraMessage
+  fields; the inspected login path does not show proof binding them to an
+  authenticated gateway response. A permission lookup for a supplied identity
+  is not by itself verification that the caller owns that identity.
+- [Employment/unit lookup](../old/SHF/src/bzq/shf/model/Login.java#L125)
+  binds user to full EMP_ID_NUMBER; permission construction reads security-
+  profile/activity/fixed-unit tables and cached unit hierarchy. These tables
+  beyond the previously inspected three and real identities are not yet read
+  or mapped in the new application.
+- [Session setup](../old/SHF/src/bzq/shf/actions/LoginAction.java#L103)
+  stores UserProfile and a5400-second idle interval.
+  [BaseAction](../old/SHF/src/bzq/shf/actions/BaseAction.java#L125) checks named
+  activities when present. Neither a session object nor SHIFTER database
+  authentication supplies the missing gateway provenance for a new Node API.
+- The accessible
+  [WebSphere binding](../old/SHFWeb/WebContent/WEB-INF/ibm-web-bnd.xmi) sets a
+  virtual host; the
+  [extension](../old/SHFWeb/WebContent/WEB-INF/ibm-web-ext.xmi) sets web runtime
+  options. They do not establish a verified gateway/identity contract. Some
+  deployment search results were suppressed by organization content exclusion;
+  those files were not accessed through another tool or reconstructed.
+  No loose obtainuserid server ASP source or complete SOAP WSDL was found in
+  the inspected paths; no archive/vendor application was executed.
+
+**Blocked by missing inputs (SSO/gateway owner):**
+
+1. An enforceable provenance rule for the callback/backend: authenticated
+   gateway transport or equivalent approved boundary, permitted ingress and
+   prevention of direct bypass. Do not trust a caller-chosen header or enable
+   blanket forwarded-header trust to manufacture verified identity/client IP.
+2. Contract for protected identity fields and correlation: how user/domain_user
+   are produced, validated and bound to the same human/session, and which field
+   resolves uniquely to the canonical employee ID. Include rejection/expiration/
+   logout behavior and login callback/session-CSRF/session-fixation controls.
+3. An accessible Nemo SOAP contract, current test endpoint/application code,
+   authenticated service access, response/fault schema and deadline policy.
+   Source names/generated proxy imports are not enough to invent XML namespaces
+   or imply a successful live permissions response.
+4. Approved application permission/scope mapping for remark edits, independent
+   of database account grants, with uniform denied-resource handling.
+
+The [legacy remark writer](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L5664)
+updates REMARK by day ID; it is not copied as an unauthenticated/concurrency-
+unchecked command. Before a test UPDATE: establish real ownership/permissions,
+allowed lengths/null behavior, constraints/triggers/co-writer effects, atomic
+precondition/locking, audit/retry/unknown-commit handling and restoration scope
+using approved existing schema evidence. The three-table column capture lacks
+several of these facts. No new sequence/audit/outbox table is authorized.
+
+Current task state is **blocked**, owner SSO/gateway for trusted authentication
+and accessible contract; DBA/business/ARC own the subsequent command gates.
+No business read, Nemo call, login session, UPDATE/commit, DDL or deployment
+occurred during this investigation. No app code/secret was added and the real
+adapter remains read-only. A missing document cannot be replaced by a guessed
+gateway guarantee or free-form POST identity; the original source may have
+external deployment protections that remain unknown.
+
+#### 7.3.2 Approved Unverified POST-Claim Simulation
+
+After the gateway investigation, the user explicitly selected accepting ordinary
+POST identity fields **only for SSO imitation without real rights**, not as
+confirmed identity and not the alternative secret-token real-data test mode.
+The [stub controller](../apps/api/src/stub/sso-simulation.controller.ts) is
+registered only in the opt-in StubModule, never the real application module.
+No corporate gateway/obtainuserid/Nemo/Oracle endpoint is contacted.
+
+```text
+POST /api/v1/auth/sso-simulation
+Body: { "user": "synthetic-user", "domain_user": "DEMO\\synthetic-domain-user" }
+```
+
+Accept exactly these two nonblank strings, each at most128 characters, with no
+C0/DEL control characters; reject other body fields and any query, including
+env overrides, roles, authenticated flags, employee IDs or passwords.
+Invalid input is400 INVALID_SSO_SIMULATION with static Hebrew Problem Details.
+This is a new explicit simulation contract, not a duplicate production login
+callback accepting arbitrary legacy request fields.
+
+HTTP200 retains mode=stub/synthetic=true/authenticated=false and no-store/source
+headers. Response is simulationOnly=true, claimsAccepted=true,
+identityAssurance=unverified, sessionCreated=false, permissions=[], oracleAccess=
+false, nemoContacted=false and nextStep=VERIFIED_SSO_REQUIRED, plus technical
+fetchedAt. It creates no actor/token/cookie/session/operation ID and does not
+echo/store the submitted identities. Accepted shape is not verified identity.
+Existing demo actor/capabilities remain unchanged; write permission is false.
+
+The [capability registration](../apps/api/src/stub/stub.module.ts) exposes only
+ssoSimulation.preview with UNVERIFIED_CLAIMS_ONLY and false write. Stub and enabled
+Oracle modes cannot coexist; the route is absent in real mode. No simulated
+claim is installed into a shared mutable profile or passed to a business writer.
+No frontend sign-in control was enabled or real access substituted.
+
+[Four API tests](../apps/api/test/sso-simulation.test.ts) passed marker/result
+shape, no cookie/identity echo, exact body/query/size/control validation, static
+errors, unchanged demo actor/capabilities, no real remark write, real-mode404
+and stub/Oracle exclusion. The first full check flagged a prohibited control
+regex; explicit character-code validation replaced it, with the same rejection
+tests and lint passing. Full check passed126 backend+116 frontend tests (242),
+lint/types/builds; initial UI bundle remains433.73kB. These are local Fastify
+injection tests, not corporate SSO, browser sign-in or real Oracle validation.
+The real gateway/SOAP/remark safety prerequisites in Section7.3.1 remain blocked.
 
 ### 7.4 IF-02/03: SHFSP Managed-Break Request/Reply
 

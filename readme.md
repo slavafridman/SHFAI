@@ -318,8 +318,127 @@ eligibility differences, Oracle DATE policy and a verification/owner matrix.
 Current constraints/flag values/prefix uniqueness/timezone and authoritative
 identity remain unresolved. Existing synthetic behavior and real-read gates are
 unchanged; the prior 223-test baseline was not rerun for documentation-only work.
-Next step is approval of raw-row mapping policies and missing prerequisites,
-not business-data sampling or production API activation.
+The read-policy decisions were subsequently approved as recorded below;
+missing real identity/timezone/data prerequisites are not waived.
+
+### Approved Cancellation and Inclusion Policy
+
+The [R01-PS-ORACLE-MAP-0.2 decisions](docs/SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md#363-approved-read-mapping-policy-r01-ps-oracle-map-02)
+record explicit user approvals for the first isolated mapper:
+
+- Ambiguous owners, duplicate changes and invalid mandatory included-row fields
+  fail with DATA_CONTRACT_UNVERIFIED; no partial-success warning or guessed row.
+- Owners link explicitly to canonical internal EMPLOYEE_ID strings. No prefix
+  guessing, national/internal ID interchange or demo identity fallback.
+- A change is excluded as cancelled when its owner is `'99999999'` OR
+  CANCEL_REASON_CODE is non-null, regardless of dates/day type.
+- Noncancelled rows use WM_DAY_TYPE only without a change; with a change they
+  use NEW_DAY_TYPE only. Type4 is a candidate; known types1/2/3/5/6/7 exclude;
+  null/unknown codes fail. Never resurrect the baseline on a null new day type.
+- The first mapper receives strict local timestamp strings only. Real Oracle
+  DATE conversion and trusted authentication remain separately gated.
+
+The legacy writer/constants/cancelled-reader were inspected as read-only source
+evidence; the combined read predicate is an approved intentional policy, not
+claimed universal legacy parity. Cancellation writes/day-part cleanup/SoftPhone
+requests were not executed. The original policy-agreement step changed
+documentation only; its later isolated implementation is documented below.
+
+### Isolated Oracle Personal-Shift Mapper
+
+The [raw-row mapper](apps/api/src/personal-shifts/oracle-shift-mapping.ts)
+now implements the approved read policy using synthetic named-column inputs:
+one `day`, zero/one `changes` entry, explicit `ownerLinks`, and supplied internal
+employee scope. It reuses the unchanged normalized projection; it has no SQL,
+Oracle-client, controller or partner dependency and is not wired to any route.
+
+Cancellation/nonactivity and foreign effective ownership return no item;
+ambiguous links/change rows, unknown types and malformed included schedules
+throw DATA_CONTRACT_UNVERIFIED, not partial-success or empty-error responses.
+IDs/sites remain decimal strings, raw numeric day types accept only exact
+known codes, dates remain strict local strings, and fields fall back only on
+explicit null. A present row requires valid Y/N home/split flags. Extra raw
+source fields are not serialized; original-owner privacy uses existing
+baseline redaction.
+
+The mapper also validates full baseline schedules, including hidden originals,
+before scope filtering. It does not silently hide malformed foreign activity
+rows or label an incomplete original schedule as absent. Raw Oracle DATE
+conversion, actual identity links and full real-data compatibility remain gated.
+See the [implementation evidence](docs/SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md#364-isolated-raw-row-mapper-implementation)
+and [execution record](docs/plan-shfAiAgentDevelopment.prompt.md#37-approved-isolated-oracle-personal-shift-mapper).
+
+Focused mapper/existing-projection checks: **37 passed**. Full validation:
+**238 tests (122 backend + 116 frontend)**, lint/types/builds passed; initial
+bundle unchanged at **433.73 kB**. No dependency or UI change. No new Oracle
+connection, business-data read, mutation, schema change or live API activation
+occurred. The next step is an approved real fetch/identity/time policy boundary,
+not replacing the working synthetic routes automatically.
+
+### Requested Real API Access: Corporate SSO Prerequisite
+
+The user requested real read/write integration without schema changes and
+confirmed the target is test. The first bounded scope is day1255, reading/
+updating only REMARK. Corporate SSO was selected instead of a local token test
+identity; env=t selects the obtainuserid test URL. Source investigation is
+documented in the
+[gateway trust gate](docs/SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md#731-real-api-request-and-corporate-gateway-trust-blocker).
+
+Legacy LoginAction uses domain_user for Nemo permissions but Login.load uses
+separate user for the profile/employment link. The readable source path and
+accessible WebSphere files do not verify the callback's gateway provenance or
+bind those fields to an authenticated caller. Permission lookup is not proof
+of identity. Some deployment search results are excluded by organization policy;
+they were not accessed by alternative means. Actual external gateway protections
+may exist but are unverified. No corporate endpoint was contacted.
+
+**Blocked:** SSO/gateway owner must supply an enforceable trusted ingress/identity
+contract and the accessible Nemo SOAP/test configuration. Then verify remark
+permission/resource ownership and existing-schema concurrency/audit/trigger/
+length/null/restoration rules before enabling a mutation. No real business API,
+unauthenticated POST identity, arbitrary SQL or schema change was added. No
+record1255 was read or changed in this step; current adapter remains read-only.
+The preceding238-test baseline remains, not claimed rerun for this source/
+documentation-only investigation.
+
+### Unverified SSO Claim Simulation, Stub Only
+
+The user approved POST identity fields only as **unverified SSO imitation, with
+no real rights**. The new [endpoint](apps/api/src/stub/sso-simulation.controller.ts)
+exists only with `SHF_STUB_API=true`; restart the stub API:
+
+```powershell
+npm run dev:api:stub
+```
+
+```text
+POST /api/v1/auth/sso-simulation
+Content-Type: application/json
+```
+
+```json
+{
+  "user": "synthetic-user",
+  "domain_user": "DEMO\\synthetic-domain-user"
+}
+```
+
+Use invented claims, not passwords or real user data. Exactly two nonblank
+strings, each max128 characters, no controls or query fields. Other body fields
+(roles, employee IDs, passwords, authenticated flags) are rejected with400
+INVALID_SSO_SIMULATION. HTTP200 explicitly means shape accepted, **not login**:
+authenticated=false, simulationOnly=true, identityAssurance=unverified,
+sessionCreated=false, permissions=[], oracleAccess=false, nemoContacted=false.
+No cookie/token/actor is created and submitted values are not echoed or retained.
+
+The static synthetic demo identity/capabilities remain unchanged. The route is
+absent in real mode; stub cannot coexist with enabled Oracle access. No real
+SSO callback, Nemo lookup, record1255 read/write or sign-in UI was enabled.
+See [contract and evidence](docs/SHF_REVERSE_ENGINEERED_TECHNICAL_DESIGN.md#732-approved-unverified-post-claim-simulation)
+and [execution record](docs/plan-shfAiAgentDevelopment.prompt.md#39-approved-unverified-sso-claim-simulation).
+Four focused API tests passed, followed by **242 total tests (126 backend+116
+frontend)**, lint/types/builds. Initial bundle remains **433.73 kB**. Actual
+corporate gateway trust and safe real write prerequisites remain unresolved.
 
 ### Historical Oracle Checks
 
@@ -522,7 +641,7 @@ identity, verified metadata/mapping, business contracts and data scope are ready
 
 ### Progress and R06 Operational Schedule/Attendance Demo
 
-The [current progress report](docs/plan-shfAiAgentDevelopment.prompt.md#current-progress-snapshot-2026-10-14-after-oracle-column-metadata)
+The [current progress report](docs/plan-shfAiAgentDevelopment.prompt.md#current-progress-snapshot-2026-10-14-after-unverified-sso-simulation)
 records the overall plan status. R04/R05 and the new R06 range-read increment
 have working synthetic demos; full architecture/business baselines, trusted
 identity, Oracle mapping/parity and production acceptance are not complete.
