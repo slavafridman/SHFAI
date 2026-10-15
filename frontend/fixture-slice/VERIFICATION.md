@@ -1,4 +1,160 @@
-# SHF-RW-05 verification — 2026-10-15
+# SHF-IMPL-UI-01 verification — 2026-10-15
+
+## Current implementation scope (supersedes historical detail-only scope below)
+
+**Status: frontend implementation done; ready for independent QA/caller review.**
+
+Real Angular **shared RTL shell + current-list filters/results/pagination +
+compact effective detail**, using only approved API responses. No prototype
+rows/catalog/service in the running application. Current-list approval at
+14:55 removed that earlier dependency; the current-list menu is now functional.
+Search/my-shifts remain disabled/planned, with no false navigation claims.
+No full migration, real authentication, production release or Oracle UI/runtime
+verification is claimed.
+
+Approved baselines: **§13 API/detail v0.1; §14 existing behavior v0.1;
+§17 exact tooling; §19 v0.1** including additive identity capability revision;
+**§21 accepted visual v0.1 with timepicker; §22.3–22.4 approval/source delta**.
+Canonical types remain backend-owned. Exact source pairs are fixture/fixture or
+identity+detail `oracle` / context+list `oracle-read-only`; mixed/unknown sources
+are rejected. Visible Oracle TEST/read-only text does not hide the explicitly
+synthetic Administrator/no-password-verification notice. Source-pair tests use
+synthetic names and mocked HTTP, not an Oracle read.
+
+### Evidence and ownership
+
+Only authored files under `frontend/fixture-slice/` changed. No Git operations,
+dependency installs, package/lockfile changes, other writers' files, backend or
+canonical-contract/design edits. No legacy execution, DB/EMS/batch/DDL,
+deployment, credentials or real employee screenshots.
+
+Read instructions/brief/UI skill; accepted prototype and §13/17/19/21/22;
+installed Material adapter/timepicker/dialog APIs; controlling read-only
+`ShiftDataAction` 118–132, `ShiftDataModel` 972–1020, `shifts_table.jsp` 37–98,
+detail popup 49–74 and effective getters 1016–1030. The source contract catalog
+is absent (`Test-Path docs/SHF_SOURCE_CONTRACT_CATALOG.md` → False).
+Source is evidence, not proof of legacy runtime or fresh Oracle metadata.
+
+Material built-in timepicker declares seconds/`m`/`h` interval support and
+immediate selection. To preserve approved explicit hour/minute apply/cancel
+semantics, use existing Material Dialog + Select: 24/60 choices, minute precision,
+strict HH:mm seed, cancel/Escape retention and exact clock focus restoration.
+Actual Material Datepicker uses the strict civil-date adapter and Hebrew labels.
+No new dependency. Official overview HTTP 200 was an SPA shell, not readable
+component documentation; attempted static timepicker content URL returned 404.
+Local installed declarations + compile/browser behavior are the verified evidence.
+
+### Executed checks and repairs during this implementation
+
+All npm/Node check commands below run from `frontend/fixture-slice/`.
+
+| Exact command | Actual outcome |
+|---|---|
+| `node --version`; `npm --version` (repo root) | **24.21.0 / 11.19.0**; approved installed versions retained |
+| `npm test -- --include=src/shift-day-page.spec.ts` (first coherent edit) | Test bundle compiled; first invocation hit Vitest's 5-second worker-start timeout, stopped **owned** hung session; no passing tests claimed |
+| same focused command, rerun | **28/30**; two assertions described old DOM composition, then adapted to semantic null-field cells and exact diagnostic link |
+| `npm test -- --include=src/current-shifts-page.spec.ts --include=src/shift-day-page.spec.ts` | **49/50**; dialog close lifecycle timing repaired with explicit zero transition durations; detail 30/30 |
+| `npm test -- --include=src/current-shifts-page.spec.ts --include=src/workspace-shell.spec.ts` | Initially 21/22 plus unhandled exception: `#opener` queried a Material button instance, not ElementRef. Fixed explicit query `read: ElementRef` with correct generic overload |
+| same focused command after repair | **22/22**, no unhandled errors |
+| `npm run typecheck` | Passed after repairing nullable originating-list context narrowing; later unknown-JSON guards use `unknown`, not `any` |
+| `npm run build` (first full-list eager version) | Passed with 841.41 kB initial / 800 kB warning; replaced eager list route with supported lazy route, **did not raise budget** |
+| `npm run typecheck`; `npm run build` (lazy route) | Passed; initial **534.65 kB**, lazy list **311.28 kB**, no budget warning at that checkpoint |
+| `npm test -- --include=src/current-shifts-page.spec.ts --include=src/current-shifts-generation.spec.ts --include=src/contract.spec.ts` | **31/31** after source-pair, bounded-window and independent stale-generation checks |
+| `npm test` (before last two refresh-focus cases) | **70/70**, six files; original forty behavior cases retained with legitimate composition/capability/source adjustments |
+| `npm run typecheck`; `npm test -- --include=src/current-shifts-page.spec.ts --include=src/current-shifts-generation.spec.ts` | **PASS; 29/29** after current-refresh exact-element pending/200/503 focus tests |
+| `node checks/browser-check.mjs` | **PASS**, actual Chrome **155.0.8059.40**, Angular running on owned loopback 4320, **intercepted synthetic API only**; detailed scope below |
+| `node checks/fixture-proxy-check.mjs` | **PASS**, actual Angular → proxy → explicitly configured **fixture-only** backend on owned 4310, no HTTP interception; desktop/mobile list/detail 200 + no-store |
+
+Browser harness initially encountered a stale Vite compiler-error overlay, then
+was rerun after restarting **only the owned dev server**. Assertions were fixed
+to await applied values/page IDs rather than accepting a previous results table;
+Material dialog controls wait for initial focus/rendering. Actual browser found
+clock Escape restoration could end on the input; close handling now explicitly
+returns to the exact clock button. None of these failed runs is counted as a
+passing browser run. Final checks are recorded below after all changes.
+
+### Bounded actual browser coverage
+
+- Intercepted synthetic matrix: **1440×900, 390×844, 320×844**. Real Material
+  calendar strict invalid date retention and Escape/opener; 24/60 picker applies
+  **08:07**, preserves typed invalid 24:00 / 8:07 / blank, cancel/Escape focus;
+  current mode uses server-supplied **08:07**, disables both time controls, and
+  switching off reloads defaults. No native US/AM-PM fallback.
+- Right desktop menu, honest disabled search/my-shifts, narrow modal drawer
+  Tab/Escape/exact opener; no page overflow at either narrow width. Both actual
+  shift time values are above the **844px** fold. Palette/RTL/landmarks checked.
+- Actual row/detail/back and next/previous offsets; direct detail keeps collapsed
+  diagnostic ID form and honest missing-origin landing. Long 38-digit ID,
+  40-character name, escaped raw markup, secondary metadata and text spacing
+  reflow; raw source is text, not HTML.
+- **Exact reload focus 4/4**: 1440/320 × terminal 200/503, actual keyboard Space,
+  saved DOM object identity pending/terminal, one request despite repeat Space.
+  New list refresh equivalent is independently covered by Angular unit tests.
+- Real delayed detail **and list** A/B races; explicit detail 401/403/404/500/503,
+  list 400/401/403/500/503, empty result, failed/malformed identity and explicit
+  context retry. No automatic fixture fallback, data on identity failure,
+  browser storage, external runtime requests or JS exceptions.
+- Separate non-intercepted fixture proxy run at **1440×900 / 390×844** uses
+  synthetic `15/10/2026 23:59` and day 2001: real backend G01/J01 labels,
+  list/detail 200/no-store, full overnight dates, real browser Back restores
+  filters/page/vertical **and table** scroll/exact opener. Script refuses Oracle
+  identity before opening business UI. Fixture may legitimately show empty at
+  the current server minute; application never supplies a fake row.
+
+Representative approved token contrast calculations (not a rendered/full audit):
+navy/white **14.88:1**, primary/white **5.00:1**, primary/soft **4.52:1**,
+muted/white **6.37:1**. Synthetic screenshots only under ignored
+`.angular/browser-evidence/ui01-*.png`; desktop/mobile list/detail/picker,
+loading/empty/error, long text and separate proxy snapshots. Representative
+desktop/mobile images were opened for visual review.
+
+### Explicit not-run checks / remaining owners
+
+No browser against Oracle or live employee data; Oracle adapter/driver/runtime
+readiness belongs to **backend owner + caller**, not a missing frontend API
+approval. No screen-reader/AT, exhaustive contrast/zoom or full WCAG 2.2 audit;
+QA owns independent acceptance. No deployment/release, full SHF migration,
+search/my-shifts, edit/export/totals, live DB/EMS, batch or legacy execution.
+All shared contract prerequisites assigned to this frontend are now available.
+
+### Final checks after all source edits — 15:23 +03:00
+
+| Exact command | Final result |
+|---|---|
+| `npm test` | **PASS 73/73**, six files: current page 27, detail 30, detail generations 7, list generations 3, shell 2, wire boundary 4; no unhandled errors |
+| `npm run typecheck` | **PASS**, strict no-emit TypeScript against the now-published canonical source union |
+| `npm run build` | **PASS**, strict Angular templates and optimized production-format build; initial **534.67 kB**, lazy list **311.79 kB**, no budget warnings/errors |
+| `node checks/browser-check.mjs` | **PASS**, final actual Angular/Chrome 155 synthetic-intercepted matrix, all three viewports, calendar/picker/menu/focus/navigation/states and both list/detail races; exact reload 4/4 |
+| `node checks/fixture-proxy-check.mjs` | **PASS**, final actual non-intercepted Angular/proxy/fixture API at 1440/390; list/detail 200 and no-store, real browser Back, filters/page/vertical+table scroll/exact opener |
+
+Final return edge-case: if re-reading the remembered page no longer includes
+the originating row, focus the real results heading and announce that the row
+is absent. Do not invent a row/opener or leave focus on BODY. This branch is
+covered by the added Angular/mocked-HTTP case; browser runs cover the actual
+successful-origin return and were rerun after the final change.
+
+Authored paths (all relative to this directory):
+`src/workspace-shell.{ts,html,scss,spec.ts}`,
+`src/current-shifts-page.{ts,html,scss,spec.ts}`,
+`src/current-shifts-contract.ts`, `src/current-shifts-fixtures.ts`,
+`src/current-shifts-generation.spec.ts`, `src/civil-date-adapter.ts`,
+`src/minute-picker.ts`, `src/list-navigation.ts`, `src/api.ts`,
+`src/contract.ts`, `src/contract.spec.ts`, `src/routes.ts`,
+`src/shift-day-page.{ts,html,scss,spec.ts}`, `src/generation.spec.ts`,
+`src/test-fixtures.ts`, `src/styles.scss`, `fixtures/current-shifts.synthetic.json`,
+`checks/browser-check.mjs`, `checks/fixture-proxy-check.mjs`, `README.md`,
+and this `VERIFICATION.md`. No manifests, lockfiles or proxy settings changed.
+
+Owned verification processes only: fixture API **22604** (4310), Angular dev
+server **24584** (4320), separate Chrome **2452** (9322, dedicated
+`.angular/ui01-browser` profile), all stopped. Final rerun used new owned fixture
+API **288**, Angular **1444**, Chrome **17452** on the same checked loopback ports;
+all three final helper sessions also stopped. These were temporary self-contained
+verification helpers, not a user demo or deployed service.
+
+---
+
+# Historical SHF-RW-05 verification — 2026-10-15
 
 Status: **D01/H01 fixes implemented and locally retested; narrowed independent
 SHF-QA-02 retest pending through caller**. Only `frontend/fixture-slice/`

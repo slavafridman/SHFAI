@@ -11,6 +11,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { SliceApi } from './api';
+import { WorkspaceShell } from './workspace-shell';
+import { ListNavigation } from './list-navigation';
 import {
   detail, displayTime, id, identity, problem,
   type EmployeeShiftDayResponseV1, type IdentityResponseV1,
@@ -32,18 +34,26 @@ const COPY = {
   selector: 'shf-shift-day',
   imports: [
     ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule,
-    MatInputModule, MatProgressBarModule,
+    MatInputModule, MatProgressBarModule, WorkspaceShell,
   ],
   templateUrl: './shift-day-page.html',
   styleUrl: './shift-day-page.scss',
 })
 export class ShiftDayPage {
   private readonly api = inject(SliceApi);
+  private readonly navigation = inject(ListNavigation);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroy = inject(DestroyRef);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly title = viewChild<ElementRef<HTMLElement>>('pageTitle');
+  readonly technical = viewChild<ElementRef<HTMLDetailsElement>>('technical');
+  readonly fromDiagnostic = signal(false);
+  readonly fromList = signal(false);
+  sourceUnit() {
+    const origin = this.navigation.origin;
+    return this.fromList() && origin && origin.unit.code === this.row()?.employee.orgUnitId ? origin.unit : null;
+  }
   readonly form = new FormGroup({
     employeeId: new FormControl('', { nonNullable: true, validators: [
       Validators.required, Validators.pattern(/^[1-9][0-9]{0,37}$/),
@@ -73,7 +83,10 @@ export class ShiftDayPage {
   readonly time = displayTime;
 
   constructor() {
-    afterNextRender(() => this.title()?.nativeElement.focus());
+    afterNextRender(() => {
+      this.title()?.nativeElement.focus({ preventScroll: true });
+      document.documentElement.scrollTop = 0;
+    });
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.cancelDetail();
       this.deferredRoute = null;
@@ -84,6 +97,11 @@ export class ShiftDayPage {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(params => {
       const employeeId = params.get('employeeId'), shiftDayId = params.get('shiftDayId');
       const pair = employeeId !== null && shiftDayId !== null ? { employeeId, shiftDayId } : null;
+      const origin = this.navigation.origin;
+      this.fromList.set(!!pair && !!origin && pair.employeeId === origin.employeeId && pair.shiftDayId === origin.shiftDayId);
+      // Only our supported diagnostic origin is recognized; never follow a return URL.
+      this.fromDiagnostic.set(!!pair &&
+        this.router.currentNavigation()?.extras.state?.['origin'] === 'shift-day-diagnostic');
       if (same(pair, this.ownNavigation)) { this.ownNavigation = null; return; }
       this.ownNavigation = null;
       this.cancelDetail();
@@ -136,7 +154,16 @@ export class ShiftDayPage {
     return `יש להזין ספרות 0–9 בלבד, ללא אפס מוביל או רווחים, עד ${name === 'employeeId' ? 38 : 10} ספרות`;
   }
   focusInput(name = 'employeeId'): void {
+    if (this.technical()) this.technical()!.nativeElement.open = true;
     this.host.nativeElement.querySelector<HTMLInputElement>(`#${name}`)?.focus();
+  }
+  backToEntry(): void {
+    if (this.fromList()) {
+      this.navigation.returning = true;
+      void this.router.navigate(['/current-shifts']);
+      return;
+    }
+    void this.router.navigate(['/shift-day']).then(() => this.focusInput());
   }
   private cancelDetail(): void {
     this.generation++;
@@ -194,7 +221,10 @@ export class ShiftDayPage {
     this.deferredRoute = null;
     this.committed.set(pair);
     this.ownNavigation = pair;
-    void this.router.navigate(['/employees', pair.employeeId, 'shift-days', pair.shiftDayId])
+    if (this.router.url === '/shift-day') this.fromDiagnostic.set(true);
+    void this.router.navigate(['/employees', pair.employeeId, 'shift-days', pair.shiftDayId], {
+      state: this.fromDiagnostic() ? { origin: 'shift-day-diagnostic' } : {},
+    })
       .then(ok => { if (!ok && same(pair, this.ownNavigation)) this.ownNavigation = null; });
     this.load(pair, reload);
   }
@@ -214,7 +244,7 @@ export class ShiftDayPage {
     this.detailWork = this.api.detail(pair.employeeId, pair.shiftDayId).subscribe({
       next: value => {
         if (!current()) return;
-        if (!detail(value, pair.employeeId, pair.shiftDayId)) {
+        if (!detail(value, pair.employeeId, pair.shiftDayId, this.principal()!.dataSource)) {
           this.terminalError(COPY.mismatch, gen, reload); return;
         }
         this.row.set(value);
@@ -275,7 +305,7 @@ export class ShiftDayPage {
     this.state.set('error');
     this.message.set(message);
     this.announcement.set(reload ? message : '');
-    if (!reload) this.queueFocus('#error-heading', gen);
+    if (!reload || !this.canRead()) this.queueFocus('#error-heading', gen);
   }
   private queueFocus(selector: string, gen: number): void {
     // After signal-driven rendering; generation check also protects focus from late work.

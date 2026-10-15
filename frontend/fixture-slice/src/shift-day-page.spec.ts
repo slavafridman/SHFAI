@@ -180,8 +180,9 @@ describe('UI02 single shift-day page (Angular + mocked HTTP, jsdom)', () => {
     http.expectOne(url).flush(row);
     render();
     expect(page.state()).toBe('success');
-    expect(dom().querySelectorAll('dd').length).toBe(10);
-    expect(text().split('לא זמין').length - 1).toBe(7);
+    expect(dom().querySelector('.detail-card')).not.toBeNull();
+    expect(dom().querySelectorAll('.detail-secondary dd')).toHaveLength(5);
+    expect([...dom().querySelectorAll('.detail-secondary dd')].every(n => n.textContent === 'לא זמין')).toBe(true);
   });
 
   it('UI02-09 duplicate activation suppressed; edits cancel and clear old data immediately', () => {
@@ -275,7 +276,7 @@ describe('UI02 single shift-day page (Angular + mocked HTTP, jsdom)', () => {
     render();
     expect(page.invalidRoute()).toBe(true);
     expect(text()).toContain('הקשר לא תקין');
-    expect(dom().querySelector('a[routerLink]')?.textContent).toContain('בחירת הקשר חדש');
+    expect(dom().querySelector('a[href="/shift-day"]')?.textContent).toContain('בחירת הקשר חדש');
   });
 
   for (const mutation of [
@@ -309,7 +310,7 @@ describe('UI02 single shift-day page (Angular + mocked HTTP, jsdom)', () => {
 
   it('UI02-10 unexpected identity source or invalid synthetic employee never authorizes detail', () => {
     const value = fixtureIdentity();
-    value.dataSource = 'oracle';
+    value.dataSource = 'unapproved-source' as 'oracle';
     http.expectOne('/api/v1/identity').flush(value);
     enter();
     expect(page.canRead()).toBe(false);

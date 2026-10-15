@@ -1,0 +1,129 @@
+<shf-workspace-shell active="list" [principal]="principal()" [identityState]="identityState()"
+  [identityMessage]="identityError()" (recheck)="recheckIdentity()">
+  <nav class="breadcrumbs" aria-label="מיקום במערכת"><span>סביבת עבודה</span><span aria-hidden="true">/</span><span>משמרות נוכחיות</span></nav>
+  <div class="heading"><div><h1 #heading tabindex="-1">משמרות נוכחיות</h1>
+    <p class="subtle">בירור משמרות לפי תאריך, שעה ומוקד</p></div><span class="version">קריאה בלבד</span></div>
+  <form [formGroup]="form" (ngSubmit)="search()">
+    <fieldset class="surface filters" [disabled]="!canRead() || !context()">
+      <legend>סינון משמרות</legend>
+      <div class="filter-head">
+        <mat-checkbox id="current-mode" [checked]="current()" (change)="toggleCurrent($event.checked)"
+          [disabled]="!canRead() || !context()">משמרות ברגע זה</mat-checkbox>
+        <p class="subtle">ללא רענון אוטומטי · הזמן נקבע בשירות</p>
+      </div>
+      <div class="filter-grid">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>תאריך</mat-label>
+          <input matInput id="filter-date" formControlName="date" [matDatepicker]="calendar" dir="ltr"
+            [min]="minDate" [max]="maxDate" placeholder="DD/MM/YYYY" autocomplete="off" aria-describedby="date-help">
+          <mat-datepicker-toggle matIconSuffix [for]="calendar" aria-label="פתיחת לוח שנה" [disabled]="current()" />
+          <mat-datepicker #calendar [restoreFocus]="true" />
+          <mat-hint id="date-help">יום/חודש/שנה</mat-hint>
+          @if (form.controls.date.touched && form.controls.date.invalid) { <mat-error>יש להזין תאריך תקין בפורמט DD/MM/YYYY</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>שעה</mat-label>
+          <input matInput id="filter-time" formControlName="time" dir="ltr" inputmode="text"
+            placeholder="HH:mm" autocomplete="off" aria-describedby="time-help">
+          <button id="time-open" mat-icon-button matSuffix type="button" aria-label="פתיחת בחירת שעה"
+            [disabled]="current() || !canRead() || !context()" [attr.aria-expanded]="pickerOpen()"
+            aria-haspopup="dialog" (click)="openTime()"><span aria-hidden="true">◷</span></button>
+          <mat-hint id="time-help">24 שעות · דיוק של דקה</mat-hint>
+          @if (form.controls.time.touched && form.controls.time.invalid) { <mat-error>יש להזין שעה תקינה HH:mm בין 00:00 ל־23:59</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="parent-field">
+          <mat-label>מוקד</mat-label>
+          <mat-select id="filter-moked" formControlName="moked">
+            <mat-option [value]="null">כל המוקדים המורשים</mat-option>
+            @for (option of context()?.mokedOptions ?? []; track option.code) {
+              <mat-option [value]="option.code">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>מוקד אב · הצוות מוצג בנפרד בתוצאות</mat-hint>
+        </mat-form-field>
+        <div class="apply">
+          <button id="list-search" mat-flat-button type="submit" [disabled]="!canRead() || !context() || current() || state() === 'loading'">חיפוש משמרות</button>
+          @if (current()) { <button id="list-refresh" mat-flat-button type="button" (click)="search(false)"
+            [disabled]="!canRead()" [attr.aria-disabled]="!canRead() || state() === 'loading'"
+            [attr.aria-busy]="state() === 'loading'">רענון עכשיו</button> }
+        </div>
+      </div>
+      @if (result(); as data) {
+        <p class="applied"><span class="dot" aria-hidden="true"></span>
+          {{ evaluatedCurrent() ? 'מצב נוכחי הוערך בשעה' : 'תוצאות עבור' }}
+          <bdi dir="ltr">{{ displayTime(data.applied.attendanceDate + 'T' + data.applied.currentTime + ':00').slice(0, 16) }}</bdi>
+          · <bdi dir="ltr">{{ data.businessTimeZone }}</bdi>
+        </p>
+      }
+    </fieldset>
+  </form>
+  <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ announcement() }}</p>
+  <section aria-label="תוצאות משמרות" [attr.aria-busy]="state() === 'loading' || state() === 'context-loading'">
+    @if (state() === 'loading' || state() === 'context-loading') {
+      <div class="surface state-panel"><p>{{ message() }}</p><mat-progress-bar mode="indeterminate" aria-label="טעינת משמרות" /></div>
+    }
+    @if (state() === 'dirty') { <p class="surface state-panel">{{ message() }}</p> }
+    @if (state() === 'error') {
+      <div class="surface state-panel error"><h2 id="list-error" tabindex="-1">לא ניתן להציג משמרות</h2><p>{{ message() }}</p>
+        @if (reference()) { <p>מזהה פנייה לתמיכה: <bdi dir="ltr">{{ reference() }}</bdi></p> }
+        <button id="list-retry" mat-stroked-button type="button" (click)="retry()" [disabled]="!canRead()">ניסיון נוסף</button>
+      </div>
+    }
+    @if (result(); as data) {
+      <div class="results-head"><h2 id="results-heading" tabindex="-1">רשימת משמרות <span class="count">{{ data.items.length }} בעמוד זה</span></h2>
+        <p class="subtle">הנתונים משקפים את הקריאה האחרונה בלבד</p></div>
+      @if (state() === 'empty') { <div class="surface state-panel"><p>לא נמצאו משמרות במסננים שנבחרו.</p><p class="subtle">אפשר לשנות תאריך, שעה או מוקד ולחפש מחדש.</p></div> }
+      @else {
+        <p class="scroll-hint" id="table-help">הטבלה ניתנת לגלילה אופקית להצגת כל השדות.</p>
+        <div class="surface">
+          <div class="table-wrap" tabindex="0" role="region" aria-label="טבלת משמרות, גלילה אופקית" aria-describedby="table-help">
+            <table><caption class="sr-only">משמרות עבור המסננים שהוחלו</caption>
+              <thead><tr><th scope="col">עובד/ת</th><th scope="col">יום ותאריך התחלה</th><th scope="col">התחלה</th>
+                <th scope="col">סיום</th><th scope="col">צוות</th><th scope="col">מיקום</th><th scope="col">פעילות</th>
+                <th scope="col">תפקיד פנימי</th><th scope="col">נוכחות</th><th scope="col">פרטים</th></tr></thead>
+              <tbody>
+                @for (row of data.items; track row.shiftDayId) {
+                  <tr [class.selected]="navigation.origin?.shiftDayId === row.shiftDayId">
+                    <th scope="row"><bdi>{{ row.employee.firstName }} {{ row.employee.lastName }}</bdi></th>
+                    <td>{{ weekday(row) }}<bdi class="cell-note" dir="ltr">{{ startDate(row) }}</bdi></td>
+                    <td><bdi dir="ltr">{{ row.startLocal.slice(11, 16) }}</bdi></td>
+                    <td><bdi dir="ltr">{{ row.endLocal.slice(11, 16) }}</bdi>
+                      <bdi class="cell-note" dir="ltr">{{ displayTime(row.endLocal).slice(0, 10) }}</bdi>
+                      @if (row.startLocal.slice(0, 10) !== row.endLocal.slice(0, 10)) { <span class="cell-note">תאריך סיום שונה</span> }
+                    </td>
+                    <td><bdi>{{ row.employee.unit.label }}</bdi><span class="cell-note">מוקד: <bdi>{{ row.employee.unit.moked.label }}</bdi></span></td>
+                    <td>{{ row.workingFromHome === null ? 'לא זמין' : row.workingFromHome ? 'מהבית' : 'באתר' }}</td>
+                    <td>@for (activity of row.activities; track $index) { <span class="activity-line"><bdi>{{ label(activity) }}</bdi></span> } @empty { <span>לא זמין</span> }</td>
+                    <td><bdi>{{ row.innerJob ? label(row.innerJob) : 'לא זמין' }}</bdi></td>
+                    <td>
+                      @switch (row.attendanceDisplay.kind) {
+                        @case ('missing-reason') { <span class="pill reason"><bdi>{{ label(row.attendanceDisplay.reason) }}</bdi></span> }
+                        @case ('station-arrival') { <span class="pill"><bdi dir="ltr">{{ row.attendanceDisplay.atLocal.slice(11, 16) }}</bdi></span> }
+                        @case ('not-recorded') { <span class="subtle">— לא נרשם</span> }
+                      }
+                    </td>
+                    <td>@if (principal()?.principal?.capabilities?.includes('shift-day:read')) {
+                      <a class="row-link" [id]="'detail-' + row.shiftDayId" [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId]"
+                        (click)="openDetail(row, $event)" [attr.aria-label]="'פרטי משמרת עבור ' + row.employee.firstName + ' ' + row.employee.lastName">פרטי משמרת</a>
+                    } @else { <span class="subtle" aria-disabled="true">אין הרשאה לפרטים</span> }</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="pager"><span>מוצגות {{ data.page.offset + 1 }}–{{ data.page.offset + data.items.length }} · ללא ספירה כוללת</span>
+            <div class="pager-controls">
+              <button id="previous-page" mat-stroked-button type="button" [disabled]="data.page.offset === 0" (click)="page(data.page.offset - data.page.limit)">הקודם</button>
+              <button id="next-page" mat-stroked-button type="button" [disabled]="data.page.nextOffset === null" (click)="page(data.page.nextOffset!)">הבא</button>
+            </div>
+          </div>
+          @if (data.page.hasMore && data.page.nextOffset === null) { <p class="window-note">הגעת לגבול חלון התוצאות. יש לצמצם מוקד או זמן.</p> }
+        </div>
+      }
+      <p class="footer-note">הדפדוף שומר את דקת הבירור, לא תמונת מצב קבועה. נתונים עשויים להשתנות בין קריאות.</p>
+    }
+  </section>
+  <details class="surface diagnostics"><summary>כלים נוספים — קישור ישיר לפי מזהים ידועים</summary>
+    <p>אין כאן חיפוש עובד לפי מזהה. <a routerLink="/shift-day">פתיחת בירור לפי מזהי עובד ויום עבודה</a></p>
+  </details>
+</shf-workspace-shell>

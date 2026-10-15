@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { detail, displayTime, id, localTime } from './contract';
+import { detail, displayTime, id, localTime, identity } from './contract';
+import { fixtureIdentity, fixtureRow } from './test-fixtures';
 
 describe('UI02-02/07/10 wire boundary', () => {
   it('preserves canonical decimal strings without trimming or numeric coercion', () => {
@@ -22,5 +23,17 @@ describe('UI02-02/07/10 wire boundary', () => {
   it('rejects absent fields and mismatched responses', () => {
     expect(detail({}, '1001', '2001')).toBe(false);
     expect(detail(null, '1001', '2001')).toBe(false);
+  });
+  it('approved identity has both capabilities; Oracle detail must match the verified identity source', () => {
+    const principal = fixtureIdentity();
+    expect(identity(principal)).toBe(true);
+    principal.principal.capabilities = ['shift-day:read'];
+    expect(identity(principal)).toBe(false);
+    principal.principal.capabilities = ['shift-day:read', 'current-shifts:read'];
+    principal.dataSource = 'oracle';
+    expect(identity(principal)).toBe(true);
+    const row = fixtureRow(); row.dataSource = 'oracle';
+    expect(detail(row, '1001', '2001', 'oracle')).toBe(true);
+    expect(detail(row, '1001', '2001', 'isolated-fixture')).toBe(false);
   });
 });

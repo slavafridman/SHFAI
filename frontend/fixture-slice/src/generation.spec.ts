@@ -96,7 +96,7 @@ describe('UI02-09 generation guards independent of HTTP cancellation', () => {
     harness.detectChanges();
     expect(page.state()).toBe('error');
     expect(api.details).toHaveLength(0);
-    expect(harness.routeNativeElement?.querySelector('a[routerLink]')?.textContent).toContain('בחירת הקשר חדש');
+    expect(harness.routeNativeElement?.querySelector('a[href="/shift-day"]')?.textContent).toContain('בחירת הקשר חדש');
   });
   it('route destruction suppresses late identity/detail callbacks', async () => {
     const { api, harness, page } = await setup();

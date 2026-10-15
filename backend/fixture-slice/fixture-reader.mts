@@ -2,6 +2,7 @@ import type { EmployeeShiftDayReader, RawShiftDay, ShiftDayReadResult } from "./
 
 // Isolated test double: source-column-shaped joined rows only, never a live adapter.
 export class FixtureReader implements EmployeeShiftDayReader {
+  readonly dataSource = "isolated-fixture" as const;
   private readonly rows: RawShiftDay[];
   constructor(rows: RawShiftDay[]) {
     this.rows = structuredClone(rows);

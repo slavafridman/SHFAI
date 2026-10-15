@@ -4,7 +4,8 @@ import { SliceError } from "./errors.mts";
 
 // AgentDayBean.getShiftStart/End/Activity/SiteId: change iff non-null.
 // No activity/day-type/cancellation filter, date conversion or duration repair.
-export function project(row: RawShiftDay, businessTimeZone: string): EmployeeShiftDayResponseV1 {
+export function project(row: RawShiftDay, businessTimeZone: string,
+  dataSource: EmployeeShiftDayResponseV1["dataSource"] = "isolated-fixture"): EmployeeShiftDayResponseV1 {
   validateRaw(row);
   if (row.orgUnitId === null) throw new SliceError("SHIFT_DAY_NOT_FOUND");
   return {
@@ -20,6 +21,6 @@ export function project(row: RawShiftDay, businessTimeZone: string): EmployeeShi
       stageArrivalLocal: row.stageArrivalLocal,
       stationArrivalLocal: row.stationArrivalLocal, stationExitLocal: row.stationExitLocal,
     },
-    businessTimeZone, dataSource: "isolated-fixture",
+    businessTimeZone, dataSource,
   };
 }

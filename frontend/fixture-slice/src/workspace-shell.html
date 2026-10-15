@@ -1,0 +1,64 @@
+<a class="skip" href="#main" (click)="focusMain()">דילוג לתוכן הראשי</a>
+<header class="topbar">
+  <div class="brand"><bdi class="wordmark" lang="en">SHF</bdi><span class="brand-caption">ניהול משמרות</span></div>
+  <div class="identity">זהות היישום נפרדת מהעובד/ת הנבחר/ת</div>
+  <button #opener id="menu-open" mat-stroked-button class="menu-toggle" type="button"
+    aria-label="פתיחת תפריט ניווט" aria-haspopup="dialog" aria-controls="menu"
+    [attr.aria-expanded]="menuOpen()" (click)="openMenu()">☰ תפריט</button>
+</header>
+<aside class="mockbar" aria-label="מצב זהות ומקור נתונים">
+  <div>
+    @if (principal(); as identity) {
+      @if (identity.principal.synthetic) {
+        <strong>מצב הדגמה מקומי — מנהל מערכת סינתטי.</strong>
+        <span> לא בוצע אימות סיסמה אמיתית.</span>
+      } @else {
+        <strong>זהות שסופקה על ידי השירות — אינה זהות העובד שנבחר.</strong>
+      }
+      <span class="identity-name"> זהות יישום: <bdi dir="auto">{{ identity.principal.displayName }}</bdi></span>
+      <span class="source-label"> · מקור נתונים: {{ identity.dataSource === 'oracle' ? 'Oracle TEST — קריאה בלבד' : 'נתוני הדגמה מבודדים' }}</span>
+    } @else {
+      <strong id="identity-heading" tabindex="-1">
+        {{ identityState() === 'loading' ? 'טוען את פרטי מצב ההדגמה…' : 'זהות הדגמה לא זמינה — אין הנחת מנהל מערכת.' }}
+      </strong>
+      <span> · מקור נתונים טרם אומת</span>
+    }
+    @if (identityMessage()) { <p id="identity-message">{{ identityMessage() }}</p> }
+  </div>
+  <button id="identity-retry" mat-button type="button" (click)="recheck.emit()"
+    [disabled]="identityState() === 'loading'">
+    {{ identityState() === 'ready' ? 'בדיקת זהות מחדש' : 'ניסיון נוסף' }}
+  </button>
+</aside>
+<div class="workspace">
+  <aside class="sidebar">
+    <nav aria-label="ניווט ראשי">
+      <p class="nav-title">סביבת עבודה / משמרות</p>
+      @if (principal()?.principal?.capabilities?.includes('current-shifts:read')) {
+        <a class="nav-item" [class.active]="active() === 'list'" routerLink="/current-shifts"
+          [attr.aria-current]="active() === 'list' ? 'page' : null">משמרות נוכחיות</a>
+      } @else { <span class="nav-item unavailable" aria-disabled="true">משמרות נוכחיות <small>אין הרשאה זמינה</small></span> }
+      <span class="nav-item unavailable" aria-disabled="true">חיפוש משמרות <small>מתוכנן</small></span>
+      <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>מתוכנן</small></span>
+      @if (active() === 'detail') { <span class="nav-item active" aria-current="page">פרטי משמרת</span> }
+    </nav>
+    <p class="nav-note">בירור משמרות לקריאה בלבד. חיפוש מורחב והמשמרות שלי עדיין אינם זמינים.</p>
+  </aside>
+  <main #main id="main" tabindex="-1"><ng-content /></main>
+</div>
+<dialog #menu id="menu" aria-labelledby="menu-heading"
+  (cancel)="$event.preventDefault(); closeMenu()" (close)="menuOpen.set(false)">
+  <div class="drawer-head"><h2 id="menu-heading">ניווט משמרות</h2>
+    <button id="menu-close" mat-stroked-button type="button" (click)="closeMenu()" autofocus>סגירת תפריט</button>
+  </div>
+  <nav class="drawer-nav" aria-label="ניווט במכשיר נייד">
+    @if (principal()?.principal?.capabilities?.includes('current-shifts:read')) {
+      <a class="nav-item" [class.active]="active() === 'list'" routerLink="/current-shifts" (click)="closeMenu()"
+        [attr.aria-current]="active() === 'list' ? 'page' : null">משמרות נוכחיות</a>
+    } @else { <span class="nav-item unavailable" aria-disabled="true">משמרות נוכחיות <small>אין הרשאה זמינה</small></span> }
+    <span class="nav-item unavailable" aria-disabled="true">חיפוש משמרות <small>מתוכנן</small></span>
+    <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>מתוכנן</small></span>
+    @if (active() === 'detail') { <span class="nav-item active" aria-current="page">פרטי משמרת</span> }
+  </nav>
+  <p class="nav-note">חיפוש מורחב והמשמרות שלי עדיין אינם זמינים.</p>
+</dialog>

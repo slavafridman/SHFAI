@@ -18,18 +18,19 @@ const unique = (v: unknown, test: (v: unknown) => boolean): v is string[] =>
 const unit = (v: unknown): v is string => text(v, 8, 1) && v !== '*';
 
 export function identity(v: unknown): v is IdentityResponseV1 {
-  if (!object(v) || v.dataSource !== 'isolated-fixture' || !object(v.principal)) return false;
+  if (!object(v) || !['isolated-fixture', 'oracle'].includes(String(v.dataSource)) || !object(v.principal)) return false;
   const p = v.principal;
   if (!text(p.subject, 128, 1) || !text(p.displayName, 128) ||
       !['synthetic', 'real'].includes(String(p.provider)) ||
       p.synthetic !== (p.provider === 'synthetic') ||
       !unique(p.roles, r => r === 'Administrator') ||
-      !unique(p.capabilities, c => c === 'shift-day:read') ||
+      !unique(p.capabilities, c => c === 'shift-day:read' || c === 'current-shifts:read') ||
       !(p.employeeId === null || id(p.employeeId)) ||
       !object(p.resourceScope) || !unique(p.resourceScope.orgUnitIds, unit)) return false;
   return !p.synthetic || (p.subject === 'synthetic:administrator' &&
     p.displayName === 'Synthetic Administrator (local/isolated only)' &&
-    p.employeeId === null && p.roles.length === 1 && p.capabilities.length === 1 &&
+    p.employeeId === null && p.roles.length === 1 && p.capabilities.length === 2 &&
+    p.capabilities.includes('shift-day:read') && p.capabilities.includes('current-shifts:read') &&
     p.resourceScope.orgUnitIds.length > 0 && p.resourceScope.orgUnitIds.length <= 100);
 }
 
@@ -45,9 +46,10 @@ function zone(v: unknown): v is string {
   if (!text(v, 128, 1) || !/^[A-Za-z][A-Za-z0-9._+-]*(?:\/[A-Za-z0-9._+-]+)*$/.test(v)) return false;
   try { new Intl.DateTimeFormat('en', { timeZone: v }); return true; } catch { return false; }
 }
-export function detail(v: unknown, employeeId: string, shiftDayId: string): v is EmployeeShiftDayResponseV1 {
+export function detail(v: unknown, employeeId: string, shiftDayId: string,
+  expectedSource: IdentityResponseV1['dataSource'] = 'isolated-fixture'): v is EmployeeShiftDayResponseV1 {
   if (!object(v) || v.employeeId !== employeeId || v.shiftDayId !== shiftDayId ||
-      !id(v.employeeId) || !id(v.shiftDayId, 10) || v.dataSource !== 'isolated-fixture' ||
+      !id(v.employeeId) || !id(v.shiftDayId, 10) || v.dataSource !== expectedSource ||
       !zone(v.businessTimeZone) || !object(v.employee) ||
       !text(v.employee.firstName, 40) || !text(v.employee.lastName, 40) ||
       !text(v.employee.orgUnitId, 8, 1) || !object(v.effectiveShift) || !object(v.attendance)) return false;

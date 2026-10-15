@@ -1,0 +1,23 @@
+{
+  "catalog": {
+    "mokedUnits": [{ "code": "P01", "label": "מוקד בדיקה סינתטי", "unitType": "G01" }],
+    "teams": [{ "code": "TEST-U", "label": "צוות בדיקה סינתטי", "unitType": "J01", "parentMokedCode": "P01" }]
+  },
+  "activities": [{ "code": "בדיקה", "label": "פעילות בדיקה" }, { "code": "TEST", "label": "פעילות סינתטית" }],
+  "innerJobs": [],
+  "missingReasons": [],
+  "employees": [
+    { "employeeId": "1001", "employeeNumber": "TEST0001", "firstName": "בדיקה", "lastName": "סינתטית", "teamCode": "TEST-U", "innerJobCode": null }
+  ],
+  "days": [
+    {
+      "shiftDayId": "2001", "employeeKey": "TEST0001", "changedEmployeeKey": null,
+      "baselineStartLocal": "2026-10-15T23:30:00", "changedStartLocal": null,
+      "baselineEndLocal": "2026-10-16T07:00:00", "changedEndLocal": null,
+      "baselineDayType": 4, "changedDayType": null, "cancellationReason": null,
+      "baselineActivityData": "בדיקה;TEST", "changedActivityData": null,
+      "baselineHome": null, "changedHome": null
+    }
+  ],
+  "attendance": []
+}

@@ -6,7 +6,7 @@ export function fixtureIdentity(): IdentityResponseV1 {
     principal: {
       subject: 'synthetic:administrator', provider: 'synthetic', synthetic: true,
       displayName: 'Synthetic Administrator (local/isolated only)',
-      roles: ['Administrator'], capabilities: ['shift-day:read'], employeeId: null,
+      roles: ['Administrator'], capabilities: ['shift-day:read', 'current-shifts:read'], employeeId: null,
       resourceScope: { orgUnitIds: ['TEST-U'] },
     },
     dataSource: 'isolated-fixture',

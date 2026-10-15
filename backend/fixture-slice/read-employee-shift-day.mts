@@ -9,6 +9,7 @@ import { project } from "./projection.mts";
 export async function readEmployeeShiftDay(
   principal: PrincipalV1, employeeId: string, shiftDayId: string,
   reader: EmployeeShiftDayReader, businessTimeZone: string,
+  dataSource: EmployeeShiftDayResponseV1["dataSource"] = "isolated-fixture",
 ): Promise<EmployeeShiftDayResponseV1> {
   validatePrincipal(principal);
   validateIds(employeeId, shiftDayId);
@@ -22,5 +23,5 @@ export async function readEmployeeShiftDay(
   if (result.row.shiftDayId !== shiftDayId) throw new SliceError("INVALID_SOURCE_DATA");
   if (result.row.employeeId !== employeeId ||
       !accessPolicy.canReadShiftDay(principal, result.row)) throw new SliceError("SHIFT_DAY_NOT_FOUND");
-  return project(result.row, businessTimeZone);
+  return project(result.row, businessTimeZone, dataSource);
 }

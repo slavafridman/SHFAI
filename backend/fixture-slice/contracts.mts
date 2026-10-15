@@ -2,7 +2,7 @@
 export type DecimalId = string;
 export type ShiftDayId = string;
 export type LocalDateTime = string;
-export type CapabilityV1 = "shift-day:read";
+export type CapabilityV1 = "shift-day:read" | "current-shifts:read";
 export interface PrincipalV1 {
   subject: string;
   provider: "synthetic" | "real";
