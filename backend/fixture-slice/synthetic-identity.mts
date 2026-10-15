@@ -29,11 +29,12 @@ export async function createRuntime(
   configuration: unknown, reader: EmployeeShiftDayReader, resolveProvider?: ProviderResolver,
 ) {
   const config: StartupConfig = validateConfig(configuration);
-  const provider = config.authenticationMode === "synthetic"
+  const configuredProvider = config.authenticationMode === "synthetic"
     ? new SyntheticAdministratorProvider(config)
     : await resolveProvider?.(config.realProviderId);
-  if (!provider || typeof provider.authenticate !== "function")
+  if (!configuredProvider || typeof configuredProvider.authenticate !== "function")
     throw new Error("Configured authentication provider is not installed");
+  const provider = configuredProvider;
 
   async function authenticate(request: AuthenticationRequest): Promise<PrincipalV1> {
     let principal: unknown;

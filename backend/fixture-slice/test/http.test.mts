@@ -10,6 +10,7 @@ import type { SliceRuntime } from "../synthetic-identity.mts";
 import type { EmployeeShiftDayReader, PrincipalV1 } from "../contracts.mts";
 import { FixtureReader } from "../fixture-reader.mts";
 import { SliceError } from "../errors.mts";
+import { record } from "../contract-validation.mts";
 import { startFromEnvironment } from "../server.mts";
 import { config, row } from "./fixtures.mts";
 
@@ -46,9 +47,11 @@ async function problem(response: Response, code: string, status: number) {
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.match(response.headers.get("content-type") ?? "", /^application\/problem\+json/);
   const dto = await response.json();
+  assert.ok(record(dto));
   assert.equal(dto.code, code);
   assert.equal(dto.type, `urn:shf:problem:${code}`);
   assert.equal(dto.status, status);
+  assert.ok(typeof dto.requestId === "string");
   assert.match(dto.requestId, /^[0-9a-f-]{36}$/);
   assert.ok(!("employeeId" in dto) && !("effectiveShift" in dto) && !("detail" in dto));
   return dto;
@@ -178,6 +181,8 @@ test("large canonical employee/site IDs remain strings through HTTP", async () =
     const response = await fetch(`${url}/api/v1/employees/${id}/shift-days/9999999999`);
     assert.equal(response.status, 200);
     const dto = await response.json();
+    assert.ok(record(dto));
+    assert.ok(record(dto.effectiveShift));
     assert.equal(dto.employeeId, id);
     assert.equal(dto.effectiveShift.siteId, id);
     assert.equal(dto.shiftDayId, "9999999999");
@@ -201,6 +206,8 @@ test("identity response limit is enforced over HTTP; unapproved provider fields 
     const response = await fetch(url + "/api/v1/identity");
     assert.equal(response.status, 200);
     const dto = await response.json();
+    assert.ok(record(dto));
+    assert.ok(record(dto.principal));
     assert.equal("internalOnly" in dto.principal, false);
     assert.deepEqual(dto.principal.roles, []);
   });
@@ -306,7 +313,9 @@ test("concurrent HTTP requests keep per-request principal/context/errors isolate
       const day = index % 2 ? "2001" : "2002";
       const response = await fetch(`${url}/api/v1/employees/${employee}/shift-days/${day}`);
       assert.equal(response.status, 200);
-      assert.equal((await response.json()).employeeId, employee);
+      const dto = await response.json();
+      assert.ok(record(dto));
+      assert.equal(dto.employeeId, employee);
       return problem(await fetch(`${url}/api/v1/employees/9999/shift-days/${day}`), "SHIFT_DAY_NOT_FOUND", 404);
     }));
     assert.equal(new Set(results.map(dto => dto.requestId)).size, 20);
