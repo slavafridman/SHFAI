@@ -1286,3 +1286,445 @@ Record the user's calendar-control preference for **future relevant actual date 
 **Reported by caller, not independently verified here:** backend static typecheck and 34 focused tests were published at checkpoint **`22c31e9`**; UI owner reports **38 tests, typecheck, build and browser checks passed**. Independent QA remains pending; these reports are not architecture verification, complete migration coverage or release approval. Neither checkpoint/report proves this appended comparison is published. The stored document-verification hash does not cover the new bytes.
 
 **Next action:** caller uses this matrix for migration review; current backend/UI owners retain the approved sections 13–14 scope, and QA validates the implemented detail against it. No additional controls or contract changes are requested by SHF-MAP-01.
+
+---
+
+## 19. Current-shift list target proposal — v0.1 (SHF-NEXT-01)
+
+**Date:** 15 October 2026. **Status:** review; **P: proposed, awaiting explicit baseline approval before consumer edits**.  
+**Exclusive scope:** append this architecture/shared-contract section only. Sections 13–14 v0.1 remain approved, tooling/scaffold approval in section 17 remains satisfied, and section 18 remains unchanged. Caller reports the completed first fixture milestone on `main` at `da8834aa10eea65079b403e2aad7aaf330c00f60`; no Git/remote verification was performed here. This is not implementation, publication or release approval.
+
+### 19.1 Selected source chain and recovered behavior
+
+The source-contract catalog is absent from the inspected `docs` directory. Existing baseline/inventories, particularly [routes](reverse-engineering/routes.csv#L55), were used as locators, followed by direct reads of controlling source. All findings below are **S: source-observed**, not runtime verification.
+
+| Controlling evidence | Recovered behavior |
+|---|---|
+| [struts-config.xml, 403–408](../old/SHFWeb/WebContent/WEB-INF/struts-config.xml#L403) | `/shift/currentParam` uses request-scoped `shiftDataForm`, dispatches `current_param`, then forwards to `/shift/currentResult.do`; that dispatches `current_result` and forwards to `shifts_list.jsp`. Both declare activity `shift_current`. This is not the personal-list route. |
+| [BaseAction.perform and setUserProfileDetails](../old/SHF/src/bzq/shf/actions/BaseAction.java#L88) | Requires session profile, checks configured activity, injects `allowedUnits` and `allowedMoked` into the form. Source authorization is more than menu visibility, but not proof of resource-level enforcement for every supplied filter. |
+| [ShiftDataAction, 118–132](../old/SHF/src/bzq/shf/actions/ShiftDataAction.java#L118) | `current_param` invokes `setFormDefaults`; `current_result` invokes `setCurrentDefaults` only when `cbChecked` equals `"1"`, then `populateCurrentShift`, setting `shifts_list`. No current-list-specific validation call is visible in these branches. |
+| [ShiftDataModel defaults, 277–312](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L277) | Initial date/time uses host `Calendar`: minute >10 advances one hour, then selected time is that hour at `:00`; rollover also changes date. `allowedMoked`, when non-null, becomes `moked`. Current mode uses host date/hour/minute without rounding to an hour (hour is not zero-padded); query parsing later supplies seconds `:00`. No named business zone is established. |
+| [populateCurrentShift / getCurrentShifts, 924–1074](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L924) | Actual symbol is `populateCurrentShift()`, **not** `populateCurrentShiftList()`. It calls `getCurrentShifts()` and, for nonempty results, the separate summary routine. SQL joins baseline `d`, changes `c`, effective employee `e`, old employee `e_old`, attendance `a`, and unit `u`. Effective employee matching is `substr(e.emp_id_number,1,8)=NVL(c.NEW_EMPLOYEE_ID,d.emp_id_number)`, not a day→employee PK FK. |
+| [SQL predicate and binds, 987–1044](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L987), [constants](../old/SHF/src/bzq/shf/utils/SHFConstants.java#L48) | Matched employee required; `c.CANCEL_REASON_CODE IS NULL`; effective day type equals `DAY_TYPE_ACTIVITY` = 4. At selected local date/minute, **start inclusive, end exclusive**: `at >= NVL(changedStart,baselineStart)` and `at < NVL(changedEnd,baselineEnd)`. No same-start-date constraint: an overnight shift may qualify. Missing-attendance reasons do **not** exclude a row. |
+| [unit filter and order, 990–1018](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L990) | Specific `moked` normally binds `u.PARENT_UNIT = moked`; hidden/inherited non-`"00"` team array instead constructs an `e.org_unit_id IN (...)` clause. All/null `moked` constructs parent-unit IN from profile `allowedUnits`. Specific-parent branch does not independently intersect the parent with allowed units here. Order is **baseline** start, first name, last name, without unique tie-breaker or pagination. |
+| [summary routine, 1077–1165](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L1077) | Builds in-memory unit/activity/skill totals, calls `EmployeeDataModel.populateSkills(1)` per employee. Not needed to decide list membership. This slice deliberately excludes it, including its extra reads. |
+| [shifts_list.jsp JS, 25–51](../old/SHFWeb/WebContent/jsp/shifts_list.jsp#L25), [fields, 128–180](../old/SHFWeb/WebContent/jsp/shifts_list.jsp#L128) | Submit calls client `isValidTime`; checking checkbox assigns `"1"` and submits result; unchecking assigns `"0"` and submits parameter route, which resets defaults. Date/time and submit are disabled/read-only in checked state; unit select remains available. No periodic refresh is established by this inspected flow. |
+| [unit tag](../old/SHF/src/bzq/shf/taglib/UnitSelectTag.java#L31), [loader](../old/SHF/src/bzq/shf/model/LoadTables.java#L182), [catalog SQL](../old/SHF/src/bzq/shf/utils/ComplexCodeTable.java#L66), [types](../old/SHF/src/bzq/shf/utils/SHFConstants.java#L20) | `unitCode` maps `ORG_UNIT_ID AS CODE`, name as description, type and parent. Tag admits allowed codes of requested type `G01` (MOKED), plus sentinel type `-1`; loader creates all/empty sentinel `-1`. Team type is `J01`. This is a relationship between codes, not equivalence of selected parent and employee's `ORG_UNIT_ID`. |
+
+**Decoding limit:** JSP declares Windows-1255. The available view tool renders non-ASCII legacy labels with replacement/garbled characters and offers no explicit encoding parameter; no shell/decoder tool is exposed in this task. Therefore original Hebrew headings, checkbox wording and button text are **U**, not reconstructed translations. Operational current-mode semantics above come from executable branches, not an assumed meaning of its unreadable label. Section 20 must distinguish proposed Hebrew copy from verified original copy; exact original wording can be recovered later by caller/source owner with explicit Windows-1255 decoding. This does not block the field-type/behavior proposal.
+
+### 19.2 Original field/column matrix and fidelity boundary
+
+| Original input/type | Source backing | Proposed contract mapping (pending approval) |
+|---|---|---|
+| `attendanceDate`: `Date`; calendar `dd/MM/yyyy` | [AttendanceSearchForm](../old/SHF/src/bzq/shf/forms/AttendanceSearchForm.java#L18), [CalendarTag](../old/SHF/src/bzq/shf/taglib/CalendarTag.java#L42) | Actual calendar input, Angular Material datepicker within the already approved stack; wire `attendanceDate=YYYY-MM-DD`. Not employee/day ID, not read-only detail timestamp. No lenient parsing or fallback-to-today on invalid input. |
+| `currentTime`: `String`; time chooser max length 5 | [ShiftDataForm](../old/SHF/src/bzq/shf/forms/ShiftDataForm.java#L23), [TimeChooserTag](../old/SHF/src/bzq/shf/taglib/TimeChooserTag.java#L37) | Separate `currentTime=HH:mm`, 24-hour minute precision. Backend validates even if UI is bypassed. |
+| `moked`: `String`; `unitCode`, G01, `all=yes` | [JSP select](../old/SHFWeb/WebContent/jsp/shifts_list.jsp#L156) | `mokedCode` is a **catalog-backed parent code**; omitted means all *authorized* parents. No free-text raw-ID dropdown, no `orgUnitId` alias, no numeric coercion/stripping leading zeroes. |
+| `cbChecked`: string `"1"` branch | [action](../old/SHF/src/bzq/shf/actions/ShiftDataAction.java#L128), JSP JS/disabled conditions above | Explicit enum `mode="current" | "at"` replaces fragile checkbox string. Current = evaluate configured-zone server clock once per explicit refresh, minute precision. Not “present employees only”, live subscription or automatic refresh. |
+| Submit and Enter; checkbox transition submits | JSP JS above | At-mode explicit search; switching current on fetches once, switching off reloads proposed defaults before search. Current date/time and ordinary submit disabled; a distinct explicit refresh is permitted. No inherited team/activity/job filters accepted. Exact interaction/focus/copy belongs to section 20. |
+
+[shifts_table.jsp, 37–96](../old/SHFWeb/WebContent/jsp/shifts_table.jsp#L37) defines ten headers plus a hidden day-ID cell. Original header wording is undecoded; these are the **data expressions**, in source array order, not a fabricated translation:
+
+| Original visible expression | Proposed row mapping |
+|---|---|
+| Missing reason icon/lookup if reason >0; otherwise station-arrival time; otherwise dash | `attendanceDisplay` discriminated union, preserving that priority, not an assertion of actual employee presence. No icon HTML in API. |
+| `unitCode` label for employee team `orgUnitCode` | `employee.unit` code + catalog label + parent G01 code/label. Not the parent's label presented as the team. |
+| `isWorkingFromHome()` | `workingFromHome: boolean | null`, effective change fallback. |
+| `getActivityNames(getShiftActivity())` | `activities[]` code/label, tokens in effective source order; separate from unchanged detail's opaque `activityData`. |
+| `getInnerJobName(innerJobId)` | `innerJob` code/label or null. |
+| Effective shift end; effective shift start; date from effective start | Complete `endLocal`, `startLocal`; UI may split date/time without discarding overnight end date or seconds. |
+| Employee link with `employeeId`, first + last name; day of week from effective start | Explicit employee context in row; detail navigation uses its employee/day pair. Day-of-week is a presentation derivation, not a new business field. |
+| Hidden `agentDayId` | `shiftDayId` decimal text, never rendered as a date. |
+
+Projection evidence: [AgentDayBean field mapping](../old/SHF/src/bzq/shf/bean/AgentDayBean.java#L29), [effective getters](../old/SHF/src/bzq/shf/bean/AgentDayBean.java#L967), [home getter](../old/SHF/src/bzq/shf/bean/AgentDayBean.java#L1423); labels via [activity helper](../old/SHF/src/bzq/shf/utils/SHFTableUtils.java#L414), [inner-job/reason helpers](../old/SHF/src/bzq/shf/utils/SHFTableUtils.java#L275). Activity helper splits semicolons and emits HTML breaks; new DTO supplies plain Unicode text only. Source home getter can dereference null baseline; missing unit in JSP can also dereference null.
+
+**One bounded vertical slice:** fixture-backed list/filter context → pure list GET → display source-backed columns → navigate to already approved detail with explicit IDs. Catalogs needed for these columns are part of fixture projection, not a new general catalog-management feature. Exclude personal-list, general shift-search, team/job/activity filter expansion, employee directory/card, tree/skill totals, exports, attendance/edit/swap/cancel commands, EMS, Oracle adapters/connections, metadata refresh, DDL, batch and auto-refresh workers. Do not reproduce inherited SQL filter injection or invoke the whole legacy model/loader.
+
+### 19.3 Component boundary, identity and scope — exact additive proposal
+
+Reuse the section 17 approved versions: Node 24.21.0, TypeScript 5.9.3, backend `@types/node` 24.19.2 / `undici-types` 7.24.6; Angular framework 21.2.25, CLI/build 21.2.27, Material/CDK 21.2.14, RxJS 7.8.2, tslib 2.8.1, Vitest 4.0.8. No version change, new scaffold or extra Material-datepicker approval is requested. Support research is the existing section 16–17 evidence, not independently rerun here. Oracle 11.2 historical metadata does not establish a supported Node driver/client combination; that remains deferred and is **not a fixture prerequisite**.
+
+```text
+existing Angular shell -> HTTP validation/authentication adapter
+  -> GetCurrentShiftFilterContext / ListCurrentShifts application services
+     -> existing centralized AccessPolicy + bounded list-scope methods
+     -> injected Clock (instant -> configured business-zone civil minute)
+     -> CurrentShiftReadPort (isolated immutable relational fixture)
+        -> pure effective-value + catalog projection
+existing ReadEmployeeShiftDay remains separate and unchanged
+```
+
+HTTP owns grammar/serialization only. Application owns validation of cross-field modes, capability, scope, filter membership and resolved minute. Reader owns one consistent fixture dataset read/filter/order/page and catalog joins; projection contains no HTTP or permissions. No messaging port is used; there is no simulated or actual partner-completion claim.
+
+**Identity contract delta, proposed revision v0.2 of the existing v1 seam, pending approval:**
+
+```typescript
+// Only this existing alias changes; no PrincipalV1/IdentityResponseV1 fields change.
+type CapabilityV1 = "shift-day:read" | "current-shifts:read";
+// Synthetic Administrator's exact capability array becomes:
+// ["shift-day:read", "current-shifts:read"]
+// Proposed additive centralized policy methods:
+interface CurrentShiftAccessPolicy {
+  requireCurrentShiftRead(principal: PrincipalV1): void;
+  authorizedCurrentShiftUnitIds(principal: PrincipalV1): string[];
+}
+```
+
+Existing `AuthenticationProvider`, detail endpoint/DTO/errors and identity endpoint path/body remain unchanged. The new methods extend the shared policy, not a parallel frontend authorization service. Existing `resourceScope.orgUnitIds` and `syntheticOrgUnitIds` retain **exact employee-unit IDs**, never wildcard/parent inheritance. No new principal field, role, scope config or automatic expansion is proposed. For this slice each granted unit must resolve in the fixture catalog as a J01 team with a direct G01 parent; unresolved/wrong-type grants fail fixture startup. The returned authorized list is an exact copy of those validated IDs, not all children of a selected parent.
+
+Both new GETs require `current-shifts:read`; absent capability → 403 **before reader access**. Catalog options are distinct G01 parents of those authorized teams only. A supplied parent must occur in that derived set; unknown/unauthorized code → identical 403 `FORBIDDEN`, with no option-existence disclosure. List rows must satisfy both exact team scope and the selected-parent predicate; selecting an authorized parent does not authorize its other teams. Empty real-provider scope returns empty options/list for all-mode, not unrestricted access. Detail still independently enforces `shift-day:read`, employee match and exact unit scope; list capability alone does not grant detail access.
+
+Synthetic principal remains clearly labeled Administrator with null employee, only explicitly enabled local-development/isolated-test-demo, fixture data only. All existing startup validation/fail-closed/production rejection rules in 13.3 remain mandatory; missing/invalid config, real-provider initialization failure or authentication error never falls back to Administrator. Outside approved synthetic mode a configured real provider is required or startup fails explicitly; implementing that provider is excluded. Synthetic capabilities confer no DB/broker permissions. Consumers must not implement this capability delta until the user approves its **exact alias, array and unchanged scope meaning**.
+
+### 19.4 Exact REST query and response contracts
+
+All new responses use `Cache-Control: no-store`; successes `application/json`, failures `application/problem+json`. No body is accepted on either GET. Authentication → grammar validation → capability → catalog/scope validation → bounded read → projection. Reject unknown/repeated query keys, empty values, sentinel `-1`, whitespace-normalized IDs, JS arrays/objects and client SQL/sort expressions. No session-held filters.
+
+**GET `/api/v1/current-shifts/filter-context`**, no query/body. Returns:
+
+```typescript
+type LocalDateV1 = string; // exact YYYY-MM-DD, Gregorian year 0001–9999, valid date
+type MinuteV1 = string;    // exact HH:mm, 00:00–23:59
+type UnitCodeV1 = string;  // exact nonempty 1–8 characters, no whitespace/control chars
+interface MokedOptionV1 {
+  code: UnitCodeV1;
+  label: string;          // nonempty Unicode plain text, <=256 code points
+  unitType: "G01";
+}
+interface CurrentShiftFilterContextV1 {
+  defaults: {
+    mode: "at";
+    attendanceDate: LocalDateV1;
+    currentTime: MinuteV1;
+    mokedCode: UnitCodeV1 | null;
+  };
+  mokedOptions: MokedOptionV1[];
+  businessTimeZone: string;
+  dataSource: "isolated-fixture";
+}
+```
+
+Options sorted by exact code (Unicode code-point order), maximum 100 distinct parents, no silent truncation and no synthetic all-row. UI creates a separately labeled all-authorized selection serialized by **omitting** `mokedCode`; this is not a fabricated catalog entry. Fixture catalog/allowlist exceeding this bound fails startup. Default parent is the sole option if exactly one, otherwise null (all authorized). This explicitly replaces legacy `allowedMoked` default, which is not present in approved identity. Context defaults preserve minute >10 hour advance/`:00` rule, including date rollover, calculated from one configured-zone clock reading. Response never substitutes browser/OS zone. Context is not authorization evidence for subsequent requests.
+
+**GET `/api/v1/current-shifts`** query:
+
+| Key | Exact rule |
+|---|---|
+| `mode` | Required `"at"` or `"current"`; no implicit mode. |
+| `attendanceDate`, `currentTime` | Both required in at-mode; both forbidden in current-mode. Valid date and strict zero-padded minute. No seconds, offsets, UTC date conversion or personal/employee/day IDs in these fields. |
+| `mokedCode` | Optional exact catalog code; omitted = all authorized parents; JSON null/literal `"null"` not accepted. |
+| `limit` | Optional decimal integer 1–100, default 25; canonical digits, no leading zero, sign, exponent or fractional form. |
+| `offset` | Optional canonical nonnegative integer 0–10000, default 0 (`0` permitted); current-mode requires offset 0. |
+| `sort` | Optional single enum `"effective-start-asc"`, also default; any other value rejected. |
+
+At-mode resolves `attendanceDate + "T" + currentTime + ":00"`. Current-mode reads server clock **once** per request, converts its instant to configured `businessTimeZone` and truncates seconds to `00`; client dates are forbidden, not ignored. Use civil calendar comparison against source Oracle-DATE-shaped values; no `Z` or invented source offset. Manual at-mode accepts DST-overlap or gap civil minutes as civil query values (not an instant); current-mode is derived from an actual instant and may repeat a local minute at DST fallback. No ambiguity repair or duration calculation. Configuration zone is required/validated; explicitly synthetic `Asia/Jerusalem` fixture configuration is permissible, not proof of real business policy.
+
+```typescript
+interface CatalogValueV1 {
+  code: string;           // nonempty <=128 code points; no control chars
+  label: string | null;   // plain Unicode <=256 code points; null = unresolved
+}
+type CurrentAttendanceDisplayV1 =
+  | { kind: "missing-reason"; reason: CatalogValueV1 }
+  | { kind: "station-arrival"; atLocal: LocalDateTime }
+  | { kind: "not-recorded" };
+interface CurrentShiftRowV1 {
+  shiftDayId: ShiftDayId; // existing canonical positive decimal text, 1–10 digits
+  employee: {
+    employeeId: DecimalId; // existing canonical positive decimal text, 1–38 digits
+    firstName: string;     // required, <=40 Unicode characters, as in detail
+    lastName: string;      // required, <=40 Unicode characters, as in detail
+    unit: {
+      code: UnitCodeV1;
+      label: string;       // nonempty plain Unicode text, <=256 code points
+      moked: MokedOptionV1;
+    };
+  };
+  startLocal: LocalDateTime;
+  endLocal: LocalDateTime;
+  workingFromHome: boolean | null;
+  activities: CatalogValueV1[];
+  innerJob: CatalogValueV1 | null;
+  attendanceDisplay: CurrentAttendanceDisplayV1;
+}
+interface CurrentShiftListV1 {
+  items: CurrentShiftRowV1[];
+  applied: {
+    requestedMode: "at" | "current";
+    attendanceDate: LocalDateV1;
+    currentTime: MinuteV1;
+    mokedCode: UnitCodeV1 | null;
+    sort: "effective-start-asc";
+  };
+  page: { limit: number; offset: number; hasMore: boolean; nextOffset: number | null };
+  businessTimeZone: string;
+  dataSource: "isolated-fixture";
+}
+```
+
+All declared fields required; unavailable allowed values use null/empty arrays, never omitted properties, empty-label stand-ins or HTML. `LocalDateTime` remains section 13's exact `YYYY-MM-DDTHH:mm:ss` civil value, year 0001–9999, no zone. Effective start/end are non-null for qualifying rows; retain original seconds and overnight calendar dates. IDs never pass through JS Number; only bounded pagination uses numbers. Catalog/unit/row bounds are proposed wire safeguards, not claims of fresh physical schema verification. Names retain section 13 validation; team/parent labels use the new bounds above. Missing authorized team/parent catalog relationship or overbound source field is invalid source data, not a guessed label or silent truncation.
+
+**Exact row projection:** preserve NVL baseline/change fallback, effective employee relationship, cancellation-null and effective activity-type=4, start-inclusive/end-exclusive. Do not add employee-active, same-day-start or attendance-presence filters. Effective activity is split on `;`, empty tokens skipped, original order/duplicates retained; max 100 tokens, code bound above, unresolved label null rather than silently dropping unknown codes. No separate activity catalog endpoint. Inner-job source null/empty/legacy `"00"` → null, otherwise code + nullable label. Missing-reason source null/zero → absent; positive canonical decimal text (up to 38 digits) → reason code/nullable label; negative/nonintegral values → invalid source data. Reason takes display priority over station arrival. Home value selects changed iff non-null, otherwise baseline: null → null, case-insensitive `"y"` → true, any other non-null source text → false, matching non-null legacy behavior without its null dereference.
+
+**Pagination/concurrency:** sort after authorization/filtering by `(effective startLocal ASC, numeric shiftDayId ASC, numeric employeeId ASC)`, no locale-dependent name ordering. Treat multiple joined rows for one qualifying day as `AMBIGUOUS_CURRENT_SHIFT`, not deduplicate or choose a first employee. Fixture is immutable within one request; reader takes at most limit+1 eligible rows after offset. `hasMore` is that extra-row test; `nextOffset = offset + items.length` only when hasMore and <=10000, otherwise null. At the offset ceiling hasMore may be true with nextOffset null; UI explains the window limit and asks for narrower parent/time selection. No total-count query, total tree or export.
+
+For current-mode pagination, subsequent page requests use **at-mode with the returned applied date/time**, same parent/sort/limit; UI retains “current evaluated at …” context. This freezes the evaluation minute, not the dataset. Refresh starts current-mode at offset 0 again. At-mode page requests also retain the applied minute. Concurrent legacy writes can change membership/order between future live GETs, causing offset duplicates/skips; no cross-request snapshot, cursor, ETag or locking guarantee. Fixtures can deterministically characterize changes between reads without claiming live Oracle verification.
+
+### 19.5 Errors, read purity and intentional differences
+
+New endpoints use **separate** `CurrentShiftProblemV1`, not a change to approved detail `ProblemV1`:
+
+```typescript
+interface CurrentShiftProblemV1 {
+  type: string; // urn:shf:problem:<exact code>
+  title: string; // stable sanitized summary, never offending input
+  status: number;
+  code: "INVALID_REQUEST" | "UNAUTHENTICATED" | "FORBIDDEN"
+    | "DEPENDENCY_UNAVAILABLE" | "DEPENDENCY_TIMEOUT"
+    | "AMBIGUOUS_CURRENT_SHIFT" | "INVALID_SOURCE_DATA" | "INTERNAL_ERROR";
+  requestId: string; // server-generated opaque correlation
+  invalidParameters?: Array<{
+    name: "mode" | "attendanceDate" | "currentTime" | "mokedCode"
+      | "limit" | "offset" | "sort" | "query" | "body";
+    reason: "required" | "invalid-format" | "unsupported";
+  }>;
+}
+```
+
+400 `INVALID_REQUEST` for grammar/cross-field validation; 401 `UNAUTHENTICATED` for missing/invalid real credentials or invalid principal; 403 `FORBIDDEN` for capability or unavailable parent scope. Empty valid selection/page → **200, items=[]**, not 404 or a dependency error. 503 dependency unavailable/timeout; 500 ambiguity, invalid source data or internal failure. No SQL, source rows, personal identifier, credentials, remarks or offending values in problems/logs. Inherit 5-second total design budget and no automatic application retry/late success from 13.4; not a measured SLA or proven Oracle cancellation guarantee.
+
+**Observed read surface:** `getCurrentShifts`, selected catalog SELECTs and inspected projection helpers contain no DML, sequence, stored procedure, autonomous-function invocation or EMS call. Summary is local aggregation plus extra skill reads, excluded here. Broad `LoadTables` contains unrelated operations/imports; do not initialize it wholesale. Struts/profile/session and DBAccess behavior are not reused by the new GET. Live runtime effects/current policies remain U.
+
+**Target boundary:** fixture-only immutable reader, no Oracle driver/pool/credentials/network, no writes, sequence allocation, `SELECT FOR UPDATE`, partner waits, timers or command validation helpers. Repeated list/context GETs must produce zero business effects. No Oracle connection or fresh metadata is needed before fixture work. A later Oracle adapter must preserve existing tables/columns and joins, use bound filters, one statement-consistent list projection with a bounded Oracle-11.2-compatible ordered row window, and release resources; it requires separate compatibility/access approval. Catalog-context/list/detail requests are not one transaction and may differ under concurrent updates.
+
+Historical [autonomous function](reverse-engineering/oracle-transaction-function.csv#L10) inserts and commits independently even when invoked in SELECT; rollback cannot undo that ledger entry. This read slice never invokes it. The inspected source SELECTs have no such reference; that is not a claim all possible future SELECTs are pure. No transaction write/commit/rollback business contract or EMS completion semantics is added.
+
+**Explicit differences for approval, not silent legacy fixes:** strict backend date/minute validation instead of leniency/fallback; configured zone instead of host zone; enum instead of `"1"` checkbox; preserved rounded initial default but policy-derived parent default; selected parent always intersected with exact unit scope; inherited team arrays/SQL concatenation rejected; effective-start numeric-tiebreak sort instead of baseline/name sort; bounded pages instead of full vector; no summary/skills/export; ambiguity rejected; null home handled safely; unknown catalog labels explicit null instead of disappearing/blank labels or raw-ID substitution; plain text instead of generated HTML; routed approved detail instead of broader employee-card navigation. Existing detail contract and its UI are not relabeled as a migrated list.
+
+### 19.6 Contract acceptance cases and UI-designer handoff
+
+These are **proposed fixture acceptance tests**, not executed results:
+
+| ID | Required case / outcome |
+|---|---|
+| NEXT01-01 | Calendar accepts Gregorian leap day, rejects impossible/overflow dates, `dd/MM/yyyy` on wire, blank date, timestamp and numeric employee/day ID. UI parses its displayed `dd/MM/yyyy` explicitly to ISO civil date without browser-zone conversion. Employee/day fields in existing detail remain identifiers without datepickers. |
+| NEXT01-02 | `00:00`/`23:59` valid; `24:00`, `9:05`, seconds, offset, exponent, whitespace invalid. Both date/time required in at-mode and forbidden in current-mode; repeated/unknown/body fields 400. |
+| NEXT01-03 | Injected clock covers minute 10 vs 11, midnight/hour rollover and named-zone DST. Initial defaults preserve >10 rule; current samples once and truncates seconds. No browser/host fallback, no silent default on invalid config. |
+| NEXT01-04 | At exact effective start row included, at exact end excluded; overnight included across date boundary; changed start/end/employee honored; cancelled/type-not-4 excluded; missing attendance reason retained, not filtered out. |
+| NEXT01-05 | G01 options derived from allowed J01 teams, labels are catalog labels and codes preserve zeroes. All means authorized union only. Authorized parent cannot expose sibling teams outside exact scope. Unknown/forbidden parent identical 403. No raw team ID masquerades as parent label. |
+| NEXT01-06 | New capability checked before read, backend filters even if UI is bypassed. List-only principal cannot open detail; detail still requires exact employee/day and scope. Synthetic Administrator carries both approved capabilities only after delta approval; employee remains null. |
+| NEXT01-07 | Startup rejects synthetic production, missing zone/allowlist, invalid hierarchy/overbound catalog and absent real provider outside mock mode; authentication/provider errors never grant Administrator. Existing identity/detail tests remain unchanged except explicitly approved capability-array expectation. |
+| NEXT01-08 | Fixed sort stable with equal start/names and >2^53 employee IDs; limit bounds, offset ceiling and one-extra-row hasMore; duplicate qualifying day raises sanitized ambiguity, never silent selection. Current page 2 uses returned at-minute; refresh resets offset and current evaluation. |
+| NEXT01-09 | Empty authorized catalog/list and out-of-range-within-bound offset return valid empty 200; 400/401/403/500/503 remain distinct. Provider/read timeout cannot yield late success or trigger automatic retry. |
+| NEXT01-10 | All original table data expressions mapped; reason wins over station time; no reason/station yields not-recorded (not “absent”). Home null does not crash; activity tokens retain order with nullable unknown labels; inner-job null/00 handled; overnight end date and seconds preserved. |
+| NEXT01-11 | Repeated context/list/search/detail GETs leave raw fixture records byte-for-byte unchanged; zero command/persistence/messaging calls, network clients, timers, autonomous functions or sequence increments. Synthetic data never presented as Oracle or real partner results. |
+| NEXT01-12 | Loading/error/empty/catalog failure differentiated; changed filters reset offset and invalidate prior results. Cancel/ignore stale responses by request generation; older response cannot overwrite new filters or re-enable wrong mode. No stale detail link while results are invalid/loading/error. |
+| NEXT01-13 | Detail navigation supplies row employeeId + shiftDayId to unchanged approved inquiry, never substitutes Administrator/null employee or guesses from name. Back navigation may restore filters/applied minute, but does not restore stale results as newly fetched data. Re-fetch detail and handle 404 from intervening changes. |
+| NEXT01-14 | Hebrew/RTL, mixed-direction ISO dates/times/codes, keyboard calendar/time/select, focus restoration/errors and WCAG 2.2 AA checked under section 20's UI acceptance contract; no invented claim of exact legacy Hebrew copy or completed accessibility verification. |
+
+**Concrete handoff via caller to UI designer (section 20 only):** design the existing-shell list/filter route, real calendar datepicker, separate HH:mm input, catalog G01 parent select/all-authorized state, checked/unchecked current-mode transitions and disabled/refresh behavior above. Define Hebrew proposed labels/assistive text, RTL table/responsive column priority, mixed-direction date/time isolation, original ten-data-expression fidelity, applied evaluation-time/page-window notices, list→existing detail/back context, catalog/loading/empty/error/stale states, keyboard/focus and accessibility tests. Do not redesign section 14, implement consumers, add endpoints/identity fields, introduce a raw-ID unit select or launch agents. Material datepicker needs no new stack gate. Exact original Hebrew-copy fidelity remains pending explicit decoding; proposed copy must be labeled as such.
+
+### 19.7 Checks, genuine remaining decisions and exact approval request
+
+**Actually performed:** read project instructions/brief and information-system-engineer skill; read latest baseline sections 17–18 and prior identity/detail contracts; inspect directories confirming absent source catalog; follow route inventory to actual mappings, BaseAction, ShiftDataAction current branches, actual defaults/getCurrentShifts/summary, forms, JSP table/filter, unit/calendar/time tags, effective/home getters and catalog SQL/helpers. New local Markdown link targets and cited ranges were opened/read for path/range readability; this is manual reference review, not automated link/hash or runtime verification. One exploratory `.../tags` directory read failed (actual directory is `taglib`, subsequently read); no unavailable evidence was invented.
+
+**Discovered, explicitly not run:** `node docs\reverse-engineering\verify-evidence.mjs`. Inspected verifier confirms it writes `docs/reverse-engineering/verification.json`, including document hash; that output belongs to publication/evidence owner and is outside this task. Existing verification cannot cover this append. No extractor, Git, install, public/private network lookup, build, typecheck, fixture/UI/legacy execution, DB/broker/DDL/batch check was run. No shell execution tool is exposed; no claim of Windows-1255 decoding, automated link pass, fresh driver compatibility or test success. Appended-section readback is the only post-edit check in this task.
+
+| Remaining decision / prerequisite | Owner / consequence |
+|---|---|
+| Exact section 19 v0.1 API, identity additive delta, scope/sort/default/temporal differences and fixture acceptance | User through orchestrator; required before dependent backend/UI consumer edits, not before this draft. |
+| Matching section 20 UI contract | UI designer through caller; next design step, followed by explicit joint baseline approval. |
+| Decode original Hebrew labels if exact wording is required | Caller/source owner with explicit Windows-1255-capable read; do not fabricate copy. Not a blocker for fixture data/API design or already approved Material tooling. |
+| Real business zone, physical-data anomalies/precision, supported Oracle driver/client/database combination and authorized live scope | Business/database/platform owners; deferred until live adapter design/access. **Not blockers for fixture implementation after approval.** |
+| Current automated document verification and publication | Evidence/publication owner; authorized verifier run and narrow diff review later, no Git operation by this role. |
+
+**Exact approval request:** “Approve SHF-NEXT-01 section 19 Current-shift list target proposal v0.1, together with the subsequently reviewed section 20 UI version: the two new pure fixture-backed GET contracts, exact queries/DTOs/errors/pagination/current-zone semantics, catalog-backed G01 selection and exact-team scope, the v0.2 additive identity-seam capability alias and synthetic capability array with no PrincipalV1 field/detail-contract change, all listed intentional legacy differences and NEXT01-01–14 acceptance cases. Then authorize the bounded list/filter fixture implementation in existing backend/frontend fixture slices using already approved section 17 tooling. This does not authorize Oracle adapters/connections, real authentication implementation, EMS, DDL, batch, export/commands/tree totals, production deployment or release.”
+
+**Next action / stop:** caller routes this draft to UI designer for section 20; architecture stops after draft 19. No agents launched and no consumer edits. After joint explicit approval, caller assigns backend/UI owners bounded implementation and QA against the named accepted revisions, with publication owned separately.
+
+---
+
+## 20. Current-shift list UI proposal — v0.1 (SHF-NEXT-02)
+
+**Date:** 15 October 2026. **Status:** **review — P: proposed; not approved for implementation**.  
+**Ownership:** UI design only; this append does not amend section 19, shared DTOs, endpoints, capabilities or sections 13–18. Consume section 19 v0.1 conditionally, only after its explicit approval. Existing detail/API approvals and section 17 tooling approval remain effective.  
+**Deliverable:** one bounded Hebrew/RTL current-shift list/filter UI in the existing fixture application, leading to the existing detail. No application edits, extra catalog/tracking document, new scaffold, dependency selection, installation or running-demo intervention.
+
+### 20.1 Source grounding and fidelity decisions
+
+The source-contract catalog is absent from the inspected `docs` listing. Sections 18–19 and the existing route references located the following controlling source, read directly in this task:
+
+| Evidence (S: inspected, not executed) | UI consequence |
+|---|---|
+| [struts-config.xml, 403–408](../old/SHFWeb/WebContent/WEB-INF/struts-config.xml#L403); [ShiftDataAction, 118–132](../old/SHF/src/bzq/shf/actions/ShiftDataAction.java#L118) | Current parameter → result → `shifts_list.jsp`, not personal shifts. Parameter route initializes defaults; result switches to server-current defaults only for checkbox `"1"`. |
+| [ShiftDataModel, 277–312](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L277) | Initial hour rounds forward only when minute >10, including date rollover; checked mode uses server minute, not the initial rounded hour. New UI receives defaults/applied values from section 19, never reproduces that clock logic locally. |
+| [shifts_list.jsp, 25–51](../old/SHFWeb/WebContent/jsp/shifts_list.jsp#L25), [128–180](../old/SHFWeb/WebContent/jsp/shifts_list.jsp#L128) | Actual date calendar, separate time chooser, G01 parent select/all, current checkbox, submit. Checked state disables manual date/time and ordinary submit; unit remains selectable. Checkbox submits once on transition; inspected flow establishes no periodic polling. |
+| [populateCurrentShift/getCurrentShifts, 924–1074](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L924) | Query uses effective employee/times, cancellation-reason null, effective day type 4 and `[start inclusive, end exclusive]`. Overnight rows can qualify; missing attendance is not exclusion. UI must not recompute membership, cancellation, day type or effective overlay. |
+| [shifts_table.jsp, 37–96](../old/SHFWeb/WebContent/jsp/shifts_table.jsp#L37) | Ten visible data expressions, hidden day ID, reason-before-station attendance display and team lookup; detailed migration below. |
+
+**Evidence limits:** legacy files declare Windows-1255; the view tool displays garbled Hebrew and has no decoding option. All Hebrew below is **new proposed copy**, not transcribed original labels. Exact original wording remains unknown. No legacy/runtime/DB evidence is implied. Section 19.1–19.5 retains ownership of catalog joins and projection semantics.
+
+**Intentional changes for joint approval:** modern routed list instead of fixed legacy grid; strict civil-date/minute validation; catalog parent selection intersected with exact team scope; explicit refresh instead of an unusable checked-state submit; deterministic bounded paging rather than all-row name sorting; safe plain-text unknown labels; existing detail rather than employee-card navigation. Legacy defects, null dereferences and weak filter authorization are not target requirements. Tree/summary/skill totals, export and writes are deferred/excluded, not silently migrated.
+
+### 20.2 Navigation, actors and API dependencies
+
+Proposed **client route** `/current-shifts` in the existing shell, link `משמרות בנקודת זמן`. This is not another API endpoint. Existing known-ID entry and `/employees/:employeeId/shift-days/:shiftDayId` detail routes remain unchanged. All in-scope actors represented by the temporary synthetic Administrator can use this bounded inquiry when the **new capability is approved and actually returned**; no additional actor/employee identity is invented.
+
+| Dependency | Exact consumption; no contract extension |
+|---|---|
+| Approved `GET /api/v1/identity` | Existing `IdentityResponseV1`; section 19 proposes the additive capability alias/array only. Currently approved `shift-day:read` alone does **not** make list ready. |
+| Draft `GET /api/v1/current-shifts/filter-context` | `CurrentShiftFilterContextV1`: validated defaults, bounded G01 options, configured business zone and fixture marker. No query/body, independent of browser clock. |
+| Draft `GET /api/v1/current-shifts` | Exact section 19.4 query, `CurrentShiftListV1` and separate `CurrentShiftProblemV1`; no new filter, total, token, sort or label endpoint. |
+| Approved employee/day detail GET | Row's exact `employee.employeeId` + `shiftDayId`; unchanged detail DTO, errors and policy. Requires `shift-day:read` independently. |
+
+Entry sequence after approval: resolve identity → require actual `current-shifts:read` → fetch context → initialize valid at-mode controls → issue **one** default at-mode list request at offset 0. A context failure makes zero list requests. Returning with retained in-memory list context follows 20.6 instead of resetting defaults. No role-name expansion, wildcard, `/me`, employee inference, impersonation or raw unit-ID entry.
+
+Persistent notices in every state:
+
+- `מצב הדגמה מקומי — מנהל מערכת סינתטי. לא בוצע אימות סיסמה אמיתית.`
+- `מקור נתונים: נתוני הדגמה מבודדים`
+- Identity remains a principal, not the row employee; synthetic `employeeId=null` is expected. Demo is explicitly local/isolated and backend-blocked in production; a banner is not enforcement. An unexpected nonfixture source, invalid identity or inconsistent zone/source between context/list blocks rendering, with safe configuration error, never a live-data fallback.
+
+**Readiness:** current deployed/demo identity must not be presumed to contain `current-shifts:read`. Before approval this is documentation only, not a new active menu. After implementation, absent list capability shows `אין הרשאה להצגת רשימת המשמרות` and makes zero context/list requests. A list-only principal can read rows but has no enabled detail link; show `אין הרשאה להצגת פרטים`. Backend checks remain authoritative for all requests and direct URLs.
+
+### 20.3 Filter layout, calendar and transitions
+
+Use the already approved Angular 21.2.25, Material/CDK 21.2.14, CLI/build 21.2.27, TypeScript 5.9.3 and Node 24.21.0 baseline; no renewed version/scaffold gate. Reuse existing shell, typed reactive-form/data-access conventions and Material 3 theme. Components: labeled Material form fields, **Material Datepicker**, ordinary Material text input for time, bounded Material select, checkbox, buttons and progress indicator. Semantic HTML table, not an ARIA spreadsheet/grid.
+
+Desktop order (RTL reading/DOM order): h1 → notices → filter fieldset `בחירת נקודת זמן` → current checkbox → date input/toggle → time input → parent select → apply/refresh → applied-context heading/status → results → pager. On wide screens filters share a wrapping CSS Grid row; on narrow screens use one column without reordering the DOM. Date/time remain adjacent in meaning, not a datetime/UTC control.
+
+| Original control → UI | Proposed label, validation and serialization |
+|---|---|
+| `attendanceDate` calendar → Material Datepicker + editable date input | `תאריך לבדיקה`, hint `יום/חודש/שנה (DD/MM/YYYY), לוח גרגוריאני`. Strict displayed `DD/MM/YYYY`, wire `YYYY-MM-DD`, year 0001–9999. Required in at-mode. Validate actual month length/leap year; no lenient overflow, numeric-ID interpretation, timestamp, silent trim or fallback to today. Preserve invalid text for correction. |
+| `currentTime` timechooser → separate LTR text input | `שעה לבדיקה`, hint `שעה ודקה ב־24 שעות, HH:mm (00:00–23:59)`. Required at-mode; exact five ASCII characters, zero-padded hour/minute. No seconds, offsets, whitespace, localized-digit conversion or repair. Examples of errors: `יש להזין שעה תקינה בפורמט HH:mm` and `יש לבחור תאריך תקין בפורמט DD/MM/YYYY`. |
+| `moked`, G01/all → bounded select | `מוקד (יחידת אב)`. Options only from `mokedOptions`; show label plus exact isolated code for disambiguation. Separate first selection `כל המוקדים המורשים` means omitted `mokedCode`, **not** code `-1`/`"null"`/empty string. An actual option preserves its exact string including leading zeroes. No employee `orgUnitId` substitution, numeric conversion or free text. |
+| `cbChecked` → checkbox | `שימוש בזמן השרת הנוכחי`; help `הזמן נקבע בכל טעינה מפורשת. אין עדכון אוטומטי.` Checked means `mode=current`, not employee-presence status. |
+| Submit/Enter → buttons | Unchecked: `הצגת משמרות`; checked: ordinary apply stays visibly disabled with explanation, distinct enabled `טעינה מחדש לפי זמן השרת` when ready. On a manual result offer `טעינה מחדש` for its committed minute. No redundant checked-state action that sends manual fields. |
+
+**Calendar contract:** Hebrew locale `he-IL`, RTL chrome, Gregorian calendar, Sunday (`יום ראשון`) first column; proposed local UI convention, not source-proven business policy. Hebrew month/day labels and full-date accessible cell names (for example `יום חמישי, 15 באוקטובר 2026`). Labels: toggle `פתיחת לוח שנה לתאריך לבדיקה`, previous/next month `החודש הקודם` / `החודש הבא`, month/year selection `בחירת חודש ושנה`, close `סגירת לוח השנה`. Include selected/today states non-visually as well as visually. “Today,” if marked by the library's device date, is only a navigation hint, never a server default; do not call it current business time.
+
+Opening by keyboard places focus on selected valid date, else the context default date. Standard datepicker calendar interaction is required: arrow keys move adjacent day/week in the displayed Gregorian grid (RTL visual direction verified), Home/End week edges, PageUp/PageDown month, modified month navigation/year controls reachable and labeled, Enter/Space choose, Escape cancels and restores focus to opener. Month/year selection must be keyboard usable and expose its heading/selection. Implementation must verify the pinned Material behavior/locale adapter, including year 0001–0099 and range edges, rather than assume a generic JavaScript Date parser works. Month changes announce the new month/year without stealing focus. Calendar overlay retains focus appropriately while open, has no background focus leakage when modal, a keyboard close path and focus restoration; no browser popup.
+
+Use a strict civil-component parser/formatter for input and datepicker adapter boundaries. No `Date.parse`, `toISOString`, UTC-midnight roundtrip, host-zone shift or implicit 1900-year offset; selected day must serialize unchanged in all browser zones. Date display and parsing remain Gregorian despite Hebrew language. Calendar validation is duplicated authoritatively by API. No datepicker on existing ID locators or read-only detail timestamps.
+
+**Time-library limit:** this design deliberately selects a labeled `matInput` text control, not a Material timepicker. No claim that Material 21 timepicker implements arbitrary 24-hour boundaries/minutes has been verified here; no AM/PM picker, step rounding or unsupported component API is required. Normal text editing, selection and keyboard submission are available; optional numeric keyboard hint cannot prevent entering a colon.
+
+**Interaction transitions (local generation guards apply to all):**
+
+1. Initial at-mode uses context defaults exactly, including the server's >10-minute rounding/date rollover and sole-parent/all default. No browser time default.
+2. Checking current immediately disables date/time and calendar toggle, invalidates old results/page and issues **one** current request at offset 0 using selected parent. Omit date/time entirely (disabled controls must not leak via raw form serialization). Keep the checkbox mounted and focused for keyboard Space; do not move focus on completion.
+3. Disabled manual controls may show the last returned applied date/minute with hint `זמן הבדיקה נקבע בשרת`. While pending, say `ממתין לזמן הבדיקה מהשרת`; never present the prior time as the new evaluation. Their display is not serialized.
+4. Unchecking immediately invalidates results, clears current-origin paging, and fetches filter context once to restore at-mode defaults, then performs one default at-mode search. This mirrors source reset behavior, not restoration of an obsolete manual draft. Preserve still-authorized selected parent; use returned default if none was explicitly selected. Keep date/time disabled during reset, checkbox focus retained. Context failure leaves no result and offers explicit context retry.
+5. Editing at-mode date/time/parent preserves the new text, clears stale result links, resets offset to 0 and shows `המסננים השתנו. יש להציג את המשמרות מחדש.` No keystroke/change fetch. In current-mode parent remains enabled; changing it invalidates results and requires explicit current refresh. Checkbox transition is the only automatic user-change search.
+6. Valid apply commits one exact filter tuple; invalid apply sends zero requests, associates errors and focuses the first invalid field. Keep manual apply available for validation when ready, not permanently disabled merely for invalid input. Enter submits only the filter form, not global key-up handlers; Enter/Space while selecting a calendar date or option performs that component's selection, not a second search.
+7. Suppress duplicate same-generation apply/refresh/pager requests while pending, without removing or disabling the focused initiating button in a way that loses keyboard focus (use an announced unavailable/guarded state). Checkbox/inputs stay usable to supersede work. No timer, interval, auto-retry, live subscription or automatic clock tick.
+
+### 20.4 Original table → displayed columns and responsive layout
+
+This matrix covers **all ten original visible expressions** plus hidden day ID. Labels are proposals, not translations of garbled source headers. All values originate in section 19's projection; source-order grid is replaced by task-oriented RTL reading order.
+
+| Original expression | Proposed presentation / fidelity disposition |
+|---|---|
+| Employee link, first + last name | **Shown** in `עובד`: display escaped name parts with whitespace separator; expose `מזהה עובד` exact decimal text. Detail link `פרטי משמרת` has accessible name including employee/day context. Do not add fullName DTO or employee-card API. |
+| Start date | **Merged** into `תחילת משמרת`, complete `DD/MM/YYYY HH:mm:ss`, LTR isolated; never omit the start date. |
+| Effective start time | **Shown/merged** with start date from `startLocal`; no independent overlay. |
+| Effective end time | **Shown** in `סיום משמרת`, full date/time including seconds even across midnight. No inferred duration. |
+| Weekday of effective start | **Merged**, supplemental Hebrew weekday adjacent to start, derived only from valid civil Gregorian components (not converted instant). Full date remains authoritative. Not an invented wire field/status. |
+| Employee team `unitCode` lookup | **Shown** in `צוות ומוקד`: team label/code and separately labeled parent `מוקד` label/code from response. Team and G01 parent never substituted for each other. |
+| Effective working-from-home | **Shown** in `עבודה מהבית`: true `כן`, false `לא`, null `לא זמין`. Not a remote-attendance inference. |
+| Activity names | **Shown** in `פעילויות`: ordered plain-text labels/codes, duplicates retained, empty array `לא זמין`. Unknown label `תיאור לא זמין` with exact code; no local lookup/splitting of detail activityData. |
+| Inner-job name | **Shown** in `תפקיד פנימי`: label/code; null `לא זמין`, unresolved nonnull label `תיאור לא זמין` + code. UI does not reinterpret `"00"`; API already projects it. |
+| Reason icon else station time else dash | **Shown** in `רישום נוכחות`: missing-reason `סיבת חוסר: …` (nullable description explicit with code); station-arrival `כניסה לעמדה: DD/MM/YYYY HH:mm:ss`; not-recorded `לא נרשם`. Follow union priority, not “present/absent/late,” no colored invented status. Hebrew business term subject to copy review. |
+| Hidden `agentDayId` | **Retained** as exact `shiftDayId` for navigation and labeled secondary `מזהה יום עבודה`; not a date or inferred from date. |
+| Legacy tree/skills/totals/export/collapse controls outside ten expressions | **Deferred/excluded** as section 19 bounded core; no hidden export or fake summary. Current-page item count is not a total. |
+
+Wide view (target >=960 CSS px): semantic captioned table; logical order employee, start, end, team/parent, attendance, home, activities, inner job. No sortable-header controls: fixed order is explained as `מיון: תחילת משמרת, מזהה יום עבודה, מזהה עובד`. Section 19 numeric ID tiebreaks are server-owned; never lexicographic client resort.
+
+Narrow view (<960px, including 320px): replace the table with an equivalent ordered list of records, one record heading (employee) and labeled description-list fields in the same priority. All fields remain reachable and visible, not hidden behind horizontal scrolling/tooltip or a new detail-only assumption. Only one representation is exposed to accessibility APIs at a time; preserve the active record/link focus when crossing breakpoint. Long names/labels/activity codes wrap using logical CSS; long IDs can wrap visually without changing copied bytes. No page-level horizontal scroll.
+
+Reuse section 14 tokens: 4px spacing scale, 16px/1.5 body, 20px section headings, 24px h1, 48px action targets, minimum 8px target separation. Use existing Material surface/on-surface/primary/outline/error roles, no new arbitrary palette; measure contrast later. Default/hover/pressed/selected/disabled/busy/error/focus must be distinct without color alone. Visible focus cannot be clipped/covered; no sticky overlay obscures controls. Respect reduced motion. `lang=he`, page RTL, CSS logical properties; isolate IDs, unit codes, zone and each date/time group LTR (`bdi`/direction-aware plain text for mixed names). Never inject directional characters into stored/copied data or render catalog text as HTML.
+
+### 20.5 Applied minute, fixed ordering and bounded pagination
+
+Above results show **returned applied context**, separate from draft controls: `נבדק לתאריך … בשעה …`, selected parent/all and `אזור זמן לפרשנות: …` (exact zone isolated). For current-origin result: `זמן שרת שנבדק: … — אין עדכון אוטומטי`. Show `הנתונים משקפים את הקריאה האחרונה בלבד`; never “live,” last-modified time or UTC instant. A device clock crossing midnight changes nothing until explicit refresh.
+
+Default page size 25; bounded choice 25/50/100 uses exact API `limit`. No arbitrary text input. Changing size starts offset 0 with the committed evaluation minute (and guarded search); changing filters invalidates that page. Forward/back buttons `העמוד הבא` / `העמוד הקודם`, Hebrew accessible names, current window text `מוצגות רשומות …–…` only for nonempty response. No total-page count, last-page shortcut or fetched-all sorting. Previous uses retained valid offset history; initial page has no previous.
+
+- Every ordinary page request uses at-mode, **returned applied date/minute**, same parent/sort/limit, canonical offset. Current checkbox remains the **origin/refresh intention**, with notice `דפדוף לפי זמן השרת שנבדק; טעינה מחדש תבחר זמן שרת חדש`. Do not re-evaluate current time on page 2 or incorrectly serialize disabled manual controls. This is local UI state, not an extra wire field.
+- Enable next only for `hasMore=true` and nonnull `nextOffset`; use that offset, not a client-invented continuation. At ceiling with hasMore true and nextOffset null: `הגעת לגבול חלון התוצאות. אפשר לצמצם מוקד או לשנות זמן בדיקה.` No request beyond 10000.
+- Empty first page: `לא נמצאו משמרות זמינות למסננים שנבחרו`; window count `0 רשומות בעמוד זה`. Valid empty later page: `אין רשומות בעמוד זה. ייתכן שהנתונים השתנו מאז הקריאה הקודמת.` Keep prior-page/first-page actions, never negative or phantom ranges, 404, or automatic backtracking.
+- Current refresh samples server anew at offset 0. Manual reload retains committed at-minute but starts offset 0. Pages freeze the minute only: concurrent writes may move rows between GETs; show `דפדוף אינו מבטיח תמונת נתונים אחידה בין קריאות`. No deduplication, stale cache or snapshot/version guarantee.
+
+### 20.6 List → existing detail → return
+
+Each enabled link goes to the unchanged detail route with exact row employee/day IDs as strings, never the Administrator subject/null employee, name, date, personal identifier or unit code. Existing detail independently fetches and may return its indistinguishable 404 after concurrent changes; list success is no detail authorization guarantee.
+
+Keep list draft/committed filters, origin mode, last applied minute, page size/offset and opener row identity in **ephemeral application memory** keyed by a navigation token. No business localStorage/sessionStorage/IndexedDB, service-worker cache, server session filters or URL query data dump. Existing browser Back returns to list; a list-origin `חזרה לרשימת המשמרות` navigation affordance may use that token without altering detail contract or known-ID behavior. Direct detail links with no origin retain existing navigation, not a fabricated prior list.
+
+On return: re-resolve identity/catalog as needed, revalidate saved parent, restore filters/applied-minute page request as at-mode and **re-fetch**, not display stored rows as freshly read. Current origin remains labeled as earlier evaluated time until explicit current refresh. Restore focus to surviving opener after fresh render; if row vanished/denied, focus result heading and announce its unavailability. If in-memory state is gone (full reload/new tab), return to normal context-default entry with notice `הקשר הרשימה הקודם אינו זמין`; no attempt to reconstruct business context from identity. Route focus starts at h1 for unrelated/direct entry.
+
+### 20.7 Screen states, errors, denials and races
+
+Keep draft filters, committed query, current-origin intent and returned applied context separate. Identity lifecycle, context catalog and each list request carry local generation markers; no new API field. Cancel superseded operations **and** ignore late success/error/focus/live announcements if any generation differs. Input edit, mode toggle, catalog refresh, identity invalidation or route exit invalidates prior rows/links immediately; loading/retry never silently restores stale data.
+
+| State | Required UI/actions/focus |
+|---|---|
+| Identity loading/failure | Show `טוען פרטי זהות…`; no context/list request until ready. Failure `לא ניתן לטעון את פרטי הזהות`, explicit identity retry; no Administrator fallback. Capability missing is a distinct denial, not empty data. |
+| Context loading/reset/failure | `טוען מסננים…`; dependent controls/actions unavailable with associated explanation, checkbox stays focus-stable if toggled. Error `לא ניתן לטעון את אפשרויות המוקד`; explicit context retry, no raw-ID substitute, no list request from stale defaults. |
+| Valid empty catalog | All-authorized selection only; hint `אין מוקדים מורשים זמינים`; do not invent a selectable parent or unrestricted scope. Permit one valid all-mode read and display its valid empty result. |
+| Ready/dirty | Apply is available for validation; dirty notice, no stale rows or detail links. User draft text remains intact across list error/retry. |
+| List loading/reload/page | Clear prior rows; `טוען משמרות…`, result region busy, one polite announcement. Keep initiating control mounted/focused; prevent duplicates. New explicit apply success focuses result heading; refresh/pager/checkbox completion retains initiating focus. No result focus jump on Space toggle. |
+| 200 success / empty | Render mapped records or distinct empty-page state, one status announcement `נטענו … רשומות בעמוד זה` / empty text. No fake toast claiming a save, attendance update or partner completion. |
+| 400 INVALID_REQUEST | `יש לבדוק את מסנני החיפוש`; allowlisted date/time/parent errors associate with controls; mode/limit/offset/sort/query/body or unknown fields use safe summary. Never echo offending values/raw server titles; valid draft preserved. Invalid submit/error summary focuses first invalid control, otherwise summary. |
+| 401 | Clear identity/catalog/results, invalidate all generations, `לא ניתן לאמת את הזהות`; disable fetch, explicit identity retry only, no password prompt or synthetic fallback. |
+| 403 from context/list | `אין הרשאה להצגת הרשימה או למוקד שנבחר`; same copy for unknown/forbidden parent, no disclosure. Clear results, invalidate catalog readiness; keep denied selected text as unavailable, not silently convert to all. Explicit `בדיקת הרשאות ומסננים מחדש` re-resolves identity/context; if parent disappeared, require explicit available selection/apply. No automatic broader fetch. |
+| 503 timeout/unavailable/network | `לא ניתן לטעון משמרות כעת. אפשר לנסות שוב`; keep filters/applied context, no stale rows, explicit same-intent retry only. Network error is local, not a new problem code. |
+| 500 ambiguity/source/internal | `לא ניתן להציג את הרשימה עקב שגיאה. לא בוצע שינוי בנתונים`; no partial list, guessed duplicate or local repairs. Optional selectable safe opaque requestId for support, no employee/day logs. |
+| Invalid response/configuration | Wrong source/zone/shape, mismatched applied mode/filter/minute, invalid rows/page metadata or unknown status/code → safe local contract error, no partial rendering; report to architect via caller. Current response is server-resolved, so do not compare its time to browser time. Page at-mode must match requested minute even when origin is current. |
+| Dynamic catalog/scope change | A fresh context can remove an option; old labels/options do not authorize it. Mark retained selection unavailable, clear rows, require explicit reselection (no auto-all). A server 403 between context and list follows denial path even if option was formerly present. |
+| Clock/date boundary or late response | Context default may fall on next day; current applied time may differ from displayed previous minute. Show returned full date and configured zone without client correction. Late A after B, including error/denial, cannot change B rows, checkbox/disabled state, catalog, announcements or focus. |
+
+Use one polite status region; concise errors through a focused summary or alert, not duplicate announcements in multiple live regions. Static values/banners are not tab stops. Known field errors use `aria-invalid` and associated `mat-error`/descriptions; summary links focus exact controls. Hebrew labels remain visible and part of accessible names. Focus never falls to body because a busy action was removed.
+
+**Confirmations/dialogs:** no business confirmation or discard dialog: GET-only inquiry, filter drafts are not unsaved business writes. The datepicker is the only overlay specified and follows 20.3 dismissal/restoration rules. No legacy browser popup, export dialog or command affordance.
+
+### 20.8 Measurable UI acceptance cases (planned, not executed)
+
+Record fixture, request captures, viewport, browser/OS/AT versions, keyboard sequence and observed result. WCAG 2.2 AA references are targets, **not a compliance claim**. Tests use synthetic isolated doubles, not the user's running demo/fixed ports.
+
+| ID | Case and measurable expected result |
+|---|---|
+| NEXT02-01 Identity/readiness | With existing detail-only capability, zero context/list GETs; denial shown. Only after approved capability delta and actual ready identity does entry send one context and one default at-mode request. Synthetic employee stays null; both mock/fixture notices persist. List-only capability gives zero detail requests/links. Backend policy tested separately under NEXT01-06–07. |
+| NEXT02-02 Actual calendar | Keyboard open/navigate month/year/select/close; Hebrew names and Sunday-first Gregorian grid verified in accessibility tree. `29/02/2028` selects/sends `2028-02-29`; `29/02/2027`, `31/04/2026`, blank, timestamp and numeric ID fail with zero list requests. Include years 0001/0099/9999 and valid range edges; input invalid text preserved. Repeat in UTC-negative and UTC-positive browser zones: identical civil day on wire, no UTC shift. |
+| NEXT02-03 Strict time | `00:00`, `23:59` valid; `24:00`, `9:05`, `12:60`, seconds, offsets, whitespace and exponent invalid, zero GET, inline Hebrew error and first-invalid focus. Time remains independent of datepicker, no AM/PM rounding. |
+| NEXT02-04 Mode/wire/clock | Space-check sends exactly one `mode=current`, offset 0 and no date/time keys; controls/toggle disabled. Returned server minute/date displayed. Space-uncheck sends one context reset then one default at-mode list with both required keys. Checkbox focus remains through loading/success/error; no auto-poll after clock advances. Inject minute 10/11, 23:59 rollover, midnight and configured-zone DST; no browser correction. |
+| NEXT02-05 Canonical parent/dynamic denial | Synthetic G01 code `0012` survives select/wire/copy exactly; team code never sent as parent. All omits key, no `-1`/null/empty. Unknown catalog labels show explicit text+code. Remove selected parent between reads: result cleared, safe 403/recheck, no silent all or raw-text input. Empty catalog is bounded all-only/valid empty, not unrestricted authorization. |
+| NEXT02-06 Table mapping/semantics | Synthetic fixtures cover all ten expressions and hidden ID: overnight dates/seconds, reason winning over station, not-recorded without absence claim, home true/false/null, ordered duplicate/unknown activity labels and null inner job. At exact start row included/end excluded, day-type 4 and no-cancellation rule are API outcomes (NEXT01-04), not UI filtering/recalculation. No invented status, duration or detail activityData split. |
+| NEXT02-07 Paging | Equal-start/large-ID fixtures preserve server numeric-tiebreak order; no client name sort. Page 2 from current sends at-mode with returned minute/parent/limit, refresh returns current offset 0. Empty first/later page shows no negative range, total or 404; previous works. hasMore true/nextOffset null disables next with window-limit explanation, zero out-of-bound request. |
+| NEXT02-08 Read-only/no effects | Apply/reload/page/context/detail/back generate only specified GETs; fixture snapshots unchanged, zero command/EMS/DB/write/sequence calls. No export/tree/sums, timers, real credential verification, durable business storage or live-data fallback. Markup fixtures render escaped text. |
+| NEXT02-09 Detail/back | Row `1001`/`2001` opens exact unchanged detail route/GET, never synthetic subject. Return revalidates catalog and re-fetches saved applied-minute page without stale rows; restore row-link focus if present, heading if absent. Detail 404 safe; direct detail/no memory uses existing/default navigation, no guessed employee/context. |
+| NEXT02-10 Keyboard/focus | Tab/Shift+Tab/Enter/Space reach skip link, all fields/calendar/select, actions, links and pager without traps. Select typeahead/arrows/Enter/Escape work with Hebrew labels. Invalid submit focuses associated field; new apply result heading; refresh/page/Space-checkbox retain focus. Calendar Escape returns opener. Visible focus wholly unobscured, including breakpoint change. WCAG 2.1.1–2.1.2, 2.4.3, 2.4.7, 2.4.11. |
+| NEXT02-11 RTL/reflow/contrast | At 320 CSS px and 1280px/400% zoom: no page horizontal scroll, clipping or missing column values; one accessible table/list representation. Test 200% text and WCAG text-spacing overrides, 38-digit IDs/long Hebrew labels/100 activity tokens. Copy IDs/dates unchanged, RTL names and LTR groups ordered correctly. Measure text >=4.5:1 (large >=3:1), controls/focus >=3:1, actions >=48x48px; no color-only meaning. WCAG 1.3.1–1.3.2, 1.4.1, 1.4.3–1.4.4, 1.4.10–1.4.12, 2.5.8. |
+| NEXT02-12 State/error associations | Cover identity/context/list loading, success, empty pages, 400, 401, both 403 causes, both 503 codes/network, all 500 codes and malformed responses. Exactly one meaningful outcome announcement; Hebrew label in accessible name, error/help associations, zero automatic retry, stale links, raw problem HTML or offending values. WCAG 2.5.3, 3.1.1, 3.3.1–3.3.3, 4.1.2–4.1.3. |
+| NEXT02-13 Late A after B | Delay A, edit/start B, complete B then A success/error/403; only B updates records, catalog, applied minute, checkbox state, busy text or focus. Repeat toggle during context load, dirty edit without submit, identity reset and route exit. Abort failure must not defeat generation checks; duplicate activation yields at most one same-generation request. |
+
+### 20.9 Checks, remaining owners and joint approval request
+
+**Performed:** read project instructions, agent brief, existing UI-design skill; read sections 13–19 including historical approval/tooling interpretation and exact draft 19 contracts; inspect docs directory for absent source catalog; directly inspect current route/action/defaults/controlling query and original filter/table source. Static mapping review supports the focused hypothesis: current-mode is one server-minute evaluation per explicit transition/refresh, with manual date/time disabled, not confirmed periodic polling. Ten visible data expressions plus day ID have explicit shown/merged dispositions. Appended-section readback is the post-edit structural check; no shared-contract change is intended.
+
+**Not run / why:** design-only scope and view/patch tools; no shell, automated diff/hash/link check, build/typecheck/tests, browser/calendar/component execution, screenshots, screen reader, contrast/reflow measurements or network calls. Datepicker adapter/key behavior and accessibility cases remain implementation/QA verification, not new stack approval. No Windows-1255 decode, source execution, DB/EMS/DDL/batch, Git, installs or agents. User's running backend **4310** and Angular **4320** were not contacted, stopped or reconfigured; no test listener/fixed port was used.
+
+Known document verifier `node docs\reverse-engineering\verify-evidence.mjs` was deliberately not run: it writes `docs/reverse-engineering/verification.json`, outside exclusive append ownership. Its old hash does not cover sections 19–20; evidence/publication owner must perform authorized current verification and narrow preservation review later. No new tracking artifact is created.
+
+| Remaining item | Owner / disposition |
+|---|---|
+| Exact next API/identity and UI baseline approval | User through caller: jointly review **19 v0.1 + 20 v0.1** before consumer changes. Architect owns all contract interpretation/change requests; UI designer does not amend API. |
+| Hebrew business-copy/unknown original wording | Business/source owner via caller: review proposed terms (especially attendance reason/team/parent); exact legacy-copy parity needs permitted Windows-1255 decoding. No fabricated transcription; not a new tooling/scaffold gate. |
+| Calendar locale/strict adapter/key behavior and accessibility measurement | UI implementer + QA after approval: verify pinned Material, Gregorian year edges, Sunday-first/RTL, calendar focus and NEXT02-01–13, with isolated doubles. No compliance asserted. |
+| Dynamic catalog/clock/scope fixture cases | Backend owner + QA after approval: section 19 acceptance and synthetic scenarios; existing detail contract remains unchanged. Missing capabilities or contract needs go to `system_architect` through caller, not local UI inference. |
+| Real business zone/physical-data anomalies/live compatibility | Business/database/platform owners: deferred live-adapter decisions, not prerequisites for this isolated fixture proposal/approved tooling. |
+| Byte-level preservation, verifier refresh and publication | Caller/evidence/publication owner; no Git or out-of-scope artifact write by designer. |
+
+**Exact combined approval request:** “Approve **SHF-NEXT-01 section 19 Current-shift list target proposal v0.1** and **SHF-NEXT-02 section 20 Current-shift list UI proposal v0.1** together: the two new pure fixture-backed GET contracts and exact queries/DTOs/errors, configured-zone/default/current-minute semantics, catalog-backed G01 parent selection intersected with exact-team scope, deterministic bounded pagination, additive v0.2 identity-seam capability alias and synthetic array (with no PrincipalV1 fields or existing detail-contract change), intentional legacy differences, Hebrew/RTL Material Datepicker plus separate strict HH:mm control, all screen/state/focus/navigation rules, and planned NEXT01-01–14 / NEXT02-01–13 acceptance cases. Then authorize bounded implementation in the existing backend/frontend fixture slices using already approved section 17 tooling. This does not authorize live Oracle/adapters/connections, real authentication implementation, EMS, DDL, batch, exports/tree totals/commands, production deployment or release, and must not disturb the user's running demo.”
+
+**Next action / stop:** draft complete, status **review**. Caller presents this combined request; stop here without agents or implementation. After explicit approval of these exact versions, caller assigns bounded backend/UI work and focused QA, with separate evidence/publication ownership.
