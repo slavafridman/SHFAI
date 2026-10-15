@@ -5,6 +5,10 @@
   - EMS Tibco: For now -only abstract interfaces from API.
   - Batch processess: Temporary excluded from scope of new project  
 
+- agent named reverse_engener_architect to analyze old shifter J2EE websphere project,generate detail design  document    include  architecture of  all layers, workflows,screes,interfaces, datbase and ui navigation analysys and propose for solution to rewrite project using moder platform like nodejs and angularjs.
+agent can analyze Oracle test database in following connection: SHIFTER/shfgogo@CTIDBT_WFMT  
+
+
 
 - agent named system_architect to buid right modern information system architecture.
 
@@ -16,7 +20,7 @@
 
 - quality-assurance to make all test scopes for project - aagent may interact with developers for pass bugs and issues.
 
-- devop-manager to build and pack docker project environment. 
+- devop-manager to build and pack docker  environment dot use WSL. 
 
 - project-orchestrator to manage all agents in traditional workflow ofproject develop.
 
