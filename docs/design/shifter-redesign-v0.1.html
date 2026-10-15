@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>SHF · עיצוב משמרות v0.1</title>
+  <style>
+    :root{--bg:#fafafa;--navy:#16254f;--blue:#056ae5;--border:#dadada;--muted:#526077;--soft:#edf4ff;--danger:#a52b32;--green:#236348;--radius:12px}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--navy);font:15px/1.5 "Segoe UI",Arial,sans-serif}
+    button,input,select{font:inherit}
+    button,a,input,select,summary{-webkit-tap-highlight-color:transparent}
+    a{color:#075cbd;text-underline-offset:4px}
+    button,a{touch-action:manipulation}
+    button{cursor:pointer}
+    :focus-visible{outline:3px solid #16254f;outline-offset:4px}
+    [hidden]{display:none!important}
+    .ltr,time,bdi{direction:ltr;unicode-bidi:isolate}
+    .skip{position:fixed;inset-block-start:-100px;inset-inline-start:16px;z-index:20;background:white;padding:12px}
+    .skip:focus{inset-block-start:8px}
+    .topbar{height:68px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding-inline:32px;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .wordmark{font-size:28px;letter-spacing:-1px;font-weight:800;text-decoration:none;color:var(--blue)}
+    .brand-caption{border-inline-start:1px solid var(--border);padding-inline-start:12px;font-weight:600}
+    .identity{font-size:13px;color:var(--muted);text-align:end}
+    .identity strong{color:var(--navy)}
+    .mockbar{padding:7px 32px;background:var(--soft);border-bottom:1px solid #d4e3f9;font-size:13px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+    .mockbar strong{font-weight:600}
+    .workspace{display:grid;grid-template-columns:224px minmax(0,1fr);min-height:calc(100vh - 103px)}
+    .sidebar{background:white;border-inline-end:1px solid var(--border);padding:26px 16px}
+    .nav-title{font-size:12px;letter-spacing:.03em;color:var(--muted);margin:0 16px 12px}
+    .nav-item{min-height:48px;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:8px;text-decoration:none;font-weight:600;margin-block:4px}
+    .nav-item.active{background:var(--soft);color:#075cbd;border-inline-start:3px solid var(--blue)}
+    .nav-item.unavailable{color:var(--muted);font-weight:400}
+    .nav-item small{font-size:11px;margin-inline-start:auto;white-space:nowrap}
+    .nav-icon{width:20px;text-align:center;font-size:19px}
+    .nav-note{border-top:1px solid var(--border);margin:24px 12px 0;padding-top:16px;font-size:12px;color:var(--muted)}
+    main{min-width:0;padding:24px 32px 40px;max-width:1600px;width:100%;margin-inline:auto}
+    .breadcrumbs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);min-height:32px;margin-bottom:8px}
+    .breadcrumbs a{display:inline-flex;align-items:center;min-height:44px}
+    .heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+    h1{font-size:28px;line-height:1.25;letter-spacing:-.4px;margin:0 0 4px}
+    h2{font-size:18px;line-height:1.4;margin:0}
+    h3{font-size:16px;margin:0 0 8px}
+    p{margin:0}
+    .subtle{color:var(--muted);font-size:13px}
+    .version{border:1px solid var(--border);border-radius:20px;background:white;padding:5px 12px;font-size:12px;white-space:nowrap}
+    .surface{background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 2px 6px #16254f04}
+    .filters{padding:16px 24px;margin:0 0 20px;min-width:0}
+    .filters legend{padding-inline:8px;font-weight:700;font-size:15px}
+    .filter-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+    .check{display:flex;align-items:center;gap:8px;min-height:44px;font-weight:600}
+    input[type=checkbox]{width:20px;height:20px;accent-color:var(--blue);margin:0}
+    .filter-grid{display:grid;grid-template-columns:1.1fr .75fr 1.5fr auto;gap:16px;align-items:start}
+    .field{min-width:0}
+    .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+    .field input,.field select{height:48px;border:1px solid #7e899b;border-radius:8px;background:white;color:var(--navy);padding:8px 12px;width:100%;min-width:0}
+    .field input{direction:ltr;text-align:left}
+    .date-control{display:flex;direction:ltr;gap:4px}
+    .date-control input{flex:1;width:0;padding-inline:8px}
+    .calendar-toggle{flex:0 0 44px;min-height:48px;border:1px solid #7e899b;border-radius:8px;background:white;color:var(--navy);font-size:20px}
+    .field input:disabled{background:#f1f2f5;color:#616a79;border-color:#c4c9d2;cursor:not-allowed}
+    .hint{font-size:12px;color:var(--muted);margin-top:5px}
+    .btn{min-height:49px;min-width:48px;border-radius:24px;padding:10px 22px;border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-weight:600}
+    .primary{background:var(--blue);color:white}
+    .primary:hover{background:#0059c7}
+    .secondary{background:white;border-color:#a7b2c2;color:var(--navy)}
+    .secondary:hover{background:var(--soft)}
+    .btn:active{transform:translateY(1px)}
+    button:disabled{background:#edeef1;color:#667080;border-color:#cbd0d8;cursor:not-allowed}
+    .apply{padding-top:26px}
+    .applied{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid #eceef2;font-size:13px}
+    .dot{width:7px;height:7px;border-radius:50%;background:var(--blue);display:inline-block}
+    .results-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px}
+    .count{font-size:13px;color:var(--muted);font-weight:400;margin-inline-start:8px}
+    .table-wrap{overflow-x:auto;border-radius:12px 12px 0 0}
+    table{border-collapse:collapse;width:100%;text-align:start;font-size:13px}
+    .shifts{min-width:960px}
+    caption{text-align:start;padding:0}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+    th{background:#f5f7fa;font-weight:600;color:#46536a;padding:13px 12px;border-bottom:1px solid var(--border);white-space:nowrap;text-align:start}
+    td{padding:14px 12px;border-bottom:1px solid #e9ecf1;vertical-align:middle}
+    tbody tr:hover{background:#f8fbff}
+    tbody tr.selected{background:#f2f7ff}
+    .employee-name{font-size:14px;font-weight:700;white-space:nowrap}
+    .cell-note{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+    .row-link{min-height:48px;display:inline-flex;align-items:center;white-space:nowrap;font-weight:600}
+    .pill{display:inline-flex;align-items:center;gap:5px;background:#edf6f1;color:var(--green);border-radius:6px;padding:4px 8px;white-space:nowrap}
+    .reason{background:#fff3df;color:#80531b}
+    .unrecorded{color:var(--muted)}
+    .pager{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 16px}
+    .pager-controls{display:flex;gap:8px;align-items:center}
+    .pager .btn{min-height:44px;padding:8px 16px}
+    .scroll-hint{display:none}
+    .design-tools{margin-top:24px}
+    details>summary{cursor:pointer;min-height:48px;padding:12px 16px;font-size:13px;font-weight:600}
+    .design-tools[open]>summary,.technical[open]>summary{border-bottom:1px solid var(--border)}
+    .design-content{padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+    .calendar{border:1px solid var(--border);border-radius:12px;padding:12px;max-width:100%}
+    .calendar-title{font-weight:700;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .calendar table{table-layout:fixed;text-align:center}
+    .calendar td,.calendar th{padding:0;text-align:center;border:0;background:white;height:44px}
+    .calendar th{font-size:11px}
+    .calendar button{width:44px;height:44px;border:0;border-radius:50%;background:white;color:var(--navy)}
+    .calendar button:hover{background:var(--soft)}
+    .calendar button[aria-pressed=true]{background:var(--blue);color:white;font-weight:700}
+    #calendar-dialog{width:380px;max-width:calc(100% - 24px);border-radius:12px}
+    #calendar-dialog .calendar{border:0;width:100%;padding:12px}
+    .calendar-scroll{overflow-x:auto;padding:4px}
+    .calendar table{min-width:308px}
+    .calendar-help{padding:0 16px 16px}
+    .states{display:grid;gap:10px}
+    .state{border-inline-start:3px solid var(--blue);background:#f5f8fc;padding:10px 12px;font-size:13px}
+    .state.error{border-color:var(--danger);background:#fff5f4}
+    .state strong{display:block;margin-bottom:2px}
+    .detail-top{margin-bottom:16px}
+    .back{margin-bottom:16px}
+    .detail-card{max-width:960px;padding:24px}
+    .employee-strip{display:flex;align-items:center;gap:12px;padding-bottom:20px;border-bottom:1px solid #e9ecf1}
+    .avatar{width:48px;height:48px;border-radius:50%;background:var(--soft);color:var(--blue);display:grid;place-items:center;font-size:18px;font-weight:700;flex-shrink:0}
+    .employee-strip .tag{margin-inline-start:auto;font-size:12px;border:1px solid var(--border);border-radius:16px;padding:4px 12px;white-space:nowrap}
+    dl{margin:0}
+    .detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;padding-block:24px}
+    dt{font-size:13px;color:var(--muted);margin-bottom:6px}
+    dd{margin:0;font-size:16px;font-weight:600;overflow-wrap:anywhere}
+    .time-value{font-size:28px;line-height:1.3;letter-spacing:-.5px}
+    .detail-secondary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;background:#f7f9fc;border-radius:8px;padding:16px}
+    .detail-secondary dd{font-size:14px}
+    .context-note{margin-top:16px;font-size:12px;color:var(--muted)}
+    .technical{margin-top:20px;max-width:960px}
+    .technical dl{padding:16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+    .technical dd{font-size:14px}
+    .footer-note{margin-top:24px;font-size:12px;color:var(--muted)}
+    .menu-toggle{display:none}
+    dialog{border:0;padding:0;color:var(--navy);background:#fff;max-height:100dvh}
+    dialog::backdrop{background:#16254f66}
+    #menu{margin:0 0 0 auto;height:100dvh;max-width:calc(100% - 24px);width:300px}
+    .drawer-head{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--border)}
+    .drawer-nav{padding:16px}
+    @media(min-width:1600px){main{padding-inline:40px}}
+    @media(max-width:1100px){.workspace{grid-template-columns:200px minmax(0,1fr)}main{padding:20px}.filter-grid{grid-template-columns:1fr .8fr 1.3fr}.apply{grid-column:1/-1;padding-top:0}.apply .btn{width:auto}.filter-head{align-items:start;flex-direction:column}}
+    @media(max-width:760px){
+      .topbar{height:64px;padding-inline:16px;gap:8px}.wordmark{font-size:25px}.brand{gap:8px}.brand-caption{font-size:13px;padding-inline-start:8px}.identity{display:none}
+      .menu-toggle{display:inline-flex;padding:8px 12px}.mockbar{padding:8px 16px;font-size:12px}.mockbar .scope{display:none}
+      .workspace{display:block}.sidebar{display:none}main{padding:16px;max-width:100%}.breadcrumbs{font-size:12px;margin-bottom:8px}
+      h1{font-size:24px}.heading{align-items:start;margin-bottom:12px}.heading .subtle{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.version{padding:4px 8px;font-size:11px}
+      .filters{padding:8px 12px 12px;margin-bottom:16px}.filter-grid{grid-template-columns:1.2fr 1fr;gap:12px}.field.unit{grid-column:1/-1}.apply .btn{width:100%}
+      .filter-head{gap:0;margin-bottom:8px}.check{font-size:14px}.applied{font-size:12px;gap:6px;margin-top:10px;padding-top:8px}.results-head{gap:8px;align-items:start}.results-head .subtle{display:none}
+      .scroll-hint{display:block;margin-bottom:8px;font-size:12px;color:var(--muted)}
+      .pager{padding:12px;gap:8px;font-size:12px}.pager-controls{gap:6px}.pager .btn{padding:8px 12px}
+      .design-content{grid-template-columns:minmax(0,1fr);padding:12px;gap:16px}.calendar{width:300px}
+      .detail-card{padding:16px}.employee-strip .tag{display:none}.detail-grid{grid-template-columns:1fr 1fr;gap:20px 12px;padding-block:20px}.detail-grid>div:first-child{grid-column:1/-1}
+      .detail-secondary{grid-template-columns:1fr;padding:12px}.technical dl{grid-template-columns:1fr}.time-value{font-size:26px}
+    }
+    @media(max-width:350px){.brand-caption{display:none}.filter-grid{grid-template-columns:1fr}.field.unit{grid-column:auto}.version{display:none}.pager-controls{width:100%;justify-content:space-between}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.btn:active{transform:none}}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">דילוג לתוכן הראשי</a>
+  <header class="topbar">
+    <div class="brand"><a class="wordmark" href="#list" aria-label="SHF — רשימת משמרות לדוגמה"><bdi>SHF</bdi></a><span class="brand-caption">ניהול משמרות</span></div>
+    <div class="identity"><strong>מנהל מערכת סינתטי</strong><br>סביבת עיצוב מקומית · ללא שיוך לעובד</div>
+    <button class="btn secondary menu-toggle" type="button" id="menu-open" aria-label="פתיחת תפריט ניווט" aria-haspopup="dialog" aria-controls="menu">☰ <span>תפריט</span></button>
+  </header>
+  <div class="mockbar"><strong>תצוגת עיצוב בלבד · נתוני דוגמה</strong><span class="scope">לא מחובר למערכת · הצעה לאישור <bdi>v0.1</bdi> · ללא אימות סיסמה או גישה ל־Oracle</span></div>
+  <div class="workspace">
+    <aside class="sidebar">
+      <nav aria-label="ניווט ראשי">
+        <p class="nav-title">סביבת עבודה / משמרות</p>
+        <a class="nav-item active" href="#list" data-list-nav aria-current="page"><span class="nav-icon" aria-hidden="true">▦</span>משמרות נוכחיות</a>
+        <span class="nav-item unavailable" aria-disabled="true">חיפוש משמרות <small>מתוכנן</small></span>
+        <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>מתוכנן</small></span>
+      </nav>
+      <p class="nav-note">במקור קיימים שלושה מסלולי משמרות. במוקאפ פעילים רק הרשימה ופרטי המשמרת. יתר המסלולים אינם זמינים.</p>
+    </aside>
+    <main id="main" tabindex="-1">
+      <section id="list" aria-labelledby="list-title">
+        <nav class="breadcrumbs" aria-label="מיקום במערכת"><span>משמרות</span><span aria-hidden="true">/</span><span>משמרות נוכחיות</span></nav>
+        <div class="heading"><div><h1 id="list-title" tabindex="-1">משמרות נוכחיות</h1><p class="subtle">מי משובץ בנקודת הזמן שנבחרה</p></div><span class="version">הצעת עיצוב <bdi>v0.1</bdi></span></div>
+        <fieldset class="surface filters">
+          <legend>בחירת נקודת זמן</legend>
+          <div class="filter-head"><label class="check" for="current"><input type="checkbox" id="current" aria-describedby="mode-help">שימוש בזמן השרת הנוכחי</label><p class="sr-only" id="mode-help">במוקאפ: זמן קבוע לדוגמה בלבד. אין שעון חי או רענון אוטומטי.</p></div>
+          <div class="filter-grid">
+            <div class="field"><label for="date">תאריך לבדיקה</label><div class="date-control"><input id="date" type="text" value="15/10/2026" maxlength="10" placeholder="DD/MM/YYYY" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" aria-describedby="date-help"><button class="calendar-toggle" id="calendar-open" type="button" aria-label="פתיחת לוח שנה לתאריך לבדיקה" aria-haspopup="dialog" aria-controls="calendar-dialog"><span aria-hidden="true">▦</span></button></div><p class="sr-only" id="date-help">יום/חודש/שנה, DD/MM/YYYY. לוח הדוגמה מאפשר בחירת יום באוקטובר 2026 בלבד; אינו פקד Material בפועל.</p></div>
+            <div class="field"><label for="time">שעה (24 שעות)</label><input id="time" type="text" value="10:00" maxlength="5" placeholder="HH:mm" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" aria-describedby="time-help"><p class="sr-only" id="time-help">שעה ודקה בפורמט HH:mm, מ־00:00 עד 23:59. טקסט מוקלד ללא AM או PM; כללי השרת והאימות מיועדים ליישום לאחר אישור.</p></div>
+            <div class="field unit"><label for="unit">מוקד (יחידת אב)</label><select id="unit" aria-describedby="unit-help"><option value="0012">מוקד שירות מרכז</option><option value="">כל המוקדים המורשים</option></select><p class="sr-only" id="unit-help">בחירה לפי שם · קטלוג G01 מדומה</p></div>
+            <div class="apply"><button class="btn primary" id="search" type="button">חיפוש משמרות</button></div>
+          </div>
+          <div class="applied"><span class="dot" aria-hidden="true"></span><strong>דוגמה קבועה:</strong><time datetime="2026-10-15T10:00">15/10/2026 · 10:00</time><span class="sr-only" id="mode-note">בחירה ידנית לדוגמה</span></div>
+          <p class="sr-only" id="preview-status" role="status">הפקדים מדגימים עיצוב בלבד; שינוי ערכים אינו מסנן את רשומות הדוגמה.</p>
+        </fieldset>
+        <div class="results-head"><h2>רשימת משמרות <span class="count">3 רשומות דוגמה</span></h2><p class="subtle">תצוגה לקריאה בלבד</p></div>
+        <p class="scroll-hint" id="scroll-help">כל העמודות זמינות בגלילה אופקית בתוך הטבלה. פרטי המשמרת נמצאים בסוף כל שורה.</p>
+        <div class="surface">
+          <div class="table-wrap" tabindex="0" role="region" aria-label="טבלת משמרות לדוגמה, ניתנת לגלילה אופקית" aria-describedby="scroll-help">
+            <table class="shifts">
+              <caption class="sr-only">שלוש משמרות סינתטיות בנקודת זמן 15 באוקטובר 2026 בשעה 10:00. שמות העובדים אינם קישורים לכרטיס עובד.</caption>
+              <thead><tr><th scope="col">עובד/ת</th><th scope="col">יום ותאריך התחלה</th><th scope="col">התחלה</th><th scope="col">סיום</th><th scope="col">צוות</th><th scope="col">מיקום</th><th scope="col">פעילות</th><th scope="col">תפקיד פנימי</th><th scope="col">דיווח נוכחות</th><th scope="col">צפייה</th></tr></thead>
+              <tbody>
+                <tr id="row-dana"><th scope="row"><span class="employee-name">דנה לוי</span></th><td>יום חמישי<span class="cell-note"><time datetime="2026-10-15">15/10/2026</time></span></td><td><time datetime="2026-10-15T08:00">08:00</time></td><td><time datetime="2026-10-15T16:00">16:00</time></td><td>צוות אופק</td><td>באתר</td><td>שירות לקוחות</td><td>נציגת שירות</td><td><span class="pill"><time datetime="2026-10-15T07:56">07:56</time></span><span class="cell-note">כניסה לעמדה</span></td><td><a class="row-link" id="open-dana" href="#detail" data-person="dana" aria-label="פרטי משמרת של דנה לוי, 15 באוקטובר 2026">פרטי משמרת ←</a></td></tr>
+                <tr id="row-noam"><th scope="row"><span class="employee-name">נועם כהן</span></th><td>יום רביעי<span class="cell-note"><time datetime="2026-10-14">14/10/2026</time></span></td><td><time datetime="2026-10-14T23:30">23:30</time></td><td><time datetime="2026-10-15T11:00">11:00</time><span class="cell-note"><time datetime="2026-10-15">15/10/2026</time> · למחרת</span></td><td>צוות לילה</td><td>מהבית</td><td>שירות לקוחות<br>תמיכה</td><td>נציג שירות</td><td><span class="pill reason">סיבה: הדרכה</span><span class="cell-note">קודמת לשעת עמדה</span></td><td><a class="row-link" id="open-noam" href="#detail" data-person="noam" aria-label="פרטי משמרת לילה של נועם כהן, 14 עד 15 באוקטובר 2026">פרטי משמרת ←</a></td></tr>
+                <tr><th scope="row"><span class="employee-name">יעל הדר</span></th><td>יום חמישי<span class="cell-note"><time datetime="2026-10-15">15/10/2026</time></span></td><td><time datetime="2026-10-15T09:00">09:00</time></td><td><time datetime="2026-10-15T17:00">17:00</time></td><td>צוות אופק</td><td>באתר</td><td>שירות לקוחות</td><td>לא צוין</td><td><span class="unrecorded">— לא נרשם</span><span class="cell-note">לא קביעה של היעדרות</span></td><td><span class="subtle">לא הודגם</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pager"><span>מוצגות <bdi>1–3</bdi> · עמוד דוגמה יחיד · עד 25 בעמוד</span><div class="pager-controls"><button class="btn secondary" type="button" disabled aria-label="העמוד הקודם, אין עמוד קודם">הקודם</button><span aria-current="page">1</span><button class="btn secondary" type="button" disabled aria-label="העמוד הבא, אין עוד רשומות דוגמה">הבא</button></div></div>
+        </div>
+        <details class="surface design-tools">
+          <summary>לסקירת העיצוב: כללי הפקדים ומצבי מסך</summary>
+          <div class="design-content">
+            <div>
+              <div class="calendar" id="calendar-preview">
+                <div class="calendar-title"><span>אוקטובר 2026</span><span class="subtle">המחשה בלבד</span></div>
+                <div class="calendar-scroll"><table aria-label="בחירת יום באוקטובר 2026 לדוגמה"><thead><tr><th scope="col">א׳</th><th scope="col">ב׳</th><th scope="col">ג׳</th><th scope="col">ד׳</th><th scope="col">ה׳</th><th scope="col">ו׳</th><th scope="col">ש׳</th></tr></thead><tbody>
+                  <tr><td></td><td></td><td></td><td></td><td>1</td><td>2</td><td>3</td></tr>
+                  <tr><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td></tr>
+                  <tr><td>11</td><td>12</td><td>13</td><td>14</td><td class="chosen">15</td><td>16</td><td>17</td></tr>
+                  <tr><td>18</td><td>19</td><td>20</td><td>21</td><td>22</td><td>23</td><td>24</td></tr>
+                  <tr><td>25</td><td>26</td><td>27</td><td>28</td><td>29</td><td>30</td><td>31</td></tr>
+                </tbody></table></div>
+              </div>
+              <p class="hint">התאריך מוצג תמיד כ־<bdi>DD/MM/YYYY</bdi> והשעה כ־<bdi>HH:mm</bdi>, ללא תלות בשפת הדפדפן. כפתור הלוח פותח דוגמה מקומית לאוקטובר 2026 בלבד. היעד לאחר אישור: Material Datepicker ואימות תאריך אזרחי מלא; תאריך העברה <bdi>YYYY-MM-DD</bdi> ושעה <bdi>HH:mm</bdi>, ללא UTC. אין כאן DateAdapter או אימות שרת.</p>
+              <p class="hint">החיפוש אינו פעיל: שינוי הפקדים אינו מסנן את הרשומות. ״עכשיו״ נועל תאריך ושעה לדקת דוגמה קבועה; אין שעון חי או רענון אוטומטי.</p>
+            </div>
+            <div class="states">
+              <div class="state"><strong>טעינה</strong>טוען משמרות… פעולת החיפוש לא תישלח שוב בזמן המתנה. אין הצגת תוצאות ישנות כעדכניות.</div>
+              <div class="state"><strong>אין תוצאות</strong>לא נמצאו משמרות בנקודת הזמן שנבחרה. ניתן לשנות תאריך, שעה או מוקד.</div>
+              <div class="state error"><strong>שגיאה בשדה</strong>יש להזין שעה תקינה בפורמט <bdi>HH:mm</bdi>. ביישום: שיוך ההודעה לשדה והעברת מיקוד לשדה השגוי הראשון.</div>
+              <div class="state error"><strong>טעינה נכשלה / גישה לא מורשית</strong>המסננים נשמרים; לא מוצגים קישורי מידע ישן. ניסיון חוזר יהיה מפורש בלבד. הרשאות ייבדקו בשרת.</div>
+              <div class="state"><strong>הצלחה / מידע חסר</strong>הודעת מספר רשומות אחת. תיאור לא ידוע: ״תיאור לא זמין״; קוד טכני רק בפרטים טכניים. אלה המחשות, לא תוצאות שרת.</div>
+            </div>
+          </div>
+        </details>
+        <p class="footer-note">פרטי משמרת הם מעבר מוצע חדש מהרשימה, לא שחזור של חלונית החלפה. אין במוקאפ עריכה, ייצוא, עץ סיכומים או כרטיס עובד פעיל.</p>
+      </section>
+      <section id="detail" aria-labelledby="detail-title" hidden>
+        <nav class="breadcrumbs" aria-label="מיקום במערכת"><span>משמרות</span><span aria-hidden="true">/</span><a href="#list">משמרות נוכחיות</a><span aria-hidden="true">/</span><span>פרטי משמרת</span></nav>
+        <a class="btn secondary back" href="#list" id="back">→ חזרה לרשימה</a>
+        <div class="heading detail-top"><div><h1 id="detail-title" tabindex="-1">פרטי משמרת</h1><p class="subtle">תצוגה לקריאה בלבד · נתונים סינתטיים</p></div><span class="version">ללא עריכה</span></div>
+        <article class="surface detail-card" aria-label="סיכום משמרת לדוגמה">
+          <div class="employee-strip"><span class="avatar" id="avatar" aria-hidden="true">דל</span><div><h2 id="person-name">דנה לוי</h2><p class="subtle">פרטי עובד/ת · בנפרד מזהות המנהל המחובר</p></div><span class="tag">נתוני דוגמה</span></div>
+          <dl class="detail-grid">
+            <div><dt>תאריך התחלה</dt><dd><span id="detail-weekday">יום חמישי</span><br><bdi id="detail-date">15/10/2026</bdi></dd></div>
+            <div><dt>תחילת משמרת</dt><dd class="time-value"><bdi id="detail-start">08:00</bdi></dd></div>
+            <div><dt>סיום משמרת</dt><dd class="time-value"><bdi id="detail-end">16:00</bdi></dd><dd class="cell-note"><bdi id="detail-end-date">15/10/2026</bdi><span id="overnight" hidden> · למחרת</span></dd></div>
+          </dl>
+          <dl class="detail-secondary">
+            <div><dt>צוות</dt><dd id="detail-team">צוות אופק</dd></div>
+            <div><dt>מוקד (יחידת אב)</dt><dd>מוקד שירות מרכז <span class="subtle">· הקשר מהרשימה</span></dd></div>
+            <div><dt>דיווח נוכחות</dt><dd id="detail-attendance">כניסה לעמדה: 07:56</dd></div>
+            <div><dt>מיקום עבודה</dt><dd id="detail-site">באתר</dd></div>
+          </dl>
+          <p class="context-note">תאריכים ושעות מקומיים לדוגמה, ללא המרה ל־UTC. אין כאן טענה לנתון חי, לתכנון מקורי או לאימות נוכחות. שמות הצוות והמוקד נשענים במוקאפ על שורת המקור, לא על שדות חדשים ב־API של הפרטים.</p>
+        </article>
+        <details class="surface technical"><summary>פרטים טכניים — לא נדרשים לעבודה השוטפת</summary><dl><div><dt>מזהה עובד פנימי (דוגמה)</dt><dd><bdi id="employee-id">1001</bdi></dd></div><div><dt>מזהה יום עבודה פנימי (דוגמה)</dt><dd><bdi id="day-id">2001</bdi></dd></div></dl></details>
+        <p class="footer-note" id="return-note">החזרה משמרת את שדות הדוגמה ומחזירה מיקוד לקישור שנבחר. כניסה ישירה ללא בחירת שורה מציגה דוגמה בלבד ומציעה חזרה לרשימת הדוגמה.</p>
+      </section>
+    </main>
+  </div>
+  <dialog id="calendar-dialog" aria-labelledby="calendar-dialog-title" aria-describedby="calendar-dialog-help">
+    <div class="drawer-head"><h2 id="calendar-dialog-title">בחירת תאריך לדוגמה</h2><button class="btn secondary" id="calendar-close" type="button" aria-label="סגירת לוח השנה">סגירה ×</button></div>
+    <div id="calendar-host"></div>
+    <p class="hint calendar-help" id="calendar-dialog-help">אוקטובר 2026 בלבד · Tab למעבר בין ימים, Enter לבחירה, Escape לסגירה. הרשומות נשארות דוגמה קבועה.</p>
+  </dialog>
+  <dialog id="menu" aria-labelledby="menu-title">
+    <div class="drawer-head"><h2 id="menu-title">ניווט משמרות</h2><button class="btn secondary" id="menu-close" type="button" aria-label="סגירת תפריט ניווט">סגירה ×</button></div>
+    <nav class="drawer-nav" aria-label="ניווט ראשי לנייד">
+      <a href="#list" class="nav-item active" data-list-nav aria-current="page">משמרות נוכחיות</a>
+      <span class="nav-item unavailable" aria-disabled="true">חיפוש משמרות <small>מתוכנן</small></span>
+      <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>מתוכנן</small></span>
+      <p class="nav-note">מנהל מערכת סינתטי · ללא שיוך לעובד. ניווט פעיל במוקאפ בלבד.</p>
+    </nav>
+  </dialog>
+  <script>
+    // Design-only navigation/interaction. No requests, persistence or business operations.
+    const $ = id => document.getElementById(id);
+    history.scrollRestoration='manual';
+    let opener = null, listScroll = 0, selected = 'dana';
+    const examples = {
+      dana:['דנה לוי','דל','יום חמישי','15/10/2026','08:00','16:00','15/10/2026','צוות אופק','כניסה לעמדה: 07:56','באתר','1001','2001'],
+      noam:['נועם כהן','נכ','יום רביעי','14/10/2026','23:30','11:00','15/10/2026','צוות לילה','סיבה: הדרכה (קודמת לשעת עמדה)','מהבית','1002','2002']
+    };
+    function renderDetail(){
+      ['person-name','avatar','detail-weekday','detail-date','detail-start','detail-end','detail-end-date','detail-team','detail-attendance','detail-site','employee-id','day-id'].forEach((id,i)=>$(id).textContent=examples[selected][i]);
+      $('overnight').hidden=selected!=='noam';
+    }
+    function route(focus=true){
+      const detail=location.hash==='#detail';
+      $('list').hidden=detail; $('detail').hidden=!detail;
+      document.querySelectorAll('[data-list-nav]').forEach(link=>{if(detail)link.removeAttribute('aria-current');else link.setAttribute('aria-current','page')});
+      if(detail){renderDetail();if(focus){$('detail-title').focus({preventScroll:true});window.scrollTo(0,0)}}
+      else if(focus){window.scrollTo(0,listScroll);(opener||$('list-title')).focus({preventScroll:true})}
+    }
+    document.querySelectorAll('[data-person]').forEach(link=>link.addEventListener('click',()=>{opener=link;selected=link.dataset.person;listScroll=window.scrollY;document.querySelectorAll('.shifts tr.selected').forEach(row=>row.classList.remove('selected'));link.closest('tr').classList.add('selected')}));
+    window.addEventListener('hashchange',()=>route());
+    window.addEventListener('popstate',()=>route());
+    document.querySelectorAll('a[href="#list"],a[href="#detail"]').forEach(link=>link.addEventListener('click',event=>{
+      event.preventDefault();
+      if(location.hash!==link.hash)history.pushState(null,'',link.hash);
+      route();
+    }));
+    const calendar=$('calendar-dialog');
+    $('calendar-host').append($('calendar-preview'));
+    $('calendar-preview').querySelectorAll('tbody td').forEach(cell=>{
+      const day=cell.textContent.trim();if(!day)return;
+      const button=document.createElement('button');button.type='button';button.textContent=day;
+      button.setAttribute('aria-label',`${day} באוקטובר 2026, בחירת תאריך לדוגמה`);
+      button.setAttribute('aria-pressed',day==='15'?'true':'false');
+      cell.textContent='';cell.append(button);
+      button.addEventListener('click',()=>{
+        $('date').value=day.padStart(2,'0')+'/10/2026';
+        $('date').dispatchEvent(new Event('change'));calendar.close();
+      });
+    });
+    $('calendar-open').addEventListener('click',()=>{
+      const value=$('date').value;
+      calendar.querySelectorAll('td button').forEach(button=>button.setAttribute('aria-pressed',value===button.textContent.padStart(2,'0')+'/10/2026'?'true':'false'));
+      calendar.showModal();
+      (calendar.querySelector('[aria-pressed=true]')||$('calendar-close')).focus({preventScroll:true});
+    });
+    $('calendar-close').addEventListener('click',()=>calendar.close());
+    calendar.addEventListener('close',()=>$('calendar-open').focus({preventScroll:true}));
+    const menu=$('menu');
+    $('menu-open').addEventListener('click',()=>menu.showModal());
+    $('menu-close').addEventListener('click',()=>menu.close());
+    menu.addEventListener('close',()=>$('menu-open').focus());
+    menu.querySelector('a').addEventListener('click',()=>menu.close());
+    window.matchMedia('(min-width:761px)').addEventListener('change',event=>{if(event.matches&&menu.open){menu.close();requestAnimationFrame(()=>$('main').focus())}});
+    $('current').addEventListener('change',()=>{
+      const current=$('current').checked;
+      $('date').disabled=current;$('time').disabled=current;$('calendar-open').disabled=current;
+      $('date').value='15/10/2026';$('time').value='10:00';
+      $('search').textContent=current?'רענון הדוגמה':'חיפוש משמרות';
+      $('mode-note').textContent=current?'· דוגמת דקת שרת קבועה — לא זמן חי':'· בחירה ידנית לדוגמה';
+      $('preview-status').textContent=current?'מצב ״עכשיו״ לדוגמה: התאריך והשעה נעולים. דקת הדוגמה היא 15/10/2026 10:00; לא נקרא שרת.':'הוחזרו ערכי ברירת המחדל של הדוגמה. אין חיפוש אמיתי.';
+    });
+    ['date','time','unit'].forEach(id=>$(id).addEventListener('change',()=>{$('preview-status').textContent='שונו פקדי הדוגמה בלבד. הרשומות ונקודת הזמן המוצגת קבועות ואינן תוצאת סינון.'}));
+    $('search').addEventListener('click',()=>{$('preview-status').textContent='הדגמת פעולה בלבד: ביישום המאושר כאן יתבצע חיפוש. במוקאפ לא נשלחה בקשה ולא שונו התוצאות.'});
+    route();
+    requestAnimationFrame(()=>window.scrollTo(0,0));
+    window.addEventListener('load',()=>window.scrollTo(0,0),{once:true});
+  </script>
+</body>
+</html>
