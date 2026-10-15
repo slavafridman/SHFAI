@@ -110,6 +110,11 @@
     .calendar-scroll{overflow-x:auto;padding:4px}
     .calendar table{min-width:308px}
     .calendar-help{padding:0 16px 16px}
+    #time-dialog{width:360px;max-width:calc(100% - 24px);border-radius:12px}
+    .time-options{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px}
+    .time-options select{direction:ltr}
+    .time-actions{padding:0 16px 16px;display:flex;justify-content:flex-end}
+    .field-error{color:var(--danger);font-size:12px;margin-top:5px}
     .states{display:grid;gap:10px}
     .state{border-inline-start:3px solid var(--blue);background:#f5f8fc;padding:10px 12px;font-size:13px}
     .state.error{border-color:var(--danger);background:#fff5f4}
@@ -184,7 +189,7 @@
           <div class="filter-head"><label class="check" for="current"><input type="checkbox" id="current" aria-describedby="mode-help">שימוש בזמן השרת הנוכחי</label><p class="sr-only" id="mode-help">במוקאפ: זמן קבוע לדוגמה בלבד. אין שעון חי או רענון אוטומטי.</p></div>
           <div class="filter-grid">
             <div class="field"><label for="date">תאריך לבדיקה</label><div class="date-control"><input id="date" type="text" value="15/10/2026" maxlength="10" placeholder="DD/MM/YYYY" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" aria-describedby="date-help"><button class="calendar-toggle" id="calendar-open" type="button" aria-label="פתיחת לוח שנה לתאריך לבדיקה" aria-haspopup="dialog" aria-controls="calendar-dialog"><span aria-hidden="true">▦</span></button></div><p class="sr-only" id="date-help">יום/חודש/שנה, DD/MM/YYYY. לוח הדוגמה מאפשר בחירת יום באוקטובר 2026 בלבד; אינו פקד Material בפועל.</p></div>
-            <div class="field"><label for="time">שעה (24 שעות)</label><input id="time" type="text" value="10:00" maxlength="5" placeholder="HH:mm" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" aria-describedby="time-help"><p class="sr-only" id="time-help">שעה ודקה בפורמט HH:mm, מ־00:00 עד 23:59. טקסט מוקלד ללא AM או PM; כללי השרת והאימות מיועדים ליישום לאחר אישור.</p></div>
+            <div class="field"><label for="time">שעה (24 שעות)</label><div class="date-control"><input id="time" type="text" value="10:00" maxlength="5" placeholder="HH:mm" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" aria-describedby="time-help time-error"><button class="calendar-toggle" id="time-open" type="button" aria-label="פתיחת בורר שעה לבדיקה" aria-haspopup="dialog" aria-controls="time-dialog"><span aria-hidden="true">◷</span></button></div><p class="sr-only" id="time-help">שעה ודקה בפורמט HH:mm, מ־00:00 עד 23:59. ניתן להקליד או לבחור שעה ודקה בבורר, ללא AM או PM וללא עיגול. זהו בורר מקומי לדוגמה, לא רכיב Angular Material בפועל.</p><p class="field-error" id="time-error" role="alert" hidden>יש להזין שעה תקינה בפורמט HH:mm, מ־00:00 עד 23:59. הערך לא שונה.</p></div>
             <div class="field unit"><label for="unit">מוקד (יחידת אב)</label><select id="unit" aria-describedby="unit-help"><option value="0012">מוקד שירות מרכז</option><option value="">כל המוקדים המורשים</option></select><p class="sr-only" id="unit-help">בחירה לפי שם · קטלוג G01 מדומה</p></div>
             <div class="apply"><button class="btn primary" id="search" type="button">חיפוש משמרות</button></div>
           </div>
@@ -259,6 +264,16 @@
       </section>
     </main>
   </div>
+  <dialog id="time-dialog" aria-labelledby="time-dialog-title" aria-describedby="time-dialog-help">
+    <div class="drawer-head"><h2 id="time-dialog-title">בחירת שעה</h2><button class="btn secondary" id="time-cancel" type="button" aria-label="ביטול בחירת שעה">ביטול ×</button></div>
+    <div class="time-options">
+      <div class="field"><label for="picker-hour">שעה (<bdi dir="ltr">00–23</bdi>)</label><select id="picker-hour"></select></div>
+      <div class="field"><label for="picker-minute">דקה (<bdi dir="ltr">00–59</bdi>)</label><select id="picker-minute"></select></div>
+    </div>
+    <p class="hint calendar-help" id="time-dialog-help">שעון 24 שעות · כל דקה ניתנת לבחירה. ביטול או Escape אינם משנים את השדה. תצוגת עיצוב בלבד.</p>
+    <p class="field-error calendar-help" id="picker-error" role="alert" hidden>יש לבחור שעה ודקה תקינות לפני אישור.</p>
+    <div class="time-actions"><button class="btn primary" id="time-apply" type="button">בחירת שעה</button></div>
+  </dialog>
   <dialog id="calendar-dialog" aria-labelledby="calendar-dialog-title" aria-describedby="calendar-dialog-help">
     <div class="drawer-head"><h2 id="calendar-dialog-title">בחירת תאריך לדוגמה</h2><button class="btn secondary" id="calendar-close" type="button" aria-label="סגירת לוח השנה">סגירה ×</button></div>
     <div id="calendar-host"></div>
@@ -322,6 +337,33 @@
     });
     $('calendar-close').addEventListener('click',()=>calendar.close());
     calendar.addEventListener('close',()=>$('calendar-open').focus({preventScroll:true}));
+    const timePicker=$('time-dialog'), validTime=value=>/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+    function checkManualTime(focus=false){
+      const valid=validTime($('time').value);
+      $('time-error').hidden=valid;
+      if(valid)$('time').removeAttribute('aria-invalid');else $('time').setAttribute('aria-invalid','true');
+      if(!valid&&focus)$('time').focus();
+      return valid;
+    }
+    [['picker-hour',24],['picker-minute',60]].forEach(([id,count])=>{
+      for(let i=0;i<count;i++){const option=document.createElement('option');option.value=option.textContent=String(i).padStart(2,'0');$(id).append(option)}
+    });
+    $('time-open').addEventListener('click',()=>{
+      if($('current').checked||timePicker.open)return;
+      if(!checkManualTime(true))return;
+      const [hour,minute]=$('time').value.split(':');
+      $('picker-hour').value=hour;$('picker-minute').value=minute;$('picker-error').hidden=true;
+      timePicker.showModal();$('picker-hour').focus({preventScroll:true});
+    });
+    $('time-cancel').addEventListener('click',()=>timePicker.close());
+    timePicker.addEventListener('close',()=>$('time-open').focus({preventScroll:true}));
+    $('time-apply').addEventListener('click',()=>{
+      const value=$('picker-hour').value+':'+$('picker-minute').value;
+      if(!validTime(value)){$('picker-error').hidden=false;$('picker-hour').focus();return}
+      if($('current').checked)return;
+      $('time').value=value;checkManualTime();$('time').dispatchEvent(new Event('change'));timePicker.close();
+    });
+    $('time').addEventListener('change',()=>checkManualTime());
     const menu=$('menu');
     $('menu-open').addEventListener('click',()=>menu.showModal());
     $('menu-close').addEventListener('click',()=>menu.close());
@@ -330,14 +372,15 @@
     window.matchMedia('(min-width:761px)').addEventListener('change',event=>{if(event.matches&&menu.open){menu.close();requestAnimationFrame(()=>$('main').focus())}});
     $('current').addEventListener('change',()=>{
       const current=$('current').checked;
-      $('date').disabled=current;$('time').disabled=current;$('calendar-open').disabled=current;
+      $('date').disabled=current;$('time').disabled=current;$('calendar-open').disabled=current;$('time-open').disabled=current;
       $('date').value='15/10/2026';$('time').value='10:00';
+      checkManualTime();
       $('search').textContent=current?'רענון הדוגמה':'חיפוש משמרות';
       $('mode-note').textContent=current?'· דוגמת דקת שרת קבועה — לא זמן חי':'· בחירה ידנית לדוגמה';
       $('preview-status').textContent=current?'מצב ״עכשיו״ לדוגמה: התאריך והשעה נעולים. דקת הדוגמה היא 15/10/2026 10:00; לא נקרא שרת.':'הוחזרו ערכי ברירת המחדל של הדוגמה. אין חיפוש אמיתי.';
     });
     ['date','time','unit'].forEach(id=>$(id).addEventListener('change',()=>{$('preview-status').textContent='שונו פקדי הדוגמה בלבד. הרשומות ונקודת הזמן המוצגת קבועות ואינן תוצאת סינון.'}));
-    $('search').addEventListener('click',()=>{$('preview-status').textContent='הדגמת פעולה בלבד: ביישום המאושר כאן יתבצע חיפוש. במוקאפ לא נשלחה בקשה ולא שונו התוצאות.'});
+    $('search').addEventListener('click',()=>{if(!$('current').checked&&!checkManualTime(true))return;$('preview-status').textContent='הדגמת פעולה בלבד: ביישום המאושר כאן יתבצע חיפוש. במוקאפ לא נשלחה בקשה ולא שונו התוצאות.'});
     route();
     requestAnimationFrame(()=>window.scrollTo(0,0));
     window.addEventListener('load',()=>window.scrollTo(0,0),{once:true});
