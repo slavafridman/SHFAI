@@ -1,0 +1,52 @@
+
+VIEW_NAME                            TEXT_LENGTH TEXT
+------------------------------------ ----------- ------------------------------------------------------------------------------------------------------------------------------------------------------
+SHF_LAST_SHIFTS_VIEW                        1138 SELECT c."SHF_EMPLOYEE_DAY_ID",c."END_CHANGE_REASON",
+                                                     c."MODIFICATION_TIME",c."MODIFICATION_USER",c."NEW_ACTIVITY",
+                                                     c."NEW_DAY_END",c."NEW_DAY_START",c."NEW_DAY_TYPE",
+                                                     c."NEW_EMPLOYEE_ID",c."NEW_EXCEPTION_TYPE_ID",
+                                                     c."NEW_PAID_MINUTES",c."NEW_SHIFT_END",c."NEW_SHIFT_START",
+                                                     c."NEW_SITE_ID",c."NEW_TIMEOFF_TYPE_ID",c."NEW_WORK_MINUTES",
+                                                     c."START_CHANGE_REASON",c."SWITCH_DAY_ID",
+                                                     c."CANCEL_REASON_CODE",c."CANCEL_REASON_REMARK",
+                                                        d.shf_employee_day_id AS wm_shf_employee_day_id,
+                                                        d.wm_date,            d.remark,
+                                                        d.wm_day_type,        d.wm_paid_minutes,
+                                                        d.wm_site_id,         d.wm_work_minutes,
+                                                        d.emp_id_number,      d.source,
+                                                        d.wm_end_datetime,    d.wm_exception_type_id,
+                                                        d.wm_schedule_day_id, d.wm_sch_activity_id_data,
+                                                        d.wm_sch_state_data,  d.wm_shift_end_datetime,
+                                                        d.wm_shift_id,        d.wm_shift_start_datetime,
+                                                        d.wm_start_datetime,  d.wm_timeoff_type_id
+                                                                      FROM SHIFTER.shf_employee_day d
+                                                        LEFT JOIN SHIFTER.SHF_DAY_CHANGES c ON d.SHF_EMPLOYEE_DAY_ID = C.SHF_EMPLOYEE_DAY_ID
+                                                        WHERE d.wm_date > SYSDATE - 14
+
+SHF_ORG_UNITS_VIEW                           661 SELECT Chevra.Org_Unit_Id ChevraId,
+                                                 Chevra.Org_Unit_Name ChevraName,
+                                                 Chativot.Org_Unit_Id ChativaId,
+                                                 Chativot.Org_Unit_Name ChativaName,
+                                                 Agafim.Org_Unit_Id AgafId,
+                                                 Agafim.Org_Unit_Name AgafName,
+                                                 Mokedim.Org_Unit_Id MokedId,
+                                                 Mokedim.Org_Unit_Name MokedName,
+                                                 Tzvatim.Org_Unit_Id TzevetId,
+                                                 Tzvatim.Org_Unit_Name TzevetName
+                                                 from
+                                                 shifter.shf_org_unit Chevra,
+                                                 shifter.shf_org_unit Chativot,
+                                                 shifter.shf_org_unit Agafim,
+                                                 shifter.shf_org_unit Mokedim,
+                                                 shifter.shf_org_unit Tzvatim
+                                                 where
+                                                 Tzvatim.Parent_Unit = Mokedim.Org_Unit_Id
+                                                 and
+                                                 Mokedim.Parent_Unit = Agafim.Org_Unit_Id
+                                                 and
+                                                 Agafim.Parent_Unit = Chativot.Org_Unit_Id
+                                                 and
+                                                 Chativot.Parent_Unit = Chevra.Org_Unit_Id
+
+
+

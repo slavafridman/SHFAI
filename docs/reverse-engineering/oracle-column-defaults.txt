@@ -1,0 +1,43 @@
+
+TABLE_NAME                           COLUMN_NAME                          DATA_DEFAULT
+------------------------------------ ------------------------------------ ----------------------------------------------------------------------------------------------------
+SHF_ATTENDANCE                       TADREECH                             0
+SHF_ATTENDANCE                       TADREECH_P2                          0
+SHF_CTI_AFTER_HANDLED                CTI_PART_ID                          0
+SHF_CTI_BEFORE_HANDLED               CTI_PART_ID                          0
+SHF_CTI_BEFORE_HANDLED               STATUS_WEIGHT                        0
+SHF_CTI_PARTS                        CTI_PART_ID                          0
+SHF_DAY_CHANGES                      NEW_WORK_FROM_HOME                   'N'
+SHF_DAY_CHANGES                      NEW_SPLIT_SHIFT                      'N'
+SHF_EMPLOYEES                        RECEIVE_SWITCH_SMS                   1
+SHF_EMPLOYEE_DAY                     WORK_FROM_HOME                       'N'
+SHF_EMPLOYEE_DAY                     SPLIT_SHIFT                          'N'
+SHF_EXCEPTION_TYPE                   SPLIT_SHIFT                          'N'
+SHF_REPLACE_MASSAGE                  IS_DELETED                           0
+SHF_WM_SHIFTS                        WM_NAME                              ' '
+SHF_WM_SHIFTS                        WM_MIN_DURATION                      0
+SHF_WM_SHIFTS                        WM_MAX_DURATION                      0
+SHF_WM_SHIFTS                        WM_EARLIEST_START_TIME               TO_DATE('30-12-1899 0:0:0', 'DD-MM-YYYY HH24:MI:SS')
+SHF_WM_SHIFTS                        WM_LATEST_END_DURATION               0
+SHF_WM_SHIFTS                        WM_DAY_OFF_RULE                      0
+SHF_WM_SHIFTS                        WM_SUN                               0
+SHF_WM_SHIFTS                        WM_MON                               0
+SHF_WM_SHIFTS                        WM_TUE                               0
+SHF_WM_SHIFTS                        WM_WED                               0
+SHF_WM_SHIFTS                        WM_THU                               0
+SHF_WM_SHIFTS                        WM_FRI                               0
+SHF_WM_SHIFTS                        WM_SAT                               0
+SHF_WM_SHIFTS                        WM_START_STEP                        15
+SHF_WM_SHIFTS                        WM_MIN_OCCUR                         0
+SHF_WM_SHIFTS                        WM_MAX_OCCUR                         0
+SHF_WM_SHIFTS                        WM_DISTRIB_PERIOD                    0
+SHF_WM_SHIFTS                        WM_BREAK_MIN_DISTANCE                -1
+SHF_WM_SHIFTS                        WM_TASK_SEQUENCE_USAGE               0
+SHF_WM_SHIFTS                        WM_LATEST_START_DURATION             -1
+SHF_WM_SHIFTS                        WM_EARLIEST_END_DURATION             -1
+SHF_WM_SHIFTS                        WM_USE_CONSECUTIVE                   0
+SHF_WM_SHIFTS                        WM_CONSECUTIVE_DAYS                  0
+SHF_WM_SHIFTS                        WM_USE_AFTER_DAYOFF                  1
+SHF_WM_SHIFTS                        WM_BREAK_MAX_DISTANCE                -1
+SHF_WM_SHIFTS                        WORK_HOME                            0
+SHF_WM_SHIFTS                        UPDATED                              SYSDATE

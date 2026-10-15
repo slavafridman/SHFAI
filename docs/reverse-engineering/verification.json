@@ -1,0 +1,106 @@
+{
+  "task_id": "SHF-RE-2026-10-15",
+  "checked_at": "2026-10-15T10:03:30.461Z",
+  "status": "passed_with_documented_source_anomaly",
+  "csv_files": 31,
+  "inventory_row_references": 10000,
+  "source_hashes_verified": 454,
+  "document_local_links": 283,
+  "document_line_anchors": 168,
+  "route_paths_unique": 215,
+  "legacy_route_uniqueness": "failed: identical mapping declared twice",
+  "documented_duplicate_routes": [
+    {
+      "path": "/shift/viewOriginalShiftDialog",
+      "lines": [
+        925,
+        929
+      ]
+    }
+  ],
+  "physical_table_view_rows": 80,
+  "document_sha256": "e03e8498e40b559176fbcf78e22b899479bc66631023504e7b30ae5db4899f32",
+  "oracle_capture_hashes": [
+    {
+      "file": "oracle-arguments.csv",
+      "sha256": "481c2a90e6322ce82cd659b2e6884ea31c332bfcaa13d5d7c1fbf6d4d83fdc04"
+    },
+    {
+      "file": "oracle-check-conditions.txt",
+      "sha256": "6ff4199cd6c9f91d2562a2706021ecfc5e40b1818225ae09571cd83b4eb41f21"
+    },
+    {
+      "file": "oracle-column-defaults.txt",
+      "sha256": "a8885b4ce92ce78ef67dbf1b5dc038f3d6fc6540e91f3b7de64592e99e9c982f"
+    },
+    {
+      "file": "oracle-columns.csv",
+      "sha256": "a5f31047c7037f16c769e522aeb741ccd1023dfc35dd4f0e271193340a5c935e"
+    },
+    {
+      "file": "oracle-constraints.csv",
+      "sha256": "e02e5b31ffb86b850068433c10284c423a5520016694b99dd4c2241f6b58a74f"
+    },
+    {
+      "file": "oracle-context.csv",
+      "sha256": "2306726e9956712ae77523c382ed015391cb83b1ad0ff853da425ec405d3e8b7"
+    },
+    {
+      "file": "oracle-dependencies.csv",
+      "sha256": "ff5a44b16c267a5a061caefee3a8755463021aadf1f285244feb420abeb64c3d"
+    },
+    {
+      "file": "oracle-index-expressions.txt",
+      "sha256": "22447b65876f8b75cd4190fe799882de3c77b9619092d99bb99a3af11157aeb6"
+    },
+    {
+      "file": "oracle-indexes.csv",
+      "sha256": "fdea762975fe79f3d8125a310b16a8d45a33ee9f1eeee5525d060dbb7e7cedfa"
+    },
+    {
+      "file": "oracle-nls.csv",
+      "sha256": "22a8db4f46dd6c0eca6c159c59395c347fde885d2badc4ebe62ed4fd2906f5e6"
+    },
+    {
+      "file": "oracle-objects.csv",
+      "sha256": "cf85c2f8b38b4f9dafe73424c1d5a07d2ee56dc2cfa4ca4813867929f2b012fb"
+    },
+    {
+      "file": "oracle-procedures.csv",
+      "sha256": "2c9c37b4b4da4943a971a93b7278b7ae7b6bfdb0d6aa43a5f78b9de0cde6782d"
+    },
+    {
+      "file": "oracle-sequences.csv",
+      "sha256": "c13966beb2821ed52dc6208e7c4549ba45104553ff62ebfaab5ac65637af7dc8"
+    },
+    {
+      "file": "oracle-server-version.csv",
+      "sha256": "bc3fa0a41ce284c2cedc1a1045e9524ff7274184c22551f181c62e248d1e71af"
+    },
+    {
+      "file": "oracle-source-summary.csv",
+      "sha256": "c27692f0536b81d0718c505abe82a2202408492f167701d1f97a071e57093489"
+    },
+    {
+      "file": "oracle-synonyms.csv",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "oracle-timezones.csv",
+      "sha256": "919b94c7e56c17ed74f3b167c0403b752cfb0e2296bc655d3f789c73d2343c8c"
+    },
+    {
+      "file": "oracle-transaction-function.csv",
+      "sha256": "b820754993468006f893f97188cc2bccf2f0c2fa42a2f30026347c1fbe6ae0ff"
+    },
+    {
+      "file": "oracle-triggers.csv",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "oracle-view-definitions.txt",
+      "sha256": "2778a2ad4eafdce2a9802052352f6bc8c39886b26f1384dbbd999420309c0477"
+    }
+  ],
+  "limitations": "Structural/static evidence verification only; no Java build, UI, business-data, EMS or application behavior test."
+}
