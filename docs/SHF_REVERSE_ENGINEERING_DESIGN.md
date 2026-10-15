@@ -1204,3 +1204,38 @@ Fixture settings `Asia/Jerusalem` and `TEST-U` are explicitly labeled synthetic 
 If faster backend static verification is desired, request approval for **only** TypeScript 5.9.3 + the exact verified Node-types/transitive dev-tool set and backend-local setup first; UI tooling approval need not block it. Conversely, Oracle support/access remains a later independent gate for both fixture scopes.
 
 **Checks by this architecture update:** re-read the controlling approval/tooling clauses; inspected backend README/contracts/directory; recorded caller-reported ENV02 and SHF-RW-03 evidence with public citations; appended this interpretation only. No feature implementation, dependency installation, external retrieval, shell/test execution, Git write or nested delegation. Status: **review**; fixture runtime QA **ready**, new dev-tool installation and Angular scaffold **blocked on explicit scoped approval**.
+
+---
+
+## 17. Explicit tooling and bounded scaffold approval — v0.1
+
+**Task:** SHF-RW-01 approval-record update.  
+**Approval evidence (user statement reported by caller):** at **15 October 2026, 13:07 +03:00**, the user explicitly stated **“Утверждаю предложенные версии tooling и Angular scaffold”**. Recorded from the caller's handoff at 13:08 +03:00.  
+**Current status:** tooling/scaffold approval **satisfied**; backend-local typecheck setup and isolated frontend scaffold **ready within the assigned scopes**. Sections 13–14 v0.1 remain the already approved API/identity and UI contracts; no contract revision or new approval gate is introduced.
+
+### 17.1 Exact approved versions and file scopes
+
+| Scope | Approved baseline |
+|---|---|
+| Existing execution/tool environment | Node **24.21.0**, npm **11.19.0**. This record does not authorize a machine-wide runtime upgrade. |
+| Backend development-only static tooling | TypeScript compiler **5.9.3**, `@types/node` **24.19.2**, `undici-types` **7.24.6**. `undici-types` is type tooling, not authorization for a network client or partner transport. |
+| Frontend Angular framework family | `@angular/core`, `@angular/common`, `@angular/compiler`, `@angular/compiler-cli`, `@angular/forms`, `@angular/router`, `@angular/platform-browser` **21.2.25**. |
+| Frontend CLI/build | `@angular/cli`, `@angular/build` **21.2.27**. |
+| Frontend Material 3/CDK | `@angular/material`, `@angular/cdk` **21.2.14**. |
+| Frontend language/runtime/test tooling | TypeScript **5.9.3**, RxJS **7.8.2**, tslib **2.8.1**, Vitest **4.0.8**. |
+
+The approval permits backend-local typecheck setup confined to **`backend/fixture-slice/`** and a limited isolated Angular/Material 3 scaffold confined to **`frontend/fixture-slice/`**, including the scoped dependency setup, local manifests/lockfiles/configuration and install/build/typecheck/focused tests needed for the approved slice. No root-wide application scaffold or edits to legacy evidence are implied.
+
+`server-side-developer` owns the backend scope; `ui-developer` owns the frontend scope. They may work in parallel in these disjoint directories under the caller's assignments. Both consume the unchanged approved sections 13–14 v0.1; neither changes shared API/identity/capability/error/temporal contracts. Architecture ownership remains this existing design document. QA records actual focused verification results against the approved contracts and tooling; success is not presumed from approval.
+
+### 17.2 Historical blockers, exclusions and evidence state
+
+The version/tooling/scaffold approval requests and blocked statuses in sections 13–16 are preserved as **historical statements**. This explicit decision supersedes those particular approval blockers, including the missing exact Node-types patch and the frontend test-tool selection. No further contract approval is required to start the assigned backend-local setup or frontend scaffold. Any concrete installation/build/test failure is an execution issue to report with evidence, not an invented new contract gate.
+
+Approval remains limited to the isolated fixture slice. It **does not authorize live Oracle or business-data access, EMS clients/transport, DDL/schema changes, batch, Docker/container work, deployment or release**. Synthetic Administrator remains explicitly enabled only for local/isolated use, blocked in production and incapable of granting infrastructure access. Oracle driver/client compatibility and live access remain separate deferred concerns, not blockers for the approved fixture implementation.
+
+**Publication evidence reported by caller:** the first checkpoint was pushed to `main` at commit **`727dc5e3d9394862e6e88252cdb1c5ceddd2dff6`**. This architect did not independently inspect Git or the remote; that report does not claim this new section is committed/pushed or covered by that checkpoint.
+
+**Checks for this update:** read the preceding approval/tooling clauses and append this approval record only; perform document readback. No consumer code, dependency installation, scaffold, shell/test/web execution, Git write or agent invocation was performed here. No new backend typecheck, frontend build/test, accessibility or document-verifier result is claimed. Earlier reported 34/34 runtime tests and ENV02 findings retain their evidence labels; the stored document verification hash is not current for this append.
+
+**Immediate next action:** backend owner proceeds with the approved local static tooling and reports the actual typecheck/runtime outcomes; UI owner proceeds with the approved limited scaffold and contract implementation, then reports actual build/focused test outcomes. Caller coordinates QA and subsequent narrow publication while preserving unrelated user changes. SHF-RW-01 approval recording is complete for this prerequisite; implementation and verification results remain owned by their respective tasks.
