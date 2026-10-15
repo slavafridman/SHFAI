@@ -1,0 +1,8 @@
+{
+  "deploymentClass": "local-development",
+  "authenticationMode": "synthetic",
+  "syntheticAdministratorEnabled": true,
+  "syntheticOrgUnitIds": ["TEST-U"],
+  "dataSource": "isolated-fixture",
+  "businessTimeZone": "Asia/Jerusalem"
+}

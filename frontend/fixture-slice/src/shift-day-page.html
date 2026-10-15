@@ -1,0 +1,131 @@
+<a class="skip" href="#main" (click)="title()?.nativeElement?.focus()">דילוג לתוכן הראשי</a>
+<header><bdi lang="en">SHF</bdi> — בירור משמרת · הדגמה מבודדת</header>
+<main id="main" tabindex="-1">
+  <h1 #pageTitle tabindex="-1">פרטי המשמרת האפקטיבית</h1>
+  <aside aria-label="מצב זהות ומקור נתונים">
+    <h2 id="identity-heading" tabindex="-1">מצב זהות והרשאה</h2>
+    @if (principal(); as identity) {
+      @if (identity.principal.synthetic) {
+        <p class="notice">מצב הדגמה מקומי — מנהל מערכת סינתטי. לא בוצע אימות סיסמה אמיתית.</p>
+      } @else {
+        <p class="notice">זהות שסופקה על ידי השירות — אינה זהות העובד שנבחר.</p>
+      }
+      <p class="notice">מקור נתונים: נתוני הדגמה מבודדים</p>
+      <p>זהות יישום: <bdi [attr.lang]="identity.principal.synthetic ? 'en' : null" dir="auto">{{ identity.principal.displayName }}</bdi></p>
+    } @else {
+      <p class="notice">זהות הדגמה לא זמינה — לא הוצגו נתוני עובד. אין הנחת מנהל מערכת.</p>
+      <p class="notice">מקור צפוי: נתוני הדגמה מבודדים בלבד</p>
+    }
+    @if (identityState() === 'loading') {
+      <p>טוען את פרטי מצב ההדגמה…</p>
+    }
+    @if (identityState() === 'error' || forbidden() || (identityState() === 'ready' && !canRead())) {
+      <p>{{ identityError() || disabledReason() }}</p>
+    }
+    <button mat-stroked-button type="button" (click)="recheckIdentity()" [disabled]="identityState() === 'loading'">
+      {{ identityState() === 'ready' && canRead() ? 'בדיקת זהות מחדש' : 'ניסיון נוסף' }}
+    </button>
+  </aside>
+
+  <section aria-labelledby="context-heading">
+    <h2 id="context-heading">בחירת עובד ויום עבודה</h2>
+    <p id="context-help">יש להזין מזהים ידועים מנתוני ההדגמה. אין כאן חיפוש עובדים או ימים.</p>
+    <form [formGroup]="form" (ngSubmit)="submit()" aria-describedby="context-help disabled-reason"
+      [attr.aria-busy]="identityState() === 'loading'">
+      <div class="fields">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>מזהה עובד</mat-label>
+          <input matInput id="employeeId" formControlName="employeeId" dir="ltr" inputmode="numeric"
+            autocomplete="off" spellcheck="false" required [attr.aria-invalid]="!!fieldError('employeeId')">
+          <mat-hint id="employee-hint">מזהה פנימי של עובד, לא מספר תעודת זהות</mat-hint>
+          @if (fieldError('employeeId')) {
+            <mat-error id="employee-error">{{ fieldError('employeeId') }}</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>מזהה יום עבודה</mat-label>
+          <input matInput id="shiftDayId" formControlName="shiftDayId" dir="ltr" inputmode="numeric"
+            autocomplete="off" spellcheck="false" required [attr.aria-invalid]="!!fieldError('shiftDayId')">
+          <mat-hint id="day-hint">מזהה רשומת יום עבודה, לא תאריך</mat-hint>
+          @if (fieldError('shiftDayId')) {
+            <mat-error id="day-error">{{ fieldError('shiftDayId') }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+      <p id="disabled-reason">{{ disabledReason() }}</p>
+      <div class="actions">
+        <button mat-flat-button type="submit" [disabled]="!canRead() || isSamePending()"
+          aria-describedby="disabled-reason"
+          aria-label="הצגת פרטים — פרטי משמרת לעובד וליום שנבחרו">הצגת פרטים</button>
+        <button mat-stroked-button type="button" (click)="focusInput()">שינוי הקשר</button>
+        @if (committed()) {
+          <!-- Pending reload stays focusable; reload() guards repeated activation. -->
+          <button id="reload-action" mat-stroked-button type="button" (click)="reload()"
+            [disabled]="!canRead() || state() === 'dirty'"
+            [attr.aria-disabled]="!canRead() || state() === 'loading' || state() === 'dirty'"
+            [attr.aria-busy]="state() === 'loading'"
+            aria-describedby="disabled-reason">טעינה מחדש</button>
+        }
+      </div>
+      @if (committed()) { <p>הנתונים משקפים את הקריאה האחרונה בלבד</p> }
+    </form>
+  </section>
+  <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ announcement() }}</p>
+  <section aria-label="תוצאת הבירור" [attr.aria-busy]="state() === 'loading'">
+    @if (state() === 'loading') {
+      <p>{{ message() }}</p>
+      <mat-progress-bar mode="indeterminate" aria-label="טעינת פרטי משמרת" aria-hidden="true" />
+    }
+    @if (state() === 'dirty') { <p>{{ message() }}</p> }
+    @if (state() === 'error') {
+      <h2 id="error-heading" tabindex="-1" aria-describedby="error-message">לא ניתן להציג את הפרטים</h2>
+      <p id="error-message">{{ message() }}</p>
+      @if (form.controls.employeeId.invalid) {
+        <button mat-button type="button" (click)="focusInput('employeeId')">תיקון מזהה עובד</button>
+      }
+      @if (form.controls.shiftDayId.invalid) {
+        <button mat-button type="button" (click)="focusInput('shiftDayId')">תיקון מזהה יום עבודה</button>
+      }
+      @if (invalidRoute()) { <a mat-button routerLink="/shift-day">בחירת הקשר חדש</a> }
+      @if (reference()) { <p>מזהה פנייה לתמיכה: <bdi dir="ltr">{{ reference() }}</bdi></p> }
+    }
+    @if (row(); as data) {
+      <h2 id="result-heading" tabindex="-1" aria-describedby="result-context">פרטי המשמרת נטענו</h2>
+      <p id="result-context">מזהה עובד: <bdi dir="ltr">{{ data.employeeId }}</bdi>
+        · מזהה יום עבודה: <bdi dir="ltr">{{ data.shiftDayId }}</bdi></p>
+      <p>הנתונים משקפים את הבקשה הנוכחית בלבד. ייתכן שהרשומה השתנתה מאז הטעינה.</p>
+      <div class="details">
+        <section aria-labelledby="employee-heading">
+          <h3 id="employee-heading">פרטי עובד</h3>
+          <dl>
+            <dt>שם פרטי</dt><dd><bdi>{{ data.employee.firstName }}</bdi></dd>
+            <dt>שם משפחה</dt><dd><bdi>{{ data.employee.lastName }}</bdi></dd>
+            <dt>מזהה יחידה</dt><dd><bdi dir="ltr">{{ data.employee.orgUnitId }}</bdi></dd>
+          </dl>
+        </section>
+        <section aria-labelledby="shift-heading">
+          <h3 id="shift-heading">המשמרת האפקטיבית</h3>
+          <dl>
+            <dt>תחילת משמרת</dt><dd><bdi [attr.dir]="data.effectiveShift.startLocal ? 'ltr' : 'rtl'">{{ time(data.effectiveShift.startLocal) }}</bdi></dd>
+            <dt>סיום משמרת</dt><dd><bdi [attr.dir]="data.effectiveShift.endLocal ? 'ltr' : 'rtl'">{{ time(data.effectiveShift.endLocal) }}</bdi></dd>
+            <dt>נתוני פעילות (ערך מקור)</dt><dd class="raw"><bdi>{{ data.effectiveShift.activityData ?? 'לא זמין' }}</bdi></dd>
+            <dt>מזהה אתר</dt><dd><bdi [attr.dir]="data.effectiveShift.siteId ? 'ltr' : 'rtl'">{{ data.effectiveShift.siteId ?? 'לא זמין' }}</bdi></dd>
+          </dl>
+        </section>
+        <section aria-labelledby="attendance-heading">
+          <h3 id="attendance-heading">נוכחות</h3>
+          <dl>
+            <dt>הגעה לבמה</dt><dd><bdi [attr.dir]="data.attendance.stageArrivalLocal ? 'ltr' : 'rtl'">{{ time(data.attendance.stageArrivalLocal) }}</bdi></dd>
+            <dt>כניסה לעמדה</dt><dd><bdi [attr.dir]="data.attendance.stationArrivalLocal ? 'ltr' : 'rtl'">{{ time(data.attendance.stationArrivalLocal) }}</bdi></dd>
+            <dt>יציאה מהעמדה</dt><dd><bdi [attr.dir]="data.attendance.stationExitLocal ? 'ltr' : 'rtl'">{{ time(data.attendance.stationExitLocal) }}</bdi></dd>
+          </dl>
+        </section>
+        <section aria-labelledby="zone-heading">
+          <h3 id="zone-heading">אזור זמן לפרשנות</h3>
+          <p><bdi dir="ltr">{{ data.businessTimeZone }}</bdi></p>
+          <p>השעות מוצגות כזמן מקומי כפי שהתקבל. לא בוצעה המרה לאזור הזמן של המכשיר.</p>
+        </section>
+      </div>
+    }
+  </section>
+</main>

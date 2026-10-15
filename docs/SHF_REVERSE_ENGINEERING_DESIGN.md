@@ -1239,3 +1239,50 @@ Approval remains limited to the isolated fixture slice. It **does not authorize 
 **Checks for this update:** read the preceding approval/tooling clauses and append this approval record only; perform document readback. No consumer code, dependency installation, scaffold, shell/test/web execution, Git write or agent invocation was performed here. No new backend typecheck, frontend build/test, accessibility or document-verifier result is claimed. Earlier reported 34/34 runtime tests and ENV02 findings retain their evidence labels; the stored document verification hash is not current for this append.
 
 **Immediate next action:** backend owner proceeds with the approved local static tooling and reports the actual typecheck/runtime outcomes; UI owner proceeds with the approved limited scaffold and contract implementation, then reports actual build/focused test outcomes. Caller coordinates QA and subsequent narrow publication while preserving unrelated user changes. SHF-RW-01 approval recording is complete for this prerequisite; implementation and verification results remain owned by their respective tasks.
+
+---
+
+## 18. Original-form field migration comparison — SHF-MAP-01
+
+**Date:** 15 October 2026. **Status:** Source comparison recorded; no API/UI contract revision or new gate.  
+**Request:** user explicitly asked “Compare design in old - original project design for right form fields migration,” following a calendar/datepicker preference.  
+**Evidence provenance:** the caller directly inspected the original source and current detail template and supplied the comparison below. This architecture task records that source-backed comparison without retracing it. Source inspection does not establish legacy execution, deployed behavior or reliable decoding of unreadable Windows-1255 labels.
+
+### 18.1 Read-only detail popup → approved detail view
+
+Controlling chain: [ShiftDataAction getShift, lines 92–97](../old/SHF/src/bzq/shf/actions/ShiftDataAction.java#L92) sets `originalDay` from `populateShift(agentDayId)`; [AgentDayBean effective getters, around lines 1016–1030](../old/SHF/src/bzq/shf/bean/AgentDayBean.java#L1016) use non-null `newShiftStart`/`newShiftEnd`, otherwise baseline times. Thus “original” in the popup name does **not** mean historical-baseline-only values. The [popup, lines 49–74](../old/SHFWeb/WebContent/jsp/show_original_shift_popup.jsp#L49) is read-only and contains **no date-valued input**.
+
+| Original popup field/control | Current detail mapping in [shift-day-page.html](../frontend/fixture-slice/src/shift-day-page.html) | Migration interpretation |
+|---|---|---|
+| Read-only `fullName` | `employee.firstName`, `employee.lastName` | Separate source name fields, as approved in section 14; not an editable employee-name form or a new fullName DTO. |
+| `shiftStart` formatted as date | Date portion of `effectiveShift.startLocal` | Date is displayed within the complete local timestamp, not a separate date row or date-selection control. |
+| `shiftStart` formatted `HH:mm` | Complete `effectiveShift.startLocal` date/time including seconds | Effective value retained; approved presentation adds complete components without timezone conversion. |
+| `shiftEnd` formatted `HH:mm` | Complete `effectiveShift.endLocal` date/time including seconds | Full end date remains visible, including overnight dates; no inferred duration or time repair. |
+| `unitCode` table label using `originalDay.getMokedCode()` | Raw `employee.orgUnitId` | **Not equivalent:** legacy displays a lookup label derived from call-center code; modern field is an internal unit ID. This is an explicit approved section 14 difference, not proof that labels/catalogs were migrated. Do not invent a label or lookup endpoint. |
+| Image/button `clear_popup` | Approved routed detail-page navigation/context actions | Popup dismissal is replaced by the approved page interaction, not a business command or migrated modal. |
+| No employee/day locator inputs in this popup | `employeeId`, `shiftDayId` context inputs | **New, already approved resource locator**. They are internal IDs, not migrated dates, personal identifiers or calendar selections. |
+| No corresponding displayed fields identified in this popup comparison | Activity/site, attendance and zone fields | Additional approved detail projection from sections 13–14, not a claim these fields existed in this popup. |
+
+The migration is deliberately one detail slice. It does **not** claim that every legacy form, field, unit-label lookup or shift workflow has been migrated.
+
+### 18.2 Actual calendar inputs belong to a separate list/filter workflow
+
+The caller inspected [shifts_list.jsp, lines 128–180](../old/SHFWeb/WebContent/jsp/shifts_list.jsp#L128). Its current-shift **list/filter** controls are distinct from the implemented read-only detail:
+
+| Source control/type | Correct future migration direction; not implemented by this record |
+|---|---|
+| `shf:calendar` bound to `attendanceDate` | An actual date input: use a calendar/datepicker, consistent with the user's preference, when this separate workflow is implemented. Do not substitute employee/day IDs. |
+| `shf:timechooser` bound to `currentTime` | Accessible time input, separate from the date; do not treat it as a date or identifier. |
+| `shf:unitselect`, `name=moked`, `tablename=unitCode`, `type=G01`, `all=yes` | Catalog-backed unit/call-center select, preserving the source selection semantics in that workflow's source-backed contract; not the detail DTO's raw `orgUnitId`. |
+| `cbChecked` | Source toggles date/time disabled state and submit behavior. Preserve those rules when that workflow's contract is defined/approved; its unreadable label is not evidence for an invented business meaning. |
+| `ShiftDataForm.newStartDate`, `newEndDate` (`Date`); `newStartTime`, `newEndTime` (`String`) | Distinct date/time types, as reported from the caller's source comparison of [ShiftDataForm](../old/SHF/src/bzq/shf/forms/ShiftDataForm.java). They are not employee/day locator IDs. No numeric line anchor was supplied for these declarations. |
+
+Record the user's calendar-control preference for **future relevant actual date inputs**, not for read-only timestamps or ID locators. This does not add a datepicker, time input, unit catalog, filter, endpoint or scaffold to the approved detail slice. The separate list/filter workflow follows its own source-backed contract work when selected; no new prerequisite is imposed on the currently approved slice.
+
+### 18.3 Checks and reported implementation state
+
+**This task:** recorded the caller's completed source comparison, read the existing document tail and performed appended-section readback. No repeat source review, legacy execution, label-decoding claim, consumer edit, external retrieval, test execution, agent invocation or Git operation.
+
+**Reported by caller, not independently verified here:** backend static typecheck and 34 focused tests were published at checkpoint **`22c31e9`**; UI owner reports **38 tests, typecheck, build and browser checks passed**. Independent QA remains pending; these reports are not architecture verification, complete migration coverage or release approval. Neither checkpoint/report proves this appended comparison is published. The stored document-verification hash does not cover the new bytes.
+
+**Next action:** caller uses this matrix for migration review; current backend/UI owners retain the approved sections 13–14 scope, and QA validates the implemented detail against it. No additional controls or contract changes are requested by SHF-MAP-01.
