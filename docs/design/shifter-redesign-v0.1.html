@@ -186,6 +186,33 @@
       .detail-secondary{grid-template-columns:1fr;padding:12px}.technical dl{grid-template-columns:1fr}.time-value{font-size:26px}
     }
     @media(max-width:350px){.brand-caption{display:none}.filter-grid{grid-template-columns:1fr}.field.unit{grid-column:auto}.version{display:none}.pager-controls{width:100%;justify-content:space-between}}
+    /* §30 / SHF-SHIFT-ITEMS-DESIGN-18: additive design-only selected-day inquiry. */
+    .items-link,#shift-items a,#shift-items button{white-space:normal;overflow-wrap:anywhere;max-inline-size:100%;min-block-size:44px}
+    .items-link{display:inline-flex;align-items:center;font-weight:600;padding-block:8px}
+    #shift-items .heading{flex-wrap:wrap}
+    #shift-items .detail-card{padding:16px;margin-block:16px}
+    #shift-items .items-context{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:12px 0 0}
+    #shift-items dt{font-size:12px;color:var(--muted)}
+    #shift-items dd{margin:0;overflow-wrap:anywhere}
+    #shift-items .items-actions{display:flex;flex-wrap:wrap;gap:8px;margin-block:16px}
+    #shift-items .items-table{min-width:1040px}
+    #shift-items .items-table td{vertical-align:top}
+    #shift-items .items-table bdi{display:inline-block;white-space:normal;overflow-wrap:anywhere;max-inline-size:100%}
+    #shift-items .items-table .item-time-token{white-space:nowrap;overflow-wrap:normal}
+    #shift-items .items-table .item-duration{white-space:normal;overflow-wrap:anywhere;max-inline-size:160px}
+    #shift-items summary{white-space:normal;overflow-wrap:anywhere}
+    #shift-items pre{direction:ltr;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-inline-size:100%;margin:8px 0}
+    #shift-items .item-remark{white-space:pre-wrap;overflow-wrap:anywhere}
+    #shift-items .state{overflow-wrap:anywhere}
+    body.shift-items-view .topbar{position:sticky;top:0;z-index:5}
+    body.shift-items-view .sidebar{position:sticky;top:68px;align-self:start;max-height:calc(100dvh - 68px);overflow-y:auto}
+    #shift-items-title{scroll-margin-top:80px}
+    @media(max-width:760px){
+      #shift-items .items-context{grid-template-columns:minmax(0,1fr)}
+      #shift-items .items-table{min-width:0}
+      #shift-items .items-table [data-label]::before{display:block}
+      #shift-items .items-table .item-duration{max-inline-size:100%}
+    }
     @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.btn:active{transform:none}}
   </style>
 </head>
@@ -337,6 +364,56 @@
         <details class="surface technical"><summary>פרטים טכניים — לא נדרשים לעבודה השוטפת</summary><dl><div><dt>מזהה עובד פנימי (דוגמה)</dt><dd><bdi id="employee-id">1001</bdi></dd></div><div><dt>מזהה יום עבודה פנימי (דוגמה)</dt><dd><bdi id="day-id">2001</bdi></dd></div></dl></details>
         <p class="footer-note" id="return-note">החזרה משמרת את שדות הדוגמה ומחזירה מיקוד לקישור שנבחר. כניסה ישירה ללא בחירת שורה מציגה דוגמה בלבד ומציעה חזרה לרשימת הדוגמה.</p>
       </section>
+      <section id="shift-items" hidden aria-labelledby="shift-items-title">
+        <nav class="breadcrumbs" aria-label="מיקום במערכת"><span>משמרות</span><span aria-hidden="true">/</span><a id="items-origin" href="#list">מקור הבחירה</a><span aria-hidden="true">/</span><span>הפסקות וחריגות חלקיות</span></nav>
+        <a class="btn secondary" id="items-back" href="#list">→ חזרה למקור הבחירה</a>
+        <div class="heading"><div><h1 id="shift-items-title" tabindex="-1">הפסקות וחריגות חלקיות במשמרת</h1><p>קריאה בלבד · הצעת עיצוב <bdi>v0.1</bdi></p></div></div>
+        <p class="state">אב־טיפוס מקומי בלבד · פרופילי דוגמה סינתטיים, לא תוצאת Node או Oracle. אין בקשות רשת. זהות מנהל סינתטית ללא שיוך לעובד/ת; ההקשר שנבחר אינו זהות המשתמש. ה־API וההרשאה החדשים ממתינים לאישור.</p>
+        <div id="items-no-selection" class="surface detail-card">
+          <h2>לא נבחרו עובד/ת ויום עבודה</h2>
+          <p>יש לפתוח ״הפסקות וחריגות חלקיות״ בשורה קיימת או בפרטי משמרת שנבחרה. אין בחירה אוטומטית, טופס מזהים או פנייה לשרת.</p>
+          <div class="items-actions"><a class="btn primary" href="#list">למשמרות הנוכחיות</a><a class="btn secondary" href="#search">לחיפוש משמרות</a><a class="btn secondary" href="#my-shifts">למשמרות העובד/ת</a></div>
+        </div>
+        <div id="items-selected" hidden>
+          <article class="surface detail-card" aria-label="הקשר המשמרת שנבחרה">
+            <h2 id="items-name"></h2><p class="hint" id="items-context-source"></p>
+            <dl class="items-context">
+              <div><dt>התחלה — מהקשר המקור</dt><dd id="items-shift-start"></dd></div>
+              <div><dt>סיום — מהקשר המקור</dt><dd id="items-shift-end"></dd></div>
+              <div><dt>צוות — מהקשר המקור</dt><dd id="items-team"></dd></div>
+              <div><dt>מיקום עבודה — מהקשר המקור בלבד</dt><dd id="items-site"></dd></div>
+              <div><dt>מוקד, פעילות ותפקיד פנימי</dt><dd>לא הודגמו בתגובת המסך הזה. אין השלמה או הסקת שם אתר ממוקד.</dd></div>
+            </dl>
+          </article>
+          <p class="hint">רק רשומות חלקיות המקושרות ליום העבודה שנבחר. לא כולל חריגות יום מלא, סיבות חוסר בנוכחות או דוחות אישור. הזמנים מקומיים, בשניות וללא המרה ל־UTC. משך הוא ערך רשום, לא חישוב מהזמנים.</p>
+          <div class="items-actions"><a class="btn secondary" id="items-detail" href="#detail">לפרטי המשמרת האפקטיבית</a><button class="btn secondary" id="items-reload" type="button">הצגה מחדש של הדוגמה</button></div>
+          <p id="items-status" role="status" class="hint"></p>
+          <div class="surface table-wrap" role="region" aria-label="רשומות חלקיות סינתטיות, במחשב גלילה בתוך הטבלה" tabindex="0">
+            <table class="search-table items-table">
+              <caption class="sr-only">פרופיל דוגמה קבוע הקשור לבחירת עובד ויום, לא נתוני מערכת. סדר התחלה עולה בשניות; אין מיון או מסנן מקומי.</caption>
+              <thead><tr><th scope="col">סוג</th><th scope="col">שם וקוד סוג</th><th scope="col">התחלה מקומית</th><th scope="col">סיום מקומי</th><th scope="col">משך רשום בדקות</th><th scope="col">יציאה רשומה</th><th scope="col">חזרה רשומה</th><th scope="col">הערה ומקור</th></tr></thead>
+              <tbody id="items-rows"></tbody>
+            </table>
+          </div>
+          <div class="surface pager"><span>דוגמה: <bdi>offset=0 · limit=25 · hasMore=false · nextOffset=null</bdi> · ללא סך כולל</span><div class="pager-controls"><button class="btn secondary" disabled type="button">הקודם</button><button class="btn secondary" disabled type="button">הבא</button></div></div>
+          <details class="surface technical"><summary>הקשר טכני ונתונים גולמיים — דוגמה בלבד</summary><div class="design-content"><p>מזהים אינם תאריכים. מפתח פריט הוא צמד יום/התחלה, ללא API לפרט פריט. מקור שורה אינו סטטוס.</p><pre id="items-raw"></pre></div></details>
+        </div>
+        <details class="surface design-tools"><summary>מצבי מסך לבדיקת העיצוב — לא תגובות שרת</summary>
+          <div class="design-content">
+            <p><strong>טעינה:</strong> טוענים את ההקשר והרשומות… אין להציג רשומות קודמות או קישורים שלהן. החלפת עובד/יום מבטלת בקשה; רק הדור התואם לשני המזהים רשאי לעדכן תצוגה ומיקוד.</p>
+            <p><strong>ריק מורשה:</strong> לא נמצאו רשומות חלקיות מקושרות. אין בכך הוכחה שאין היעדרות יום מלא. בעמוד מאוחר ריק: אין רשומות בעמוד זה; הקודם זמין.</p>
+            <p><strong>400:</strong> הבקשה אינה תקינה. אין שדות קלט לתיקון כאן; חזרה למקור הבחירה. <strong>401:</strong> נדרש אימות; אין מעבר אוטומטי לזהות מנהל. <strong>403:</strong> אין הרשאה לתצוגה זו. <strong>404:</strong> המשמרת אינה זמינה בהקשר שנבחר. לא מציגים זהות של עובד חלופי.</p>
+            <p><strong>500:</strong> לא ניתן להציג נתונים עקב שגיאת מקור או הקשר לא חד־משמעי. <bdi>AMBIGUOUS_SHIFT_DAY / AMBIGUOUS_SHIFT_ITEMS / INVALID_SOURCE_DATA / INTERNAL_ERROR</bdi> — אין בחירת ״הראשון״ ואין הצלחה חלקית. <strong>503:</strong> השירות אינו זמין או פג הזמן; ניסיון ידני בלבד. הודעה נגישה ושדה <bdi>requestId</bdi> מחוטא, ללא ערכים גולמיים.</p>
+            <p><strong>דפדוף אמיתי בהצעה:</strong> רק <bdi>page.offset/limit/hasMore/nextOffset</bdi>. הבא רק עם <bdi>nextOffset</bdi>; הקודם לפי היסטוריית offset. בגבול <bdi>10000</bdi> עם עוד נתונים וללא offset הבא: ״הושג גבול התצוגה; יש לטעון מחדש או לפנות לתמיכה״, לא ״עמוד אחרון״. אין מסנן טווח לצמצום כאן.</p>
+            <p><strong>ערכים חריגים:</strong> משך אפס/שלילי/עד 38 ספרות מוצג במדויק, גם אם אינו תואם לזמנים. סיום מוקדם מהתחלה מוצג עם שני התאריכים והסבר ניטרלי, ללא תיקון. תאריך חובה חסר הוא שגיאת מקור, לא שורה תקינה. מקור <bdi>DEL</bdi> ללא קוד ביטול נשמר, לא מוצג כ״פעיל״.</p>
+          </div>
+        </details>
+        <details class="surface design-tools"><summary>הערות עיצוב משניות ופרופילי דוגמה</summary><div class="design-content">
+          <p>הטקסטים בעברית מוצעים לבחינה עסקית, לא תעתיק WINDOWS-1255. כניסה מהמשמרות הנוכחיות ומפרטים היא ניווט חדש מוצע; המקור האישי והחיפוש הישנים הראו הפסקות בלבד. שילוב סוגי החריגות החלקיות הוא שינוי תחום מפורש בהצעה §29.</p>
+          <p>דוגמאות היום/הלילה נקבעות לפי השורה שנבחרה; כל הערכים מומצאים. לוח משמרות ללא שעת סיום נשאר ״לא זמין במקור״; לא משלימים זמן. אין קשר לנתוני משתמשים או לסביבה חיה.</p>
+          <p>עריכה, הזזה, ביטול, אישור, החלפות, יציאה/חזרה בפועל, יצוא, דוחות ו־EMS נדחו; אין להם כפתורים כאן. אין שדות קלט, לוח שנה או בורר שעה. אין סטטוס ניהול/שותף/השלמה.</p>
+        </div></details>
+      </section>
       <section id="my-shifts" hidden aria-labelledby="my-shifts-title">
         <div class="breadcrumbs"><a href="#list">משמרות</a><span aria-hidden="true">/</span><span>משמרות העובד/ת</span></div>
         <div class="heading"><div><h1 id="my-shifts-title" tabindex="-1">משמרות העובד/ת</h1><p class="subtle">לוח משמרות לקריאה בלבד · הצעת עיצוב v0.1</p></div><span class="version">עיצוב בלבד</span></div>
@@ -426,11 +503,137 @@
       searchDana:['דנה לוי','דל','יום חמישי','15/10/2026','10:00','18:00','15/10/2026','צוות אופק','לא מוצג בחיפוש · דוגמה בלבד','מהבית','1001','3001'],
       yael:['יעל הדר','יה','יום חמישי','15/10/2026','09:00','17:00','15/10/2026','צוות אופק','לא הודגם','באתר','1003','2003']
     };
+    // Volatile prototype journeys only; history contains opaque tokens, never names/remarks.
+    const itemsJourneys=new Map();
+    let itemsSequence=0,activeItems=null,itemDetailReturn=false,renderedItemsToken=null;
+    const screenNames={list:'משמרות נוכחיות',search:'חיפוש משמרות','my-shifts':'משמרות העובד/ת',detail:'פרטי משמרת'};
+    function addItemsLink(container,person,screen){
+      const link=document.createElement('a');
+      link.href='#shift-items';link.className='items-link';
+      link.textContent='הפסקות וחריגות חלקיות ←';
+      link.setAttribute('aria-label','הפסקות וחריגות חלקיות במשמרת — '+examples[person][0]+', '+examples[person][3]+', דוגמה סינתטית');
+      link.addEventListener('click',event=>{
+        event.preventDefault();
+        openItems(person,screen,link);
+      });
+      container.append(document.createElement('br'),link);
+    }
+    function openItems(person,screen,opener){
+      if(!examples[person])return;
+      const token='items-'+(++itemsSequence);
+      const sample=examples[person].slice();
+      itemsJourneys.set(token,{token,person,sample,screen,opener,scroll:window.scrollY,
+        detailOrigin:origin,detailPerson:selected,itemScroll:0});
+      history.pushState({itemsToken:token},'','#shift-items');route();
+    }
+    function appendItemTime(cell,local){
+      if(!local){cell.textContent='אין ערך רשום';return}
+      const [date,time]=local.split('T'),parts=date.split('-');
+      const dateText=document.createElement('bdi'),timeText=document.createElement('bdi');
+      dateText.className=timeText.className='item-time-token';
+      dateText.textContent=parts[2]+'/'+parts[1]+'/'+parts[0];timeText.textContent=time;
+      cell.append(dateText,document.createElement('br'),timeText);
+    }
+    function renderItems(){
+      const entry=itemsJourneys.get(history.state?.itemsToken)||null;
+      activeItems=entry;
+      $('items-no-selection').hidden=!!entry;$('items-selected').hidden=!entry;
+      $('items-back').hidden=$('items-origin').hidden=!entry;
+      // No null actor request, stale previous row, or guessed selection on direct entry.
+      if(!entry){$('items-rows').replaceChildren();$('items-raw').textContent='';renderedItemsToken=null;return}
+      // Same journey return keeps row disclosures and the exact DOM opener intact.
+      if(renderedItemsToken===entry.token)return;
+      renderedItemsToken=entry.token;
+      const e=entry.sample;
+      $('items-back').href=$('items-origin').href='#'+entry.screen;
+      $('items-back').textContent='→ חזרה אל '+screenNames[entry.screen];
+      $('items-origin').textContent=screenNames[entry.screen];
+      $('items-name').textContent=e[0]+' · הקשר עובד/ת נבחר/ת לדוגמה';
+      $('items-context-source').textContent='מקור: '+screenNames[entry.screen]+' · פרופיל סינתטי קבוע לשורה זו, לא תגובת API ולא הקשר מאומת מחדש. שניות 00 בהקשר המקור הן הדגמה בלבד.';
+      $('items-shift-start').replaceChildren();$('items-shift-end').replaceChildren();
+      const iso=date=>date.split('/').reverse().join('-');
+      appendItemTime($('items-shift-start'),iso(e[3])+'T'+e[4]+':00');
+      if(e[5]==='לא זמין')$('items-shift-end').textContent='לא זמין במקור — אין השלמה סינתטית';
+      else appendItemTime($('items-shift-end'),iso(e[6])+'T'+e[5]+':00');
+      $('items-team').textContent=e[7]+' · תווית מהדוגמה במקור';
+      $('items-site').textContent=entry.person.startsWith('schedule-')?'לא זמין בשורת הלוח — לא הוסק':e[9]+' · תיאור מהמקור, לא שם אתר או siteId';
+      const night=e[4]==='23:30',day=iso(e[3]),later=night?iso(e[6]):day;
+      const first=day+'T'+(night?'23:50:00':'10:00:00');
+      const rows=[
+        {key:{shiftDayId:e[11],startLocal:first},kind:'break',stateCode:'4',type:null,startLocal:first,
+          endLocal:(night?later+'T00:05:00':day+'T10:15:00'),durationMinutes:'15',
+          breakExitLocal:null,breakReturnLocal:null,remark:null,sourceCode:'DEMO'},
+        {key:{shiftDayId:e[11],startLocal:night?later+'T00:10:00':day+'T10:00:30'},kind:'exception',stateCode:'7',
+          type:{code:'-9',label:null},startLocal:night?later+'T00:10:00':day+'T10:00:30',
+          endLocal:night?later+'T00:20:00':day+'T10:10:30',durationMinutes:'-5',
+          breakExitLocal:null,breakReturnLocal:null,remark:'דוגמה בלבד: <טקסט> & קוד EX-9; משך רשום לא תואם לזמנים.',sourceCode:'DEL'},
+        {key:{shiftDayId:e[11],startLocal:later+'T11:00:00'},kind:'timeoff',stateCode:'2',
+          type:{code:'0',label:'סוג היעדרות לדוגמה'},startLocal:later+'T11:00:00',endLocal:later+'T11:30:00',
+          durationMinutes:'30',breakExitLocal:null,breakReturnLocal:null,remark:'הערה סינתטית בלבד',sourceCode:'DEMO'}
+      ];
+      const labels=['סוג','שם וקוד סוג','התחלה מקומית','סיום מקומי','משך רשום בדקות','יציאה רשומה','חזרה רשומה','הערה ומקור'];
+      $('items-rows').replaceChildren();
+      rows.forEach(item=>{
+        const row=document.createElement('tr');
+        labels.forEach((label,index)=>{
+          const cell=document.createElement(index===0?'th':'td');cell.dataset.label=label;
+          if(index===0){cell.scope='row';cell.textContent=({break:'הפסקה',timeoff:'היעדרות חלקית',exception:'חריגה חלקית'})[item.kind]}
+          if(index===1){
+            cell.textContent=item.type?(item.type.label||'שם סוג לא ידוע'):'ללא סוג קטלוגי';
+            const code=document.createElement('bdi');code.className='cell-note';
+            code.textContent=(item.type?'type='+item.type.code+' · ':'')+'state='+item.stateCode+' · kind='+item.kind;cell.append(code);
+          }
+          if(index===2||index===3)appendItemTime(cell,index===2?item.startLocal:item.endLocal);
+          if(index===4){
+            const duration=document.createElement('bdi');duration.className='item-duration';duration.textContent=item.durationMinutes;cell.append(duration);
+            if(item.durationMinutes==='-5'){const note=document.createElement('span');note.className='cell-note';note.textContent='ערך מקור לדוגמה; לא תוקן ולא חושב';cell.append(note)}
+          }
+          if(index===5||index===6){
+            if(item.kind!=='break')cell.textContent='לא חל';
+            else appendItemTime(cell,index===5?item.breakExitLocal:item.breakReturnLocal);
+          }
+          if(index===7){
+            const disclosure=document.createElement('details'),summary=document.createElement('summary'),text=document.createElement('p');
+            summary.textContent=item.remark===null?'אין הערה · מקור טכני':'הערה ומקור טכני';
+            text.className='item-remark';text.dir='auto';text.textContent=item.remark===null?'אין הערה רשומה':item.remark;
+            const provenance=document.createElement('bdi');provenance.textContent='sourceCode: '+item.sourceCode;
+            disclosure.append(summary,text,provenance);cell.append(disclosure);
+          }
+          row.append(cell);
+        });
+        $('items-rows').append(row);
+      });
+      $('items-status').textContent='שלוש רשומות דוגמה קבועות לעובד וליום שנבחרו · '+(night?'פרופיל חוצה חצות':'פרופיל יום')+' · משך שלילי ושם לא ידוע מודגמים במכוון. אין בקשת GET.';
+      $('items-raw').textContent=JSON.stringify({
+        notice:'Synthetic selection + item DTO fragments only; NOT a full SelectedShiftItemsV1 response',
+        requestSelection:{employeeId:e[10],shiftDayId:e[11]},
+        proposedSourceMarkers:{'shiftDay.dataSource':'isolated-fixture','shiftDay.businessTimeZone':'Asia/Jerusalem'},
+        items:rows,applied:{sort:'start-asc'},page:{limit:25,offset:0,hasMore:false,nextOffset:null}
+      },null,2);
+    }
     function renderDetail(){
       ['person-name','avatar','detail-weekday','detail-date','detail-start','detail-end','detail-end-date','detail-team','detail-attendance','detail-site','employee-id','day-id'].forEach((id,i)=>$(id).textContent=examples[selected][i]);
       $('overnight').hidden=examples[selected][3]===examples[selected][6]||examples[selected][6]==='לא זמין';
     }
     function route(focus=true){
+      const leavingItems=previousScreen==='shift-items'?activeItems:null;
+      document.body.classList.toggle('shift-items-view',location.hash==='#shift-items');
+      if(location.hash==='#shift-items'){
+        renderItems();
+        ['list','search','detail','my-shifts','shift-items'].forEach(id=>$(id).hidden=id!=='shift-items');
+        const parent=activeItems?(activeItems.screen==='detail'?activeItems.detailOrigin:activeItems.screen):'list';
+        ['list','search','my-shifts'].forEach(id=>document.querySelectorAll(`[data-${id}-nav]`).forEach(link=>{
+          const active=id===parent;link.classList.toggle('active',active);
+          if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
+        }));
+        if(focus){
+          const restore=itemDetailReturn&&activeItems;
+          window.scrollTo(0,restore?activeItems.itemScroll:0);
+          (restore?$('items-detail'):$('shift-items-title')).focus({preventScroll:true});
+        }
+        itemDetailReturn=false;previousScreen='shift-items';return;
+      }
+      $('shift-items').hidden=true;
       const screen=location.hash==='#detail'?'detail':location.hash==='#search'?'search':location.hash==='#my-shifts'?'my-shifts':'list', detail=screen==='detail';
       if(detail&&history.state?.designDetail){
         // A reload deliberately loses synthetic schedule context; never recover an actor from a hash.
@@ -456,11 +659,29 @@
         $('return-note').textContent='הפרט שייך למזהי העובד ויום העבודה של שורת הלוח. החזרה משמרת טווח, עמוד, גלילה וקישור פתיחה; מקור הבחירה מהרשימה או מהחיפוש נשמר בנפרד. נתוני נוכחות, אם יוצגו בפרט העתידי, עצמאיים ואינם נתוני לוח המשמרות.';
       }
       if(screen==='my-shifts')renderSchedule();
+      detailItems.hidden=!detail||!history.state?.designDetail||!examples[history.state.person]||!!history.state?.fromItemsDetail;
       if(detail){renderDetail();if(focus){$('detail-title').focus({preventScroll:true});window.scrollTo(0,0)}}
       else if(focus){
         const restore=(previousScreen==='detail'&&screen===origin)||(previousScreen==='my-shifts'&&screen===scheduleUpstream), memory=returnMemory[screen];
         window.scrollTo(0,restore?memory.scroll:0);
         (restore&&memory.opener&&!memory.opener.closest('[hidden]')?memory.opener:$(screen+'-title')).focus({preventScroll:true});
+      }
+      if(detail&&history.state?.fromItemsDetail&&itemsJourneys.has(history.state.fromItemsDetail)){
+        const entry=itemsJourneys.get(history.state.fromItemsDetail);
+        $('back').href=$('detail-origin').href='#shift-items';
+        $('back').textContent='→ חזרה להפסקות ולחריגות החלקיות';
+        $('detail-origin').textContent='הפסקות וחריגות חלקיות';
+        $('return-note').textContent='פרטי המשמרת הקיימים בלבד — לא פרט של פריט. החזרה שומרת את שרשרת המקור של מסך ההפסקות.';
+        itemDetailReturn=true;
+        // Opaque token is restored on explicit back as well as browser Back.
+        [$('back'),$('detail-origin')].forEach(link=>link.dataset.itemsReturn=entry.token);
+      }else{
+        itemDetailReturn=false;
+        delete $('back').dataset.itemsReturn;delete $('detail-origin').dataset.itemsReturn;
+      }
+      if(focus&&leavingItems&&screen===leavingItems.screen&&!history.state?.fromItemsDetail){
+        window.scrollTo(0,leavingItems.scroll);
+        (leavingItems.opener?.isConnected&&!leavingItems.opener.closest('[hidden]')?leavingItems.opener:$(screen+'-title')).focus({preventScroll:true});
       }
       previousScreen=screen;
     }
@@ -472,6 +693,7 @@
       link.textContent='משמרות העובד/ת ←';
       link.setAttribute('aria-label','משמרות העובד/ת '+examples[person][0]+' — בחירת הקשר סינתטי');
       cell.append(document.createElement('br'),link);
+      addItemsLink(cell,person,row.closest('section').id);
       link.addEventListener('click',()=>{
         schedulePerson=person;scheduleUpstream=row.closest('section').id;
         returnMemory[scheduleUpstream]={opener:link,scroll:window.scrollY};
@@ -523,7 +745,7 @@
           $('schedule-rows').querySelectorAll('.selected').forEach(item=>item.classList.remove('selected'));row.classList.add('selected');
           history.pushState({designDetail:true,origin,person:selected},'','#detail');route();
         });
-        cell.append(link);row.append(cell);$('schedule-rows').append(row);
+        cell.append(link);addItemsLink(cell,key,'my-shifts');row.append(cell);$('schedule-rows').append(row);
       });
     }
     document.querySelectorAll('[data-person]').forEach(link=>link.addEventListener('click',()=>{
@@ -532,11 +754,34 @@
     }));
     window.addEventListener('hashchange',()=>route());
     document.querySelectorAll('a[href="#list"],a[href="#detail"],a[href="#search"],a[href="#my-shifts"]').forEach(link=>link.addEventListener('click',event=>{
+      if(link.id==='items-detail')return;
       event.preventDefault();
       if(menu.open)menu.close();
+      if(link.dataset.itemsReturn){
+        history.pushState({itemsToken:link.dataset.itemsReturn},'','#shift-items');route();return;
+      }
+      if((link.id==='items-back'||link.id==='items-origin')&&activeItems){
+        selected=activeItems.detailPerson;origin=activeItems.detailOrigin;
+      }
       if(location.hash!==link.hash)history.pushState(link.hash==='#detail'?{designDetail:true,origin,person:selected}:null,'',link.hash);
       route();
     }));
+    // Explicit selected detail action; never manufactures an item-detail endpoint.
+    const detailItems=document.createElement('a');
+    detailItems.href='#shift-items';detailItems.className='items-link';detailItems.textContent='הפסקות וחריגות חלקיות במשמרת ←';
+    detailItems.addEventListener('click',event=>{event.preventDefault();openItems(selected,'detail',detailItems)});
+    $('detail').querySelector('article').after(detailItems);
+    $('items-detail').addEventListener('click',event=>{
+      event.preventDefault();if(!activeItems)return;
+      activeItems.itemScroll=window.scrollY;selected=activeItems.person;
+      origin=activeItems.screen==='detail'?activeItems.detailOrigin:activeItems.screen;
+      history.pushState({designDetail:true,person:selected,origin,fromItemsDetail:activeItems.token},'','#detail');route();
+    });
+    $('items-reload').addEventListener('click',()=>{
+      if(!activeItems)return;
+      renderedItemsToken=null;
+      renderItems();$('items-status').textContent+=' הוצגה מחדש אותה דוגמה; לא בוצע רענון שרת.';
+    });
       // Date-only arithmetic: no Date parsing, timestamps, UTC or DST arithmetic.
       const isLeap=year=>year%4===0&&(year%100!==0||year%400===0);
       const monthLength=(year,month)=>[31,isLeap(year)?29:28,31,30,31,30,31,31,30,31,30,31][month-1];

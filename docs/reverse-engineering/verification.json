@@ -1,11 +1,11 @@
 {
   "task_id": "SHF-RE-2026-10-15",
-  "checked_at": "2026-10-18T09:48:04.041Z",
+  "checked_at": "2026-10-18T10:53:29.951Z",
   "status": "passed_with_documented_source_anomaly",
   "csv_files": 31,
   "inventory_row_references": 10000,
   "source_hashes_verified": 454,
-  "document_local_links": 380,
+  "document_local_links": 381,
   "document_line_anchors": 244,
   "route_paths_unique": 215,
   "legacy_route_uniqueness": "failed: identical mapping declared twice",
@@ -19,7 +19,7 @@
     }
   ],
   "physical_table_view_rows": 80,
-  "document_sha256": "26bc7ca8385f4cb489b228a69463b31fbaeb0a6fda6a7f513ef898bfd12135ac",
+  "document_sha256": "ab286a73006be4bf6a28982ffdb24f2272d6993dfe6c92cffad087103bec6d60",
   "oracle_capture_hashes": [
     {
       "file": "oracle-arguments.csv",
