@@ -146,6 +146,15 @@
     .search-table{min-width:1050px}
     .markers{max-width:260px;font-size:12px}
     .markers span{display:block}
+    #schedule-calendar{width:380px;max-width:calc(100% - 24px);border-radius:12px}
+    #my-shifts>.state{margin-bottom:16px}
+    #schedule-selected>.detail-card{margin-bottom:20px}
+    #schedule-upstream{white-space:normal;min-inline-size:0;max-inline-size:100%;flex-wrap:wrap;overflow-wrap:anywhere;min-block-size:48px}
+    #schedule-form{margin-top:20px}
+    .schedule-table td,.schedule-table th{overflow-wrap:anywhere}
+    #my-shifts .search-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    #my-shifts .detail-card{max-width:100%}
+    @media(max-width:760px){#my-shifts .search-grid{grid-template-columns:minmax(0,1fr)}.schedule-table .row-link{white-space:normal}#my-shifts .heading{flex-wrap:wrap}#my-shifts .state{overflow-wrap:anywhere}}
     @media(max-width:1100px){.search-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:760px){
       .search-grid{grid-template-columns:minmax(0,1fr)}
@@ -194,9 +203,9 @@
         <p class="nav-title">סביבת עבודה / משמרות</p>
         <a class="nav-item active" href="#list" data-list-nav aria-current="page"><span class="nav-icon" aria-hidden="true">▦</span>משמרות נוכחיות</a>
         <a class="nav-item" href="#search" data-search-nav>חיפוש משמרות <small>עיצוב בלבד</small></a>
-        <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>מתוכנן</small></span>
+        <a class="nav-item" href="#my-shifts" data-my-shifts-nav>המשמרות שלי <small>עיצוב בלבד</small></a>
       </nav>
-      <p class="nav-note">במוקאפ: משמרות נוכחיות, חיפוש ופרטים. החיפוש הוא הצעת עיצוב בלבד, לא יכולת ייצור. המשמרות שלי עדיין מתוכנן.</p>
+      <p class="nav-note">במוקאפ: משמרות נוכחיות, חיפוש, פרטים ומשמרות עובד/ת. עיצוב בלבד, ללא טענה למוכנות לייצור.</p>
     </aside>
     <main id="main" tabindex="-1">
       <section id="list" aria-labelledby="list-title">
@@ -328,6 +337,47 @@
         <details class="surface technical"><summary>פרטים טכניים — לא נדרשים לעבודה השוטפת</summary><dl><div><dt>מזהה עובד פנימי (דוגמה)</dt><dd><bdi id="employee-id">1001</bdi></dd></div><div><dt>מזהה יום עבודה פנימי (דוגמה)</dt><dd><bdi id="day-id">2001</bdi></dd></div></dl></details>
         <p class="footer-note" id="return-note">החזרה משמרת את שדות הדוגמה ומחזירה מיקוד לקישור שנבחר. כניסה ישירה ללא בחירת שורה מציגה דוגמה בלבד ומציעה חזרה לרשימת הדוגמה.</p>
       </section>
+      <section id="my-shifts" hidden aria-labelledby="my-shifts-title">
+        <div class="breadcrumbs"><a href="#list">משמרות</a><span aria-hidden="true">/</span><span>משמרות העובד/ת</span></div>
+        <div class="heading"><div><h1 id="my-shifts-title" tabindex="-1">משמרות העובד/ת</h1><p class="subtle">לוח משמרות לקריאה בלבד · הצעת עיצוב v0.1</p></div><span class="version">עיצוב בלבד</span></div>
+        <p class="state">מנהל המערכת הסינתטי אינו עובד/ת מחובר/ת: <bdi>employeeId=null</bdi>. בחירת עובד/ת היא הקשר לתצוגה מקומית בלבד, לא התחזות, הרשאה או ספק זהות אמיתי. אין API או חיבור למסד נתונים.</p>
+        <div id="schedule-no-selection" class="surface detail-card">
+          <h2>לא נבחר עובד/ת</h2><p>יש לבחור עובד/ת מתוצאות חיפוש המשמרות או מהמשמרות הנוכחיות, באמצעות הקישור ״משמרות העובד/ת״ בשורה.</p>
+          <div class="search-actions"><a class="btn primary" href="#list">למשמרות הנוכחיות</a><a class="btn secondary" href="#search">לחיפוש משמרות</a></div>
+          <p class="hint">אין בחירה אוטומטית או שדה מזהה. בעתיד בלבד: ספק זהות אמיתי מאומת עם שיוך עובד יוכל לאפשר ״המשמרות שלי״; לא ממומש במוקאפ.</p>
+        </div>
+        <div id="schedule-selected" hidden>
+          <a class="row-link" id="schedule-upstream" href="#list">→ חזרה למקור הבחירה</a>
+          <article class="surface detail-card"><h2 id="schedule-employee"></h2><p id="schedule-context"></p><p class="hint" id="schedule-source"></p><p class="hint">פרטי עובד/ת שנבחר/ה — לא פרטי המשתמש הסינתטי. כל השמות והמשמרות הם דוגמאות סינתטיות קבועות.</p></article>
+          <form id="schedule-form" novalidate>
+            <fieldset class="surface filters"><legend>טווח תאריכי התחלת משמרת</legend>
+              <p class="hint" id="schedule-date-help">יום/חודש/שנה · DD/MM/YYYY · ברירת מחדל לדוגמה: 18–31 באוקטובר 2026, 14 תאריכים כולל שני הקצוות. עד 31 תאריכים קלנדריים. ללא שעות קלט, UTC או חיפוש חפיפה.</p>
+              <div class="search-grid">
+                <div class="field"><label for="schedule-dateFrom">מתאריך</label><div class="date-control"><input id="schedule-dateFrom" name="dateFrom" value="18/10/2026" maxlength="10" placeholder="DD/MM/YYYY" aria-describedby="schedule-date-help schedule-dateFrom-error"><button class="calendar-toggle" type="button" data-schedule-calendar="schedule-dateFrom" aria-label="פתיחת לוח שנה למתאריך" aria-haspopup="dialog" aria-controls="schedule-calendar">▦</button></div><p class="field-error" id="schedule-dateFrom-error" hidden>יש להזין תאריך גרגוריאני תקין בפורמט DD/MM/YYYY.</p></div>
+                <div class="field"><label for="schedule-dateTo">עד תאריך</label><div class="date-control"><input id="schedule-dateTo" name="dateTo" value="31/10/2026" maxlength="10" placeholder="DD/MM/YYYY" aria-describedby="schedule-date-help schedule-dateTo-error"><button class="calendar-toggle" type="button" data-schedule-calendar="schedule-dateTo" aria-label="פתיחת לוח שנה לעד תאריך" aria-haspopup="dialog" aria-controls="schedule-calendar">▦</button></div><p class="field-error" id="schedule-dateTo-error" hidden>יש להזין תאריך תקין, שאינו לפני מתאריך, בטווח של עד 31 תאריכים כולל הקצוות.</p></div>
+              </div>
+              <div class="search-actions"><button class="btn primary" type="submit">החלת הטווח / רענון הדוגמה</button></div>
+              <p id="schedule-status" class="hint" role="status">דוגמאות קבועות, לא תוצאות סינון. רענון ידני בלבד, ללא בקשות או רענון אוטומטי.</p>
+            </fieldset>
+          </form>
+          <div id="schedule-samples">
+            <div class="results-head"><h2 id="schedule-results-title" tabindex="-1">משמרות לדוגמה בלבד</h2></div>
+            <div class="surface table-wrap"><table class="search-table schedule-table"><caption class="sr-only">לוח משמרות סינתטי קבוע. ללא דיווחי נוכחות, פקודות או עריכת משמרת.</caption><thead><tr><th scope="col">עובד/ת</th><th scope="col">יום ותאריך התחלה</th><th scope="col">התחלה</th><th scope="col">סיום</th><th scope="col">צוות</th><th scope="col">פעילות</th><th scope="col">צפייה</th></tr></thead><tbody id="schedule-rows"></tbody></table>
+              <div class="pager"><span>עמוד דוגמה יחיד · ללא ספירה כוללת או דפדוף אמיתי</span><div class="pager-controls"><button class="btn secondary" disabled>הקודם</button><button class="btn secondary" disabled>הבא</button></div></div>
+            </div>
+          </div>
+          <details class="surface technical"><summary>הקשר טכני סינתטי — לקריאה בלבד</summary><dl><div><dt>מזהה עובד פנימי</dt><dd><bdi id="schedule-employee-id"></bdi></dd></div><div><dt>מצב הצעה</dt><dd><bdi>selected</bdi> · אינו משנה את זהות המשתמש</dd></div></dl></details>
+        </div>
+        <details class="surface design-tools"><summary>לסקירת העיצוב: מצבים וגבולות ההצעה</summary><div class="design-content states">
+          <div class="state"><strong>טעינה / הצלחה / ריק</strong>ביעד: קודם הקשר עובד, אחריו רשימה; בזמן בקשה כפתור מושבת והכרזה ״טוען משמרות…״. הצלחה מציגה טווח מוחל. ריק תקין: ״לא נמצאו משמרות שמתחילות בטווח שנבחר״, לא היעדרות. במוקאפ אין בקשות או הצלחת שרת מדומה.</div>
+          <div class="state error"><strong>טווח שגוי — 400</strong>הערכים נשמרים; שגיאה משויכת לשדה ומיקוד בשדה השגוי הראשון. אין קיצור אוטומטי ל־31 ימים.</div>
+          <div class="state error"><strong>401 / 403 / 409</strong>אין זהות תקפה / ההקשר אינו זמין או מורשה / נדרש שיוך עובד. מסירים תוצאות וקישורים ישנים; לא חושפים אם עובד קיים. מציעים חזרה למקור ובחירה מפורשת מחדש, בלי עובד חלופי אוטומטי.</div>
+          <div class="state error"><strong>503 / 500 / פרט שנעלם</strong>שירות לא זמין או פג זמן ההמתנה / נתונים לא חד־משמעיים או שגויים. ללא תוצאות חלקיות או ניסיון חוזר אוטומטי. ניסיון חוזר ידני; מזהה בקשה מסונן בלבד. שגיאת פרט 404 או עמימות נוכחות נשארת בפרטים עם חזרה ללוח.</div>
+          <div class="state"><strong>שינוי הקשר / הרשאות / טווח</strong>ביעד: הסרת רשומות ישנות, ביטול בקשה ותגובה רק לדור הבקשה האחרון. אימות הקשר והרשאות מחדש בכל חזרה; לא סומכים על בחירת דפדפן. במוקאפ שינוי טווח מסתיר את הדוגמאות עד החלה.</div>
+          <div class="state"><strong>עמוד ריק מאוחר / תקרת דפדוף</strong>ביעד: חזרה לעמוד קודם; בתקרה ״הבא״ מושבת עם בקשה לצמצם טווח, ללא ספירה כוללת. אין גרירה, עריכה, הפסקות, היעדרויות, בקשות או ייצוא.</div>
+          <div class="state"><strong>שדות ודיוק</strong>מיקום עבודה ותפקיד פנימי אינם בחוזה הלוח ולכן אינם מוצגים. פעילות לא ידועה מוצגת לפי קוד; רשימה ריקה אינה היעדרות. סיום חסר: ״לא זמין״. שעות HH:mm, תאריך מלא בסיום; שניות שאינן אפס נשמרות בטקסט עזר, ללא עיגול.</div>
+        </div></details>
+      </section>
     </main>
   </div>
   <dialog id="time-dialog" aria-labelledby="time-dialog-title" aria-describedby="time-dialog-help">
@@ -350,31 +400,47 @@
     <nav class="drawer-nav" aria-label="ניווט ראשי לנייד">
       <a href="#list" class="nav-item active" data-list-nav aria-current="page">משמרות נוכחיות</a>
       <a href="#search" class="nav-item" data-search-nav>חיפוש משמרות <small>עיצוב בלבד</small></a>
-      <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>מתוכנן</small></span>
+      <a class="nav-item" href="#my-shifts" data-my-shifts-nav>המשמרות שלי <small>עיצוב בלבד</small></a>
       <p class="nav-note">מנהל מערכת סינתטי · ללא שיוך לעובד. ניווט פעיל במוקאפ בלבד.</p>
     </nav>
+  </dialog>
+  <dialog id="schedule-calendar" aria-labelledby="schedule-calendar-title" aria-describedby="schedule-calendar-help">
+    <div class="drawer-head"><h2 id="schedule-calendar-title">בחירת תאריך לטווח</h2><button class="btn secondary" id="schedule-calendar-close" type="button" aria-label="סגירת לוח תאריכי הטווח">סגירה ×</button></div>
+    <div class="design-content">
+      <div class="field"><label for="schedule-calendar-year">שנה לדוגמה</label><select id="schedule-calendar-year"><option>2024</option><option>2025</option><option selected>2026</option><option>2027</option><option>2028</option></select></div>
+      <div class="field"><label for="schedule-calendar-month">חודש</label><select id="schedule-calendar-month"></select></div>
+      <div class="calendar-scroll"><div class="calendar"><table aria-label="בחירת יום לטווח לדוגמה"><thead><tr><th>א׳</th><th>ב׳</th><th>ג׳</th><th>ד׳</th><th>ה׳</th><th>ו׳</th><th>ש׳</th></tr></thead><tbody id="schedule-calendar-days"></tbody></table></div></div>
+    </div>
+    <p id="schedule-calendar-help" class="hint calendar-help">לוח אב־טיפוס מוגבל לשנים 2024–2028, לא רכיב ייצור. אפשר להקליד שנים 0001–9999 בשדות. Tab בין הימים, Enter לבחירה, Escape לסגירה ללא שינוי; המיקוד חוזר לכפתור הפתיחה. לוחות החיפוש והרשימה לא השתנו.</p>
   </dialog>
   <script>
     // Design-only navigation/interaction. No requests, persistence or business operations.
     const $ = id => document.getElementById(id);
     history.scrollRestoration='manual';
     let selected = 'dana', origin = 'list', previousScreen = null;
-    const returnMemory={list:{opener:null,scroll:0},search:{opener:null,scroll:0}};
+    const returnMemory={list:{opener:null,scroll:0},search:{opener:null,scroll:0},'my-shifts':{opener:null,scroll:0}};
+    let schedulePerson=null, scheduleUpstream='list';
     const examples = {
       dana:['דנה לוי','דל','יום חמישי','15/10/2026','08:00','16:00','15/10/2026','צוות אופק','כניסה לעמדה: 07:56','באתר','1001','2001'],
       noam:['נועם כהן','נכ','יום רביעי','14/10/2026','23:30','11:00','15/10/2026','צוות לילה','סיבה: הדרכה (קודמת לשעת עמדה)','מהבית','1002','2002'],
-      searchDana:['דנה לוי','דל','יום חמישי','15/10/2026','10:00','18:00','15/10/2026','צוות אופק','לא מוצג בחיפוש · דוגמה בלבד','מהבית','1001','3001']
+      searchDana:['דנה לוי','דל','יום חמישי','15/10/2026','10:00','18:00','15/10/2026','צוות אופק','לא מוצג בחיפוש · דוגמה בלבד','מהבית','1001','3001'],
+      yael:['יעל הדר','יה','יום חמישי','15/10/2026','09:00','17:00','15/10/2026','צוות אופק','לא הודגם','באתר','1003','2003']
     };
     function renderDetail(){
       ['person-name','avatar','detail-weekday','detail-date','detail-start','detail-end','detail-end-date','detail-team','detail-attendance','detail-site','employee-id','day-id'].forEach((id,i)=>$(id).textContent=examples[selected][i]);
-      $('overnight').hidden=selected!=='noam';
+      $('overnight').hidden=examples[selected][3]===examples[selected][6]||examples[selected][6]==='לא זמין';
     }
     function route(focus=true){
-      const screen=location.hash==='#detail'?'detail':location.hash==='#search'?'search':'list', detail=screen==='detail';
-      if(detail&&history.state?.designDetail){origin=history.state.origin;selected=history.state.person}
-      ['list','search','detail'].forEach(id=>$(id).hidden=id!==screen);
+      const screen=location.hash==='#detail'?'detail':location.hash==='#search'?'search':location.hash==='#my-shifts'?'my-shifts':'list', detail=screen==='detail';
+      if(detail&&history.state?.designDetail){
+        // A reload deliberately loses synthetic schedule context; never recover an actor from a hash.
+        if(examples[history.state.person]&&(history.state.origin!=='my-shifts'||schedulePerson)){
+          origin=history.state.origin;selected=history.state.person;
+        }else{origin='list';selected='dana'}
+      }
+      ['list','search','detail','my-shifts'].forEach(id=>$(id).hidden=id!==screen);
       const navScreen=detail?origin:screen;
-      ['list','search'].forEach(id=>document.querySelectorAll(`[data-${id}-nav]`).forEach(link=>{
+      ['list','search','my-shifts'].forEach(id=>document.querySelectorAll(`[data-${id}-nav]`).forEach(link=>{
         const active=navScreen===id;link.classList.toggle('active',active);
         if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
       }));
@@ -383,25 +449,167 @@
       $('back').textContent=origin==='search'?'→ חזרה לחיפוש':'→ חזרה לרשימה';
       $('detail-source').textContent=origin==='search'?'· הקשר מתוצאת חיפוש סינתטית':'· הקשר מהרשימה';
       $('return-note').textContent=origin==='search'?'דוגמה מתוצאת חיפוש: מזהי העובד ויום העבודה שייכים לשורה האפקטיבית, לא למקור ההחלפה. החזרה משמרת את מסנני החיפוש, חלון השעות והגלילה ומחזירה מיקוד לקישור שנבחר. אין טעינה אמיתית.':'החזרה משמרת את שדות הדוגמה ומחזירה מיקוד לקישור שנבחר. כניסה ישירה ללא בחירת שורה מציגה דוגמה בלבד ומציעה חזרה לרשימת הדוגמה.';
+      if(origin==='my-shifts'){
+        $('detail-origin').textContent='משמרות העובד/ת';
+        $('back').textContent='→ חזרה למשמרות העובד/ת';
+        $('detail-source').textContent='· הקשר מלוח עובד/ת סינתטי';
+        $('return-note').textContent='הפרט שייך למזהי העובד ויום העבודה של שורת הלוח. החזרה משמרת טווח, עמוד, גלילה וקישור פתיחה; מקור הבחירה מהרשימה או מהחיפוש נשמר בנפרד. נתוני נוכחות, אם יוצגו בפרט העתידי, עצמאיים ואינם נתוני לוח המשמרות.';
+      }
+      if(screen==='my-shifts')renderSchedule();
       if(detail){renderDetail();if(focus){$('detail-title').focus({preventScroll:true});window.scrollTo(0,0)}}
       else if(focus){
-        const restore=previousScreen==='detail'&&screen===origin, memory=returnMemory[screen];
+        const restore=(previousScreen==='detail'&&screen===origin)||(previousScreen==='my-shifts'&&screen===scheduleUpstream), memory=returnMemory[screen];
         window.scrollTo(0,restore?memory.scroll:0);
         (restore&&memory.opener&&!memory.opener.closest('[hidden]')?memory.opener:$(screen+'-title')).focus({preventScroll:true});
       }
       previousScreen=screen;
+    }
+    // Explicit row actions, separate from detail links; IDs are internal selectors only.
+    const listRows=$('list').querySelectorAll('table.shifts tbody tr');
+    [['dana',listRows[0]],['noam',listRows[1]],['yael',listRows[2]],['searchDana',$('search').querySelector('tbody tr')]].forEach(([person,row])=>{
+      const cell=row.lastElementChild, link=document.createElement('a');
+      link.className='row-link';link.href='#my-shifts';link.id='schedule-open-'+person;
+      link.textContent='משמרות העובד/ת ←';
+      link.setAttribute('aria-label','משמרות העובד/ת '+examples[person][0]+' — בחירת הקשר סינתטי');
+      cell.append(document.createElement('br'),link);
+      link.addEventListener('click',()=>{
+        schedulePerson=person;scheduleUpstream=row.closest('section').id;
+        returnMemory[scheduleUpstream]={opener:link,scroll:window.scrollY};
+        $('schedule-dateFrom').value='18/10/2026';$('schedule-dateTo').value='31/10/2026';
+        ['dateFrom','dateTo'].forEach(key=>{$('schedule-'+key).removeAttribute('aria-invalid');$('schedule-'+key+'-error').hidden=true});
+        $('schedule-samples').hidden=false;
+        $('schedule-status').textContent='נבחר הקשר עובד/ת סינתטי מפורש. הדוגמאות קבועות ל־18–31/10/2026; אין תוצאות שרת או סינון.';
+        document.querySelectorAll('tr.selected').forEach(item=>item.classList.remove('selected'));row.classList.add('selected');
+      });
+    });
+    function renderSchedule(){
+      $('schedule-no-selection').hidden=!!schedulePerson;$('schedule-selected').hidden=!schedulePerson;
+      if(!schedulePerson)return;
+      const employee=examples[schedulePerson];
+      $('schedule-employee').textContent=employee[0];
+      $('schedule-context').textContent=employee[7]+' · מוקד שירות מרכז';
+      $('schedule-source').textContent='מקור בחירה: '+(scheduleUpstream==='search'?'תוצאת חיפוש סינתטית':'שורת משמרות נוכחיות סינתטית')+' · ההקשר לקריאה בלבד';
+      $('schedule-employee-id').textContent=employee[10];
+      $('schedule-upstream').href='#'+scheduleUpstream;
+      $('schedule-upstream').textContent=scheduleUpstream==='search'?'→ חזרה לחיפוש ולשורת הבחירה':'→ חזרה לרשימה ולשורת הבחירה';
+      // Do not replace DOM on a detail return: retain exact opener and disclosures.
+      if($('schedule-rows').dataset.person===schedulePerson)return;
+      $('schedule-rows').dataset.person=schedulePerson;$('schedule-rows').replaceChildren();
+      const night=schedulePerson==='noam';
+      [
+        ['יום ראשון','18/10/2026',night?'23:30':'08:00',night?'07:00':'16:00',night?'19/10/2026':'18/10/2026','שירות לקוחות','4101'],
+        ['יום שני','19/10/2026','09:00','לא זמין','לא זמין','פעילות לא מוכרת (קוד ACT-DEMO)','4102']
+      ].forEach((sample,index)=>{
+        const key='schedule-'+schedulePerson+'-'+index;
+        examples[key]=[employee[0],employee[1],sample[0],sample[1],sample[2],sample[3],sample[4],employee[7],'לא הודגם בפרט סינתטי זה','לא הודגם בפרט סינתטי זה',employee[10],sample[6]];
+        const row=document.createElement('tr');
+        const values=[employee[0],sample[0]+' · '+sample[1],sample[2]+' · '+sample[1],sample[3]==='לא זמין'?'לא זמין':sample[3]+' · '+sample[4]+(night?' · למחרת':''),employee[7],sample[5]];
+        const labels=['עובד/ת','יום ותאריך התחלה','התחלה','סיום','צוות','פעילות'];
+        values.forEach((value,i)=>{
+          const cell=document.createElement(i===0?'th':'td');if(i===0)cell.scope='row';
+          cell.dataset.label=labels[i];
+          const text=document.createElement(i===2||(i===3&&sample[3]!=='לא זמין')?'bdi':'span');
+          if(i===1){
+            text.textContent=sample[0]+' · ';const date=document.createElement('bdi');date.textContent=sample[1];cell.append(text,date);
+          }else{text.textContent=value;cell.append(text)}
+          row.append(cell);
+        });
+        const cell=document.createElement('td'),link=document.createElement('a');cell.dataset.label='צפייה';
+        link.href='#detail';link.id='schedule-detail-'+schedulePerson+'-'+index;link.className='row-link';
+        link.textContent='פרטי משמרת ←';link.setAttribute('aria-label','פרטי משמרת של '+employee[0]+', '+sample[1]+', דוגמה סינתטית');
+        link.addEventListener('click',event=>{
+          event.preventDefault();origin='my-shifts';selected=key;
+          returnMemory['my-shifts']={opener:link,scroll:window.scrollY};
+          $('schedule-rows').querySelectorAll('.selected').forEach(item=>item.classList.remove('selected'));row.classList.add('selected');
+          history.pushState({designDetail:true,origin,person:selected},'','#detail');route();
+        });
+        cell.append(link);row.append(cell);$('schedule-rows').append(row);
+      });
     }
     document.querySelectorAll('[data-person]').forEach(link=>link.addEventListener('click',()=>{
       origin=link.closest('section').id;selected=link.dataset.person;returnMemory[origin]={opener:link,scroll:window.scrollY};
       document.querySelectorAll('tr.selected').forEach(row=>row.classList.remove('selected'));link.closest('tr').classList.add('selected');
     }));
     window.addEventListener('hashchange',()=>route());
-    document.querySelectorAll('a[href="#list"],a[href="#detail"],a[href="#search"]').forEach(link=>link.addEventListener('click',event=>{
+    document.querySelectorAll('a[href="#list"],a[href="#detail"],a[href="#search"],a[href="#my-shifts"]').forEach(link=>link.addEventListener('click',event=>{
       event.preventDefault();
       if(menu.open)menu.close();
       if(location.hash!==link.hash)history.pushState(link.hash==='#detail'?{designDetail:true,origin,person:selected}:null,'',link.hash);
       route();
     }));
+      // Date-only arithmetic: no Date parsing, timestamps, UTC or DST arithmetic.
+      const isLeap=year=>year%4===0&&(year%100!==0||year%400===0);
+      const monthLength=(year,month)=>[31,isLeap(year)?29:28,31,30,31,30,31,31,30,31,30,31][month-1];
+      function civilOrdinal(year,month,day){
+        const prior=year-1;
+        let total=365*prior+Math.floor(prior/4)-Math.floor(prior/100)+Math.floor(prior/400)+day;
+        for(let m=1;m<month;m++)total+=monthLength(year,m);
+        return total;
+      }
+      function parseScheduleDate(text){
+        const match=/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/.exec(text);
+        if(!match)return null;
+        const [,d,m,y]=match,day=Number(d),month=Number(m),year=Number(y);
+        if(year<1||month<1||month>12||day<1||day>monthLength(year,month))return null;
+        return {day,month,year,ordinal:civilOrdinal(year,month,day)};
+      }
+      function validateScheduleRange(){
+        const from=parseScheduleDate($('schedule-dateFrom').value),to=parseScheduleDate($('schedule-dateTo').value);
+        const validTo=!!to&&(!from||(to.ordinal>=from.ordinal&&to.ordinal-from.ordinal+1<=31));
+        [['dateFrom',!!from],['dateTo',validTo]].forEach(([key,valid])=>{
+          $('schedule-'+key+'-error').hidden=valid;
+          if(valid)$('schedule-'+key).removeAttribute('aria-invalid');else $('schedule-'+key).setAttribute('aria-invalid','true');
+        });
+        return !!from&&validTo;
+      }
+      function scheduleDirty(){
+        $('schedule-samples').hidden=true;
+        $('schedule-status').textContent='הטווח שונה. הדוגמאות הוסתרו; יש להחיל את הטווח. אין בקשה או סינון שרת.';
+      }
+      $('schedule-form').addEventListener('input',scheduleDirty);
+      $('schedule-form').addEventListener('change',scheduleDirty);
+      $('schedule-form').addEventListener('submit',event=>{
+        event.preventDefault();
+        if(!validateScheduleRange()){
+          $('schedule-samples').hidden=true;$('schedule-status').textContent='יש לתקן את שדות התאריך המסומנים; לא נשלחה בקשה.';
+          $('schedule-form').querySelector('[aria-invalid=true]').focus();return;
+        }
+        $('schedule-samples').hidden=false;
+        $('schedule-status').textContent='טווח הקלט תקין להדגמה בלבד. מוצגות אותן דוגמאות קבועות ל־18–31/10/2026, ללא קשר לטווח שהוזן; לא נשלחה בקשה.';
+        $('schedule-results-title').focus();
+      });
+      const rangeCalendar=$('schedule-calendar');
+      let rangeTarget=null,rangeOpener=null;
+      const monthNames=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+      monthNames.forEach((name,index)=>{const option=document.createElement('option');option.value=String(index+1);option.textContent=name;$('schedule-calendar-month').append(option)});
+      function drawRangeCalendar(){
+        const year=Number($('schedule-calendar-year').value),month=Number($('schedule-calendar-month').value);
+        const body=$('schedule-calendar-days');body.replaceChildren();
+        const offset=civilOrdinal(year,month,1)%7; // Gregorian 0001-01-01 is Monday.
+        let row;
+        for(let slot=0;slot<offset+monthLength(year,month);slot++){
+          if(slot%7===0){row=document.createElement('tr');body.append(row)}
+          const cell=document.createElement('td');row.append(cell);if(slot<offset)continue;
+          const day=slot-offset+1,button=document.createElement('button');
+          const value=String(day).padStart(2,'0')+'/'+String(month).padStart(2,'0')+'/'+String(year).padStart(4,'0');
+          button.type='button';button.textContent=String(day);
+          button.setAttribute('aria-label',day+' ב'+monthNames[month-1]+' '+year+', בחירת תאריך לדוגמה');
+          button.setAttribute('aria-pressed',String(rangeTarget.value===value));
+          button.addEventListener('click',()=>{rangeTarget.value=value;rangeTarget.dispatchEvent(new Event('change',{bubbles:true}));rangeCalendar.close()});
+          cell.append(button);
+        }
+      }
+      document.querySelectorAll('[data-schedule-calendar]').forEach(button=>button.addEventListener('click',()=>{
+        rangeOpener=button;rangeTarget=$(button.dataset.scheduleCalendar);
+        const parsed=parseScheduleDate(rangeTarget.value);
+        $('schedule-calendar-year').value=String(parsed&&parsed.year>=2024&&parsed.year<=2028?parsed.year:2026);
+        $('schedule-calendar-month').value=String(parsed?parsed.month:10);
+        drawRangeCalendar();rangeCalendar.showModal();
+        (rangeCalendar.querySelector('[aria-pressed=true]')||$('schedule-calendar-year')).focus({preventScroll:true});
+      }));
+      ['schedule-calendar-month','schedule-calendar-year'].forEach(id=>$(id).addEventListener('change',drawRangeCalendar));
+      $('schedule-calendar-close').addEventListener('click',()=>rangeCalendar.close());
+      rangeCalendar.addEventListener('close',()=>rangeOpener?.focus({preventScroll:true}));
     const calendar=$('calendar-dialog');
     let calendarTarget=$('date'), calendarOpener=$('calendar-open');
     $('calendar-host').append($('calendar-preview'));
