@@ -213,6 +213,23 @@
       #shift-items .items-table [data-label]::before{display:block}
       #shift-items .items-table .item-duration{max-inline-size:100%}
     }
+    /* §33 operational employee card: scoped styles, no new date/time controls. */
+    .card-entry{display:inline-flex;align-items:center;min-block-size:48px;min-inline-size:48px;white-space:normal;overflow-wrap:anywhere;max-inline-size:100%;font-weight:600}
+    #employee-card{max-inline-size:100%;overflow-wrap:anywhere}
+    #employee-card .heading{flex-wrap:wrap}
+    #employee-card a{display:inline-flex;align-items:center;min-block-size:48px;white-space:normal;overflow-wrap:anywhere}
+    #employee-card .card-links{display:flex;flex-wrap:wrap;gap:8px;margin-block:12px}
+    #employee-card .card-core{padding:20px;margin-block:16px}
+    #employee-card .card-role{font-size:18px;margin-block:6px 12px}
+    #employee-card .card-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;margin:0}
+    #employee-card dt{font-size:13px;color:var(--muted)}
+    #employee-card dd{margin:2px 0 0}
+    #employee-card bdi{overflow-wrap:anywhere}
+    #employee-card summary{white-space:normal;overflow-wrap:anywhere}
+    body.employee-card-view .topbar{position:sticky;top:0;z-index:5}
+    body.employee-card-view .sidebar{position:sticky;top:68px;align-self:start;max-height:calc(100dvh - 68px);overflow-y:auto}
+    #employee-card-title{scroll-margin-top:80px}
+    @media(max-width:760px){#employee-card .card-core{padding:16px}#employee-card .card-fields{grid-template-columns:minmax(0,1fr);gap:12px}#employee-card .card-links .btn{max-inline-size:100%}}
     @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.btn:active{transform:none}}
   </style>
 </head>
@@ -255,7 +272,7 @@
         <div class="surface">
           <div class="table-wrap" tabindex="0" role="region" aria-label="טבלת משמרות לדוגמה, ניתנת לגלילה אופקית" aria-describedby="scroll-help">
             <table class="shifts">
-              <caption class="sr-only">שלוש משמרות סינתטיות בנקודת זמן 15 באוקטובר 2026 בשעה 10:00. שמות העובדים אינם קישורים לכרטיס עובד.</caption>
+              <caption class="sr-only">שלוש משמרות סינתטיות בנקודת זמן 15 באוקטובר 2026 בשעה 10:00. קישורי שם פותחים כרטיס עובד לדוגמה, בנפרד מקישורי המשמרת.</caption>
               <thead><tr><th scope="col">עובד/ת</th><th scope="col">יום ותאריך התחלה</th><th scope="col">התחלה</th><th scope="col">סיום</th><th scope="col">צוות</th><th scope="col">מיקום</th><th scope="col">פעילות</th><th scope="col">תפקיד פנימי</th><th scope="col">דיווח נוכחות</th><th scope="col">צפייה</th></tr></thead>
               <tbody>
                 <tr id="row-dana"><th scope="row"><span class="employee-name">דנה לוי</span></th><td>יום חמישי<span class="cell-note"><time datetime="2026-10-15">15/10/2026</time></span></td><td><time datetime="2026-10-15T08:00">08:00</time></td><td><time datetime="2026-10-15T16:00">16:00</time></td><td>צוות אופק</td><td>באתר</td><td>שירות לקוחות</td><td>נציגת שירות</td><td><span class="pill"><time datetime="2026-10-15T07:56">07:56</time></span><span class="cell-note">כניסה לעמדה</span></td><td><a class="row-link" id="open-dana" href="#detail" data-person="dana" aria-label="פרטי משמרת של דנה לוי, 15 באוקטובר 2026">פרטי משמרת ←</a></td></tr>
@@ -292,7 +309,7 @@
             </div>
           </div>
         </details>
-        <p class="footer-note">פרטי משמרת הם מעבר מוצע חדש מהרשימה, לא שחזור של חלונית החלפה. אין במוקאפ עריכה, ייצוא, עץ סיכומים או כרטיס עובד פעיל.</p>
+        <p class="footer-note">קישורי שם פותחים הצעת כרטיס תפעולי סינתטי בלבד; פרטי המשמרת נשארים מעבר נפרד. אין עריכה, ייצוא או עץ סיכומים.</p>
       </section>
       <section id="search" aria-labelledby="search-title" hidden>
         <nav class="breadcrumbs" aria-label="מיקום במערכת"><span>משמרות</span><span aria-hidden="true">/</span><span>חיפוש משמרות</span></nav>
@@ -338,7 +355,7 @@
           <div class="state error"><strong>401 / 403 / קטלוג השתנה</strong>אין הרשאה לחיפוש או למסנן שנבחר. אין הרחבה אוטומטית ל״הכול״; שמירת הבחירה כלא זמינה, הסרת תוצאות ובדיקה מפורשת מחדש. מנהל סינתטי אינו עובד.</div>
           <div class="state error"><strong>503 / רשת / 500 / נתונים עמומים</strong>הודעה מסוננת, ללא מידע חלקי או פרטים אישיים. שמירת המסננים וניסיון חוזר מפורש בלבד; ללא fallback לנתוני דוגמה ביישום.</div>
           <div class="state"><strong>הצלחה / חסר / חזרה מפרטים</strong>ביעד: היקף, אזור זמן, מקור ועמוד מוחלים מהתגובה, ללא סטטיסטיקות מומצאות. תיאור חסר מפורש; פעילות לא מוכרת נשמרת, חלופת חריגה מסומנת. חזרה מאמתת קטלוג וטוענת מחדש, ואז משחזרת שורה/גלילה/מיקוד.</div>
-          <p class="hint">הסימונים אינם קישורים. כרטיס עובד, פירוט הערות/שינויים/פיצול, הפסקות, מקור החלפה, ייצוא וכל כתיבה נדחו. אין עמודת דיווח נוכחות בחיפוש. פרטים אפקטיביים הם מעבר חדש עם מזהי שורת התוצאה — לא switchDayId.</p>
+          <p class="hint">הסימונים אינם קישורים. שם העובד/ת פותח הצעת כרטיס תפעולי סינתטי נפרד; פירוט הערות/שינויים/פיצול, מקור החלפה, ייצוא וכל כתיבה אינם חלק ממנו. אין עמודת דיווח נוכחות בחיפוש. פרטים אפקטיביים משתמשים במזהי שורת התוצאה — לא switchDayId.</p>
           <p class="hint"><a href="../SHF_REVERSE_ENGINEERING_DESIGN.md#23-shift-search-target-proposal-v01">הצעת חוזה ומקורות §23 v0.1</a> · <a href="../SHF_REVERSE_ENGINEERING_DESIGN.md#24-shift-search-ui-proposal--v01-shf-search-design-18">הצעת UI ובדיקות §24 v0.1</a></p>
         </div></details>
       </section>
@@ -453,6 +470,44 @@
           <div class="state"><strong>שינוי הקשר / הרשאות / טווח</strong>ביעד: הסרת רשומות ישנות, ביטול בקשה ותגובה רק לדור הבקשה האחרון. אימות הקשר והרשאות מחדש בכל חזרה; לא סומכים על בחירת דפדפן. במוקאפ שינוי טווח מסתיר את הדוגמאות עד החלה.</div>
           <div class="state"><strong>עמוד ריק מאוחר / תקרת דפדוף</strong>ביעד: חזרה לעמוד קודם; בתקרה ״הבא״ מושבת עם בקשה לצמצם טווח, ללא ספירה כוללת. אין גרירה, עריכה, הפסקות, היעדרויות, בקשות או ייצוא.</div>
           <div class="state"><strong>שדות ודיוק</strong>מיקום עבודה ותפקיד פנימי אינם בחוזה הלוח ולכן אינם מוצגים. פעילות לא ידועה מוצגת לפי קוד; רשימה ריקה אינה היעדרות. סיום חסר: ״לא זמין״. שעות HH:mm, תאריך מלא בסיום; שניות שאינן אפס נשמרות בטקסט עזר, ללא עיגול.</div>
+        </div></details>
+      </section>
+      <section id="employee-card" hidden aria-labelledby="employee-card-title">
+        <nav class="breadcrumbs" aria-label="מיקום במערכת"><span>משמרות</span><span aria-hidden="true">/</span><a id="card-origin" href="#list">מקור הבחירה</a><span aria-hidden="true">/</span><span>כרטיס עובד/ת תפעולי</span></nav>
+        <a class="btn secondary" id="card-back" href="#list">→ חזרה למקור הבחירה</a>
+        <header class="heading"><div><h1 id="employee-card-title" tabindex="-1">כרטיס עובד/ת תפעולי</h1><p class="hint">קריאה בלבד · הצעת עיצוב <bdi>v0.1</bdi></p></div></header>
+        <p class="hint">עיצוב מקומי בלבד · נתונים סינתטיים · אין בקשות API או Oracle · היכולת החדשה טרם אושרה.</p>
+        <div id="card-no-selection" class="surface card-core">
+          <h2>לא נבחר עובד/ת</h2><p>יש לפתוח קישור שם המסומן ״כרטיס עובד/ת״. אין בחירה אוטומטית או שיוך למנהל הסינתטי.</p>
+          <nav class="card-links" aria-label="בחירת מקור לכרטיס עובד"><a class="btn primary" href="#list">למשמרות הנוכחיות</a><a class="btn secondary" href="#search">לחיפוש משמרות</a><a class="btn secondary" href="#my-shifts">למשמרות העובד/ת — נדרשת בחירה</a></nav>
+        </div>
+        <div id="card-selected" hidden>
+          <article class="surface card-core" aria-labelledby="card-name">
+            <h2 id="card-name" dir="auto"></h2>
+            <p class="card-role" id="card-job"></p>
+            <dl class="card-fields">
+              <div><dt>שם פרטי</dt><dd id="card-first" dir="auto"></dd></div>
+              <div><dt>שם משפחה</dt><dd id="card-last" dir="auto"></dd></div>
+              <div><dt>צוות מדויק — J01</dt><dd><span id="card-team" dir="auto"></span> · <bdi id="card-team-code"></bdi></dd></div>
+              <div><dt>מוקד ישיר — G01</dt><dd><span id="card-moked" dir="auto"></span> · <bdi id="card-moked-code"></bdi></dd></div>
+              <div><dt>תפקיד</dt><dd id="card-job-field"></dd></div>
+              <div><dt>תפקיד פנימי</dt><dd id="card-inner-job"></dd></div>
+            </dl>
+            <p class="hint" id="card-source"></p>
+          </article>
+          <details class="surface technical"><summary>פרטים טכניים — לקריאה בלבד</summary><div class="design-content"><dl><div><dt>מזהה עובד פנימי — לא מספר זהות</dt><dd><bdi id="card-employee-id"></bdi></dd></div><div><dt>מקור דוגמה / אזור עסקי מוגדר</dt><dd><bdi>isolated-fixture · Asia/Jerusalem</bdi></dd></div></dl><p class="hint">אלה ערכי עיצוב, לא תגובת שרת. אין כאן שדה תאריך, שעון או בורר שעה.</p></div></details>
+        </div>
+        <details class="surface design-tools"><summary>היקף הכרטיס ומצבי יעד — לעיון בסקירה</summary><div class="design-content">
+          <p>זהו פרופיל תפעולי בסיסי בלבד, לא כרטיס משאבי אנוש מלא. תמונה, מספר זהות, קשר וכתובת, דוא״ל, תאריך לידה, תאריכי העסקה, מנהל, חוזה, הגדרות ניהול, מיומנויות, נוכחות ואירועים — נדחו. אין לשוניות מדומות, עריכה, SMS או פעולות אירוע.</p>
+          <p>פעילות ומיקום הם נתוני משמרת נבחרת, לא מאפייני עובד בכרטיס. ביעד, התגובה החדשה תהיה מקור סמכותי לצוות ולתפקיד, גם אם ההקשר ההיסטורי שונה. הפרופילים כאן קבועים וסינתטיים, אינם קשורים לזהות האפליקציה ואינם תוצאות סינון.</p>
+          <p><strong>טעינה / החלפת בחירה:</strong> טוענים כרטיס עובד/ת… מסירים יחד שם, הקשר וקישורים ישנים; רק דור בקשה תואם למזהה המדויק, לזהות ולתחום רשאי להתקבל. אין בקשות במוקאפ.</p>
+          <p><strong>מידע אופציונלי חסר:</strong> קוד חסר = ״לא צוין״. קוד קיים עם תיאור חסר = ״תיאור לא זמין״ והקוד המקורי. צוות/מוקד או שם חובה חסרים אינם הצלחה חלקית.</p>
+          <p><strong>400 / 401 / 403:</strong> בקשה לא תקינה / אין זהות תקפה / אין הרשאה לכרטיס. ללא רמז לקיום העובד, ללא זהות חלופית וללא מידע ישן.</p>
+          <p><strong>404:</strong> הכרטיס אינו זמין. אותה הודעה לעובד שאינו קיים או שיצא מהתחום; חזרה למקור ובחירה מפורשת מחדש.</p>
+          <p><strong>500 / 503:</strong> לא ניתן להציג כרטיס עקבי / השירות אינו זמין או פג זמן ההמתנה. אין חצי כרטיס, תיאור חלופי מומצא, ניסיון אוטומטי או מעבר לנתוני דוגמה ביישום. מזהה בקשה מסונן בלבד; ניסיון חוזר מפורש ביישום העתידי.</p>
+          <p>תפקיד: מקור התיאור הוא זוגות קוד/שם מקובצים של עובדים פעילים, לא קטלוג תפקידים מומצא. כפילות זוג זהה מתאחדת במקור; יותר מתיאור מקובץ אחד, כולל ריק מול שם, מכשיל את הכרטיס. תפקיד פנימי כפול מכשיל גם אם השמות שווים.</p>
+          <p>מקור אחיד בעתיד: כרטיס <bdi>oracle-read-only</bdi> מתאים לזהות/פרט <bdi>oracle</bdi>; בדוגמה כולם סינתטיים. אין ערבוב מקורות או הצגת הצלחה אטומית מתגובות שונות.</p>
+          <p><a href="../SHF_REVERSE_ENGINEERING_DESIGN.md#32-employee-operational-card-target-proposal-v01">§32 — מקור, שדות וחוזה מוצע</a> · <a href="../SHF_REVERSE_ENGINEERING_DESIGN.md#33-employee-operational-card-ui-proposal-v01">§33 — הצעת UI ובדיקות</a></p>
         </div></details>
       </section>
     </main>
@@ -615,7 +670,125 @@
       ['person-name','avatar','detail-weekday','detail-date','detail-start','detail-end','detail-end-date','detail-team','detail-attendance','detail-site','employee-id','day-id'].forEach((id,i)=>$(id).textContent=examples[selected][i]);
       $('overnight').hidden=examples[selected][3]===examples[selected][6]||examples[selected][6]==='לא זמין';
     }
+    // §33: two minimal, wholly synthetic operational projections; no HR/source-row dump.
+    const cardProfiles={
+      '1001':{employeeId:'1001',employee:{firstName:'דנה',lastName:'לוי',
+        unit:{code:'0021',label:'צוות אופק',moked:{code:'0012',label:'מוקד שירות מרכז',unitType:'G01'}},
+        job:{code:'11',label:'נציג/ת שירות'},innerJob:{code:'101',label:'נציג/ת שירות'}},
+        businessTimeZone:'Asia/Jerusalem',dataSource:'isolated-fixture'},
+      '1002':{employeeId:'1002',employee:{firstName:'נועם',lastName:'כהן',
+        unit:{code:'0023',label:'צוות לילה',moked:{code:'0012',label:'מוקד שירות מרכז',unitType:'G01'}},
+        job:{code:'-9',label:null},innerJob:null},
+        businessTimeZone:'Asia/Jerusalem',dataSource:'isolated-fixture'}
+    };
+    const cardJourneys=new Map(),cardNameLinks=new WeakMap();
+    let cardSequence=0,activeCard=null;
+    function cardValue(target,value){
+      target.replaceChildren();
+      const label=document.createElement('span');label.dir='auto';
+      label.textContent=value?(value.label===null?'תיאור לא זמין':value.label):'לא צוין';
+      target.append(label);
+      if(value){const code=document.createElement('bdi');code.textContent=value.code;target.append(' · קוד ',code)}
+    }
+    function openCard(person,screen,opener){
+      const employeeId=examples[person]?.[10];
+      if(!cardProfiles[employeeId]||!['list','search','my-shifts','detail','shift-items'].includes(screen))return;
+      const token='card-'+(++cardSequence);
+      // Snapshot independent of detail/items/schedule memories. No employee data in history.
+      const entry={token,employeeId,screen,opener,scroll:window.scrollY,
+        selected,origin,schedulePerson,scheduleUpstream,
+        memories:Object.fromEntries(Object.entries(returnMemory).map(([key,value])=>[key,{...value}])),
+        items:activeItems,itemsRendered:renderedItemsToken,itemDetailReturn,
+        sourceState:history.state,
+        controls:Array.from($(screen).querySelectorAll('input,select')).map(node=>({node,value:node.value,checked:node.checked})),
+        parent:screen==='detail'?origin:screen==='shift-items'?(activeItems?.screen==='detail'?activeItems.detailOrigin:activeItems?.screen):screen};
+      cardJourneys.set(token,entry);
+      history.replaceState({...history.state,cardOriginToken:token},'',location.hash||'#list');
+      history.pushState({cardToken:token},'','#employee-card');route();
+    }
+    function cardName(container,person,screen){
+      const employeeId=examples[person]?.[10];
+      if(!cardProfiles[employeeId])return; // Third historic sample has no invented card profile.
+      if(container.querySelector('.card-entry'))return;
+      const cached=cardNameLinks.get(container);
+      if(cached?.person===person){container.replaceChildren(cached.link);return}
+      const link=document.createElement('a');
+      link.href='#employee-card';link.className='card-entry';link.dir='auto';
+      link.textContent=examples[person][0]+' · כרטיס עובד/ת';
+      link.setAttribute('aria-label',link.textContent+' — הקשר נבחר, דוגמה סינתטית');
+      link.addEventListener('click',event=>{event.preventDefault();openCard(person,screen,link)});
+      cardNameLinks.set(container,{person,link});container.replaceChildren(link);
+    }
+    function wireCardNames(){
+      cardName($('row-dana').querySelector('th'),'dana','list');
+      cardName($('row-noam').querySelector('th'),'noam','list');
+      cardName($('search').querySelector('tbody th'),'searchDana','search');
+      if(schedulePerson){
+        cardName($('schedule-employee'),schedulePerson,'my-shifts');
+        $('schedule-rows').querySelectorAll('tr').forEach((row,index)=>cardName(row.querySelector('th'),'schedule-'+schedulePerson+'-'+index,'my-shifts'));
+      }
+      if(history.state?.designDetail&&examples[history.state.person])cardName($('person-name'),history.state.person,'detail');
+      if(activeItems)cardName($('items-name'),activeItems.person,'shift-items');
+    }
+    function renderCard(){
+      activeCard=cardJourneys.get(history.state?.cardToken)||null;
+      const profile=activeCard?cardProfiles[activeCard.employeeId]:null;
+      $('card-no-selection').hidden=!!profile;$('card-selected').hidden=!profile;
+      $('card-origin').hidden=$('card-back').hidden=!profile;
+      if(!profile){
+        ['card-name','card-job','card-first','card-last','card-team','card-team-code','card-moked','card-moked-code','card-job-field','card-inner-job','card-source','card-employee-id'].forEach(id=>$(id).replaceChildren());
+        return;
+      }
+      const e=profile.employee;
+      $('card-origin').href=$('card-back').href='#'+activeCard.screen;
+      const sourceName=activeCard.screen==='shift-items'?'הפסקות וחריגות חלקיות':screenNames[activeCard.screen];
+      $('card-origin').textContent=sourceName;$('card-back').textContent='→ חזרה אל '+sourceName;
+      $('card-name').textContent=e.firstName+' '+e.lastName;
+      $('card-first').textContent=e.firstName;$('card-last').textContent=e.lastName;
+      cardValue($('card-job'),e.job);cardValue($('card-job-field'),e.job);cardValue($('card-inner-job'),e.innerJob);
+      $('card-team').textContent=e.unit.label;$('card-team-code').textContent=e.unit.code;
+      $('card-moked').textContent=e.unit.moked.label;$('card-moked-code').textContent=e.unit.moked.code;
+      $('card-employee-id').textContent=profile.employeeId;
+      $('card-source').textContent='מקור הבחירה: '+sourceName+' · הקשר עובד/ת נבחר/ת. הפרופיל סינתטי נפרד מהמשמרת; ביעד תוצג תגובת הכרטיס הסמכותית.';
+    }
+    [$('card-back'),$('card-origin')].forEach(link=>link.addEventListener('click',event=>{
+      event.preventDefault();
+      if(activeCard){history.back();return}
+      history.pushState(null,'','#list');route();
+    }));
     function route(focus=true){
+      const leaving=previousScreen==='employee-card'?activeCard:null;
+      const isCard=location.hash==='#employee-card';
+      document.body.classList.toggle('employee-card-view',isCard);
+      $('employee-card').hidden=!isCard;
+      if(isCard){
+        document.body.classList.remove('shift-items-view');
+        ['list','search','detail','my-shifts','shift-items'].forEach(id=>$(id).hidden=true);
+        renderCard();
+        ['list','search','my-shifts'].forEach(id=>document.querySelectorAll(`[data-${id}-nav]`).forEach(link=>{
+          const current=id===activeCard?.parent;link.classList.toggle('active',current);
+          if(current)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
+        }));
+        if(focus){window.scrollTo(0,0);$('employee-card-title').focus({preventScroll:true})}
+        previousScreen='employee-card';return;
+      }
+      const restore=leaving&&history.state?.cardOriginToken===leaving.token&&location.hash==='#'+leaving.screen;
+      if(restore){
+        selected=leaving.selected;origin=leaving.origin;schedulePerson=leaving.schedulePerson;scheduleUpstream=leaving.scheduleUpstream;
+        Object.keys(returnMemory).forEach(key=>returnMemory[key]={...leaving.memories[key]});
+        activeItems=leaving.items;renderedItemsToken=leaving.itemsRendered;itemDetailReturn=leaving.itemDetailReturn;
+        // The hidden source DOM never changes during card display; keep exact drafts and nested state.
+        leaving.controls.forEach(({node,value,checked})=>{node.value=value;node.checked=checked});
+        previousScreen=null;
+      }
+      routeBase(restore?false:focus);wireCardNames();
+      if(restore&&focus){
+        window.scrollTo(0,leaving.scroll);
+        const opener=leaving.opener;
+        (opener?.isConnected&&!opener.closest('[hidden]')?opener:$(leaving.screen+'-title')).focus({preventScroll:true});
+      }
+    }
+    function routeBase(focus=true){
       const leavingItems=previousScreen==='shift-items'?activeItems:null;
       document.body.classList.toggle('shift-items-view',location.hash==='#shift-items');
       if(location.hash==='#shift-items'){
@@ -754,7 +927,7 @@
     }));
     window.addEventListener('hashchange',()=>route());
     document.querySelectorAll('a[href="#list"],a[href="#detail"],a[href="#search"],a[href="#my-shifts"]').forEach(link=>link.addEventListener('click',event=>{
-      if(link.id==='items-detail')return;
+      if(['items-detail','card-back','card-origin'].includes(link.id))return;
       event.preventDefault();
       if(menu.open)menu.close();
       if(link.dataset.itemsReturn){
