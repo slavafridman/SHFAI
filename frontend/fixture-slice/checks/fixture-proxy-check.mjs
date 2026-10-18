@@ -8,7 +8,7 @@ assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(app) && /^http:\/\/127\.0\.0\.1:\d+$/.
 const identity = await fetch(`${app}/api/v1/identity`, { cache: 'no-store' }).then(r => r.json());
 assert.equal(identity.dataSource, 'isolated-fixture', 'Never run against Oracle');
 assert.equal(identity.principal.synthetic, true);
-assert.deepEqual(identity.principal.capabilities, ['shift-day:read', 'current-shifts:read', 'shift-search:read', 'my-shifts:read']);
+assert.deepEqual(identity.principal.capabilities, ['shift-day:read', 'current-shifts:read', 'shift-search:read', 'my-shifts:read', 'shift-items:read']);
 const target = (await fetch(`${cdp}/json/list`).then(r => r.json())).find(t => t.type === 'page');
 const socket = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise(r => { socket.onopen = r; });
@@ -176,7 +176,14 @@ async function screenshot(name) {
 }
 try {
   await send('Fetch.disable'); await send('Runtime.enable'); await send('Network.enable');
-  if (process.env.SHF_SEARCH_TOKEN_ONLY === '1') {
+  if (process.env.SHF_ITEMS_ONLY === '1') {
+    const { runItemsProxyChecks } = await import('./items-proxy-check.mjs');
+    await runItemsProxyChecks({ assert, app, send, evaluate, wait, input, screenshot, apiResponses });
+    assert(apiResponses.some(r => r.url.endsWith('/breaks-and-exceptions')));
+    assert(apiResponses.every(r => r.cache === 'no-store'));
+    assert.deepEqual(errors, []);
+    console.log('PASS actual Node fixture proxy ITEMS: no interception, fixture identity, no-store, no runtime exceptions. No Oracle UI data.');
+  } else if (process.env.SHF_SEARCH_TOKEN_ONLY === '1') {
     await searchTokenScenarios();
     assert(apiResponses.some(r => r.url.endsWith('/shift-search')));
     assert(apiResponses.every(r => r.status === 200 && r.cache === 'no-store'));

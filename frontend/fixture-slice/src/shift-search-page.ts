@@ -23,6 +23,7 @@ import { CivilDateAdapter, CIVIL_FORMATS, dateFromWire, dateWire, calendarLabels
 import { WorkspaceShell } from './workspace-shell';
 import { MinutePicker } from './minute-picker';
 import { ListNavigation } from './list-navigation';
+import { ViewHistory } from './view-history';
 
 const timeControl = () => new FormControl('', { nonNullable: true,
   validators: [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/)] });
@@ -36,6 +37,7 @@ const timeControl = () => new FormControl('', { nonNullable: true,
   templateUrl: './shift-search-page.html', styleUrl: './shift-search-page.scss',
 })
 export class ShiftSearchPage {
+  readonly journey = inject(ViewHistory);
   private readonly api = inject(SliceApi);
   private readonly router = inject(Router);
   private readonly destroy = inject(DestroyRef);
@@ -69,10 +71,18 @@ export class ShiftSearchPage {
   private identityWork?: Subscription;
   private work?: Subscription;
   private lastRequest: ShiftSearchRequestV1 | null = null;
+  private historyDraft = this.journey.saved<{
+    form: ReturnType<ShiftSearchPage['form']['getRawValue']>; dirty: boolean;
+    request: ShiftSearchRequestV1 | null; dateText: string;
+  }>();
   private restore = this.navigation.returning && (this.navigation.detailOrigin === 'shift-search' ||
     this.navigation.scheduleUpstream === 'shift-search') ? this.navigation.searchOrigin : null;
 
   constructor() {
+    this.journey.attach(this.host.nativeElement, () => ({
+      form: this.form.getRawValue(), dirty: this.state() === 'dirty', request: this.lastRequest,
+      dateText: this.host.nativeElement.querySelector<HTMLInputElement>('#search-date')?.value ?? '',
+    }));
     this.navigation.returning = false;
     this.form.controls.moked.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.form.controls.teamCodes.setValue([], { emitEvent: false });
@@ -135,7 +145,12 @@ export class ShiftSearchPage {
         }
         this.context.set(value);
         const saved = this.restore;
-        if (saved || !this.initialized) {
+        const draft = this.historyDraft;
+        if (draft) {
+          this.historyDraft = null;
+          this.form.setValue(draft.form, { emitEvent: false }); this.initialized = true;
+        }
+        if (!draft && (saved || !this.initialized)) {
           const d = saved?.request ?? value.defaults;
           this.form.setValue({ date: dateFromWire(d.attendanceDate), timeFrom: d.timeFrom, timeTo: d.timeTo,
             moked: d.mokedCode ?? null, teamCodes: d.teamCodes ?? [], innerJobCodes: d.innerJobCodes ?? [],
@@ -147,6 +162,19 @@ export class ShiftSearchPage {
           this.fail('בחירה שמורה אינה זמינה בהרשאות הנוכחיות. הערכים נשמרו; יש לנקות בחירות לא זמינות ולבחור מחדש.'); return;
         }
         this.form.enable({ emitEvent: false });
+        if (draft) {
+          this.restore = null;
+          if (draft.dirty || !draft.request) {
+            this.state.set(draft.dirty ? 'dirty' : 'initial');
+            this.message.set('יש לבחור מסננים וללחוץ על חיפוש משמרות.');
+            this.defer(() => {
+              const input = this.host.nativeElement.querySelector<HTMLInputElement>('#search-date');
+              if (input) input.value = draft.dateText;
+              this.journey.restore(this.host.nativeElement);
+            }, gen);
+          } else this.fetch(draft.request, false, saved);
+          return;
+        }
         this.state.set('initial'); this.message.set('יש לבחור מסננים וללחוץ על חיפוש משמרות.'); this.announcement.set(this.message());
         if (saved) { this.restore = null; this.fetch(saved.request, false, saved); }
       },
@@ -221,6 +249,7 @@ export class ShiftSearchPage {
           window.scrollTo(0, origin.scroll);
         }, gen);
         else if (focus) this.defer(() => this.focus('#search-results'), gen);
+        this.defer(() => this.journey.restore(this.host.nativeElement), gen);
       },
       error: e => { if (this.active(gen)) this.handleError(e); },
     });
@@ -278,15 +307,22 @@ export class ShiftSearchPage {
       `הקצאת שלוחה: ${i.extensionAllocated === null ? 'לא ישים' : i.extensionAllocated ? 'כן' : 'לא'}`];
   }
   openSchedule(row: ShiftSearchRowV1, event: MouseEvent): void { this.openDetail(row, event, true); }
-  openDetail(row: ShiftSearchRowV1, event: MouseEvent, schedule = false): void {
+  canReadItems(): boolean { const caps = this.principal()?.principal.capabilities;
+    return !!caps?.includes('shift-items:read') && caps.includes('shift-day:read'); }
+  openItems(row: ShiftSearchRowV1, event: MouseEvent): void { this.openDetail(row, event, false, true); }
+  openDetail(row: ShiftSearchRowV1, event: MouseEvent, schedule = false, items = false): void {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
     event.preventDefault();
     if (!this.result() || !this.lastRequest || !this.principal()?.principal.capabilities.includes(schedule ? 'my-shifts:read' : 'shift-day:read')) return;
-    this.navigation.searchOrigin = { request: structuredClone(this.lastRequest), scroll: window.scrollY,
+    if (items && !this.canReadItems()) return;
+    this.navigation.searchOrigin = { dataSource: this.principal()!.dataSource, request: structuredClone(this.lastRequest), scroll: window.scrollY,
       tableScroll: this.host.nativeElement.querySelector<HTMLElement>('.table-wrap')?.scrollLeft ?? 0,
-      opener: `search-${schedule ? 'schedule' : 'detail'}-${row.shiftDayId}`, employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId,
+      opener: `search-${items ? 'items' : schedule ? 'schedule' : 'detail'}-${row.shiftDayId}`, employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId,
       unit: { code: row.employee.unit.code, label: row.employee.unit.label, parentLabel: row.employee.unit.moked.label } };
     this.navigation.detailOrigin = 'shift-search'; this.navigation.returning = true;
+    if (items) {
+      void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'breaks-and-exceptions']); return;
+    }
     if (schedule) {
       this.navigation.scheduleUpstream = 'shift-search'; this.navigation.schedule = null;
       void this.router.navigate(['/my-shifts/selected', row.employee.employeeId], { state: { origin: 'shift-search' } }); return;

@@ -12,8 +12,10 @@ import type { IdentityResponseV1 } from './contract';
   imports: [MatButtonModule, RouterLink, CdkTrapFocus],
   templateUrl: './workspace-shell.html',
   styleUrl: './workspace-shell.scss',
+  host: { '[class.pinned]': 'pinned()' },
 })
 export class WorkspaceShell {
+  readonly pinned = input(false);
   readonly principal = input<IdentityResponseV1 | null>(null);
   readonly identityState = input<'loading' | 'ready' | 'error'>('loading');
   readonly identityMessage = input('');

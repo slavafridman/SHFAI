@@ -3,10 +3,17 @@ import { HttpClient } from '@angular/common/http';
 import type { CurrentShiftRequestV1 } from './current-shifts-contract';
 import type { ShiftSearchRequestV1 } from '../../../backend/fixture-slice/shift-search-contracts.mts';
 import type { MyShiftsContextRequestV1, MyShiftsRequestV1 } from '../../../backend/fixture-slice/my-shifts-contracts.mts';
+import type { SelectedShiftItemsRequestV1 } from './shift-items-contract';
 
 @Injectable({ providedIn: 'root' })
 export class SliceApi {
   private readonly http = inject(HttpClient);
+  shiftItems(request: SelectedShiftItemsRequestV1) {
+    return this.http.get<unknown>(
+      `/api/v1/employees/${request.employeeId}/shift-days/${request.shiftDayId}/breaks-and-exceptions`,
+      { params: { limit: String(request.limit ?? 25), offset: String(request.offset ?? 0),
+        sort: 'start-asc' }, cache: 'no-store' });
+  }
   // Runtime validation is mandatory; HTTP generic types do not validate JSON.
   identity() {
     return this.http.get<unknown>('/api/v1/identity', { cache: 'no-store' });

@@ -1,4 +1,6 @@
 :host { display: block; }
+:host(.pinned) .topbar { position:sticky; inset-block-start:0; z-index:5; }
+:host(.pinned) .sidebar { position:sticky; inset-block-start:68px; align-self:start; min-height:calc(100dvh - 68px); }
 .skip { position: fixed; inset-block-start: -100px; inset-inline-start: 16px; z-index: 20; background: white; padding: 12px; }
 .skip:focus { inset-block-start: 8px; }
 .topbar { height: 68px; background: white; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding-inline: 32px; gap: 16px; }

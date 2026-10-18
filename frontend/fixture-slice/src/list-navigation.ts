@@ -4,6 +4,7 @@ import type { ShiftSearchRequestV1 } from './shift-search-contract';
 import type { MyShiftsRequestV1 } from './my-shifts-contract';
 
 export interface ListReturn {
+  dataSource?: 'isolated-fixture' | 'oracle';
   request: CurrentShiftRequestV1;
   evaluatedCurrent: boolean;
   scroll: number;

@@ -18,6 +18,7 @@ import { scheduleContext, scheduleList, scheduleProblem, validRange,
 import { CivilDateAdapter, CIVIL_FORMATS, dateFromWire, dateWire, calendarLabels } from './civil-date-adapter';
 import { WorkspaceShell } from './workspace-shell';
 import { ListNavigation } from './list-navigation';
+import { ViewHistory } from './view-history';
 
 @Component({
   selector: 'shf-my-shifts',
@@ -28,6 +29,7 @@ import { ListNavigation } from './list-navigation';
   templateUrl: './my-shifts-page.html', styleUrl: './my-shifts-page.scss',
 })
 export class MyShiftsPage {
+  readonly journey = inject(ViewHistory);
   private readonly api = inject(SliceApi);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -63,6 +65,7 @@ export class MyShiftsPage {
   private identityWork?: Subscription;
   private lastRequest: MyShiftsRequestV1 | null = null;
   private saved: ListNavigation['schedule'] = null;
+  private pendingOpener: string | null = null;
   private remember() {
     if (!this.context()?.actor.employee) return;
     const input = (name: string) => this.host.nativeElement.querySelector<HTMLInputElement>(`#schedule-${name}`)?.value ?? '';
@@ -74,7 +77,12 @@ export class MyShiftsPage {
   }
 
   constructor() {
-    afterNextRender(() => this.focus('h1'));
+    this.journey.attach(this.host.nativeElement, () => {
+      this.remember();
+      if (this.pendingOpener && this.navigation.schedule) this.navigation.schedule.opener = this.pendingOpener;
+      return null;
+    });
+    afterNextRender(() => this.focus('h1', true));
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.cancel(); this.lastRequest = null;
       for (const control of Object.values(this.form.controls)) {
@@ -92,7 +100,6 @@ export class MyShiftsPage {
     });
     this.recheckIdentity();
     this.destroy.onDestroy(() => {
-      if (this.navigation.detailOrigin !== 'my-shifts') this.remember();
       this.alive = false; this.identityGeneration++; this.cancel(); this.identityWork?.unsubscribe();
     });
   }
@@ -157,7 +164,8 @@ export class MyShiftsPage {
             }
           }, gen);
           if (this.saved.request) { this.fetch(this.saved.request, true); return; }
-          this.state.set('dirty'); this.message.set('התאריכים נשמרו. יש להחיל מחדש.'); return;
+          this.state.set('dirty'); this.message.set('התאריכים נשמרו. יש להחיל מחדש.');
+          this.defer(() => this.journey.restore(this.host.nativeElement), gen); return;
         }
         this.apply(false);
       },
@@ -194,6 +202,7 @@ export class MyShiftsPage {
             if (technical) technical.open = this.saved.technical;
             this.focus(`#${this.saved.opener}`, true); window.scrollTo(0, this.saved.scroll);
           } else if (focus) this.focus('#schedule-results');
+          this.journey.restore(this.host.nativeElement);
         }, gen);
       },
       error: error => { if (this.active(gen)) this.handleError(error); },
@@ -227,22 +236,31 @@ export class MyShiftsPage {
   private focus(selector: string, preventScroll = false) {
     (this.host.nativeElement.querySelector<HTMLElement>(selector) ?? this.host.nativeElement.querySelector<HTMLElement>('h1'))?.focus({ preventScroll });
   }
-  openDetail(row: MyShiftRowV1, event: MouseEvent) {
+  canReadItems(): boolean { const caps = this.principal()?.principal.capabilities;
+    return !!caps?.includes('shift-items:read') && caps.includes('shift-day:read'); }
+  openItems(row: MyShiftRowV1, event: MouseEvent) { this.openDetail(row, event, true); }
+  openDetail(row: MyShiftRowV1, event: MouseEvent, items = false) {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
     event.preventDefault();
     if (!this.result() || !this.principal()?.principal.capabilities.includes('shift-day:read')) return;
+    if (items && !this.canReadItems()) return;
     this.remember();
-    this.navigation.schedule!.opener = `schedule-detail-${row.shiftDayId}`;
+    this.pendingOpener = `schedule-${items ? 'items' : 'detail'}-${row.shiftDayId}`;
+    this.navigation.schedule!.opener = this.pendingOpener;
     const unit = this.context()!.actor.employee!.unit;
     this.navigation.scheduleDetail = { employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId,
       unit: { code: unit.code, label: unit.label, parentLabel: unit.moked.label },
       dataSource: this.principal()!.dataSource };
     this.navigation.detailOrigin = 'my-shifts'; this.navigation.returning = true;
+    if (items) {
+      void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'breaks-and-exceptions']); return;
+    }
     void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId], { state: { origin: 'my-shifts' } });
   }
   back() {
     const upstream = this.upstream(); if (!upstream) return;
     this.navigation.detailOrigin = upstream; this.navigation.returning = true;
+    if (this.journey.backIf(`/${upstream}`)) return;
     void this.router.navigate([`/${upstream}`]);
   }
 }

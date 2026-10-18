@@ -30,7 +30,6 @@ const detailExpressions = [
   alias(civil("a.station_arrival_time"), "stationArrivalLocal"),
   alias(civil("a.station_exit_time"), "stationExitLocal"),
 ];
-const detailFields = detailExpressions.join(",\n");
 const currentCoreNames = new Set(["shiftDayId", "employeeId", "firstName", "lastName", "orgUnitId",
   "baselineStartLocal", "changedStartLocal", "baselineEndLocal", "changedEndLocal",
   "baselineActivityData", "changedActivityData", "stationArrivalLocal"]);
@@ -42,6 +41,17 @@ const baseJoin = `FROM SHIFTER.shf_employee_day d
  LEFT JOIN SHIFTER.shf_employees e ON SUBSTR(e.emp_id_number,1,8)=NVL(c.new_employee_id,d.emp_id_number)
  LEFT JOIN SHIFTER.shf_attendance a ON d.shf_employee_day_id=a.shf_employee_day_id
  LEFT JOIN SHIFTER.shf_org_unit u ON u.org_unit_id=e.org_unit_id`;
+// Session-bound full-detail primitive. Fixed caller-owned expressions/joins only;
+// never filters requested employee/scope before detecting full join multiplicity.
+export async function detailContextRows(query: Query, dayId: string,
+  extraExpressions: readonly string[] = [], extraJoin = "") {
+  if (!decimalId(dayId, 10)) throw new SliceError("INVALID_REQUEST");
+  const fields = [...detailExpressions, ...extraExpressions].join(",\n");
+  const names = [...fields.matchAll(/AS "([A-Za-z]+)"/g)].map(m => `"${m[1]}"`).join(",");
+  return query(`SELECT ${names} FROM (SELECT ${fields} ${baseJoin} ${extraJoin}
+    WHERE e.employee_id IS NOT NULL AND d.shf_employee_day_id=TO_NUMBER(:dayId))
+    WHERE ROWNUM <= 2`, { dayId }, 2);
+}
 const listTail = `LEFT JOIN SHIFTER.shf_attendance a ON d.shf_employee_day_id=a.shf_employee_day_id
  LEFT JOIN SHIFTER.shf_org_unit u ON u.org_unit_id=e.org_unit_id
  LEFT JOIN SHIFTER.shf_employees e_old ON SUBSTR(e_old.emp_id_number,1,8)=d.emp_id_number`;
@@ -71,10 +81,7 @@ export class OracleDetailReader implements EmployeeShiftDayReader {
     if (!decimalId(shiftDayId, 10)) throw new SliceError("INVALID_REQUEST");
     return this.session.read(async query => {
       await requireGregorian(query);
-      const rows = await query(`SELECT * FROM (
-        SELECT ${detailFields} ${baseJoin}
-        WHERE e.employee_id IS NOT NULL AND d.shf_employee_day_id=TO_NUMBER(:dayId)
-        ) WHERE ROWNUM <= 2`, { dayId: shiftDayId }, 2);
+      const rows = await detailContextRows(query, shiftDayId);
       if (rows.length === 0) return { kind: "not-found" };
       if (rows.length > 1) return { kind: "ambiguous" };
       const row = rawDetail(rows[0]);
@@ -82,7 +89,7 @@ export class OracleDetailReader implements EmployeeShiftDayReader {
     });
   }
 }
-function rawDetail(value: unknown): RawShiftDay {
+export function rawDetail(value: unknown): RawShiftDay {
   validateRaw(value);
   return {
     shiftDayId: value.shiftDayId, employeeId: value.employeeId,
@@ -133,6 +140,7 @@ const catalogSql = {
   innerJobs: { table: "SHIFTER.shf_inner_jobs", id: "inner_job_id", label: "inner_job_name" },
   missingReasons: { table: "SHIFTER.shf_event_reason", id: "reason_id", label: "reason_desc" },
   exceptions: { table: "SHIFTER.shf_exception_type", id: "exception_type_id", label: "exception_type_name" },
+  timeoffs: { table: "SHIFTER.shf_timeoff_types", id: "wm_timeoff_type_id", label: "wm_name" },
 } as const;
 export async function labelsFor(query: Query, kind: keyof typeof catalogSql, requested: readonly string[]): Promise<CatalogValueV1[]> {
   const unique = [...new Set(requested)];
@@ -145,7 +153,7 @@ export async function labelsFor(query: Query, kind: keyof typeof catalogSql, req
     const placeholders = chunk.map((code, i) => { binds[`code${i}`] = code; return `:code${i}`; });
     // Explicit numeric-to-text code conversion avoids converting unknown client/source tokens to NUMBER.
     const id = numberText(catalog.id);
-    const rows = await query(`SELECT * FROM (SELECT ${id} AS "code", ${catalog.label} AS "label"
+    const rows = await query(`SELECT "code","label" FROM (SELECT ${id} AS "code", ${catalog.label} AS "label"
       FROM ${catalog.table} WHERE ${id} IN (${placeholders.join(",")}))
       WHERE ROWNUM <= :lookupBound`, { ...binds, lookupBound: chunk.length + 1 }, chunk.length + 1);
     if (rows.length > chunk.length) sourceFailure();

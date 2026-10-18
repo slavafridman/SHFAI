@@ -103,7 +103,7 @@ const sample = (employeeId = '1001', shiftDayId = '2001') => {
 const principal = () => ({
   principal: { subject: 'synthetic:administrator', provider: 'synthetic', synthetic: true,
     displayName: 'Synthetic Administrator (local/isolated only)', roles: ['Administrator'],
-    capabilities: ['shift-day:read', 'current-shifts:read', 'shift-search:read', 'my-shifts:read'], employeeId: null, resourceScope: { orgUnitIds: ['TEST-U', 'TEST-V'] } },
+    capabilities: ['shift-day:read', 'current-shifts:read', 'shift-search:read', 'my-shifts:read', 'shift-items:read'], employeeId: null, resourceScope: { orgUnitIds: ['TEST-U', 'TEST-V'] } },
   dataSource: 'isolated-fixture',
 });
 const context = () => ({
@@ -121,6 +121,34 @@ const row = (day = '2001') => ({
 let listMode = 'normal', detailMode = 'normal', identityMode = 'normal', contextMode = 'normal', held = null;
 let searchMode = 'normal', searchContextMode = 'normal';
 let scheduleMode = 'normal', scheduleContextMode = 'normal';
+let itemsMode = 'normal';
+function selectedItems(url) {
+  const parts = url.pathname.split('/'), employee = parts[4], day = parts[6];
+  const limit = Number(url.searchParams.get('limit')), offset = Number(url.searchParams.get('offset'));
+  const kinds = ['break', 'timeoff', 'exception'];
+  const count = itemsMode === 'empty' ? 0 : itemsMode === 'self-parent' ? 25 : itemsMode === 'pages' ? offset === 0 ? 25 : 5 : 3;
+  const rows = Array.from({ length: count }, (_, i) => {
+    const start = `2026-10-15T23:${String(i).padStart(2,'0')}:${i === 2 ? '30' : '00'}`;
+    const kind = kinds[i % 3];
+    return { key: { shiftDayId: day, startLocal: start }, kind,
+      stateCode: kind === 'break' ? '4' : kind === 'timeoff' ? '2' : '7',
+      type: kind === 'break' ? null : { code: kind === 'timeoff' ? '0' : '-9', label: null },
+      startLocal: start, endLocal: '2026-10-16T00:10:13',
+      durationMinutes: i === 0 ? '-5' : i === 1 ? '99999999999999999999999999999999999999' : '0',
+      breakExitLocal: kind === 'break' && i === 0 ? '2026-10-15T23:01:02' : null,
+      breakReturnLocal: null, remark: i === 0 ? '<img src=x onerror=alert(1)> &\nסינתטי בלבד' : null, sourceCode: i === 0 ? 'DEL' : 'TEST' };
+  });
+  const v = { shiftDay: sample(employee, day), displayContext: { unit: row().employee.unit,
+    activities: row().activities, innerJob: null }, items: rows, applied: { sort: 'start-asc' },
+    page: { limit, offset, hasMore: itemsMode === 'pages' && offset === 0,
+      nextOffset: itemsMode === 'pages' && offset === 0 ? 25 : null } };
+  if (itemsMode === 'source') v.shiftDay.dataSource = 'oracle';
+  if (itemsMode === 'mismatch') v.shiftDay.employeeId = '9999';
+  if (itemsMode === 'malformed') v.items[0].durationMinutes = '-0';
+  if (itemsMode === 'self-parent') v.displayContext.unit.moked.code = v.displayContext.unit.code;
+  if (itemsMode === 'oracle-valid') v.shiftDay.dataSource = 'oracle';
+  return v;
+}
 function scheduleContext(url) {
   const mode = url.searchParams.get('mode'), employee = row().employee;
   if (mode === 'selected') employee.employeeId = url.searchParams.get('employeeId');
@@ -191,6 +219,12 @@ handler = async event => {
   if (url.pathname.endsWith('/identity')) {
     if (identityMode === 'failure') return fulfill(event.requestId, problem(503), 503);
     const value = principal();
+    if (identityMode === 'oracle-items') value.dataSource = 'oracle';
+    if (identityMode === 'no-items') value.principal.capabilities.pop();
+    if (identityMode === 'no-detail-items') {
+      value.principal.provider = 'real'; value.principal.synthetic = false;
+      value.principal.capabilities = ['shift-items:read']; value.principal.employeeId = '1001';
+    }
     if (identityMode === 'malformed') value.principal.capabilities = ['shift-day:read'];
     if (['no-search', 'search-only'].includes(identityMode)) {
       value.principal.provider = 'real'; value.principal.synthetic = false;
@@ -244,6 +278,14 @@ handler = async event => {
     if (typeof listMode === 'number') return fulfill(event.requestId, problem(listMode), listMode);
     return fulfill(event.requestId, list(url));
   }
+  if (url.pathname.endsWith('/breaks-and-exceptions')) {
+    if (itemsMode === 'hold') { held = { id: event.requestId, url }; return; }
+    if (typeof itemsMode === 'number') return fulfill(event.requestId, problem(itemsMode), itemsMode);
+    if (itemsMode === 'ambiguity') return fulfill(event.requestId, {
+      ...problem(500), code: 'AMBIGUOUS_SHIFT_ITEMS', type: 'urn:shf:problem:AMBIGUOUS_SHIFT_ITEMS',
+    }, 500);
+    return fulfill(event.requestId, selectedItems(url));
+  }
   if (url.pathname.startsWith('/api/v1/employees/')) {
     if (detailMode === 'hold') { held = { id: event.requestId, url }; return; }
     if (typeof detailMode === 'number') return fulfill(event.requestId, problem(detailMode), detailMode);
@@ -271,6 +313,19 @@ try {
   console.log('Browser:', (await send('Browser.getVersion')).product, 'Angular with intercepted synthetic HTTP ONLY');
   await send('Runtime.enable'); await send('Network.enable');
   await send('Fetch.enable', { patterns: [{ urlPattern: '*/api/v1/*', requestStage: 'Request' }] });
+  if (process.env.SHF_ITEMS_ONLY) {
+    const run = process.env.SHF_ITEMS_REVIEW_ONLY === '1'
+      ? (await import('./items-review-check.mjs')).runItemsReviewChecks
+      : (await import('./items-browser-check.mjs')).runItemsChecks;
+    await run({ assert, send, evaluate, wait, size, navigate, key, click, input,
+      screenshot, noOverflow, calls, readyList, readyDetail,
+      setItems: value => { itemsMode = value; }, setIdentity: value => { identityMode = value; },
+      setList: value => { listMode = value; }, setSearch: value => { searchMode = value; },
+      setSchedule: value => { scheduleMode = value; },
+      release: async (status = 200) => { const old = held; held = null;
+        if (old) await fulfill(old.id, status === 200 ? selectedItems(old.url) : problem(status), status); },
+    });
+  } else {
   if (!process.env.SHF_SEARCH_ONLY && !process.env.SHF_SCHEDULE_ONLY) {
   await size(1440, 900); await navigate('/'); await readyList();
   assert.equal(await evaluate('location.pathname'), '/current-shifts');
@@ -731,6 +786,7 @@ try {
   assert(measured.bodyOnWhite>=4.5 && measured.mutedOnWhite>=4.5 && measured.button>=4.5 && measured.focusOnWhite>=3);
   console.log('PASS limited computed-color pairs (not complete WCAG audit):', measured);
   console.log('PASS SCHEDULE18: no-selection/no list; both explicit row sources and nested own-ID detail/back/history; 1440/390/320; two Material calendars/Escape/leap target; strict 31/32/equality/0001/9999; UTC-/+ en-US; 25+5 paging; dirty/cancel/late; errors400/401/403/404/500/503/malformed/source; future real-self double and real-selected denial. No real provider/authentication claim.');
+  }
   assert.equal(await evaluate(`localStorage.length + sessionStorage.length`), 0);
   assert.deepEqual(external, [], 'No external runtime assets/API');
   assert.deepEqual(errors, [], 'No runtime JS exceptions');

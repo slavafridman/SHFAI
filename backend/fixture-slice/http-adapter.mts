@@ -6,11 +6,13 @@ import { SliceError, toProblem } from "./errors.mts";
 import type { SliceRuntime } from "./synthetic-identity.mts";
 import { CurrentShiftError, currentProblem } from "./current-shifts-errors.mts";
 import { parseCurrentQuery } from "./current-shifts-validation.mts";
-import { withRequestBudget } from "./request-budget-context.mts";
+import { withRequestBudget, currentRequestBudget } from "./request-budget-context.mts";
 import { parseSearchQuery, invalidSearch } from "./shift-search-validation.mts";
 import { searchProblem } from "./shift-search-errors.mts";
 import { myShiftsProblem } from "./my-shifts-errors.mts";
 import { parseMyShiftsQuery, invalidMyShifts } from "./my-shifts-validation.mts";
+import { itemsProblem, ShiftItemsError } from "./shift-items-errors.mts";
+import { parseItemsQuery } from "./shift-items-validation.mts";
 
 export const REQUEST_BUDGET_MS = 5000;
 export const RESPONSE_LIMIT_BYTES = 16 * 1024;
@@ -27,6 +29,15 @@ function route(request: IncomingMessage) {
   const target = request.url ?? "";
   const question = target.indexOf("?");
   const path = question < 0 ? target : target.slice(0, question);
+  const itemMatch = /^\/api\/v1\/employees\/([^/]*)\/shift-days\/([^/]*)\/breaks-and-exceptions$/.exec(path);
+  if (itemMatch) {
+    let employeeId: string, shiftDayId: string;
+    try { employeeId = decodeURIComponent(itemMatch[1]); shiftDayId = decodeURIComponent(itemMatch[2]); }
+    catch { throw new SliceError("INVALID_REQUEST"); }
+    validateIds(employeeId, shiftDayId);
+    return { kind: "shift-items" as const, employeeId, shiftDayId,
+      query: parseItemsQuery(question < 0 ? "" : target.slice(question + 1)) };
+  }
   const scheduleEndpoint = path === "/api/v1/my-shifts" || path === "/api/v1/my-shifts/context";
   const searchEndpoint = scheduleEndpoint || path === "/api/v1/shift-search" || path === "/api/v1/shift-search/filter-context";
   if (Buffer.byteLength(searchEndpoint ? (question < 0 ? "" : target.slice(question + 1)) : target, "utf8") >
@@ -102,6 +113,8 @@ function send(response: ServerResponse, status: number, contentType: string, pay
 export function createLoopbackServer(runtime: SliceRuntime) {
   const server = createServer(async (request, response) => {
     const requestId = randomUUID();
+    const itemsEndpoint = /^\/api\/v1\/employees\/[^/]*\/shift-days\/[^/]*\/breaks-and-exceptions$/
+      .test((request.url ?? "").split("?")[0]);
     const currentEndpoint = (request.url ?? "").split("?")[0] === "/api/v1/current-shifts" ||
       (request.url ?? "").split("?")[0] === "/api/v1/current-shifts/filter-context";
     const searchEndpoint = (request.url ?? "").split("?")[0] === "/api/v1/shift-search" ||
@@ -128,6 +141,7 @@ export function createLoopbackServer(runtime: SliceRuntime) {
       // One budget spans authentication, input streaming and read. No automatic retries.
       // Promise.race suppresses late success; fixture/provider work has no connection to cancel.
       const work = async () => {
+        if (itemsEndpoint && request.method !== "GET") throw new ShiftItemsError("INVALID_REQUEST");
         const authorization = request.headers.authorization;
         const principal = await runtime.authenticate({
           authorization: typeof authorization === "string" ? authorization : null,
@@ -137,6 +151,8 @@ export function createLoopbackServer(runtime: SliceRuntime) {
         await requireEmptyBody(request);
         cancellation.signal.throwIfAborted();
         if (selected.kind === "identity") return runtime.identity(principal);
+        if (selected.kind === "shift-items") return await runtime.shiftItems(principal,
+          { employeeId: selected.employeeId, shiftDayId: selected.shiftDayId, ...selected.query }, cancellation.signal);
         if (selected.kind === "schedule-context") return await runtime.myShiftsContext(principal, selected.query, cancellation.signal);
         if (selected.kind === "schedule-list") return await runtime.myShiftsList(principal, selected.query, cancellation.signal);
         if (selected.kind === "search-context") return await runtime.searchContext(principal, cancellation.signal);
@@ -145,19 +161,30 @@ export function createLoopbackServer(runtime: SliceRuntime) {
         if (selected.kind === "current-list") return await runtime.currentList(principal, selected.query, cancellation.signal);
         return await runtime.read(principal, selected.employeeId, selected.shiftDayId);
       };
-      const value = await Promise.race([
-        withRequestBudget(cancellation.signal, REQUEST_BUDGET_MS, work), deadline,
+      const payload = await Promise.race([
+        withRequestBudget(cancellation.signal, REQUEST_BUDGET_MS, async () => {
+          const value = await work();
+          const json = serializeSuccess(value, itemsEndpoint || currentEndpoint || searchEndpoint || scheduleEndpoint
+            ? CURRENT_RESPONSE_LIMIT_BYTES : RESPONSE_LIMIT_BYTES);
+          if (performance.now() >= currentRequestBudget()!.deadline) throw new SliceError("DEPENDENCY_TIMEOUT");
+          cancellation.signal.throwIfAborted();
+          return json;
+        }), deadline,
       ]);
       if (!response.destroyed) send(response, 200, "application/json; charset=utf-8",
-        serializeSuccess(value, currentEndpoint || searchEndpoint || scheduleEndpoint ? CURRENT_RESPONSE_LIMIT_BYTES : RESPONSE_LIMIT_BYTES));
+        payload);
     } catch (error) {
       if (!response.destroyed && !response.headersSent) {
-        const problem = scheduleEndpoint ? myShiftsProblem(error, requestId) : searchEndpoint ? searchProblem(error, requestId) : currentEndpoint ? currentProblem(
+        const problem = itemsEndpoint ? itemsProblem(error, requestId) : scheduleEndpoint ? myShiftsProblem(error, requestId) : searchEndpoint ? searchProblem(error, requestId) : currentEndpoint ? currentProblem(
           error instanceof SliceError && error.code === "INVALID_REQUEST"
             ? new CurrentShiftError("INVALID_REQUEST", error.invalidParameters?.map(p => ({
               name: p.name === "body" ? "body" : "query", reason: p.reason,
             }))) : error, requestId) : toProblem(error, requestId);
         response.setHeader("Connection", "close");
+        if (itemsEndpoint && request.method !== "GET") {
+          problem.status = 405;
+          response.setHeader("Allow", "GET");
+        }
         send(response, problem.status, "application/problem+json; charset=utf-8", JSON.stringify(problem));
         // Reject unread body without retaining a slow or oversized stream.
         request.resume();

@@ -1,0 +1,79 @@
+<shf-workspace-shell [pinned]="true" [active]="active()" [principal]="principal()" [identityState]="identityState()"
+  [identityMessage]="identityError()" (recheck)="recheckIdentity()">
+  <nav class="breadcrumbs" aria-label="מיקום במערכת">
+    <button class="text-link" type="button" (click)="back()">{{ originLabel() }}</button>
+    <span aria-hidden="true">/</span><span>הפסקות וחריגות חלקיות</span>
+  </nav>
+  <div class="heading"><h1 tabindex="-1">הפסקות וחריגות חלקיות במשמרת</h1><span class="tag">קריאה בלבד</span></div>
+  <p>רק רשומות חלקיות המקושרות ליום העבודה שנבחר. לא כולל חריגות יום מלא, סיבות חוסר בנוכחות או דוחות אישור.</p>
+  <div class="toolbar">
+    <button id="items-back" mat-stroked-button type="button" (click)="back()">חזרה — {{ originLabel() }}</button>
+    <button id="items-reload" mat-flat-button type="button" (click)="reload()"
+      [attr.aria-disabled]="!canRead() || !request || state() === 'loading'"
+      [attr.aria-busy]="state() === 'loading'">טעינה מחדש</button>
+  </div>
+  <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ message() }}</p>
+  <section [attr.aria-busy]="state() === 'loading'" aria-label="הקשר ורשומות חלקיות">
+    @if (state() === 'loading') {
+      <div class="surface state-panel"><p>{{ message() }}</p><mat-progress-bar mode="indeterminate" aria-label="טעינת רשומות חלקיות" /></div>
+    }
+    @if (state() === 'error' || state() === 'initial') {
+      <div class="surface state-panel error"><h2 tabindex="-1">לא ניתן להציג רשומות</h2><p>{{ message() }}</p>
+        @if (reference()) { <p>מזהה פנייה לתמיכה: <bdi dir="ltr">{{ reference() }}</bdi></p> }
+        @if (code()) { <details><summary>קוד תקלה טכני</summary><bdi dir="ltr">{{ code() }}</bdi></details> }
+        <a routerLink="/current-shifts">משמרות נוכחיות</a> · <a routerLink="/shift-search">חיפוש משמרות</a> · <a routerLink="/my-shifts">המשמרות שלי</a>
+      </div>
+    }
+    @if (result(); as data) {
+      <article class="surface context-card" aria-label="הקשר העובד ויום העבודה מהשירות">
+        <h2><bdi>{{ data.shiftDay.employee.firstName }} {{ data.shiftDay.employee.lastName }}</bdi></h2>
+        <p class="subtle">הקשר מהתשובה הנוכחית · העובד/ת הנבחר/ת אינו/ה זהות היישום</p>
+        <dl class="context-grid">
+          <div><dt>תחילת משמרת</dt><dd><bdi dir="ltr" class="token">{{ data.shiftDay.effectiveShift.startLocal ? time(data.shiftDay.effectiveShift.startLocal).slice(0,10) : 'לא זמין במקור' }}</bdi> <bdi dir="ltr" class="token">{{ data.shiftDay.effectiveShift.startLocal?.slice(11) }}</bdi></dd></div>
+          <div><dt>סיום משמרת</dt><dd><bdi dir="ltr" class="token">{{ data.shiftDay.effectiveShift.endLocal ? time(data.shiftDay.effectiveShift.endLocal).slice(0,10) : 'לא זמין במקור' }}</bdi> <bdi dir="ltr" class="token">{{ data.shiftDay.effectiveShift.endLocal?.slice(11) }}</bdi></dd></div>
+          <div><dt>צוות</dt><dd><bdi>{{ data.displayContext.unit.label }}</bdi></dd></div>
+          <div><dt>מוקד אב</dt><dd><bdi>{{ data.displayContext.unit.moked.label }}</bdi></dd></div>
+          <div><dt>תפקיד פנימי</dt><dd>{{ data.displayContext.innerJob?.label ?? (data.displayContext.innerJob ? 'שם לא ידוע — ' + data.displayContext.innerJob!.code : 'לא זמין במקור') }}</dd></div>
+          <div><dt>פעילויות</dt><dd>@for (a of data.displayContext.activities; track $index) { <bdi>{{ a.label ?? ('שם לא ידוע — ' + a.code) }}</bdi><span> </span> } @empty { לא זמין במקור }</dd></div>
+        </dl>
+        <a id="items-detail" class="row-link" [href]="'/employees/' + data.shiftDay.employeeId + '/shift-days/' + data.shiftDay.shiftDayId"
+          (click)="openDetail($event)">פרטי המשמרת האפקטיבית</a>
+      </article>
+      <p class="subtle">זמן מקומי כפי שהתקבל, ללא המרה או חישוב משך. משך רשום עשוי להיות שלילי או שונה מהפרש הזמנים.</p>
+      @if (state() === 'empty') { <div class="surface state-panel"><h2>לא נמצאו רשומות חלקיות מקושרות</h2><p>ההקשר נשמר. אין בכך קביעה לגבי נוכחות או חריגות יום מלא.</p></div> }
+      <div class="surface table-wrap" role="region" aria-label="רשומות חלקיות — טבלה נגללת" tabindex="0">
+        <table><caption class="sr-only">הפסקות וחריגות חלקיות לפי זמן התחלה</caption>
+          <thead><tr><th scope="col">סיווג</th><th scope="col">שם סוג / קוד</th><th scope="col">התחלה</th><th scope="col">סיום</th><th scope="col">משך רשום בדקות</th><th scope="col">יציאה רשומה</th><th scope="col">חזרה רשומה</th><th scope="col">הערה ומקור</th></tr></thead>
+          <tbody>@for (item of data.items; track item.startLocal) {
+            <tr>
+              <td data-label="סיווג">{{ kind(item) }}</td>
+              <td data-label="שם סוג / קוד">@if (item.type; as type) { <span>{{ type.label ?? 'שם סוג לא ידוע' }}</span> <bdi dir="ltr">{{ type.code }}</bdi> } @else { לא חל }</td>
+              <td data-label="התחלה"><bdi dir="ltr" class="token">{{ time(item.startLocal).slice(0,10) }}</bdi><br><bdi dir="ltr" class="token">{{ item.startLocal.slice(11) }}</bdi></td>
+              <td data-label="סיום"><bdi dir="ltr" class="token">{{ time(item.endLocal).slice(0,10) }}</bdi><br><bdi dir="ltr" class="token">{{ item.endLocal.slice(11) }}</bdi>@if (item.endLocal < item.startLocal) { <p class="subtle">הסיום הרשום מוקדם מההתחלה. הערך נשמר כפי שהתקבל.</p> }</td>
+              <td data-label="משך רשום בדקות"><bdi class="duration-value" dir="ltr" tabindex="0"
+                role="region" aria-label="משך רשום בדקות — גלילה אופקית לפי הצורך">{{ item.durationMinutes }}</bdi></td>
+              <td data-label="יציאה רשומה">@if (item.breakExitLocal; as exit) { <bdi dir="ltr" class="token">{{ time(exit).slice(0,10) }}</bdi><br><bdi dir="ltr" class="token">{{ exit.slice(11) }}</bdi> } @else { {{ item.kind === 'break' ? 'אין ערך רשום' : 'לא חל' }} }</td>
+              <td data-label="חזרה רשומה">@if (item.breakReturnLocal; as entry) { <bdi dir="ltr" class="token">{{ time(entry).slice(0,10) }}</bdi><br><bdi dir="ltr" class="token">{{ entry.slice(11) }}</bdi> } @else { {{ item.kind === 'break' ? 'אין ערך רשום' : 'לא חל' }} }</td>
+              <td data-label="הערה ומקור"><details [id]="'item-' + item.startLocal"><summary>{{ item.remark === null ? 'אין הערה · מקור טכני' : 'הערה ומקור טכני' }}</summary>
+                <p class="remark" dir="auto">{{ item.remark ?? 'אין הערה רשומה' }}</p>
+                <dl><dt>קוד מצב מקור</dt><dd><bdi dir="ltr">{{ item.stateCode }}</bdi></dd><dt>קוד מקור הרשומה</dt><dd><bdi>{{ item.sourceCode }}</bdi></dd></dl>
+                <pre dir="ltr">{{ item | json }}</pre>
+              </details></td>
+            </tr>
+          }</tbody>
+        </table>
+      </div>
+      <div class="pagination" aria-label="דפדוף ברשומות">
+        <button id="items-previous" mat-stroked-button type="button" (click)="previous()" [attr.aria-disabled]="data.page.offset === 0">הקודם</button>
+        <span>היסט <bdi dir="ltr">{{ data.page.offset }}</bdi> · {{ data.items.length }} רשומות בעמוד</span>
+        <button id="items-next" mat-stroked-button type="button" (click)="next()" [attr.aria-disabled]="data.page.nextOffset === null">הבא</button>
+      </div>
+      @if (data.page.hasMore && data.page.nextOffset === null) { <p>הושג גבול התצוגה; יש לטעון מחדש או לפנות לתמיכה.</p> }
+      <p class="subtle">עמודים אינם תמונת מצב קבועה. כל טעינה בודקת מחדש את ההרשאה וההקשר; אין סך רשומות מובטח.</p>
+      <details id="items-technical" class="surface technical"><summary>מזהים פנימיים ומידע מקור</summary>
+        <dl><dt>מזהה עובד</dt><dd><bdi dir="ltr">{{ data.shiftDay.employeeId }}</bdi></dd><dt>מזהה יום עבודה — לא תאריך</dt><dd><bdi dir="ltr">{{ data.shiftDay.shiftDayId }}</bdi></dd><dt>אזור זמן לפרשנות</dt><dd><bdi dir="ltr">{{ data.shiftDay.businessTimeZone }}</bdi></dd></dl>
+        <pre dir="ltr">{{ data | json }}</pre>
+      </details>
+    }
+  </section>
+</shf-workspace-shell>

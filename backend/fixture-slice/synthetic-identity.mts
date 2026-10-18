@@ -8,7 +8,7 @@ import type { Clock, CurrentShiftReadPort, CurrentShiftRequestV1 } from "./curre
 import { ReadCurrentShifts, systemClock } from "./read-current-shifts.mts";
 import { CurrentShiftError } from "./current-shifts-errors.mts";
 import { validateCurrentRequest } from "./current-shifts-validation.mts";
-import { accessPolicy, myShiftsAccessPolicy } from "./access-policy.mts";
+import { accessPolicy, myShiftsAccessPolicy, shiftItemsAccessPolicy } from "./access-policy.mts";
 import { validateRuntimeConfig } from "./runtime-config.mts";
 import type { ShiftSearchReadPort, ShiftSearchRequestV1 } from "./shift-search-contracts.mts";
 import { ReadShiftSearch } from "./read-shift-search.mts";
@@ -19,12 +19,17 @@ import type { MyShiftsReader } from "./read-my-shifts.mts";
 import type { MyShiftsContextRequestV1, MyShiftsRequestV1 } from "./my-shifts-contracts.mts";
 import { MyShiftsError } from "./my-shifts-errors.mts";
 import { validateMyShiftsRequest } from "./my-shifts-validation.mts";
+import type { SelectedShiftItemsReadPort, SelectedShiftItemsRequestV1 } from "./shift-items-contracts.mts";
+import { GetSelectedShiftItems } from "./read-shift-items.mts";
+import { ShiftItemsError } from "./shift-items-errors.mts";
+import { validateItemsRequest } from "./shift-items-validation.mts";
 
 export interface CurrentRuntimeOptions {
   reader: CurrentShiftReadPort;
   clock?: Clock;
   searchReader?: ShiftSearchReadPort;
   myShiftsReader?: MyShiftsReader;
+  shiftItemsReader?: SelectedShiftItemsReadPort;
 }
 
 export class SyntheticAdministratorProvider implements AuthenticationProvider {
@@ -40,7 +45,7 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
       subject: "synthetic:administrator",
       displayName: "Synthetic Administrator (local/isolated only)",
       provider: "synthetic", synthetic: true, roles: ["Administrator"],
-      capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read"], employeeId: null,
+      capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read"], employeeId: null,
       resourceScope: { orgUnitIds: [...this.orgUnitIds] },
     };
   }
@@ -80,6 +85,11 @@ export async function createRuntime(
       currentOptions.myShiftsReader.dataSource !== config.dataSource))
     throw new Error("Explicit schedule source mismatch");
   const schedulePolicy = myShiftsAccessPolicy(config);
+  if (currentOptions?.shiftItemsReader && currentOptions.shiftItemsReader.dataSource !== config.dataSource)
+    throw new Error("Explicit shift items source mismatch");
+  const itemsPolicy = shiftItemsAccessPolicy(config);
+  const shiftItems = currentOptions?.shiftItemsReader
+    ? new GetSelectedShiftItems(currentOptions.shiftItemsReader, itemsPolicy, config.businessTimeZone) : undefined;
   const schedule = currentOptions?.myShiftsReader
     ? new ReadMyShifts(currentOptions.myShiftsReader, schedulePolicy, currentOptions.clock ?? systemClock,
       config.businessTimeZone, config.dataSource) : undefined;
@@ -120,6 +130,12 @@ export async function createRuntime(
   }
   return Object.freeze({
     authenticate,
+    shiftItems: (p: PrincipalV1, request: SelectedShiftItemsRequestV1, signal?: AbortSignal) => {
+      validatePrincipal(p); validateItemsRequest(request); itemsPolicy.requireSelectedShiftItemsRead(p);
+      if (!itemsPolicy.canReadSelectedEmployee(p, request.employeeId)) throw new ShiftItemsError("FORBIDDEN");
+      if (!shiftItems) throw new ShiftItemsError("DEPENDENCY_UNAVAILABLE");
+      return shiftItems.read(p, request, signal);
+    },
     myShiftsContext: (p: PrincipalV1, request: MyShiftsContextRequestV1, signal?: AbortSignal) => {
       validatePrincipal(p); validateMyShiftsRequest(request, false); schedulePolicy.requireMyShiftsRead(p);
       if (request.mode === "selected" && !schedulePolicy.canSelectEmployee(p)) throw new MyShiftsError("FORBIDDEN");

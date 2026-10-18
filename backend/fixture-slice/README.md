@@ -1,4 +1,4 @@
-# SHF read-only backend: detail, current, search and employee schedule
+# SHF read-only backend: detail, current, search, schedule and selected items
 
 Implements approved section 13 v0.1 of `docs/SHF_REVERSE_ENGINEERING_DESIGN.md`;
 section 15 records detail approval and section 17 approves the local tooling.
@@ -52,12 +52,14 @@ They exercise the actual five-second request budget. Routes are:
 - `GET /api/v1/shift-search` (explicit search fixture required)
 - `GET /api/v1/my-shifts/context` (explicit schedule fixture required)
 - `GET /api/v1/my-shifts` (explicit schedule fixture required)
+- `GET /api/v1/employees/{employeeId}/shift-days/{shiftDayId}/breaks-and-exceptions`
+  (explicit items fixture in fixture mode)
 
 Identity/detail prohibit query/body input; current/search filter-context prohibits
 query/body. Lists and schedule context accept only their canonical query keys,
 with no body. All send `Cache-Control: no-store`.
 Identity is not an authorization token; every request authenticates independently.
-Administrator has exactly `["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read"]`,
+Administrator has exactly `["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read"]`,
 no employee identity, and cannot
 bypass source validation, explicit employee context or the fixture-unit allowlist.
 
@@ -613,3 +615,144 @@ production/live writes, schema changes, EMS/batch, real-provider implementation,
 legacy execution, browser/RTL/accessibility checks, load/query-plan assessment or
 forced live-network/cancellation failures. Those remain outside this backend
 verification; UI/QA own browser acceptance. There is no new contract blocker.
+
+## SHF-ITEMS-API-18 — approved §§29/30 v0.1, canonical §31 v0.1
+
+Approval: 18 October 2026, 14:17, recorded in §31. Architect-owned
+`contracts.mts`, `current-shifts-contracts.mts`, `shift-search-contracts.mts`,
+`my-shifts-contracts.mts` and `shift-items-contracts.mts` were not edited.
+The only identity delta is the exact fifth capability above; synthetic
+Administrator still has `employeeId=null`, never a selected employee identity.
+
+One GET, no aliases or additional catalog/context/item endpoints:
+
+```text
+/api/v1/employees/{employeeId}/shift-days/{shiftDayId}/breaks-and-exceptions
+```
+
+Both `shift-items:read` and `shift-day:read`, then actor permission, are checked
+before any port/DB/hierarchy call. Explicit isolated synthetic selection or a
+future real verified self must still satisfy exact current J01 scope and existing
+detail ownership. Empty grants never mean all. Wrong employee, reassignment,
+out-of-scope and vanished/nonresolving day use the same generic404.
+
+Employee IDs are canonical positive decimal strings of up to38 digits; day IDs
+up to10. Optional query keys **only** limit1–100/default25, offset0–10000/default0
+and sort=`start-asc`/default. Unknown/decoded-duplicate keys, noncanonical values,
+query >8192 bytes and any nonempty body yield400. Non-GET yields405/Allow: GET,
+with no reader call. Problems use only the §29 allowlist (no409/422), no offending
+values, SQL or driver text. Both success/errors are no-store/nosniff.
+
+`GetSelectedShiftItems` owns application authorization and response projection;
+`shift-items-projection.mts` owns pure item conversion. `ShiftItemsFixtureReader`
+is an explicitly isolated test double. `OracleShiftItemsReader` uses the existing
+pool and one `OracleReadSession.read` for Gregorian verification, full detail
+context/hierarchy, full-selection duplicate probe, bounded page and scoped
+catalogs. `detailContextRows` is the shared session-bound detail primitive, not a
+second public detail call/connection. Context ambiguity is checked before
+accepting an employee or scope; item tuple ambiguity is checked before offsets,
+including an otherwise empty page.
+
+Membership: exact AGENT_DAY_ID, STATE_TYPE>0, cancellation code null. State4 is
+break, state2 timeoff, other positive states exception; SOURCE DEL remains raw
+data when cancellation is null. Signed/zero type codes and unknown labels remain
+honest. Full-second Gregorian local dates, earlier ends/outside-shift intervals,
+stored signed38-digit duration and nullable break actuals are never recalculated
+or interpreted as completion. Non-break actuals are inapplicable/null.
+No whole-day expansion, attendance reasons/reports, command eligibility,
+candidate/validation helper, custom function/procedure/sequence, ledger or EMS.
+
+**Duration clarification:** §29/31 and the canonical DTO require a nonnullable
+`durationMinutes: string`. An actual NULL is tested as INVALID_SOURCE_DATA,
+never zero or an invented duration. The task wording mentioning nullable duration
+does not match that approved canonical type; no shared contract was widened.
+
+Oracle uses parameterized exact-day reads, a full day/start duplicate probe and
+Oracle11 ROW_NUMBER pagination with <=limit+1<=101 transferred item rows.
+No item employee/attendance join, DISTINCT, first-owner selection, OFFSET FETCH,
+global catalog preload or unbounded application fetch. Only context/page labels
+are resolved; the extra sentinel is not label-hydrated or serialized.
+Read-only transaction start, autoCommit=false, rollback and awaited native
+break/release/discard use the existing infrastructure. Source failures are503,
+never fixture fallback. Total5000ms budget includes serialization; response cap
+is2MiB and an oversized resource fails INVALID_SOURCE_DATA. Later pages are
+reauthorized independent snapshots, not a frozen cursor/total.
+
+### Fixture handoff through the parent
+
+Exports in **`shift-items-sample.mts`**, all actually used by backend tests:
+
+- `sampleConfig`
+- `sampleShiftItemsFixture`
+- `sampleShiftItemsDetailRows`
+
+They share the synthetic employee/day and detail facts from
+`current-shifts-sample.mts`; use its `sampleCurrentFixture` for existing runtime
+catalog configuration. No frontend fixture was edited. Example from this folder,
+with no persistent listener left behind:
+
+```javascript
+import { sampleConfig, sampleShiftItemsFixture, sampleShiftItemsDetailRows }
+  from "./shift-items-sample.mts";
+import { sampleCurrentFixture } from "./current-shifts-sample.mts";
+import { startFromEnvironment, stopBackendServer } from "./server.mts";
+const server = await startFromEnvironment({
+  SHF_FIXTURE_CONFIG: JSON.stringify(sampleConfig),
+  SHF_FIXTURE_PORT: "0",
+  SHF_FIXTURE_ROWS: JSON.stringify(sampleShiftItemsDetailRows),
+  SHF_CURRENT_SHIFTS_FIXTURE: JSON.stringify(sampleCurrentFixture),
+  SHF_SHIFT_ITEMS_FIXTURE: JSON.stringify(sampleShiftItemsFixture),
+});
+try {
+  // Use server.address() in the owning local test; do not log real records.
+} finally { await stopBackendServer(server); }
+```
+
+`SHF_SHIFT_ITEMS_FIXTURE` is explicit opt-in; omission disables only this resource
+with503, not an invented empty success. Startup rejects a differing detail
+snapshot or missing shared current fixture. Oracle startup rejects this and all
+other fixture inputs and wires only source-bound Oracle readers. Production
+mock rejection and real-provider fail-closed behavior remain unchanged.
+
+### Verification — 18 October 2026
+
+Commands from `backend/fixture-slice`:
+
+```powershell
+node --test test/shift-items-projection.test.mts
+node --test test/shift-items-projection.test.mts test/shift-items.test.mts test/shift-items-http.test.mts test/oracle-shift-items.test.mts
+npm run typecheck
+npm test
+```
+
+- Cheapest first coherent check: **4/4 PASS** before adapter/runtime expansion.
+- Final focused selection: **38/38 PASS**, isolated fixtures/HTTP/Oracle doubles.
+- Strict TypeScript5.9.3 no-emit check: **PASS**.
+- Full suite: **161/161 PASS** = **123 existing +38 new**, no skips/failures.
+- Tests exercise BRX18 backend obligations: capability/actor checks before
+  acquisition, generic404/reassignment/full detail ambiguity, off-page tuple
+  duplicates, state/cancel/DEL membership, overlays, null/precision/seconds/date
+  anomalies, scoped labels, paging/caps, immutable reads, sanitized errors,
+  source isolation,5s auth deadline, disconnect/native abort and lease cleanup.
+  BRX18-12 browser navigation remains frontend/QA-owned, not backend-certified.
+
+Authorized native command with environment already injected:
+`node oracle-shift-items-live-check.mts`. The actual run used a disposable
+`node --input-type=module -` operator harness: reference parsed in memory only,
+then supplied to `runOracleShiftItemsLiveCheck(env)`; neither app nor checker
+reads the brief or a secrets file. No credentials/rows were persisted or printed.
+
+Actual Node24.21 / node-oracledb26 Thick / Client19.3 / CTIDBT_WFMT **PASS**:
+SELECT1, NUMBER>2^53, synthetic Hebrew and Gregorian leap DATE/seconds roundtrip;
+**10 candidate keys,1 selected day, limit2,2 items**, coherent detail and source;
+**1 observed item snapshot** with context/probe/page on one read-only lease,
+bounded transfer and rollback/release verified; environment bootstrap and
+**2 HTTP GETs** pass. Output is flags/counts only. All owned pools/listeners
+closed; pre-existing4328/4320 listeners were not stopped.
+
+Not run: previous live workflow repetitions (covered by full regression),
+production/writes/DDL/EMS/batch/legacy execution, live fault injection or
+query-plan/load/policy/grant certification, frontend/browser/RTL/a11y checks.
+Database/platform owners retain deployed policy/performance/native network
+failure risks; frontend/QA own browser acceptance. No dependency installation,
+upgrade, root/docs/frontend/legacy/canonical change or deployment was needed.

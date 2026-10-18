@@ -8,6 +8,7 @@ import { currentRequestBudget } from "./request-budget-context.mts";
 import type { OracleEnvironment } from "./runtime-config.mts";
 import { record } from "./contract-validation.mts";
 import { randomUUID } from "node:crypto";
+import { ShiftItemsError } from "./shift-items-errors.mts";
 
 // Minimal isolated-mockable infrastructure port; never exposes raw Oracle errors.
 export interface OracleConnection {
@@ -54,7 +55,7 @@ export async function createOraclePool(env: OracleEnvironment): Promise<OraclePo
 }
 function dependency(error: unknown): never {
   if (error instanceof SliceError || error instanceof CurrentShiftError || error instanceof ShiftSearchError ||
-      error instanceof MyShiftsError) throw error;
+      error instanceof MyShiftsError || error instanceof ShiftItemsError) throw error;
   const code = record(error) && typeof error.code === "string" ? error.code
     : record(error) && typeof error.errorNum === "number" &&
         Number.isInteger(error.errorNum) && error.errorNum > 0 && error.errorNum <= 99999

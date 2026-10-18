@@ -109,6 +109,11 @@
                     @if (principal()?.principal?.synthetic && principal()?.principal?.capabilities?.includes('my-shifts:read')) {
                       <a class="row-link" [id]="'schedule-' + row.shiftDayId" [routerLink]="['/my-shifts/selected', row.employee.employeeId]"
                         (click)="openSchedule(row, $event)" [attr.aria-label]="'משמרות העובד/ת ' + row.employee.firstName + ' ' + row.employee.lastName">משמרות העובד/ת</a>
+                    }
+                    @if (canReadItems()) {
+                      <a class="row-link" [id]="'items-' + row.shiftDayId"
+                        [href]="'/employees/' + row.employee.employeeId + '/shift-days/' + row.shiftDayId + '/breaks-and-exceptions'"
+                        (click)="openItems(row, $event)" [attr.aria-label]="'הפסקות וחריגות חלקיות עבור ' + row.employee.firstName + ' ' + row.employee.lastName + ' — ' + displayTime(row.startLocal)">הפסקות וחריגות חלקיות</a>
                     }</td>
                   </tr>
                 }

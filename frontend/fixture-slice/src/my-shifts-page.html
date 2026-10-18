@@ -95,6 +95,11 @@
                           [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId]"
                           (click)="openDetail(row, $event)" [attr.aria-label]="'פרטי משמרת ' + time(row.startLocal)">פרטי משמרת</a>
                       } @else { <span>אין הרשאה לפרטים</span> }
+                      @if (canReadItems()) {
+                        <a class="row-link" [id]="'schedule-items-' + row.shiftDayId"
+                          [href]="'/employees/' + row.employee.employeeId + '/shift-days/' + row.shiftDayId + '/breaks-and-exceptions'"
+                          (click)="openItems(row, $event)" [attr.aria-label]="'הפסקות וחריגות חלקיות עבור ' + row.employee.firstName + ' ' + row.employee.lastName + ' — ' + time(row.startLocal)">הפסקות וחריגות חלקיות</a>
+                      }
                     </td>
                   </tr>
                 }

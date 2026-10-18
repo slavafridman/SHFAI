@@ -1,0 +1,51 @@
+:host { display:block; min-width:0; }
+.breadcrumbs, .toolbar, .heading, .pagination { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-block-end:16px; }
+.heading { justify-content:space-between; }
+h1 { font-size:26px; margin:0; }
+.tag { background:var(--soft); border-radius:8px; padding:6px 12px; }
+.surface { background:white; border:1px solid var(--border); border-radius:12px; margin-block:16px; }
+.context-card, .state-panel, .technical { padding:20px; }
+.context-card h2 { margin:0; }
+.context-card p { margin-block:8px; }
+.context-card .token { display:block; }
+.context-card dd > bdi:not(.token) { margin-inline-end:8px; }
+.context-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+dt, .subtle { color:var(--muted); }
+dd { margin:4px 0; }
+.token { display:inline-block; white-space:nowrap; overflow-wrap:normal; }
+.duration-value { display:block; max-width:100%; overflow-x:auto; white-space:nowrap; overflow-wrap:normal; }
+.row-link, .text-link, summary { min-height:44px; padding-block:10px; }
+.text-link { border:0; background:none; color:var(--primary); text-decoration:underline; font:inherit; cursor:pointer; text-align:start; }
+.row-link { display:inline-flex; align-items:center; }
+a, button, h1, h2, dd, td, th { overflow-wrap:anywhere; min-width:0; }
+.toolbar button { height:auto; min-height:48px; white-space:normal; }
+.toolbar button, .pagination button { border-radius:8px; }
+// More specific than Material's button outline reset, scoped to this view only.
+// Offset places the ring on the neutral surface, not on the filled button.
+:host button.mat-mdc-button-base:focus-visible, .duration-value:focus-visible {
+  outline:3px solid #002f65; outline-offset:3px;
+}
+a, button, summary, [tabindex] { scroll-margin-block-start:84px; }
+.table-wrap { overflow:auto; max-width:100%; }
+table { width:100%; border-collapse:collapse; table-layout:fixed; min-width:1080px; }
+th, td { padding:12px; text-align:start; vertical-align:top; border-bottom:1px solid var(--border); }
+th { background:var(--soft); }
+pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; max-width:100%; }
+.remark { white-space:pre-wrap; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+.error { border-inline-start:4px solid #a93232; }
+[aria-disabled=true] { opacity:.65; }
+@media(max-width:760px) {
+  h1 { font-size:23px; }
+  .context-grid { grid-template-columns:minmax(0,1fr); }
+  .context-card, .state-panel, .technical { padding:16px; }
+  // Cards must not inherit the table's nowrap min-content width; the duration
+  // scrollport is constrained to its cell rather than clipped by the page.
+  table { display:block; min-width:0; table-layout:auto; }
+  thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+  tbody, tr, td { display:block; }
+  tr { margin:12px; border:1px solid var(--border); border-radius:8px; }
+  td { border-bottom:1px solid var(--border); }
+  td::before { content:attr(data-label); display:block; font-weight:600; color:var(--muted); margin-bottom:4px; }
+  .table-wrap { overflow-x:hidden; }
+}

@@ -13,6 +13,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { SliceApi } from './api';
 import { WorkspaceShell } from './workspace-shell';
 import { ListNavigation } from './list-navigation';
+import { ViewHistory } from './view-history';
 import {
   detail, displayTime, id, identity, problem,
   type EmployeeShiftDayResponseV1, type IdentityResponseV1,
@@ -40,6 +41,7 @@ const COPY = {
   styleUrl: './shift-day-page.scss',
 })
 export class ShiftDayPage {
+  readonly journey = inject(ViewHistory);
   private readonly api = inject(SliceApi);
   private readonly navigation = inject(ListNavigation);
   private readonly router = inject(Router);
@@ -59,7 +61,8 @@ export class ShiftDayPage {
         row.unit.code === this.row()?.employee.orgUnitId ? row.unit : null;
     }
     const origin = this.fromSearch() ? this.navigation.searchOrigin : this.navigation.origin;
-    return this.fromList() && origin && origin.unit.code === this.row()?.employee.orgUnitId ? origin.unit : null;
+    return this.fromList() && origin && origin.dataSource === this.principal()?.dataSource &&
+      origin.unit.code === this.row()?.employee.orgUnitId ? origin.unit : null;
   }
   readonly form = new FormGroup({
     employeeId: new FormControl('', { nonNullable: true, validators: [
@@ -90,6 +93,7 @@ export class ShiftDayPage {
   readonly time = displayTime;
 
   constructor() {
+    this.journey.attach(this.host.nativeElement);
     afterNextRender(() => {
       this.title()?.nativeElement.focus({ preventScroll: true });
       document.documentElement.scrollTop = 0;
@@ -170,12 +174,15 @@ export class ShiftDayPage {
     this.host.nativeElement.querySelector<HTMLInputElement>(`#${name}`)?.focus();
   }
   backToEntry(): void {
+    if (this.journey.parentPath()?.endsWith('/breaks-and-exceptions')) { this.journey.back(); return; }
     if (this.fromSchedule() && this.navigation.schedule) {
       this.navigation.returning = true;
+      if (this.journey.backIf(this.navigation.schedule.path)) return;
       void this.router.navigate([this.navigation.schedule.path]); return;
     }
     if (this.fromList()) {
       this.navigation.returning = true;
+      if (this.journey.backIf(this.fromSearch() ? '/shift-search' : '/current-shifts')) return;
       void this.router.navigate([this.fromSearch() ? '/shift-search' : '/current-shifts']);
       return;
     }
@@ -249,6 +256,16 @@ export class ShiftDayPage {
     if (pair && this.canRead() && this.state() !== 'loading' && this.state() !== 'dirty')
       this.load(pair, true);
   }
+  canReadItems(): boolean { return this.canRead() && !!this.principal()?.principal.capabilities.includes('shift-items:read'); }
+  fromItems(): boolean { return !!this.journey.parentPath()?.endsWith('/breaks-and-exceptions'); }
+  openItems(event: MouseEvent): void {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
+    event.preventDefault();
+    const row = this.row();
+    if (!row || !this.canReadItems()) return;
+    const path = `/employees/${row.employeeId}/shift-days/${row.shiftDayId}/breaks-and-exceptions`;
+    if (!this.journey.backIf(path)) void this.router.navigateByUrl(path);
+  }
   private load(pair: Pair, reload: boolean): void {
     this.cancelDetail();
     const gen = this.generation, identityGen = this.identityGeneration;
@@ -268,6 +285,7 @@ export class ShiftDayPage {
         this.message.set('פרטי המשמרת נטענו');
         this.announcement.set(this.message());
         if (!reload) this.queueFocus('#result-heading', gen);
+        setTimeout(() => { if (current()) this.journey.restore(this.host.nativeElement); });
       },
       error: (error: unknown) => {
         if (!current()) return;

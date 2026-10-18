@@ -1,4 +1,259 @@
-# SHF-SEARCH-UI-18 verification — 2026-10-18
+# SHF-ITEMS-UI-18 verification — 2026-10-18
+
+## Independent QA D01–D04 correction — 18 October, 15:07 handoff
+
+**Status: fixed; ready for the SAME independent QA's bounded retest before
+publication.** This is developer verification, not independent acceptance.
+Approved §29/30 v0.1 / §31 / `#shift-items` unchanged. The original QA findings
+and all earlier implementation/check history below remain valid historical
+records; the previous193 passing tests did not cover these four findings.
+
+### Exact paths changed in this correction only
+
+- `src/shift-items-page.html`
+- `src/shift-items-page.scss`
+- `src/shift-items-contract.ts`
+- `src/shift-items-page.spec.ts`
+- `src/shift-items-contract.spec.ts`
+- `checks/browser-check.mjs`
+- `checks/items-review-check.mjs` (new narrow Chrome regression runner)
+- `VERIFICATION.md`
+
+No `src/styles.scss`/shared shell/upstream style, API shape, canonical/backend,
+manifest/dependency, Git, DB, legacy execution or delegation change/action.
+Backend `shift-items-validation.mts:51` was read only: the existing rule already
+requires different unit/parent codes. No new wire fields or business rules.
+
+### Fixes and actual measured retests
+
+| Finding | Fix and final actual Chrome155 measurements |
+|---|---|
+| **D01**,38-digit duration wraps | Dedicated named, keyboard-focusable LTR `.duration-value` scroll region: `max-width:100%`, `overflow-x:auto`, `white-space:nowrap`; no truncation/coercion. Mobile cards use block table layout so intrinsic nowrap width cannot expand behind their clipping container. Exact38-nines DOM Range has **1 line at1440/390/320**. Scrollport/client widths **118/291/221px**, full text/scroll width **307px**. Scrolling exposes the final digit; token fits its cell and the cell fits its table region. All8 fields retained on every row, no page overflow; raw JSON remains `pre-wrap`. |
+| **D02**,44px toolbar targets | Items toolbar min-height precisely **48px**, not a global control override. Both back/reload measure **48/48px** on1440/390/320. At30px text, back/reload are **48/48**, **137/48**, **182/48px** respectively; wrapping without page overflow. |
+| **D03**,self-parent accepted | `itemsResponse` rejects `unit.moked.code === unit.code` after existing parent validation. Unit regression covers both approved source pairs; component regression asserts error and no context/rows. Actual Chrome intercepted otherwise-valid25-item self-parent response gives **0 context/rows**; valid J01/G01 with fixture and Oracle-marked **synthetic** responses still renders3 rows. No live Oracle test. |
+| **D04**,outline reset by Material | Scoped `:host button.mat-mdc-button-base:focus-visible` plus local duration focus selector outranks Material's outline reset; no `!important` or global override. Actual Tab→reload, Shift+Tab→back, Tab→reload gives **solid3px outline,3px offset,rgb(0,47,101)** against adjacent **rgb(250,250,250)**: **12.62:1**. At1440 ring's button top/bottom **302.5/350.5px**, header bottom68px; at320 **499.5/547.5px**, header bottom64px. Entire ring fits viewport and is not sticky-header-obscured. |
+
+Reload lifecycle was rechecked with actual CDP keyboard input at
+**1440/320 ×200/503**. Repeated Space causes **one GET** in each case; same
+reload DOM node/focus remains pending and terminal, native `disabled=false`.
+No BODY focus loss. Normal focused opacity is1; measured indicator is the
+explicit ring, not Material's12% overlay.
+
+### Exact commands/results for this correction
+
+From `frontend/fixture-slice`:
+
+- `npm test -- --include=src/shift-items-contract.spec.ts --include=src/shift-items-page.spec.ts`
+  → before fixes **3 new regressions failed** (D01 + guard/component D03),
+  then **50/50 PASS**,2 files:24 guard +26 component.
+- `npm test` → **196/196 PASS**,13 files,15:11; previous193 plus3 new
+  regressions. Existing jsdom `Window.scrollTo not implemented` diagnostic
+  remains; not counted as browser/scroll proof.
+- `npm run typecheck` → **PASS**.
+- `npm run build` → **PASS**, initial546.95kB, items lazy31.82kB; no budget warnings.
+- `node --check checks/browser-check.mjs` → **PASS**.
+- `node --check checks/items-review-check.mjs` → **PASS** (including final
+  screenshot-target adjustment).
+
+Isolated owned services, same explicit synthetic-only setup as documented below:
+Node4348 (`SHF_UI_ITEMS_FIXTURE=1`, `SHF_FIXTURE_PORT=4348`,
+`node checks/serve-synthetic.mjs`); Angular4358
+(`npm start -- --port 4358 --proxy-config fixtures/proxy.items.synthetic.json`);
+headless Chrome9368, separate profile `.angular/items18-review-chrome`.
+User4328/4320 were checked before startup and were not used/stopped.
+
+Check process environment:
+
+```powershell
+$env:SHF_UI_URL='http://127.0.0.1:4358'
+$env:SHF_CDP_URL='http://127.0.0.1:9368'
+$env:SHF_ITEMS_ONLY='1'
+$env:SHF_ITEMS_REVIEW_ONLY='1'
+node checks/browser-check.mjs
+```
+
+→ **PASS**, narrow actual Chrome D01–D04 metrics above, real keyboard,
+same-DOM200/503 lifecycle, no page overflow/storage/external requests/runtime
+exceptions. All HTTP intercepted with synthetic fixtures.
+
+```powershell
+Remove-Item Env:SHF_ITEMS_REVIEW_ONLY -ErrorAction SilentlyContinue
+node checks/browser-check.mjs
+node checks/fixture-proxy-check.mjs
+```
+
+→ **both PASS**. Full items intercepted journey/regressions plus **actual
+Angular→proxy→Node synthetic fixture**, interception disabled for proxy;
+**18 successful browser item responses**, four origins/nested returns,
+1440/390/320,25+5/reload, real400/404/no-store.
+The two broad non-items browser/proxy runners were not rerun in this narrowly
+scoped correction; their previous independent-QA results remain historical,
+not newly claimed passes. Full196 unit regression was nevertheless rerun.
+
+Synthetic evidence only:
+`.angular/browser-evidence/items18-review-duration-{1440,390,320}.png` and
+`items18-review-focus-{1440,320}-{200,503}.png`; final320 duration/focus captures
+visually inspected. Initial nowrap implementation exposed native mobile-table
+min-content expansion; it was corrected and a real cell/region containment
+assertion added, rather than accepting hidden/clipped text as local scrolling.
+
+No new implementation blocker. **Next owner: same independent QA** retests
+D01–D04 and accepts/rejects the corrections before caller publication.
+Full screen-reader/WCAG2.2 AA conformance, production, live Oracle UI and
+transport checks remain not run/outside this bounded correction.
+Cleanup verified: owned Angular/Node sessions stopped; surviving owned Chrome
+PID26316 stopped specifically. No listeners remain on4348/4358/9368.
+User4328/PID6344 and4320/PID2380 remain listening and were not stopped.
+
+## SHF-ITEMS-UI-18 — actual Angular implementation / final verification
+
+**Status: implemented, checks passed; independent QA/release remains caller-owned.**
+Approval: **§29 v0.1 + §30 v0.1 + `#shift-items` visual**, user 18 October
+14:17 “Agree and continue”, canonical record **§31 v0.1**. Existing Angular
+21.2.25 / Material-CDK21.2.14 / TS5.9.3 retained; observed Node24.21.0/npm11.19.0.
+No install, new application, Git command, backend/shared/docs/design/root edit,
+DB connection, legacy execution or delegation was performed by this UI task.
+
+### Changed paths (relative to `frontend/fixture-slice/`)
+
+New:
+`src/shift-items-contract.ts`, `src/shift-items-contract.spec.ts`,
+`src/shift-items-fixtures.ts`, `src/shift-items-page.ts`,
+`src/shift-items-page.html`, `src/shift-items-page.scss`,
+`src/shift-items-page.spec.ts`, `src/shift-items-navigation.spec.ts`,
+`src/view-history.ts`, `checks/items-browser-check.mjs`,
+`checks/items-proxy-check.mjs`, `fixtures/proxy.items.synthetic.json`.
+
+Updated:
+`src/api.ts`, `src/contract.ts`, `src/list-navigation.ts`, `src/routes.ts`,
+`src/current-shifts-page.{ts,html,scss}`, `src/shift-search-page.{ts,html}`,
+`src/my-shifts-page.{ts,html}`, `src/shift-day-page.{ts,html,scss}`,
+`src/workspace-shell.{ts,scss}`, `checks/browser-check.mjs`,
+`checks/fixture-proxy-check.mjs`, `checks/serve-synthetic.mjs`,
+`README.md`, `VERIFICATION.md`.
+Generated build/cache/synthetic captures stay inside this frontend workspace.
+No claim of Git diff/hash or byte comparison of the caller's pre-existing work.
+
+### Exact commands and observed outcomes
+
+Commands below ran from `frontend/fixture-slice`:
+
+| Command | Result |
+|---|---|
+| `npm test -- --include=src/shift-items-contract.spec.ts --include=src/shift-items-page.spec.ts --include=src/shift-items-navigation.spec.ts` | **52/52 PASS**, 3 files (23 guards,24 component,5 four-origin/navigation), final 14:55 |
+| `npm test` | **193/193 PASS**,13 files: all prior **141** unchanged tests +52 new; final 14:55 |
+| `npm run typecheck` | **PASS**, strict application check |
+| `npm run build` | **PASS**, final14:56; initial546.95kB, lazy items31.21kB; no budget warnings |
+| `node --check checks/browser-check.mjs` | **PASS** |
+| `node --check checks/items-browser-check.mjs` | **PASS** |
+| `node --check checks/fixture-proxy-check.mjs` | **PASS** |
+| `node --check checks/items-proxy-check.mjs` | **PASS** |
+| `node --check checks/serve-synthetic.mjs` | **PASS** |
+
+Unit/component checks use Angular + HttpTestingController + jsdom, **not** a
+live API/browser. jsdom still reports `Window.scrollTo not implemented`;
+it is not counted as visual/scroll proof. Geometry/history/scroll/focus were
+separately checked in actual Chrome155.0.8059.84.
+
+Owned local services/check environment (exact start commands in README):
+`SHF_UI_ITEMS_FIXTURE=1`, `SHF_FIXTURE_PORT=4348`,
+`node checks/serve-synthetic.mjs`;
+`npm start -- --port 4358 --proxy-config fixtures/proxy.items.synthetic.json`;
+isolated headless Chrome CDP9368/profile `.angular/items18-chrome`.
+`SHF_UI_URL=http://127.0.0.1:4358`, `SHF_CDP_URL=http://127.0.0.1:9368`.
+
+1. **`SHF_ITEMS_ONLY=1; node checks/browser-check.mjs` — PASS.**
+   All `/api/v1` calls intercepted with synthetic fixtures. Four real entry
+   actions/own pairs; both nested current and search → schedule → detail →
+   items → exact detail/schedule/upstream return; optional items → detail →
+   items without duplicate forward entries. Independent page25, current minute,
+   search range, vertical/RTL scroll and exact DOM opener; dirty draft returns
+   without an automatic stale search. Page25+5/previous/reload0/empty, raw DEL,
+   signed38-digit duration, null/actual/nonapplicable fields, unknown type/state7,
+   escaped XSS-shaped remarks.400/401/403/404/500/503, ambiguity, malformed rows,
+   source/employee mismatch, absent/invalid/missing-cap identities, strict query,
+   stale abort/late response. Repeat Space→one GET, same reload node/focus,
+   drawer Tab containment/Escape/opener, RTL1440/390/320, all8 fields,30px
+   item/upstream navigation wrapping, no page overflow, no browser storage,
+   external requests or runtime exceptions. This is not a complete WCAG audit.
+2. **`Remove-Item Env:SHF_ITEMS_ONLY -ErrorAction SilentlyContinue; node checks/browser-check.mjs`
+   — PASS**, existing broad intercepted current/search/schedule/detail checks.
+   Actual Material calendars and two independent24/60 pickers, Escape/focus,
+   search flags/equality/range, schedule31/32-day limit and Gregorian boundary
+   cases, original errors/capabilities/stale work, three viewport widths and
+   measured limited color pairs retained. Not a real-provider/authentication test.
+3. **`SHF_ITEMS_ONLY=1; node checks/fixture-proxy-check.mjs` — PASS** after
+   explicit backend READY handoff. **Actual Angular → own proxy → Node fixture
+   read port**, Fetch interception disabled. Rejects Oracle/non-synthetic identity
+   before UI access. Four origins + nested returns, three widths,25+5/reload0,
+   disclosure/opener/filter restoration, escaped/raw/null/negative/precision
+   fields, **18 successful browser item responses**, real server400 query grammar
+   and generic404 wrong pair; no-store and no runtime exceptions. Final run uses
+   actual CDP Enter activation, not script-only `.click()`.
+
+Only synthetic screenshots were written to ignored `.angular/browser-evidence/`
+(`items18-*` and `items18-proxy-*`);1440/320 first fold, table/card rows and30px
+navigation captures were visually inspected. Raw pane remains plain text.
+
+### Failed attempts and corrections (not counted as passes)
+
+- Initial test compile errors in a contextual test-lambda type and later draft
+  self-type were corrected. Two runs timed out **before collecting tests** while
+  starting the existing Vitest thread pool; only the owned hung commands were
+  stopped. The unchanged focused/full commands passed on rerun; tooling unchanged.
+- Early full suite184/186 exposed changed legacy explicit-back timing. History
+  return interception was scoped to active item journeys; original tests were
+  not weakened/rewritten. Final prior141 all pass.
+- New origin tests caught a programmatic schedule action opener being overwritten
+  by departure capture; explicit pending opener now survives, upstream metadata
+  remains independent.
+- Real Chrome exposed double navigation from RouterLink + explicit return handler
+  on new links. They now use safe native hrefs with a single primary-click
+  interceptor; modifiers still open direct, server-authorized links.
+- Initial browser/checker failures were also corrected: search readiness before
+  inputs, exact restored detail opener rather than first-load heading, dynamic
+  restored source row rather than hardcoded first page.
+- Proxy checks initially used a server-default schedule range excluding synthetic
+  days; now explicitly apply15–16October. Later script-only `.click()`/document
+  readiness/restoration races caused timeouts or premature row assertions; actual
+  CDP Enter, a new-document barrier, two rendered frames and explicit disclosure
+  restoration waits make the harness exercise real keyboard/history behavior.
+  Final terminal proxy run passed all assertions; failed runs are not passes.
+
+### Evidence, scope and handoff
+
+Read canonical `backend/fixture-slice/shift-items-contracts.mts` and exact
+§§29–31. Read controlling legacy evidence, **without execution**:
+`old/SHF/src/bzq/shf/model/BreakDataModel.java:617–690` (exact day, cancellation
+null, stored duration/exit/entry, start order);
+`model/ExceptionDataModel.java:304–375` (separate report and DEL-excluding
+update helper, deliberately not imported as inquiry rules).
+§29/30 explicitly approve combined partial rows and new current/detail entry;
+not a claim that legacy exposed the same combined screen. Source contract
+catalog is absent; linked baseline/inventories were used instead.
+
+Backend READY was supplied by caller:161/161/strict check and bounded native
+Oracle evidence are **caller-reported**, not executed by this frontend role.
+Read stable server/README fixture shape; helper supplies complete identical
+detail contexts through explicit `SHF_SHIFT_ITEMS_FIXTURE`. No backend file
+write or live DB/Oracle browser screenshot. Required duration null is rejected,
+never normalized to0; only canonical nullable fields are accepted.
+
+Not run: independent QA, screen-reader/manual comprehensive WCAG2.2 assessment,
+real-provider/production deployment, Oracle UI or live transport checks; no
+release approval implied. No remaining implementation/config handoff blocker.
+Next owner: caller/independent QA reviews this frontend evidence and any desired
+publication; backend evidence stays with its owner. Existing user/demo ports
+4328/4320 were not stopped or used for these tests.
+
+**Cleanup verified:** owning tool sessions for Angular4358/Node4348/Chrome9368
+were stopped. Chrome's surviving, previously verified owned PID23680 was then
+stopped explicitly with `Stop-Process -Id 23680`. Final
+`Get-NetTCPConnection -State Listen -LocalPort 4348,4358,9368`
+found **no listeners**. Existing4328/PID6344,4320/PID2380 and4318/PID12312
+remained listening; none was killed.
+
+---
 
 ## SHF-SEARCH-FINAL-18 — publication checks, 18 October 10:56 +03:00
 

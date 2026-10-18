@@ -1,4 +1,6 @@
 :host { display: block; }
+.row-link { display:inline-flex; align-items:center; min-height:44px; white-space:normal; overflow-wrap:anywhere; }
+.breadcrumbs { flex-wrap:wrap; }
 h1 { font-size: 28px; line-height: 1.25; letter-spacing: -.4px; margin: 0 0 4px; }
 h2 { font-size: 18px; line-height: 1.4; margin: 0; }
 p { margin: 0; }

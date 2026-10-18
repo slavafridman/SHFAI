@@ -24,13 +24,14 @@ export function identity(v: unknown): v is IdentityResponseV1 {
       !['synthetic', 'real'].includes(String(p.provider)) ||
       p.synthetic !== (p.provider === 'synthetic') ||
       !unique(p.roles, r => r === 'Administrator') ||
-      !unique(p.capabilities, c => c === 'shift-day:read' || c === 'current-shifts:read' || c === 'shift-search:read' || c === 'my-shifts:read') ||
+      !unique(p.capabilities, c => c === 'shift-day:read' || c === 'current-shifts:read' || c === 'shift-search:read' || c === 'my-shifts:read' || c === 'shift-items:read') ||
       !(p.employeeId === null || id(p.employeeId)) ||
       !object(p.resourceScope) || !unique(p.resourceScope.orgUnitIds, unit)) return false;
   return !p.synthetic || (p.subject === 'synthetic:administrator' &&
     p.displayName === 'Synthetic Administrator (local/isolated only)' &&
     p.employeeId === null && p.roles.length === 1 &&
-    p.capabilities.join(',') === 'shift-day:read,current-shifts:read,shift-search:read,my-shifts:read' &&
+    ['shift-day:read,current-shifts:read,shift-search:read,my-shifts:read',
+      'shift-day:read,current-shifts:read,shift-search:read,my-shifts:read,shift-items:read'].includes(p.capabilities.join(',')) &&
     p.resourceScope.orgUnitIds.length > 0 && p.resourceScope.orgUnitIds.length <= 100);
 }
 

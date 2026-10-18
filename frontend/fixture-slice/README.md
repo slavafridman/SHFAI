@@ -1,4 +1,85 @@
-# SHF-SCHEDULE-UI-18 — employee schedule, search, current shifts and detail
+# SHF-ITEMS-UI-18 — selected items, schedule, search, current shifts and detail
+
+## Selected breaks and partial exceptions — approved v0.1
+
+Implemented **§29 API + §30 UI + visual `#shift-items`**, explicitly approved
+18 October 2026 14:17 and materialized in **§31 v0.1**. Canonical types are
+type-only imports/exports from `backend/fixture-slice/shift-items-contracts.mts`;
+no shared/backend/design artifacts or dependencies are changed here.
+
+- Actual route: `/employees/:employeeId/shift-days/:shiftDayId/breaks-and-exceptions`.
+  Four separate actions on current/search/schedule/detail use the clicked
+  effective pair. Existing day-detail actions remain separate. Direct valid
+  keys are reauthorized by the server; invalid keys/query fail closed. No actor,
+  employee-ID or date/time entry form on this view and no extra context API.
+- One `GET` with only `limit/offset/sort=start-asc`; `unknown` JSON is checked
+  before committing its entire nested detail/context/items/page. Validate both
+  IDs, source, hierarchy, kind/state/type consistency, Gregorian seconds,
+  natural keys, order, precision and paging. Required stored duration is a
+  **string**, never nullable: null/malformed values fail the whole response.
+  Preserve negative/zero/38-digit values and earlier ends without calculation.
+  Break actuals are nullable; non-break actuals are null and shown “לא חל”.
+- Both `shift-items:read` and `shift-day:read` are required. Consume the exact
+  approved five-capability synthetic session, never grant from the role.
+  A previous valid four-capability identity retains its four existing screens
+  but gets no items right. No missing-identity Administrator fallback.
+- Atomic loading/empty/error/success, sanitized problem allowlists including
+  `AMBIGUOUS_SHIFT_ITEMS`, manual reload0 and bounded offset paging without a
+  total. Abort plus identity/context generations reject stale responses.
+  Reload stays the same focusable DOM button during pending/failure; repeated
+  keyboard activation cannot repeat its GET. No polling/cache/browser storage.
+- `ViewHistory` keeps independent **volatile metadata only** per opaque history
+  token: filters/drafts, offsets, upstream navigation, vertical/RTL table scroll,
+  opener and keyed disclosures. No result bodies, identity or authorization are
+  cached. Only random token/navigationId enter history state, never personal
+  query/return URLs. Items/detail excursions return rather than create cycles;
+  missing volatile history honestly offers current-shift discovery.
+- Hebrew/RTL shell, selected parent navigation, existing trapped mobile drawer,
+  full-second separate LTR date/time tokens, escaped remarks/raw DEL provenance,
+  all eight fields on narrow cards and internally scrolling desktop table.
+  Header/sidebar are sticky for this view. No standalone items menu, write,
+  approval, swap, EMS, status synthesis, calendar or timepicker controls.
+
+### Isolated synthetic verification setup
+
+Backend readiness/handoff was explicitly supplied by the caller. The existing
+frontend helper now supports **explicit** `SHF_UI_ITEMS_FIXTURE=1`, mapping its
+unchanged synthetic detail rows to identical item contexts and 30 synthetic
+items per day. It supplies the backend's `SHF_SHIFT_ITEMS_FIXTURE` seam, never
+Oracle environment/config. Without that flag existing fixture inputs remain
+unchanged. See `VERIFICATION.md` for actual results and failed-attempt history.
+
+From this folder, **check port ownership first**; never stop unknown/demo
+processes. The completed run used separate owned ports 4348/4358/9368 and left
+the user's 4328/4320 untouched:
+
+```powershell
+# Owned Node test helper (stop after tests).
+$env:SHF_UI_ITEMS_FIXTURE='1'
+$env:SHF_FIXTURE_PORT='4348'
+node checks/serve-synthetic.mjs
+
+# Separate owned Angular process.
+npm start -- --port 4358 --proxy-config fixtures/proxy.items.synthetic.json
+
+# Separate isolated Chrome, with its OWN profile.
+& 'C:\Program Files\Google\Chrome\Application\chrome.exe' --headless=new --disable-gpu --no-first-run --no-default-browser-check --disable-background-networking --remote-debugging-port=9368 --user-data-dir=D:\AIProjects\SHFAI\frontend\fixture-slice\.angular\items18-chrome about:blank
+
+# Check process, after readiness.
+$env:SHF_UI_URL='http://127.0.0.1:4358'
+$env:SHF_CDP_URL='http://127.0.0.1:9368'
+$env:SHF_ITEMS_ONLY='1'
+node checks/browser-check.mjs       # intercepted synthetic errors/states/history
+node checks/fixture-proxy-check.mjs # actual Node proxy, interception DISABLED
+
+# Existing broad intercepted browser regressions:
+Remove-Item Env:SHF_ITEMS_ONLY -ErrorAction SilentlyContinue
+node checks/browser-check.mjs
+```
+
+These are local test helpers, **not** application mock-login/browser-auth flags.
+Screenshots are synthetic only under ignored `.angular/browser-evidence/`.
+No live Oracle UI screenshots, production/real-provider test or full WCAG claim.
 
 Real standalone Angular application, not the design HTML or another prototype.
 Approved boundaries: baseline **§13 API/detail v0.1**, original **§14 UI v0.1**
