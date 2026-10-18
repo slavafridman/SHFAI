@@ -1,0 +1,114 @@
+<shf-workspace-shell active="schedule" [principal]="principal()" [identityState]="identityState()"
+  [identityMessage]="identityError()" (recheck)="recheckIdentity()">
+  <div class="heading"><h1 tabindex="-1">{{ selector.mode === 'self' && !context()?.selectionRequired && principal()?.principal?.provider === 'real' ? 'המשמרות שלי' : 'משמרות העובד/ת' }}</h1><span>קריאה בלבד</span></div>
+  @if (upstream()) {
+    <button id="schedule-back" mat-stroked-button type="button" (click)="back()">
+      {{ upstream() === 'shift-search' ? 'חזרה לחיפוש משמרות' : 'חזרה למשמרות נוכחיות' }}</button>
+  }
+  @if (context()?.actor?.employee; as employee) {
+    <section class="surface actor" aria-label="הקשר עובד/ת נבחר/ת">
+      <strong>{{ employee.firstName }} {{ employee.lastName }}</strong>
+      <span>{{ employee.unit.label }} · {{ employee.unit.moked.label }}</span>
+      <span>{{ upstream() === 'shift-search' ? 'מקור: תוצאת חיפוש' : upstream() === 'current-shifts' ? 'מקור: משמרות נוכחיות' : selector.mode === 'self' ? 'מקור: קישור עובד/ת מאומת בשירות' : 'מקור: קישור ישיר — בחירה שנבדקה בשירות' }}</span>
+    </section>
+    <form [formGroup]="form" (ngSubmit)="apply()">
+      <fieldset class="surface filters"><legend>טווח תחילת משמרת</legend>
+        <div class="filter-grid">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>מתאריך</mat-label>
+            <input matInput id="schedule-dateFrom" formControlName="dateFrom" [matDatepicker]="fromCalendar" dir="ltr"
+              [min]="minDate" [max]="maxDate" placeholder="DD/MM/YYYY" autocomplete="off">
+            <mat-datepicker-toggle matIconSuffix [for]="fromCalendar" aria-label="פתיחת לוח שנה — מתאריך" />
+            <mat-datepicker #fromCalendar [restoreFocus]="true" />
+            <mat-hint>יום/חודש/שנה</mat-hint>
+            @if (form.controls.dateFrom.invalid && form.controls.dateFrom.touched) {
+              <mat-error>יש להזין תאריך תקין DD/MM/YYYY</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>עד תאריך</mat-label>
+            <input matInput id="schedule-dateTo" formControlName="dateTo" [matDatepicker]="toCalendar" dir="ltr"
+              [min]="minDate" [max]="maxDate" placeholder="DD/MM/YYYY" autocomplete="off">
+            <mat-datepicker-toggle matIconSuffix [for]="toCalendar" aria-label="פתיחת לוח שנה — עד תאריך" />
+            <mat-datepicker #toCalendar [restoreFocus]="true" />
+            <mat-hint>כולל שני הגבולות · עד 31 ימים</mat-hint>
+            @if (form.controls.dateTo.invalid && form.controls.dateTo.touched) {
+              <mat-error>{{ form.controls.dateTo.hasError('range') ? 'הסיום חייב להיות מההתחלה ועד 31 ימים כולל' : 'יש לבדוק תאריך תקין DD/MM/YYYY' }}</mat-error>
+            }
+          </mat-form-field>
+          <button id="schedule-apply" mat-flat-button type="submit" [disabled]="!canRead() || state() === 'loading'">החלת טווח / טעינה מחדש</button>
+        </div>
+      </fieldset>
+    </form>
+    <details id="schedule-technical"><summary>הקשר טכני</summary>
+      <p>מזהה עובד/ת: <bdi class="date-time-token" dir="ltr">{{ employee.employeeId }}</bdi></p>
+      <p>אזור זמן עסקי: <bdi dir="ltr">{{ context()?.businessTimeZone }}</bdi></p>
+    </details>
+  }
+  <p role="status" class="sr-only" aria-live="polite" aria-atomic="true">{{ message() }}</p>
+  <section [attr.aria-busy]="state() === 'loading'" aria-label="משמרות העובד/ת">
+    @if (state() === 'selection') {
+      <div class="surface state-panel"><h2>נדרשת בחירת עובד/ת</h2>
+        @if (context()?.canSelectEmployee) { <p>למנהל המערכת הסינתטי אין קישור עובד/ת אישי.</p> }
+        <p>{{ message() }}</p>
+        @if (context()?.canSelectEmployee) {
+          <div class="toolbar">
+            @if (principal()?.principal?.capabilities?.includes('current-shifts:read')) { <a mat-stroked-button routerLink="/current-shifts">משמרות נוכחיות</a> }
+            @if (principal()?.principal?.capabilities?.includes('shift-search:read')) { <a mat-stroked-button routerLink="/shift-search">חיפוש משמרות</a> }
+          </div>
+        }
+      </div>
+    }
+    @if (state() === 'loading') {
+      <div class="surface state-panel"><p>{{ message() }}</p><mat-progress-bar mode="indeterminate" aria-label="טעינת משמרות" /></div>
+    }
+    @if (state() === 'dirty') { <p class="surface state-panel">{{ message() }}</p> }
+    @if (state() === 'error') {
+      <div class="surface state-panel error"><h2 id="schedule-error" tabindex="-1">לא ניתן להציג משמרות</h2><p>{{ message() }}</p>
+        @if (reference()) { <p>מזהה פנייה לתמיכה: <bdi dir="ltr">{{ reference() }}</bdi></p> }
+        <button id="schedule-retry" mat-stroked-button type="button" (click)="retry()" [disabled]="!canRead()">ניסיון נוסף</button>
+      </div>
+    }
+    @if (result(); as list) {
+      <div class="surface results">
+        <h2 id="schedule-results" tabindex="-1">משמרות בטווח שהוחל</h2>
+        <p><bdi class="date-time-token" dir="ltr">{{ time(list.applied.dateFrom + 'T00:00:00').slice(0,10) }}</bdi>
+          — <bdi class="date-time-token" dir="ltr">{{ time(list.applied.dateTo + 'T00:00:00').slice(0,10) }}</bdi> · {{ message() }}</p>
+        @if (list.items.length) {
+          <div class="table-wrap" tabindex="0" aria-label="טבלת משמרות — גלילה אופקית">
+            <table><thead><tr><th scope="col">עובד/ת</th><th scope="col">צוות / מוקד</th><th scope="col">תחילה</th><th scope="col">סיום</th><th scope="col">פעילות</th><th scope="col">פרטים</th></tr></thead>
+              <tbody>
+                @for (row of list.items; track row.shiftDayId) {
+                  <tr><th scope="row" data-label="עובד/ת">{{ row.employee.firstName }} {{ row.employee.lastName }}</th>
+                    <td data-label="צוות / מוקד">{{ row.employee.unit.label }} · {{ row.employee.unit.moked.label }}</td>
+                    <td data-label="תחילה"><span class="cell-note">{{ weekday(row.startLocal) }}</span><bdi class="date-time-token" dir="ltr" [attr.aria-label]="precision(row.startLocal)">{{ time(row.startLocal) }}</bdi></td>
+                    <td data-label="סיום"><bdi class="date-time-token" dir="ltr" [attr.aria-label]="precision(row.endLocal)">{{ time(row.endLocal) }}</bdi>
+                      @if (row.endLocal && row.endLocal.slice(0,10) !== row.startLocal.slice(0,10)) { <span class="cell-note">ביום אחר</span> }
+                    </td>
+                    <td data-label="פעילות">
+                      @for (activity of row.activities; track $index) { <span class="activity-line">{{ activity.label ?? ('תיאור לא זמין (קוד ' + activity.code + ')') }}</span> }
+                      @if (!row.activities.length) { <span>אין נתוני פעילות</span> }
+                    </td>
+                    <td data-label="פרטים">
+                      @if (principal()?.principal?.capabilities?.includes('shift-day:read')) {
+                        <a mat-stroked-button [id]="'schedule-detail-' + row.shiftDayId"
+                          [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId]"
+                          (click)="openDetail(row, $event)" [attr.aria-label]="'פרטי משמרת ' + time(row.startLocal)">פרטי משמרת</a>
+                      } @else { <span>אין הרשאה לפרטים</span> }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+        <nav class="pager" aria-label="עמודי משמרות">
+          <button mat-stroked-button type="button" [disabled]="list.page.offset === 0" (click)="page(list.page.offset - list.page.limit)">הקודם</button>
+          <span>מיקום התחלתי: <bdi dir="ltr">{{ list.page.offset }}</bdi></span>
+          <button id="schedule-next" mat-stroked-button type="button" [disabled]="list.page.nextOffset === null" (click)="page(list.page.nextOffset!)">הבא</button>
+        </nav>
+        @if (list.page.hasMore && list.page.nextOffset === null) { <p>הגעת לגבול העיון. יש לצמצם את טווח התאריכים.</p> }
+      </div>
+    }
+  </section>
+</shf-workspace-shell>

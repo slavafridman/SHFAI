@@ -19,19 +19,11 @@ import {
   searchContext, searchList, searchProblem, type ShiftSearchFilterContextV1, type ShiftSearchListV1,
   type ShiftSearchRequestV1, type ShiftSearchRowV1, type ShiftSearchWorkLocationV1,
 } from './shift-search-contract';
-import { CivilDateAdapter, CIVIL_FORMATS, dateFromWire, dateWire } from './civil-date-adapter';
+import { CivilDateAdapter, CIVIL_FORMATS, dateFromWire, dateWire, calendarLabels } from './civil-date-adapter';
 import { WorkspaceShell } from './workspace-shell';
 import { MinutePicker } from './minute-picker';
 import { ListNavigation } from './list-navigation';
 
-function calendarLabels(): MatDatepickerIntl {
-  const intl = new MatDatepickerIntl();
-  Object.assign(intl, { openCalendarLabel: 'פתיחת לוח שנה', closeCalendarLabel: 'סגירת לוח שנה',
-    prevMonthLabel: 'החודש הקודם', nextMonthLabel: 'החודש הבא', prevYearLabel: 'השנה הקודמת',
-    nextYearLabel: 'השנה הבאה', prevMultiYearLabel: 'טווח השנים הקודם', nextMultiYearLabel: 'טווח השנים הבא',
-    switchToMonthViewLabel: 'בחירת תאריך', switchToMultiYearViewLabel: 'בחירת חודש ושנה' });
-  return intl;
-}
 const timeControl = () => new FormControl('', { nonNullable: true,
   validators: [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/)] });
 
@@ -77,7 +69,8 @@ export class ShiftSearchPage {
   private identityWork?: Subscription;
   private work?: Subscription;
   private lastRequest: ShiftSearchRequestV1 | null = null;
-  private restore = this.navigation.returning && this.navigation.detailOrigin === 'shift-search' ? this.navigation.searchOrigin : null;
+  private restore = this.navigation.returning && (this.navigation.detailOrigin === 'shift-search' ||
+    this.navigation.scheduleUpstream === 'shift-search') ? this.navigation.searchOrigin : null;
 
   constructor() {
     this.navigation.returning = false;
@@ -284,15 +277,20 @@ export class ShiftSearchPage {
       `תגבור: ${i.addedStaffing ? 'כן' : 'לא'}`, `שינוי שיבוץ עובד: ${i.employeeReassigned ? 'כן' : 'לא'}`,
       `הקצאת שלוחה: ${i.extensionAllocated === null ? 'לא ישים' : i.extensionAllocated ? 'כן' : 'לא'}`];
   }
-  openDetail(row: ShiftSearchRowV1, event: MouseEvent): void {
+  openSchedule(row: ShiftSearchRowV1, event: MouseEvent): void { this.openDetail(row, event, true); }
+  openDetail(row: ShiftSearchRowV1, event: MouseEvent, schedule = false): void {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
     event.preventDefault();
-    if (!this.result() || !this.lastRequest || !this.principal()?.principal.capabilities.includes('shift-day:read')) return;
+    if (!this.result() || !this.lastRequest || !this.principal()?.principal.capabilities.includes(schedule ? 'my-shifts:read' : 'shift-day:read')) return;
     this.navigation.searchOrigin = { request: structuredClone(this.lastRequest), scroll: window.scrollY,
       tableScroll: this.host.nativeElement.querySelector<HTMLElement>('.table-wrap')?.scrollLeft ?? 0,
-      opener: `search-detail-${row.shiftDayId}`, employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId,
+      opener: `search-${schedule ? 'schedule' : 'detail'}-${row.shiftDayId}`, employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId,
       unit: { code: row.employee.unit.code, label: row.employee.unit.label, parentLabel: row.employee.unit.moked.label } };
     this.navigation.detailOrigin = 'shift-search'; this.navigation.returning = true;
+    if (schedule) {
+      this.navigation.scheduleUpstream = 'shift-search'; this.navigation.schedule = null;
+      void this.router.navigate(['/my-shifts/selected', row.employee.employeeId], { state: { origin: 'shift-search' } }); return;
+    }
     void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId], { state: { origin: 'shift-search' } });
   }
 }

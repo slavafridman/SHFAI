@@ -2504,3 +2504,70 @@ Requirements target **WCAG 2.2 AA**, not a compliance claim. Reuse approved navy
 **Exact approval request:** “Approve **§26 My-shifts target proposal v0.1 + §27 My-shifts UI proposal v0.1 + existing HTML `#my-shifts` visual** for the bounded read-only employee schedule: explicit current/search row selection under local/isolated synthetic Administrator with employeeId=null, distinct future real self, two exact GETs and DTO/errors/page semantics, additive **my-shifts:read** and exact selected-actor/J01 policy, inclusive default14/max31 date range, cancellation exclusion/effective fallback/no attendance join/deterministic order decisions, three-origin detail/two-level return navigation and MY18/MYUI18 acceptance cases. Do not infer authorization for real provider, live data access, commands, schema changes, deployment or release.”
 
 **Next bounded action / stop:** caller shows this static visual (separate browser executor supplies synthetic PNGs) and obtains explicit approval or bounded corrections. **Stop here**; no application/backend/canonical implementation follows from this artifact edit.
+
+---
+
+## 28. My-shifts approval record and canonical handoff — v0.1 (SHF-SCHEDULE-GATE-18)
+
+**Date:** 18 October 2026. **Status:** done — approved baseline materialized; ready for caller-managed, disjoint backend/UI implementation. This record supersedes only the pending-approval/stop state of §§26–27, not their historical text. **D — explicit user authority supplied by caller:** user response at **18 October 12:02**, **“Agree continue”**, explicitly answers the exact request to approve **§26 v0.1 + §27 v0.1 + existing HTML `#my-shifts` visual**, including mock identity/capability/actor policy and intentional legacy differences. This is not inferred from silence or a generic continuation. Caller identifies latest published baseline `3e59d5e7404bad54830c8ba626b8c92baf60e5de`; no Git/hash verification was available or performed here.
+
+### 28.1 Accepted scope and exact identity delta
+
+Approval covers the bounded read-only employee schedule, MY18-01–12 and MYUI18-01–10: explicitly selected current/search employee in enabled local/isolated synthetic mode, distinct future verified real-self, exact J01 backend authorization, two exact GETs, DTOs/errors/paging, Hebrew/RTL Material 3 workflow and two-level return through unchanged effective detail. Accepted intentional differences are finite inclusive calendar-start range **default14/max31**, changed cancellation exclusion, effective display fallback consistent with detail, no attendance join, ascending deterministic effective-start/numeric-ID order and full-selection ambiguity failure before pagination. These decisions are accepted, not reopened.
+
+The **only existing public type delta** is additive `CapabilityV1` member **`"my-shifts:read"`**. Approved synthetic Administrator capabilities, in exact order, are:
+
+```typescript
+["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read"]
+```
+
+`PrincipalV1`, identity/provider/authentication/resourceScope shapes remain unchanged; synthetic **employeeId=null** and subject/provider/role/display remain unchanged. Selection never rewrites identity or establishes impersonation. Both schedule GETs require `my-shifts:read`; existing current/search/detail capabilities remain independent. Backend capability/actor-mode permission must precede every DB/hierarchy read. Only explicit local-development/isolated-test-demo synthetic opt-in + validated synthetic Administrator permits selected mode; real selected mode is 403 even with Administrator. Future self requires verified real principal.employeeId plus exact current J01 scope. Unknown/vanished/out-of-scope/unlabelable actor is generic 403; no parent inheritance or role bypass.
+
+Production startup rejects enabled mock mode; config validation occurs before listening; missing real provider outside mock mode fails explicitly. No authentication-error fallback, implicit profile/personal-reference linking, first employee selection or infrastructure grant. Synthetic rights do not authorize Oracle/broker/network access. Real-provider implementation, commands/breaks/swaps/requests/export, DDL, EMS transport, batch, deployment and release remain excluded.
+
+### 28.2 Canonical artifacts, exports and consumer paths
+
+Only these three artifacts are written for this gate; §§1–27 and other user changes, including the caller-reported 23 dirty files, are preserved by targeted patch scope (no automated byte-preservation proof):
+
+| Artifact | Version / exact change |
+|---|---|
+| `backend/fixture-slice/contracts.mts` | Existing v1 contract: only additive CapabilityV1 union member; no other existing type edits. |
+| `backend/fixture-slice/my-shifts-contracts.mts` | New canonical type-only **v0.1**, materializing §26; no implementation. |
+| `docs/SHF_REVERSE_ENGINEERING_DESIGN.md` | Append this **§28 v0.1** approval/handoff record; historical proposals unchanged. |
+
+**Exact new exports:** `ScheduleModeV1`, `MyShiftsActorV1`, `MyShiftsContextV1`, `MyShiftRowV1`, `MyShiftsListV1`, `MyShiftsContextRequestV1`, `MyShiftsRequestV1`, `MyShiftsProblemV1`, `MyShiftsAccessPolicy`, `MyShiftsReadSelection`, `MyShiftsReadPort`. Reuse existing precision-safe IDs/civil dates, employee/catalog row fragments, page and source types, and `ProblemV1` envelope with explicit common-code allowlist plus only `EMPLOYEE_CONTEXT_REQUIRED` / `AMBIGUOUS_MY_SHIFTS`. No new code/status in underlying ProblemV1; no detail-only error leakage.
+
+| Consumer path | Exact contract |
+|---|---|
+| `GET /api/v1/my-shifts/context` | Required mode `self|selected`; employeeId required only selected and forbidden self; no list keys. Returns MyShiftsContextV1. Unlinked self returns null actor employee/selectionRequired=true; canSelectEmployee reflects centralized demo policy. |
+| `GET /api/v1/my-shifts` | Same actor keys + **required dateFrom/dateTo**, optional limit/offset/sort. Returns MyShiftsListV1; unlinked self 409 EMPLOYEE_CONTEXT_REQUIRED without schedule query. Empty authorized schedule is 200. |
+| UI `/my-shifts`, `/my-shifts/selected/:employeeId` | Honest null-link/explicit selected schedule, context before list, two civil-date controls, no ID prompt/directory scan or inferred employee. Existing current/search explicit row action discovers actor. |
+| Existing `/api/v1/employees/{employeeId}/shift-days/{shiftDayId}` and `/employees/:employeeId/shift-days/:shiftDayId` | Unchanged detail API/UI and independent shift-day:read; schedule uses its own row day ID. Current/search/detail direct routes and public shapes stay unchanged. |
+
+No fuzzy mode/range defaults: mode always explicit; context defaults today..today+13 from one configured-zone clock sample (end clamped at 9999-12-31); list always sends both strict Gregorian YYYY-MM-DD dates, years 0001–9999, inclusive <=31 dates. Start membership from00:00:00..to23:59:59, not overlap; no time-picker inputs or browser-clock inference. Limit/offset/sort remain 25/0/effective-start-asc defaults within 1–100/0–10000. Wire grammar, bounds, actor/null invariants, sanitized error status map (400/401/403/**409**/503/500), 8192-byte query, 2MiB context/list limit, no-store/nosniff and 5000ms total budget are §26 rules, not additions.
+
+Context/list sources are **isolated-fixture | oracle-read-only**; existing identity/detail retain **isolated-fixture | oracle**. No silent source fallback or changes to existing source contracts.
+
+### 28.3 Read boundary, acceptance and handoff owners
+
+Internal port exports exactly `readEmployeeContext(employeeId, exactTeamIds)` and `readRows(selection)`. Actor lookup is requested-ID/exact-current-J01 scoped, **once per resource operation**, <=2 rows for uniqueness; no full employee or hierarchy read. One context/list operation uses one existing read-only snapshot/unit of work for lookup, duplicate probe, page and bounded page-label resolution; no independent transaction per method or reliance on previous HTTP context. Adapter binds internal employee reference/prefix without exposing them. All actor/scope/range predicates and Oracle-11.2-compatible bounded pagination are SQL-side, <=limit+1/101 returned rows, no readAll/Node sort/slice. Full qualifying-selection duplicate detection precedes windowing, including off-page and empty-page cases. Permission denial makes zero DB/hierarchy calls; empty scope never becomes all.
+
+**Transaction risks retained:** related reads require one snapshot; later page/detail/back requests reauthorize and may see concurrent changes, with no cross-request snapshot promise. Always end/rollback snapshot and release/drop lease; await abort/native-break cleanup, no retry/late success/busy pooled lease. No locks/business commit/DML/DDL/stored helpers/sequences/EMS. `SHF_INS_AND_RETURN_LASTID` has autonomous INSERT+COMMIT per baseline; outer rollback cannot undo its ledger entry. SELECT-prefix filtering alone is not purity enforcement; schedule requires allowlisted plain-table/catalog reads and must not invoke legacy break/swap/request validation.
+
+**Backend consumer owner, after this handoff:** implement approved application/policy/projection/fixture and bounded Oracle adapters/HTTP wiring in separately assigned files. Align synthetic provider, principal validator and exact-capability tests to the four-member array; those runtime files are intentionally **not changed here**, so this gate does not claim an active new capability/endpoint. Retain startup fail-closed behavior, existing request-budget/session/error seams and explicit common-problem allowlist; existing Oracle dependency wrapping currently recognizes existing error classes only, so preserve/map new schedule-specific errors without leaking or misclassifying them. Test MY18-01–10 and regressions: exact capability independence; permission-before-DB; self/selected/null cases; strict grammar/date bounds; own changed membership; cancellation/fallback/no attendance; labels/precision; before-page ambiguity; query bounds/snapshot/cleanup/timeout/purity.
+
+**UI consumer owner, through caller:** implement §27 approved visual/interactions in assigned frontend files against these canonical types, independent discovery/detail capabilities and two-level volatile return state. No consumer-owned API expansion. Test MY18-11–12 / MYUI18-01–10, including Hebrew/RTL date/calendar keyboard/focus, distinct null/empty/error states, races/revocation, reflow/contrast and unchanged current/search/detail navigation. Static prototype examples/preview-calendar limits are not production defaults or server completion.
+
+**Caller/QA:** start disjoint backend/UI assignments only after this canonical handoff, then coordinate focused compilation/tests/browser/static-diff checks and separately authorized publication/infrastructure checks. No delegation, consumer implementation or Git action was performed by this gate.
+
+### 28.4 Evidence, actual checks, unknowns and stop
+
+**S — read directly for this gate:** project instructions/brief and full information-system-engineer skill; exact §§26–27 plus existing canonical contracts/current/search/error/precision/provider-validation/session seams; active `old/SHF/src/bzq/shf/model/ShiftDataModel.java:1250–1385` personal baseline/changed SQL (including wrong attendance join and ORDER BY3), `actions/ShiftDataAction.java:134–162` defaults/first-row replacement, and `bean/AgentDayBean.java:963–1040` effective getters. Source catalog is absent from docs listing; baseline §26.1 and its linked §2 inventories remain the navigation evidence, not invented catalog/runtime proof. Earlier source/metadata and autonomous-function findings remain historical baseline evidence; none was re-executed.
+
+**Manual/static checks:** compare canonical fields/names/nullability/modes against exact §26.4 and §27 dependencies; check request union forbids self employeeId and requires selected ID, required list dates, exact problem-code allowlist and approved status meanings; review reuse of existing employee/catalog/precision/page/source patterns and absence of existing current/search/detail shape edits; inspect port SQL-pushdown/bounds/one-operation snapshot/early-permission comments. Owned-file readback is the final available consistency check. Type-only contracts do not implement runtime validation or prove runtime behavior.
+
+**Not run / reason:** tools expose file reads/patches only, no execution interface for compilation/tests/typecheck/build, automated diff/hash/link verifier, Git or browser. Evidence verifier also writes outside the three-artifact scope. No compilation PASS, preservation hash or WCAG/runtime/driver conformance is claimed. No installs, app/server contact, live Oracle/metadata queries, old execution, EMS, batch, agents or Git operations. Existing approved Node/Angular/Material/tooling/driver-client baseline is reused unchanged; no new version selection or renewed compatibility gate.
+
+**Genuine contract ambiguities: none identified.** No renewed user approval is requested for the accepted §§26–27 baseline. Future real identity linkage/administrative browsing remains deferred to identity/security owner. Live plans/encoding/reference collisions/orphans/cancellation cleanup/performance and original Hebrew literal parity remain verification unknowns owned by backend/database/platform/business/QA, not missing API decisions or authorization for live access. Runtime-provider/validator alignment and executable checks belong to subsequent consumers/caller, not a blocker to delivering these canonical artifacts.
+
+**Stop / next action:** canonical v0.1 + approval record ready; return to caller to begin disjoint backend/UI implementation under the accepted baseline. No further application edits, approval reopening, publication, deployment or release in this task.

@@ -105,7 +105,11 @@
                     <td>@if (principal()?.principal?.capabilities?.includes('shift-day:read')) {
                       <a class="row-link" [id]="'detail-' + row.shiftDayId" [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId]"
                         (click)="openDetail(row, $event)" [attr.aria-label]="'פרטי משמרת עבור ' + row.employee.firstName + ' ' + row.employee.lastName">פרטי משמרת</a>
-                    } @else { <span class="subtle" aria-disabled="true">אין הרשאה לפרטים</span> }</td>
+                    } @else { <span class="subtle" aria-disabled="true">אין הרשאה לפרטים</span> }
+                    @if (principal()?.principal?.synthetic && principal()?.principal?.capabilities?.includes('my-shifts:read')) {
+                      <a class="row-link" [id]="'schedule-' + row.shiftDayId" [routerLink]="['/my-shifts/selected', row.employee.employeeId]"
+                        (click)="openSchedule(row, $event)" [attr.aria-label]="'משמרות העובד/ת ' + row.employee.firstName + ' ' + row.employee.lastName">משמרות העובד/ת</a>
+                    }</td>
                   </tr>
                 }
               </tbody>

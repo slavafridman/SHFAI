@@ -1,6 +1,6 @@
 {
   "task_id": "SHF-RE-2026-10-15",
-  "checked_at": "2026-10-18T08:56:17.937Z",
+  "checked_at": "2026-10-18T09:48:04.041Z",
   "status": "passed_with_documented_source_anomaly",
   "csv_files": 31,
   "inventory_row_references": 10000,
@@ -19,7 +19,7 @@
     }
   ],
   "physical_table_view_rows": 80,
-  "document_sha256": "4fe84dbda0b055d99d772fb6e836f7b3dc447aa4074c5282dc11b052b95e0b8f",
+  "document_sha256": "26bc7ca8385f4cb489b228a69463b31fbaeb0a6fda6a7f513ef898bfd12135ac",
   "oracle_capture_hashes": [
     {
       "file": "oracle-arguments.csv",

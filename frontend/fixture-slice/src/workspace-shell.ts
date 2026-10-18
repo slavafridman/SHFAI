@@ -2,13 +2,14 @@ import {
   afterNextRender, Component, DestroyRef, ElementRef, inject, input, output, signal, viewChild,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { RouterLink } from '@angular/router';
 import type { IdentityResponseV1 } from './contract';
 
 /** Presentation only: no session defaults, resource context or navigation claims. */
 @Component({
   selector: 'shf-workspace-shell',
-  imports: [MatButtonModule, RouterLink],
+  imports: [MatButtonModule, RouterLink, CdkTrapFocus],
   templateUrl: './workspace-shell.html',
   styleUrl: './workspace-shell.scss',
 })
@@ -16,7 +17,7 @@ export class WorkspaceShell {
   readonly principal = input<IdentityResponseV1 | null>(null);
   readonly identityState = input<'loading' | 'ready' | 'error'>('loading');
   readonly identityMessage = input('');
-  readonly active = input<'detail' | 'list' | 'search'>('detail');
+  readonly active = input<'detail' | 'list' | 'search' | 'schedule'>('detail');
   readonly recheck = output<void>();
   readonly menu = viewChild.required<ElementRef<HTMLDialogElement>>('menu');
   readonly opener = viewChild.required<unknown, ElementRef<HTMLButtonElement>>('opener', { read: ElementRef });

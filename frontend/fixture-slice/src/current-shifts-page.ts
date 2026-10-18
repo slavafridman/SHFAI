@@ -87,7 +87,8 @@ export class CurrentShiftsPage {
   private identityWork?: Subscription;
   private work?: Subscription;
   private lastRequest: CurrentShiftRequestV1 | null = null;
-  private restore = this.navigation.returning && this.navigation.detailOrigin !== 'shift-search' ? this.navigation.origin : null;
+  private restore = this.navigation.returning && (this.navigation.detailOrigin !== 'shift-search' &&
+    (this.navigation.detailOrigin !== 'my-shifts' || this.navigation.scheduleUpstream === 'current-shifts')) ? this.navigation.origin : null;
   constructor() {
     this.navigation.returning = false;
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
@@ -283,22 +284,27 @@ export class CurrentShiftsPage {
   weekday(row: CurrentShiftRowV1): string {
     return new Intl.DateTimeFormat('he-IL', { weekday: 'long' }).format(dateFromWire(row.startLocal.slice(0, 10)));
   }
-  openDetail(row: CurrentShiftRowV1, event: MouseEvent): void {
+  openSchedule(row: CurrentShiftRowV1, event: MouseEvent): void { this.openDetail(row, event, true); }
+  openDetail(row: CurrentShiftRowV1, event: MouseEvent, schedule = false): void {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
     event.preventDefault();
     const result = this.result();
-    if (!result || !this.principal()?.principal.capabilities.includes('shift-day:read')) return;
+    if (!result || !this.principal()?.principal.capabilities.includes(schedule ? 'my-shifts:read' : 'shift-day:read')) return;
     const a = result.applied;
     this.navigation.origin = {
       request: { mode: 'at', attendanceDate: a.attendanceDate, currentTime: a.currentTime,
         ...(a.mokedCode ? { mokedCode: a.mokedCode } : {}), limit: result.page.limit, offset: result.page.offset, sort: a.sort },
-      evaluatedCurrent: this.evaluatedCurrent(), scroll: window.scrollY, opener: `detail-${row.shiftDayId}`,
+      evaluatedCurrent: this.evaluatedCurrent(), scroll: window.scrollY, opener: `${schedule ? 'schedule' : 'detail'}-${row.shiftDayId}`,
       tableScroll: this.host.nativeElement.querySelector<HTMLElement>('.table-wrap')?.scrollLeft ?? 0,
       employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId,
       unit: { code: row.employee.unit.code, label: row.employee.unit.label, parentLabel: row.employee.unit.moked.label },
     };
     this.navigation.returning = true;
     this.navigation.detailOrigin = 'current-shifts';
+    if (schedule) {
+      this.navigation.scheduleUpstream = 'current-shifts'; this.navigation.schedule = null;
+      void this.router.navigate(['/my-shifts/selected', row.employee.employeeId], { state: { origin: 'current-shifts' } }); return;
+    }
     void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId], { state: { origin: 'current-shifts' } });
   }
 }

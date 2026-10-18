@@ -13,6 +13,8 @@ import type { Server } from "node:http";
 import { once } from "node:events";
 import { OracleSearchReader } from "./oracle-search-reader.mts";
 import { SearchFixtureReader } from "./shift-search-fixture.mts";
+import { MyShiftsFixtureReader } from "./my-shifts-fixture.mts";
+import { OracleMyShiftsReader } from "./oracle-my-shifts-reader.mts";
 
 const resources = new WeakMap<Server, OraclePool>();
 export async function stopBackendServer(server: Server) {
@@ -43,7 +45,7 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv) {
   try {
     if (config.dataSource === "oracle-read-only") {
       if (environment.SHF_FIXTURE_ROWS !== undefined || environment.SHF_CURRENT_SHIFTS_FIXTURE !== undefined ||
-          environment.SHF_SHIFT_SEARCH_FIXTURE !== undefined)
+          environment.SHF_SHIFT_SEARCH_FIXTURE !== undefined || environment.SHF_MY_SHIFTS_FIXTURE !== undefined)
         throw new Error("Oracle mode prohibits fixture input");
       pool = await createOraclePool(oracleEnvironment(environment));
       const session = new OracleReadSession(pool);
@@ -52,7 +54,8 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv) {
         if (result.length !== 1) throw new Error("Oracle readiness failed");
       });
       runtime = await createRuntime(config, new OracleDetailReader(session), undefined,
-        { reader: new OracleCurrentReader(session), searchReader: new OracleSearchReader(session) });
+        { reader: new OracleCurrentReader(session), searchReader: new OracleSearchReader(session),
+          myShiftsReader: new OracleMyShiftsReader(session) });
     } else {
       const rows: unknown = JSON.parse(environment.SHF_FIXTURE_ROWS ?? "null");
       if (!Array.isArray(rows)) throw new Error("Explicit synthetic fixture rows required");
@@ -60,9 +63,13 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv) {
       const currentOptions = environment.SHF_CURRENT_SHIFTS_FIXTURE === undefined ? undefined
         : { reader: new CurrentFixtureReader(JSON.parse(environment.SHF_CURRENT_SHIFTS_FIXTURE),
           config.syntheticOrgUnitIds), ...(environment.SHF_SHIFT_SEARCH_FIXTURE === undefined ? {} :
-          { searchReader: new SearchFixtureReader(JSON.parse(environment.SHF_SHIFT_SEARCH_FIXTURE)) }) };
+          { searchReader: new SearchFixtureReader(JSON.parse(environment.SHF_SHIFT_SEARCH_FIXTURE)) }),
+          ...(environment.SHF_MY_SHIFTS_FIXTURE === undefined ? {} :
+          { myShiftsReader: new MyShiftsFixtureReader(JSON.parse(environment.SHF_MY_SHIFTS_FIXTURE)) }) };
       if (environment.SHF_SHIFT_SEARCH_FIXTURE !== undefined && !currentOptions)
         throw new Error("Search fixture requires explicit shared current catalog configuration");
+      if (environment.SHF_MY_SHIFTS_FIXTURE !== undefined && !currentOptions)
+        throw new Error("Schedule fixture requires explicit shared current catalog configuration");
       runtime = await createRuntime(config, new FixtureReader(validatedRows), undefined, currentOptions);
     }
   } catch (error) {

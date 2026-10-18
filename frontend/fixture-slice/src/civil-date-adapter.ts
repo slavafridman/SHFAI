@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { NativeDateAdapter, type MatDateFormats } from '@angular/material/core';
+import { MatDatepickerIntl } from '@angular/material/datepicker';
 import { civilDate } from './current-shifts-contract';
 
 const pad = (n: number, length = 2) => String(n).padStart(length, '0');
@@ -33,3 +34,12 @@ export const CIVIL_FORMATS: MatDateFormats = {
     monthYearA11yLabel: { year: 'numeric', month: 'long' },
   },
 };
+
+export function calendarLabels(): MatDatepickerIntl {
+  const intl = new MatDatepickerIntl();
+  Object.assign(intl, { openCalendarLabel: 'פתיחת לוח שנה', closeCalendarLabel: 'סגירת לוח שנה',
+    prevMonthLabel: 'החודש הקודם', nextMonthLabel: 'החודש הבא', prevYearLabel: 'השנה הקודמת',
+    nextYearLabel: 'השנה הבאה', prevMultiYearLabel: 'טווח השנים הקודם', nextMultiYearLabel: 'טווח השנים הבא',
+    switchToMonthViewLabel: 'בחירת תאריך', switchToMultiYearViewLabel: 'בחירת חודש ושנה' });
+  return intl;
+}

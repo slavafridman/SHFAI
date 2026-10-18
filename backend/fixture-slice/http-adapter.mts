@@ -9,6 +9,8 @@ import { parseCurrentQuery } from "./current-shifts-validation.mts";
 import { withRequestBudget } from "./request-budget-context.mts";
 import { parseSearchQuery, invalidSearch } from "./shift-search-validation.mts";
 import { searchProblem } from "./shift-search-errors.mts";
+import { myShiftsProblem } from "./my-shifts-errors.mts";
+import { parseMyShiftsQuery, invalidMyShifts } from "./my-shifts-validation.mts";
 
 export const REQUEST_BUDGET_MS = 5000;
 export const RESPONSE_LIMIT_BYTES = 16 * 1024;
@@ -25,10 +27,22 @@ function route(request: IncomingMessage) {
   const target = request.url ?? "";
   const question = target.indexOf("?");
   const path = question < 0 ? target : target.slice(0, question);
-  const searchEndpoint = path === "/api/v1/shift-search" || path === "/api/v1/shift-search/filter-context";
+  const scheduleEndpoint = path === "/api/v1/my-shifts" || path === "/api/v1/my-shifts/context";
+  const searchEndpoint = scheduleEndpoint || path === "/api/v1/shift-search" || path === "/api/v1/shift-search/filter-context";
   if (Buffer.byteLength(searchEndpoint ? (question < 0 ? "" : target.slice(question + 1)) : target, "utf8") >
       REQUEST_TARGET_LIMIT_BYTES)
     throw new SliceError("INVALID_REQUEST", [{ name: "query", reason: "unsupported" }]);
+  if (scheduleEndpoint) {
+    const raw = question < 0 ? "" : target.slice(question + 1);
+    try {
+      for (const pair of raw.split("&"))
+        for (const part of pair.split("=")) decodeURIComponent(part.replaceAll("+", " "));
+    } catch { invalidMyShifts("query"); }
+    if (raw.includes("#")) invalidMyShifts("query");
+    if (path.endsWith("/context"))
+      return { kind: "schedule-context" as const, query: parseMyShiftsQuery(new URLSearchParams(raw), false) };
+    return { kind: "schedule-list" as const, query: parseMyShiftsQuery(new URLSearchParams(raw), true) };
+  }
   if (path === "/api/v1/shift-search" || path === "/api/v1/shift-search/filter-context") {
     if (path.endsWith("/filter-context")) {
       if (question >= 0) invalidSearch("query", "unsupported");
@@ -92,6 +106,8 @@ export function createLoopbackServer(runtime: SliceRuntime) {
       (request.url ?? "").split("?")[0] === "/api/v1/current-shifts/filter-context";
     const searchEndpoint = (request.url ?? "").split("?")[0] === "/api/v1/shift-search" ||
       (request.url ?? "").split("?")[0] === "/api/v1/shift-search/filter-context";
+    const scheduleEndpoint = (request.url ?? "").split("?")[0] === "/api/v1/my-shifts" ||
+      (request.url ?? "").split("?")[0] === "/api/v1/my-shifts/context";
     const cancellation = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     let abort: () => void = () => {};
@@ -121,6 +137,8 @@ export function createLoopbackServer(runtime: SliceRuntime) {
         await requireEmptyBody(request);
         cancellation.signal.throwIfAborted();
         if (selected.kind === "identity") return runtime.identity(principal);
+        if (selected.kind === "schedule-context") return await runtime.myShiftsContext(principal, selected.query, cancellation.signal);
+        if (selected.kind === "schedule-list") return await runtime.myShiftsList(principal, selected.query, cancellation.signal);
         if (selected.kind === "search-context") return await runtime.searchContext(principal, cancellation.signal);
         if (selected.kind === "search-list") return await runtime.searchList(principal, selected.query, cancellation.signal);
         if (selected.kind === "current-context") return await runtime.currentContext(principal, cancellation.signal);
@@ -131,10 +149,10 @@ export function createLoopbackServer(runtime: SliceRuntime) {
         withRequestBudget(cancellation.signal, REQUEST_BUDGET_MS, work), deadline,
       ]);
       if (!response.destroyed) send(response, 200, "application/json; charset=utf-8",
-        serializeSuccess(value, currentEndpoint || searchEndpoint ? CURRENT_RESPONSE_LIMIT_BYTES : RESPONSE_LIMIT_BYTES));
+        serializeSuccess(value, currentEndpoint || searchEndpoint || scheduleEndpoint ? CURRENT_RESPONSE_LIMIT_BYTES : RESPONSE_LIMIT_BYTES));
     } catch (error) {
       if (!response.destroyed && !response.headersSent) {
-        const problem = searchEndpoint ? searchProblem(error, requestId) : currentEndpoint ? currentProblem(
+        const problem = scheduleEndpoint ? myShiftsProblem(error, requestId) : searchEndpoint ? searchProblem(error, requestId) : currentEndpoint ? currentProblem(
           error instanceof SliceError && error.code === "INVALID_REQUEST"
             ? new CurrentShiftError("INVALID_REQUEST", error.invalidParameters?.map(p => ({
               name: p.name === "body" ? "body" : "query", reason: p.reason,

@@ -2,21 +2,24 @@
 // No Oracle/backend readiness probe and no app-level fake catalog/fallback.
 import assert from 'node:assert/strict';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
-const app = process.env.SHF_UI_URL ?? 'http://127.0.0.1:4320';
-const cdp = process.env.SHF_CDP_URL ?? 'http://127.0.0.1:9322';
+const app = process.env.SHF_UI_URL ?? 'http://127.0.0.1:4328';
+const cdp = process.env.SHF_CDP_URL ?? 'http://127.0.0.1:9338';
 assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(app));
 const target = (await fetch(`${cdp}/json/list`).then(r => r.json())).find(t => t.type === 'page');
 assert(target, 'Start your OWN isolated Chrome as documented');
 const socket = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise((resolve, reject) => { socket.onopen = resolve; socket.onerror = reject; });
-let sequence = 0, handler;
+let sequence = 0, handler, navigationLoaded;
 const pending = new Map(), external = [], errors = [], calls = [];
 socket.onmessage = event => {
   const m = JSON.parse(event.data);
   if (m.id) {
     const p = pending.get(m.id); if (!p) return; pending.delete(m.id);
     m.error ? p.reject(new Error(JSON.stringify(m.error))) : p.resolve(m.result);
-  } else if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.text);
+  } else if (m.method === 'Page.loadEventFired') navigationLoaded?.();
+  else if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.text);
+  else if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error')
+    errors.push(m.params.args.map(a => a.description?.split('\n')[0] ?? a.value ?? 'console error').join(' '));
   else if (m.method === 'Network.requestWillBeSent') {
     const url = m.params.request.url;
     if (!url.startsWith(app) && !url.startsWith('data:') && !url.startsWith('about:')) external.push(url);
@@ -46,7 +49,14 @@ async function size(width, height) {
   await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
   await wait(`innerWidth === ${width} && innerHeight === ${height}`);
 }
-async function navigate(path) { await send('Page.navigate', { url: app + path }); }
+async function navigate(path) {
+  await send('Page.enable');
+  const loaded = new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(Error('Document load timed out')), 20000);
+    navigationLoaded = () => { clearTimeout(timer); resolve(); };
+  });
+  await send('Page.navigate', { url: app + path }); await loaded; navigationLoaded = null;
+}
 async function key(key, code = key, modifiers = 0) {
   const vk = { Tab: 9, Enter: 13, Escape: 27, ' ': 32, ArrowDown: 40, ArrowUp: 38 }[key] ?? 0;
   await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, modifiers, windowsVirtualKeyCode: vk,
@@ -93,7 +103,7 @@ const sample = (employeeId = '1001', shiftDayId = '2001') => {
 const principal = () => ({
   principal: { subject: 'synthetic:administrator', provider: 'synthetic', synthetic: true,
     displayName: 'Synthetic Administrator (local/isolated only)', roles: ['Administrator'],
-    capabilities: ['shift-day:read', 'current-shifts:read', 'shift-search:read'], employeeId: null, resourceScope: { orgUnitIds: ['TEST-U', 'TEST-V'] } },
+    capabilities: ['shift-day:read', 'current-shifts:read', 'shift-search:read', 'my-shifts:read'], employeeId: null, resourceScope: { orgUnitIds: ['TEST-U', 'TEST-V'] } },
   dataSource: 'isolated-fixture',
 });
 const context = () => ({
@@ -110,6 +120,31 @@ const row = (day = '2001') => ({
 });
 let listMode = 'normal', detailMode = 'normal', identityMode = 'normal', contextMode = 'normal', held = null;
 let searchMode = 'normal', searchContextMode = 'normal';
+let scheduleMode = 'normal', scheduleContextMode = 'normal';
+function scheduleContext(url) {
+  const mode = url.searchParams.get('mode'), employee = row().employee;
+  if (mode === 'selected') employee.employeeId = url.searchParams.get('employeeId');
+  const linked = identityMode === 'self-linked';
+  return { actor: { mode, employee: mode === 'self' && !linked ? null : employee },
+    selectionRequired: mode === 'self' && !linked,
+    canSelectEmployee: !['self-linked', 'self-unlinked', 'schedule-only'].includes(identityMode),
+    defaults: { dateFrom: '2026-10-15', dateTo: '2026-10-28' },
+    businessTimeZone: 'Asia/Jerusalem', dataSource: 'isolated-fixture' };
+}
+function scheduleList(url) {
+  const p = url.searchParams, actor = scheduleContext(url).actor;
+  const limit = Number(p.get('limit')), offset = Number(p.get('offset'));
+  const count = scheduleMode === 'empty' ? 0 : scheduleMode === 'pages' ? offset === 0 ? 25 : 5 : 2;
+  return { actor, items: Array.from({ length: count }, (_, i) => ({
+    shiftDayId: String(4001 + offset + i), employee: actor.employee,
+    startLocal: p.get('dateFrom') + 'T23:30:11',
+    endLocal: i % 2 ? null : p.get('dateTo') + 'T23:59:22', activities: row().activities })),
+    applied: { mode: p.get('mode'), employeeId: actor.employee.employeeId,
+      dateFrom: p.get('dateFrom'), dateTo: p.get('dateTo'), sort: 'effective-start-asc' },
+    page: { limit, offset, hasMore: scheduleMode === 'pages' && offset === 0,
+      nextOffset: scheduleMode === 'pages' && offset === 0 ? 25 : null },
+    businessTimeZone: 'Asia/Jerusalem', dataSource: scheduleMode === 'source-mismatch' ? 'oracle-read-only' : 'isolated-fixture' };
+}
 const searchContext = () => ({
   defaults: { attendanceDate: '2026-10-15', timeFrom: '10:00', timeTo: '10:00', mokedCode: null,
     teamCodes: [], innerJobCodes: [], workLocations: [] },
@@ -161,6 +196,27 @@ handler = async event => {
       value.principal.provider = 'real'; value.principal.synthetic = false;
       value.principal.capabilities = identityMode === 'no-search' ? ['current-shifts:read'] : ['shift-search:read'];
     }
+    if (['self-linked', 'self-unlinked', 'schedule-only'].includes(identityMode)) {
+      value.principal.provider = 'real'; value.principal.synthetic = false;
+      value.principal.capabilities = ['my-shifts:read'];
+      value.principal.employeeId = identityMode === 'self-linked' ? '1001' : null;
+    }
+    return fulfill(event.requestId, value);
+  }
+  if (url.pathname === '/api/v1/my-shifts/context') {
+    if (scheduleContextMode === 'hold') { held = { id: event.requestId, url }; return; }
+    if (typeof scheduleContextMode === 'number') return fulfill(event.requestId, problem(scheduleContextMode), scheduleContextMode);
+    const value = scheduleContext(url);
+    if (scheduleContextMode === 'source-mismatch') value.dataSource = 'oracle-read-only';
+    if (scheduleContextMode === 'malformed') value.selectionRequired = !value.selectionRequired;
+    return fulfill(event.requestId, value);
+  }
+  if (url.pathname === '/api/v1/my-shifts') {
+    if (scheduleMode === 'hold') { held = { id: event.requestId, url }; return; }
+    if (typeof scheduleMode === 'number') return fulfill(event.requestId,
+      { ...problem(scheduleMode), ...(scheduleMode === 400 ? { invalidParameters: [{ name: 'dateTo', reason: 'invalid-format' }] } : {}) }, scheduleMode);
+    const value = scheduleList(url);
+    if (scheduleMode === 'malformed') value.items[0].employee = { ...value.actor.employee, employeeId: '9999' };
     return fulfill(event.requestId, value);
   }
   if (url.pathname === '/api/v1/shift-search/filter-context') {
@@ -215,7 +271,7 @@ try {
   console.log('Browser:', (await send('Browser.getVersion')).product, 'Angular with intercepted synthetic HTTP ONLY');
   await send('Runtime.enable'); await send('Network.enable');
   await send('Fetch.enable', { patterns: [{ urlPattern: '*/api/v1/*', requestStage: 'Request' }] });
-  if (!process.env.SHF_SEARCH_ONLY) {
+  if (!process.env.SHF_SEARCH_ONLY && !process.env.SHF_SCHEDULE_ONLY) {
   await size(1440, 900); await navigate('/'); await readyList();
   assert.equal(await evaluate('location.pathname'), '/current-shifts');
   assert.equal(await evaluate('document.documentElement.lang'), 'he');
@@ -396,7 +452,8 @@ try {
   }
   // SHF-SEARCH-UI-18: real Angular route, intercepted synthetic responses only.
   contextMode = 'normal'; identityMode = 'normal';
-  const readySearchContext = () => wait(`!!document.getElementById('search-submit') && !document.getElementById('search-submit').disabled`);
+  const readySearchContext = () => wait(`!!document.getElementById('search-submit') && !document.getElementById('search-submit').disabled &&
+    !!document.getElementById('search-date').value && !!document.getElementById('search-timeFrom').value && !!document.getElementById('search-timeTo').value`);
   const readySearch = () => wait(`!!document.getElementById('search-results')`);
   for (const width of [1440, 390, 320]) {
     await size(width, width === 1440 ? 900 : 844);
@@ -531,6 +588,149 @@ try {
   }
   identityMode = 'normal';
   console.log('PASS SEARCH18: 1440/390/320 RTL/no page overflow; two actual Material picker targets 24/60, 00:00/23:59/08:07; calendar Escape; invalid dates/minutes/range/equality; en-US UTC-/+; scoped named multiselects; 7 flags; pages -> effective detail -> browser Back exact filters/page/scroll/opener; dirty/race; empty/400/401/403/500/503/retry/malformed/source/capability failures.');
+  const scheduleReady = () => wait(`!!document.getElementById('schedule-results')`);
+  for (const width of [1440, 390, 320]) {
+    await size(width, width === 1440 ? 900 : 844);
+    let before = calls.length;
+    await navigate('/my-shifts'); await wait(`document.querySelector('main')?.textContent.includes('נדרשת בחירת')`);
+    assert.equal(calls.slice(before).filter(c => c.startsWith('/api/v1/my-shifts?')).length, 0);
+    assert.equal(await evaluate(`document.querySelectorAll('main input').length`), 0);
+    await noOverflow(); await screenshot(`schedule18-no-selection-${width}`);
+    await navigate('/shift-search'); await readySearchContext(); await click('#search-submit'); await readySearch();
+    await click('#search-schedule-3001'); await scheduleReady();
+    assert(await evaluate(`document.querySelector('.actor').textContent.includes('תוצאת חיפוש')`));
+    assert.equal(await evaluate(`document.getElementById('schedule-dateFrom').value`), '15/10/2026');
+    assert.equal(await evaluate(`document.getElementById('schedule-dateTo').value`), '28/10/2026');
+    assert(await evaluate(`document.querySelector('tbody').textContent.includes('לא זמין')`));
+    assert(await evaluate(`document.querySelector('tbody').textContent.includes('ביום אחר')`));
+    await noOverflow(); await screenshot(`schedule18-selected-${width}`);
+    assert(await evaluate(`document.querySelectorAll('tbody tr:first-child [data-label]').length === 6`));
+    assert(await evaluate(`[...document.querySelectorAll('tbody .date-time-token')].every(n => {
+      const r=document.createRange();r.selectNodeContents(n);return new Set([...r.getClientRects()].map(x=>x.top)).size<=1;})`));
+    if (width !== 1440) {
+      await click('#menu-open'); await wait(`document.getElementById('menu').open`);
+      await evaluate(`document.querySelector('#menu a:last-of-type').focus()`); await key('Tab');
+      assert(await evaluate(`document.getElementById('menu').contains(document.activeElement)`));
+      await key('Escape'); await wait(`document.activeElement.id === 'menu-open'`);
+    }
+    await click('#schedule-detail-4002'); await wait(`document.activeElement.id === 'result-heading'`);
+    assert.equal(await evaluate('location.pathname'), '/employees/1001/shift-days/4002');
+    assert(await evaluate(`document.getElementById('back-action').textContent.includes('משמרות העובד/ת')`));
+    await evaluate('history.back()'); await wait(`document.activeElement.id === 'schedule-detail-4002'`);
+    await evaluate('history.forward()'); await wait(`document.activeElement.id === 'result-heading'`);
+    await click('#back-action'); await wait(`document.activeElement.id === 'schedule-detail-4002'`);
+    await click('#schedule-back'); await wait(`document.activeElement.id === 'search-schedule-3001'`);
+    await navigate('/current-shifts'); await readyList(); await click('#schedule-2001'); await scheduleReady();
+    assert(await evaluate(`document.querySelector('.actor').textContent.includes('משמרות נוכחיות')`));
+    await click('#schedule-detail-4001'); await wait(`document.activeElement.id === 'result-heading'`);
+    await click('#back-action'); await wait(`document.activeElement.id === 'schedule-detail-4001'`);
+    await click('#schedule-back'); await wait(`document.activeElement.id === 'schedule-2001'`);
+    console.log('PASS SCHEDULE18 navigation and RTL reflow', width);
+  }
+  await size(1440, 900); await navigate('/my-shifts/selected/1001'); await scheduleReady();
+  // Each calendar has a distinct target and restores its exact trigger on Escape.
+  for (const index of [0, 1]) {
+    await evaluate(`globalThis.__rangeTrigger = document.querySelectorAll('mat-datepicker-toggle button')[${index}]`);
+    await evaluate(`globalThis.__rangeTrigger.focus()`); await key('Enter'); await wait(`!!document.querySelector('mat-datepicker-content')`);
+    await wait(`document.querySelector('mat-datepicker-content').contains(document.activeElement)`);
+    await new Promise(r => setTimeout(r, 300));
+    await key('Escape'); await wait(`!document.querySelector('mat-datepicker-content')`);
+    await wait(`document.activeElement === globalThis.__rangeTrigger`);
+  }
+  // Actual Material leap-day selection, from and to target independently.
+  for (const [id, toggle] of [['dateFrom', 0], ['dateTo', 1]]) {
+    await input(`schedule-${id}`, '28/02/2024');
+    await evaluate(`document.querySelectorAll('mat-datepicker-toggle button')[${toggle}].click()`);
+    await wait(`!!document.querySelector('mat-calendar')`);
+    await evaluate(`[...document.querySelectorAll('.mat-calendar-body-cell')].find(n => n.textContent.trim()==='29').click()`);
+    await wait(`!document.querySelector('mat-datepicker-content')`);
+    assert.equal(await evaluate(`document.getElementById('schedule-${id}').value`), '29/02/2024');
+  }
+  await click('#schedule-apply'); await scheduleReady();
+  for (const [from, to, valid] of [
+    ['01/10/2026','31/10/2026',true], ['01/10/2026','01/11/2026',false],
+    ['18/10/2026','18/10/2026',true], ['29/02/2100','01/03/2100',false],
+    ['29/02/2000','01/03/2000',true], ['01/01/0001','01/01/0001',true],
+    ['31/12/9999','31/12/9999',true], ['01/01/0000','01/01/0000',false],
+    ['31/04/2026','01/05/2026',false], ['10/31/2026','01/11/2026',false],
+  ]) {
+    await input('schedule-dateFrom', from); await input('schedule-dateTo', to);
+    assert.equal(await evaluate(`!!document.querySelector('table')`), false);
+    await click('#schedule-apply');
+    if (valid) await scheduleReady();
+    else { await wait(`document.querySelector('mat-error') !== null`);
+      assert.equal(await evaluate(`document.getElementById('schedule-dateFrom').value`), from); }
+  }
+  for (const timezoneId of ['America/Los_Angeles', 'Pacific/Auckland']) {
+    await send('Emulation.setTimezoneOverride', { timezoneId });
+    await send('Emulation.setLocaleOverride', { locale: 'en-US' });
+    await input('schedule-dateFrom','28/02/2024'); await input('schedule-dateTo','01/03/2024');
+    await click('#schedule-apply'); await scheduleReady();
+    assert(calls.at(-1).includes('dateFrom=2024-02-28') && calls.at(-1).includes('dateTo=2024-03-01'));
+  }
+  await send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Jerusalem' });
+  await send('Emulation.setLocaleOverride', { locale: 'he-IL' });
+  scheduleMode = 'pages'; await navigate('/my-shifts/selected/1001'); await scheduleReady();
+  assert.equal(await evaluate(`document.querySelectorAll('tbody tr').length`), 25);
+  await click('#schedule-next'); await wait(`!!document.getElementById('schedule-detail-4026')`);
+  assert.equal(await evaluate(`document.querySelectorAll('tbody tr').length`), 5);
+  await click('#schedule-detail-4026'); await wait(`document.activeElement.id === 'result-heading'`);
+  await evaluate('history.back()'); await wait(`document.activeElement.id === 'schedule-detail-4026'`);
+  scheduleMode = 'hold'; await input('schedule-dateFrom', '16/10/2026'); await click('#schedule-apply');
+  await wait(`document.querySelector('mat-progress-bar') !== null`); while (!held) await new Promise(r => setTimeout(r, 25));
+  const lateSchedule = held; held = null;
+  scheduleMode = 'normal'; await input('schedule-dateFrom', '17/10/2026'); await click('#schedule-apply'); await scheduleReady();
+  await fulfill(lateSchedule.id, scheduleList(lateSchedule.url)).catch(() => {});
+  await new Promise(r => setTimeout(r, 100));
+  assert(await evaluate(`document.querySelector('.results').textContent.includes('17/10/2026')`));
+  for (const mode of ['empty',400,401,403,404,500,503,'source-mismatch','malformed']) {
+    scheduleMode = mode; await navigate('/my-shifts/selected/1001');
+    await wait(mode === 'empty' ? `!!document.getElementById('schedule-results')` : `!!document.getElementById('schedule-error')`);
+    if (mode === 400) await wait(`document.activeElement.id === 'schedule-dateTo'`);
+    assert.equal(await evaluate(`!!document.querySelector('table')`), false);
+  }
+  scheduleMode = 'normal';
+  for (const mode of ['source-mismatch','malformed',403]) {
+    scheduleContextMode = mode; await navigate('/my-shifts/selected/1001');
+    await wait(`!!document.getElementById('schedule-error')`);
+    assert.equal(await evaluate(`!!document.querySelector('table')`), false);
+  }
+  scheduleContextMode = 'normal';
+  for (const mode of ['self-linked','self-unlinked']) {
+    identityMode = mode; await navigate('/my-shifts');
+    if (mode === 'self-linked') { await scheduleReady();
+      assert.equal(await evaluate(`document.querySelector('h1').textContent`), 'המשמרות שלי');
+      assert.equal(await evaluate(`!!document.querySelector('tbody a')`), false);
+    } else await wait(`document.querySelector('main')?.textContent.includes('קישור עובד/ת מאומת')`);
+  }
+  identityMode = 'self-linked'; scheduleContextMode = 403; await navigate('/my-shifts/selected/1001');
+  await wait(`!!document.getElementById('schedule-error')`);
+  identityMode = 'normal'; scheduleContextMode = 'normal';
+  await navigate('/my-shifts/selected/' + '9'.repeat(38)); await scheduleReady();
+  await size(320,844);
+  await evaluate(`document.getElementById('schedule-technical').open=true`);
+  await noOverflow();
+  assert.equal(await evaluate(`document.querySelector('#schedule-technical bdi').textContent.length`),38);
+  const colors = await evaluate(`(() => {
+    document.querySelector('h1').focus({preventScroll:true});
+    const c=n=>getComputedStyle(n).color;
+    return {body:c(document.querySelector('h1')), muted:c(document.querySelector('.cell-note')),
+      primary:getComputedStyle(document.getElementById('schedule-apply')).backgroundColor,
+      onPrimary:c(document.getElementById('schedule-apply')),
+      focus:getComputedStyle(document.querySelector('h1')).outlineColor};
+  })()`);
+  const luminance = color => {
+    const [r,g,b] = color.match(/[\d.]+/g).slice(0,3).map(Number).map(v => {
+      const x=v/255; return x<=0.04045 ? x/12.92 : ((x+0.055)/1.055)**2.4;
+    }); return .2126*r+.7152*g+.0722*b;
+  };
+  const contrast = (a,b) => { const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); };
+  const measured = {bodyOnWhite:contrast(colors.body,'rgb(255,255,255)'),
+    mutedOnWhite:contrast(colors.muted,'rgb(255,255,255)'), button:contrast(colors.primary,colors.onPrimary),
+    focusOnWhite:contrast(colors.focus,'rgb(255,255,255)')};
+  assert(measured.bodyOnWhite>=4.5 && measured.mutedOnWhite>=4.5 && measured.button>=4.5 && measured.focusOnWhite>=3);
+  console.log('PASS limited computed-color pairs (not complete WCAG audit):', measured);
+  console.log('PASS SCHEDULE18: no-selection/no list; both explicit row sources and nested own-ID detail/back/history; 1440/390/320; two Material calendars/Escape/leap target; strict 31/32/equality/0001/9999; UTC-/+ en-US; 25+5 paging; dirty/cancel/late; errors400/401/403/404/500/503/malformed/source; future real-self double and real-selected denial. No real provider/authentication claim.');
   assert.equal(await evaluate(`localStorage.length + sessionStorage.length`), 0);
   assert.deepEqual(external, [], 'No external runtime assets/API');
   assert.deepEqual(errors, [], 'No runtime JS exceptions');

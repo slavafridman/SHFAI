@@ -3,6 +3,7 @@ import type { BindParameters } from "oracledb";
 import { SliceError } from "./errors.mts";
 import { CurrentShiftError } from "./current-shifts-errors.mts";
 import { ShiftSearchError } from "./shift-search-errors.mts";
+import { MyShiftsError } from "./my-shifts-errors.mts";
 import { currentRequestBudget } from "./request-budget-context.mts";
 import type { OracleEnvironment } from "./runtime-config.mts";
 import { record } from "./contract-validation.mts";
@@ -52,7 +53,8 @@ export async function createOraclePool(env: OracleEnvironment): Promise<OraclePo
   } catch (error) { return dependency(error); }
 }
 function dependency(error: unknown): never {
-  if (error instanceof SliceError || error instanceof CurrentShiftError || error instanceof ShiftSearchError) throw error;
+  if (error instanceof SliceError || error instanceof CurrentShiftError || error instanceof ShiftSearchError ||
+      error instanceof MyShiftsError) throw error;
   const code = record(error) && typeof error.code === "string" ? error.code
     : record(error) && typeof error.errorNum === "number" &&
         Number.isInteger(error.errorNum) && error.errorNum > 0 && error.errorNum <= 99999

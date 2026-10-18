@@ -24,12 +24,14 @@ describe('UI02-02/07/10 wire boundary', () => {
     expect(detail({}, '1001', '2001')).toBe(false);
     expect(detail(null, '1001', '2001')).toBe(false);
   });
-  it('approved synthetic identity has three exact capabilities; Oracle detail matches identity source', () => {
+  it('approved synthetic identity has four exact capabilities; Oracle detail matches identity source', () => {
     const principal = fixtureIdentity();
     expect(identity(principal)).toBe(true);
     principal.principal.capabilities = ['shift-day:read'];
     expect(identity(principal)).toBe(false);
     principal.principal.capabilities = ['shift-day:read', 'current-shifts:read', 'shift-search:read'];
+    expect(identity(principal)).toBe(false);
+    principal.principal.capabilities.push('my-shifts:read');
     principal.dataSource = 'oracle';
     expect(identity(principal)).toBe(true);
     const row = fixtureRow(); row.dataSource = 'oracle';

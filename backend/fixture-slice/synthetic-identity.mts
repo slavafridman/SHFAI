@@ -8,17 +8,23 @@ import type { Clock, CurrentShiftReadPort, CurrentShiftRequestV1 } from "./curre
 import { ReadCurrentShifts, systemClock } from "./read-current-shifts.mts";
 import { CurrentShiftError } from "./current-shifts-errors.mts";
 import { validateCurrentRequest } from "./current-shifts-validation.mts";
-import { accessPolicy } from "./access-policy.mts";
+import { accessPolicy, myShiftsAccessPolicy } from "./access-policy.mts";
 import { validateRuntimeConfig } from "./runtime-config.mts";
 import type { ShiftSearchReadPort, ShiftSearchRequestV1 } from "./shift-search-contracts.mts";
 import { ReadShiftSearch } from "./read-shift-search.mts";
 import { ShiftSearchError } from "./shift-search-errors.mts";
 import { validateSearchRequest } from "./shift-search-validation.mts";
+import { ReadMyShifts } from "./read-my-shifts.mts";
+import type { MyShiftsReader } from "./read-my-shifts.mts";
+import type { MyShiftsContextRequestV1, MyShiftsRequestV1 } from "./my-shifts-contracts.mts";
+import { MyShiftsError } from "./my-shifts-errors.mts";
+import { validateMyShiftsRequest } from "./my-shifts-validation.mts";
 
 export interface CurrentRuntimeOptions {
   reader: CurrentShiftReadPort;
   clock?: Clock;
   searchReader?: ShiftSearchReadPort;
+  myShiftsReader?: MyShiftsReader;
 }
 
 export class SyntheticAdministratorProvider implements AuthenticationProvider {
@@ -34,7 +40,7 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
       subject: "synthetic:administrator",
       displayName: "Synthetic Administrator (local/isolated only)",
       provider: "synthetic", synthetic: true, roles: ["Administrator"],
-      capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read"], employeeId: null,
+      capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read"], employeeId: null,
       resourceScope: { orgUnitIds: [...this.orgUnitIds] },
     };
   }
@@ -69,6 +75,13 @@ export async function createRuntime(
     throw new Error("Explicit search source mismatch");
   const search = currentOptions?.searchReader
     ? new ReadShiftSearch(currentOptions.searchReader, currentOptions.clock ?? systemClock,
+      config.businessTimeZone, config.dataSource) : undefined;
+  if (currentOptions?.myShiftsReader && (!("dataSource" in currentOptions.myShiftsReader) ||
+      currentOptions.myShiftsReader.dataSource !== config.dataSource))
+    throw new Error("Explicit schedule source mismatch");
+  const schedulePolicy = myShiftsAccessPolicy(config);
+  const schedule = currentOptions?.myShiftsReader
+    ? new ReadMyShifts(currentOptions.myShiftsReader, schedulePolicy, currentOptions.clock ?? systemClock,
       config.businessTimeZone, config.dataSource) : undefined;
   if (current && config.authenticationMode === "synthetic") {
     // Validate the configured exact grants/catalog before accepting requests.
@@ -107,6 +120,18 @@ export async function createRuntime(
   }
   return Object.freeze({
     authenticate,
+    myShiftsContext: (p: PrincipalV1, request: MyShiftsContextRequestV1, signal?: AbortSignal) => {
+      validatePrincipal(p); validateMyShiftsRequest(request, false); schedulePolicy.requireMyShiftsRead(p);
+      if (request.mode === "selected" && !schedulePolicy.canSelectEmployee(p)) throw new MyShiftsError("FORBIDDEN");
+      if (!schedule) throw new MyShiftsError("DEPENDENCY_UNAVAILABLE");
+      return schedule.context(p, request, signal);
+    },
+    myShiftsList: (p: PrincipalV1, request: MyShiftsRequestV1, signal?: AbortSignal) => {
+      validatePrincipal(p); validateMyShiftsRequest(request, true); schedulePolicy.requireMyShiftsRead(p);
+      if (request.mode === "selected" && !schedulePolicy.canSelectEmployee(p)) throw new MyShiftsError("FORBIDDEN");
+      if (!schedule) throw new MyShiftsError("DEPENDENCY_UNAVAILABLE");
+      return schedule.list(p, request, signal);
+    },
     searchContext: (principal: PrincipalV1, signal?: AbortSignal) => {
       validatePrincipal(principal); accessPolicy.requireShiftSearchRead(principal);
       if (!search) throw new ShiftSearchError("DEPENDENCY_UNAVAILABLE");

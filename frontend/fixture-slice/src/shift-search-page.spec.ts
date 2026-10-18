@@ -46,7 +46,7 @@ describe('SHF-SEARCH-UI-18 Angular / synthetic HTTP', () => {
     expect(dom().textContent).toContain('16/10/2026');
     expect(dom().querySelectorAll('thead th')).toHaveLength(10);
   });
-  it('real capabilities are independent; synthetic requires three ordered capabilities', () => {
+  it('real capabilities are independent; synthetic requires four ordered capabilities', () => {
     const p = fixtureIdentity(); p.principal.provider = 'real'; p.principal.synthetic = false;
     p.principal.capabilities = ['current-shifts:read']; expect(identity(p)).toBe(true);
     http.expectOne('/api/v1/identity').flush(p); render();

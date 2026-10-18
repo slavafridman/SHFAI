@@ -1,4 +1,4 @@
-# SHF-RW-03 / SHF-RW-04 / SHF-IMPL-API-01: read-only backend
+# SHF read-only backend: detail, current, search and employee schedule
 
 Implements approved section 13 v0.1 of `docs/SHF_REVERSE_ENGINEERING_DESIGN.md`;
 section 15 records detail approval and section 17 approves the local tooling.
@@ -21,8 +21,7 @@ Windows PowerShell, from repository root:
 
 ```powershell
 Set-Location D:\AIProjects\SHFAI\backend\fixture-slice
-npm ci --ignore-scripts --no-audit --no-fund
-if ($LASTEXITCODE -eq 0) { npm run typecheck }
+npm run typecheck
 if ($LASTEXITCODE -eq 0) { npm test }
 ```
 
@@ -30,10 +29,11 @@ if ($LASTEXITCODE -eq 0) { npm test }
 ES2024/Node types, including **all** source and test `.mts` files. It also enforces
 erasable syntax compatible with native execution. No `skipLibCheck`, strictness
 suppression or substitute syntax-stripping check is used.
-`npm test` invokes four original regression, two current-list and one Oracle-double file:
+`npm test` runs the explicit package test list, including original regressions,
+current/search and employee-schedule application, HTTP and Oracle-double tests:
 
 ```powershell
-node --test test/projection.test.mts test/contract.test.mts test/use-case.test.mts test/http.test.mts test/current-shifts.test.mts test/current-http.test.mts test/oracle.test.mts
+npm test
 ```
 
 SHF-RW-04 verification: strict typecheck passed and all 34 runtime tests passed.
@@ -48,11 +48,17 @@ They exercise the actual five-second request budget. Routes are:
 - `GET /api/v1/employees/{employeeId}/shift-days/{shiftDayId}`
 - `GET /api/v1/current-shifts/filter-context` (explicit current fixture required)
 - `GET /api/v1/current-shifts` (explicit current fixture required)
+- `GET /api/v1/shift-search/filter-context` (explicit search fixture required)
+- `GET /api/v1/shift-search` (explicit search fixture required)
+- `GET /api/v1/my-shifts/context` (explicit schedule fixture required)
+- `GET /api/v1/my-shifts` (explicit schedule fixture required)
 
-Identity/detail prohibit query/body input; context prohibits query/body and list
-accepts only section 19 query keys, with no body. All send `Cache-Control: no-store`.
+Identity/detail prohibit query/body input; current/search filter-context prohibits
+query/body. Lists and schedule context accept only their canonical query keys,
+with no body. All send `Cache-Control: no-store`.
 Identity is not an authorization token; every request authenticates independently.
-Administrator has exactly `["shift-day:read", "current-shifts:read"]`, no employee identity, and cannot
+Administrator has exactly `["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read"]`,
+no employee identity, and cannot
 bypass source validation, explicit employee context or the fixture-unit allowlist.
 
 Optional executable from this directory: `npm start` (runs `node server.mts`).
@@ -469,3 +475,141 @@ legacy execution, EMS/batch, browser/RTL/accessibility checks, full catalog/data
 coverage, Oracle load plans and forced live network/cancellation failures.
 Remaining UI/browser verification belongs to frontend/QA; no implementation
 blocker or unresolved contract change was found. Ready for caller review.
+
+## SHF-SCHEDULE-API-18 — approved employee schedule v0.1
+
+Approved baseline: design **§26/27 v0.1**, approval/canonical handoff **§28 v0.1**
+(18 October 12:02 explicit approval). Architect-owned `contracts.mts`,
+`current-shifts-contracts.mts`, `shift-search-contracts.mts` and
+`my-shifts-contracts.mts` were consumed read-only. This section supersedes only
+historical capability/test-count descriptions above, not their recorded results.
+
+### Public fixture/configuration handoff
+
+`my-shifts-sample.mts` exports **`sampleConfig`**, **`sampleMyShiftsFixture`**,
+**`sampleMyShiftsDetailRows`**. These are synthetic opt-in samples, not default
+startup data or an Oracle failure fallback. They cover both existing current and
+search actors, overnight/full-second values, unknown/duplicate activities and a
+null end. Current actor: employee `9007199254740993`, range
+`2024-02-29..2024-03-01`; search actor: employee `1001`, range
+`2026-10-15..2026-10-15`. These identifiers are fixed synthetic fixture values.
+UI owns integration into its separate loader/dataset.
+
+From this directory, this optional inline local demo starts an ephemeral
+loopback server, verifies selected context/list, and closes it without logging
+identity/row payloads:
+
+```powershell
+@'
+import { sampleConfig, sampleMyShiftsFixture, sampleMyShiftsDetailRows } from "./my-shifts-sample.mts";
+import { sampleCurrentFixture } from "./current-shifts-sample.mts";
+import { sampleSearchFixture } from "./shift-search-sample.mts";
+import { startFromEnvironment, stopBackendServer } from "./server.mts";
+const server = await startFromEnvironment({
+  SHF_FIXTURE_CONFIG: JSON.stringify(sampleConfig), SHF_FIXTURE_PORT: "0",
+  SHF_FIXTURE_ROWS: JSON.stringify(sampleMyShiftsDetailRows),
+  SHF_CURRENT_SHIFTS_FIXTURE: JSON.stringify(sampleCurrentFixture),
+  SHF_SHIFT_SEARCH_FIXTURE: JSON.stringify(sampleSearchFixture),
+  SHF_MY_SHIFTS_FIXTURE: JSON.stringify(sampleMyShiftsFixture)
+});
+try {
+  const base = "http://127.0.0.1:" + server.address().port;
+  for (const path of [
+    "/api/v1/my-shifts/context?mode=selected&employeeId=9007199254740993",
+    "/api/v1/my-shifts?mode=selected&employeeId=9007199254740993&dateFrom=2024-02-29&dateTo=2024-03-01"
+  ]) {
+    const response = await fetch(base + path);
+    if (response.status !== 200) throw Error("Demo failed");
+    await response.arrayBuffer();
+  }
+  console.log("Synthetic context/list PASS");
+} finally { await stopBackendServer(server); }
+'@ | node --input-type=module
+```
+
+`SHF_MY_SHIFTS_FIXTURE` requires explicit `SHF_CURRENT_SHIFTS_FIXTURE`.
+Its absence means schedule dependency unavailable, never a silently synthesized
+schedule. Oracle bootstrap supplies `OracleMyShiftsReader` and rejects **all**
+fixture variables. Existing Oracle configuration/environment keys, explicit
+test-scope confirmation, Thick Client 19.3 and isolated-only startup remain
+unchanged. No dependencies were installed/upgraded.
+
+### Behavior and evidence
+
+Exact GETs: `/api/v1/my-shifts/context` and `/api/v1/my-shifts`. Both require
+explicit `mode=self|selected`, independent `my-shifts:read`, no body, strict
+single-occurrence allowlisted query keys. Selected mode additionally requires
+the validated enabled local/isolated synthetic Administrator and an explicit
+canonical employee ID. Real selected mode is forbidden. Selection never changes
+principal identity. Synthetic self context is `employee:null`,
+`selectionRequired:true`, `canSelectEmployee:true`; self list is **409
+EMPLOYEE_CONTEXT_REQUIRED**, without querying employees/schedules. A future real
+provider's validated employee link works via the existing abstract seam;
+tests use labeled provider doubles, not implemented real authentication.
+
+Context samples configured-zone Clock once for today..today+13, clamped at year
+9999. Lists require both Gregorian dates (years 0001–9999), <=31 inclusive
+calendar dates. Arithmetic is civil, not UTC/millisecond/DST elapsed arithmetic.
+Unknown/vanished/out-of-scope/unlabelable actors all produce generic **403**.
+Exact current J01 grants and direct G01 labels are revalidated per operation;
+no parent grant, active-employee filter or Administrator business-rule bypass.
+
+`OracleMyShiftsReader.withRead` reuses **one** `OracleReadSession.read` snapshot
+for actor lookup (<=2), full-selection ambiguity/orphan probe (<=1), SQL page
+(<=limit+1, <=101) and page-code labels. Bound actor full reference/prefix stay
+internal. Baseline type4/no ANY change and changed OWN employee/type4/start,
+null cancellation, inclusive START date membership are SQL predicates before
+Oracle11 analytic pagination. Display uses approved detail NVL fallbacks,
+retains null/overnight/full seconds and numeric-string IDs. Ordering is effective
+start/numeric day/numeric employee. Ambiguity before pagination includes empty
+later pages; no DISTINCT/latest/first-row masking. No attendance/cancel-login
+query, custom function, PL/SQL, business commit, DML/DDL, lock, sequence or EMS.
+
+Rollback/release, abort/native-break/unsafe-drop and total 5000ms budget reuse
+existing infrastructure. Responses are allowlisted, <=2MiB, no-store/nosniff;
+problems contain only sanitized code/requestId/field metadata. No automatic
+retry, partial/late success or Oracle-to-fixture fallback.
+
+Controlling source, inspected read-only:
+`old/SHF/src/bzq/shf/model/ShiftDataModel.java:1166–1385` (active
+`populateMyShifts`, full reference, own changed fields, anomalous attendance
+join, positional descending order);
+`actions/ShiftDataAction.java:138–161` (single-date default);
+`actions/BaseAction.java:85–139` (profile linkage);
+`bean/AgentDayBean.java:963–1060` (effective getters);
+`old/SHFWeb/WebContent/WEB-INF/struts-config.xml:394–415` and
+`jsp/shifts_my_shifts_table.jsp:64–145` (route/visible fields).
+Intentional differences are exactly those approved in §26; no legacy code was
+edited, built or executed. No source-contract catalog exists in inspected docs.
+
+### Verification (18 October 2026)
+
+From `backend/fixture-slice`:
+
+- First coherent focused `node --test test/my-shifts.test.mts`: initial native
+  strip-only parameter-property failure, repaired immediately, then **3/3 PASS**.
+- `node --test test/my-shifts.test.mts test/my-shifts-http.test.mts test/oracle-my-shifts.test.mts`:
+  **27/27 PASS**. Includes real-bound/null self seams, scope/reassignment,
+  cancellation, leap/DST/year limits, precision/nulls/detail coherence, synthetic
+  legacy-anomaly characterization, off-page ambiguity, paging, read purity,
+  strict HTTP/errors/body/response/query budgets, no auth/source fallback,
+  one snapshot and actor resolution, native abort/cleanup/discard mocks.
+- `npm run typecheck`: strict no-emit/erasable **PASS** (an earlier readonly-test
+  fixture mutation typing error was repaired and rerun).
+- `npm test`: **123/123 PASS**, 96 existing + 27 new, isolated/mocked only.
+- Authorized environment-only `node oracle-my-shifts-live-check.mts`: actual
+  Node 24.21 / driver 26 Thick Client19.3 / CTIDBT_WFMT **PASS**:
+  SELECT1, Gregorian leap DATE/full seconds, synthetic Hebrew, >2^53 precision;
+  **10** candidate keys, **1** actor, limit2 → **1** schedule row;
+  context/list/detail/source coherence, **3** HTTP GETs, explicit environment
+  bootstrap context/list PASS. Output only counts/flags, no person values.
+  Operator reference was injected only by a disposable memory-only harness;
+  neither application nor checker reads the brief/secrets file. All owned
+  listeners/pools are closed in finally paths.
+
+Existing current/search **live** checks were not repeated: no direct regression
+requiring them; their full mocked/HTTP/application regressions did run. No
+production/live writes, schema changes, EMS/batch, real-provider implementation,
+legacy execution, browser/RTL/accessibility checks, load/query-plan assessment or
+forced live-network/cancellation failures. Those remain outside this backend
+verification; UI/QA own browser acceptance. There is no new contract blocker.

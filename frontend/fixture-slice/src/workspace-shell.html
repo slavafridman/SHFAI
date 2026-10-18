@@ -15,7 +15,7 @@
       } @else {
         <strong>זהות שסופקה על ידי השירות — אינה זהות העובד שנבחר.</strong>
       }
-      <span class="identity-name"> זהות יישום: <bdi dir="auto">{{ identity.principal.displayName }}</bdi></span>
+      @if (!identity.principal.synthetic) { <span class="identity-name"> זהות יישום: <bdi dir="auto">{{ identity.principal.displayName }}</bdi></span> }
       <span class="source-label"> · מקור נתונים: {{ identity.dataSource === 'oracle' ? 'Oracle TEST — קריאה בלבד' : 'נתוני הדגמה מבודדים' }}</span>
     } @else {
       <strong id="identity-heading" tabindex="-1">
@@ -42,15 +42,19 @@
         <a class="nav-item" [class.active]="active() === 'search'" routerLink="/shift-search"
           [attr.aria-current]="active() === 'search' ? 'page' : null">חיפוש משמרות</a>
       } @else { <span class="nav-item unavailable" aria-disabled="true">חיפוש משמרות <small>אין הרשאה זמינה</small></span> }
-      <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>מתוכנן</small></span>
+      @if (principal()?.principal?.capabilities?.includes('my-shifts:read')) {
+        <a class="nav-item" routerLink="/my-shifts" [class.active]="active() === 'schedule'"
+          [attr.aria-current]="active() === 'schedule' ? 'page' : null">המשמרות שלי</a>
+      } @else { <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>אין הרשאה זמינה</small></span> }
       @if (active() === 'detail') { <span class="nav-item active" aria-current="page">פרטי משמרת</span> }
     </nav>
-    <p class="nav-note">בירור משמרות לקריאה בלבד. המשמרות שלי עדיין אינן זמינות.</p>
+    <p class="nav-note">בירור משמרות לקריאה בלבד.</p>
   </aside>
   <main #main id="main" tabindex="-1"><ng-content /></main>
 </div>
 <dialog #menu id="menu" aria-labelledby="menu-heading"
   (cancel)="$event.preventDefault(); closeMenu()" (close)="menuOpen.set(false)">
+  <div [cdkTrapFocus]="menuOpen()">
   <div class="drawer-head"><h2 id="menu-heading">ניווט משמרות</h2>
     <button id="menu-close" mat-stroked-button type="button" (click)="closeMenu()" autofocus>סגירת תפריט</button>
   </div>
@@ -63,8 +67,12 @@
       <a class="nav-item" [class.active]="active() === 'search'" routerLink="/shift-search" (click)="closeMenu()"
         [attr.aria-current]="active() === 'search' ? 'page' : null">חיפוש משמרות</a>
     } @else { <span class="nav-item unavailable" aria-disabled="true">חיפוש משמרות <small>אין הרשאה זמינה</small></span> }
-    <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>מתוכנן</small></span>
+    @if (principal()?.principal?.capabilities?.includes('my-shifts:read')) {
+      <a class="nav-item" routerLink="/my-shifts" (click)="closeMenu()" [class.active]="active() === 'schedule'"
+        [attr.aria-current]="active() === 'schedule' ? 'page' : null">המשמרות שלי</a>
+    } @else { <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>אין הרשאה זמינה</small></span> }
     @if (active() === 'detail') { <span class="nav-item active" aria-current="page">פרטי משמרת</span> }
   </nav>
-  <p class="nav-note">המשמרות שלי עדיין אינן זמינות.</p>
+  <p class="nav-note">בירור משמרות לקריאה בלבד.</p>
+  </div>
 </dialog>

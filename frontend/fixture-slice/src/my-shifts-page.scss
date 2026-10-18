@@ -1,0 +1,16 @@
+@use './shift-search-page.scss';
+:host { display: block; min-width: 0; }
+.actor { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin-block: 1rem; padding: 1rem; overflow-wrap: anywhere; }
+.filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) auto; align-items: start; }
+.heading { align-items: center; }
+.date-time-token { white-space: nowrap; }
+#schedule-technical .date-time-token { display: inline-block; max-width: 100%; overflow-x: auto; vertical-align: bottom; }
+.results { padding: 1rem; }
+details { margin-block: .75rem; overflow-wrap: anywhere; }
+summary { min-height: 44px; cursor: pointer; }
+.pager, .toolbar { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+.activity-line, .cell-note { display: block; }
+@media (max-width: 760px) {
+  .filter-grid { grid-template-columns: minmax(0, 1fr); }
+  .actor { flex-direction: column; }
+}

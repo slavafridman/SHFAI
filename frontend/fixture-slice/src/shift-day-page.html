@@ -1,8 +1,8 @@
-<shf-workspace-shell [active]="fromSearch() ? 'search' : fromList() ? 'list' : 'detail'" [principal]="principal()" [identityState]="identityState()"
+<shf-workspace-shell [active]="fromSchedule() ? 'schedule' : fromSearch() ? 'search' : fromList() ? 'list' : 'detail'" [principal]="principal()" [identityState]="identityState()"
   [identityMessage]="identityError() || (identityState() === 'ready' && !canRead() ? disabledReason() : '')"
   (recheck)="recheckIdentity()">
   <nav class="breadcrumbs" aria-label="מיקום במערכת">
-    <button type="button" class="text-link" (click)="backToEntry()">{{ fromSearch() ? 'חיפוש משמרות' : fromList() ? 'משמרות נוכחיות' : 'בחירת הקשר' }}</button>
+    <button type="button" class="text-link" (click)="backToEntry()">{{ fromSchedule() ? 'משמרות העובד/ת' : fromSearch() ? 'חיפוש משמרות' : fromList() ? 'משמרות נוכחיות' : 'בחירת הקשר' }}</button>
     <span aria-hidden="true">/</span><span>פרטי משמרת</span>
   </nav>
   <div class="heading">
@@ -12,7 +12,7 @@
   </div>
   <div class="toolbar">
     <button id="back-action" mat-stroked-button type="button" (click)="backToEntry()">
-      {{ fromSearch() ? 'חזרה לחיפוש משמרות' : fromList() ? 'חזרה למשמרות נוכחיות' : fromDiagnostic() ? 'חזרה לבחירת ההקשר' : 'לבחירת הקשר' }}
+      {{ fromSchedule() ? 'חזרה למשמרות העובד/ת' : fromSearch() ? 'חזרה לחיפוש משמרות' : fromList() ? 'חזרה למשמרות נוכחיות' : fromDiagnostic() ? 'חזרה לבחירת ההקשר' : 'לבחירת הקשר' }}
     </button>
     @if (committed()) {
       <!-- This exact element remains mounted/focusable through pending reload and errors. -->
@@ -22,7 +22,7 @@
         [attr.aria-busy]="state() === 'loading'" aria-describedby="disabled-reason">טעינה מחדש</button>
     }
   </div>
-  @if (!fromDiagnostic() && !fromList()) {
+  @if (!fromDiagnostic() && !fromList() && !fromSchedule()) {
     <p class="origin-note">אין הקשר של רשימת מקור. אפשר לבחור מזהים ידועים באזור האבחון או <a routerLink="/current-shifts">לפתוח משמרות נוכחיות</a>.</p>
   }
   <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ announcement() }}</p>

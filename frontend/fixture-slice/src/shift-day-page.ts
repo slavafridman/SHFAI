@@ -51,7 +51,13 @@ export class ShiftDayPage {
   readonly fromDiagnostic = signal(false);
   readonly fromList = signal(false);
   readonly fromSearch = signal(false);
+  readonly fromSchedule = signal(false);
   sourceUnit() {
+    if (this.fromSchedule()) {
+      const row = this.navigation.scheduleDetail;
+      return row && row.dataSource === this.principal()?.dataSource &&
+        row.unit.code === this.row()?.employee.orgUnitId ? row.unit : null;
+    }
     const origin = this.fromSearch() ? this.navigation.searchOrigin : this.navigation.origin;
     return this.fromList() && origin && origin.unit.code === this.row()?.employee.orgUnitId ? origin.unit : null;
   }
@@ -98,6 +104,9 @@ export class ShiftDayPage {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(params => {
       const employeeId = params.get('employeeId'), shiftDayId = params.get('shiftDayId');
       const pair = employeeId !== null && shiftDayId !== null ? { employeeId, shiftDayId } : null;
+      const schedule = this.navigation.scheduleDetail;
+      this.fromSchedule.set(this.navigation.detailOrigin === 'my-shifts' && !!pair &&
+        pair.employeeId === schedule?.employeeId && pair.shiftDayId === schedule?.shiftDayId);
       const origin = this.navigation.detailOrigin === 'shift-search' ? this.navigation.searchOrigin : this.navigation.origin;
       this.fromList.set(!!pair && !!origin && pair.employeeId === origin.employeeId && pair.shiftDayId === origin.shiftDayId);
       this.fromSearch.set(this.fromList() && this.navigation.detailOrigin === 'shift-search');
@@ -161,6 +170,10 @@ export class ShiftDayPage {
     this.host.nativeElement.querySelector<HTMLInputElement>(`#${name}`)?.focus();
   }
   backToEntry(): void {
+    if (this.fromSchedule() && this.navigation.schedule) {
+      this.navigation.returning = true;
+      void this.router.navigate([this.navigation.schedule.path]); return;
+    }
     if (this.fromList()) {
       this.navigation.returning = true;
       void this.router.navigate([this.fromSearch() ? '/shift-search' : '/current-shifts']);

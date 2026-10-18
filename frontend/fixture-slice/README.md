@@ -1,4 +1,4 @@
-# SHF-SEARCH-UI-18 — search, current shifts and effective detail
+# SHF-SCHEDULE-UI-18 — employee schedule, search, current shifts and detail
 
 Real standalone Angular application, not the design HTML or another prototype.
 Approved boundaries: baseline **§13 API/detail v0.1**, original **§14 UI v0.1**
@@ -8,7 +8,9 @@ timepicker**. Approval records and the additive source delta are in
 **§22.3–22.4** of `../../docs/SHF_REVERSE_ENGINEERING_DESIGN.md`.
 Search implements approved **§23 API v0.1 + §24 UI v0.1 + visual `#search`**,
 explicitly accepted **18 October 2026 10:11 +03:00** and materialized in **§25**.
-This completes the assigned read-only search feature, not the entire application.
+Schedule implements approved **§26 API v0.1 + §27 UI v0.1 + visual `#my-shifts`**,
+explicitly accepted 18 October 2026 12:02 and recorded in **§28 v0.1**.
+This completes the bounded read-only schedule feature, not the entire application.
 No shared/backend/design files are owned or edited by this frontend task.
 
 ## Implemented presentation
@@ -19,8 +21,7 @@ No shared/backend/design files are owned or edited by this frontend task.
   empty/loading/error states and bounded previous/next pagination.
 - Exact approved palette: navy `#16254F`, primary `#056AE5`, `#FAFAFA`, white
   12px surfaces, system Segoe UI/Arial stack. No CDN/fonts/icons/assets fetch.
-  Search and current list are independently capability-gated; “my shifts”
-  remains truthfully disabled/planned.
+  Schedule, search, current list and detail are independently capability-gated.
 - Actual **Material Datepicker**, Hebrew calendar names/assistive labels,
   strict `DD/MM/YYYY` parsing/display, wire `YYYY-MM-DD`. Invalid typed dates
   stay entered; never US-order parsing or fallback to browser “today”.
@@ -89,10 +90,11 @@ No shared/backend/design files are owned or edited by this frontend task.
 ## Identity, data source and contract boundary
 
 Canonical DTOs are imported **type-only** from backend-owned `contracts.mts`
-and `current-shifts-contracts.mts` / `shift-search-contracts.mts`; no backend runtime code enters the bundle.
+and `current-shifts-contracts.mts` / `shift-search-contracts.mts` /
+`my-shifts-contracts.mts`; no backend runtime code enters the bundle.
 Unknown JSON is validated at runtime, including context, exact applied request,
 page window, parent relationship, dates, Unicode bounds and source consistency.
-Only six approved GETs are consumed (including search context and results), with no body, automatic retry,
+Only eight approved GETs are consumed (including schedule context and results), with no body, automatic retry,
 mutation or persistent cache; the HTTP client requests `cache: 'no-store'`.
 
 Explicit coherent source pairs:
@@ -107,7 +109,7 @@ Oracle pair and not fixture fallback on Oracle error. Source selection belongs
 to the backend. No Oracle driver, credentials or direct DB/browser calls here.
 Synthetic Administrator is always identified as synthetic/local with **no real
 password verification** and null employee. Exact approved capabilities are
-`["shift-day:read", "current-shifts:read", "shift-search:read"]`, in that order
+`["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read"]`, in that order
 for the synthetic principal; real principals may carry individual capabilities.
 Each workflow checks its capability
 independently. No Administrator fallback, browser authorization flag or inference
@@ -143,7 +145,7 @@ npm run typecheck
 npm run build
 ```
 
-Latest SHF-SEARCH-UI-18 results: **99/99 tests**, typecheck and production build
+Historical SHF-SEARCH-UI-18 results: **99/99 tests**, typecheck and production build
 pass. Actual Chrome with intercepted synthetic HTTP and actual fixture-proxy
 checks both pass; see the dated verification entry for exact scope and caveats.
 
@@ -176,21 +178,23 @@ its end-before-start values are preserved, not silently repaired.
 In the frontend directory:
 
 ```powershell
-npm start -- --port 4320
+npm start -- --port 4328
 ```
 
 `proxy.conf.json` remains the existing `/api/**` → `http://127.0.0.1:4310`.
 Explicit loopback only. No CORS widening or Oracle settings in frontend config.
 Stop owned services when done; clear the fixture environment variables.
 
-### Search-inclusive isolated fixture helper (recommended for the checks)
+### Schedule/search-inclusive isolated fixture helper (recommended for the checks)
 
-Backend handoff uses the approved `SHF_SHIFT_SEARCH_FIXTURE` in addition to the
+Backend handoff uses approved `SHF_MY_SHIFTS_FIXTURE` and `SHF_SHIFT_SEARCH_FIXTURE` in addition to the
 existing fixture config/rows/current fixture/port; no runtime config field was added.
 The frontend-owned helper passes **only explicit synthetic configuration** to
 the existing backend `startFromEnvironment`. It merges current and search detail
 rows with a duplicate-pair assertion, and expands a synthetic search template to
-30 distinct day IDs (`3001`–`3030`) to exercise 25+5 pagination. No app fallback.
+30 distinct day IDs (`3001`–`3030`) to exercise 25+5 search/schedule pagination.
+Schedule uses that same synthetic actor/day source and corresponding detail pairs;
+the duplicate-pair assertion runs before startup. No app fallback.
 No backend source is edited; no Oracle configuration/environment is forwarded.
 
 Check ports **4318 / 4328 / 9338 are free** before starting owned test services:
@@ -198,11 +202,11 @@ Check ports **4318 / 4328 / 9338 are free** before starting owned test services:
 ```powershell
 # frontend/fixture-slice, separate terminals; stop all owned services afterward
 node checks/serve-synthetic.mjs
-npm start -- --port 4328 --proxy-config fixtures/proxy.synthetic.json
+npm start -- --port 4328 --proxy-config proxy.schedule.conf.json --prebundle=false
 
 # Isolated Chrome, unique profile and free CDP port (same installed executable)
 $profile = Join-Path (Get-Location) '.angular/search-ui18-browser'
-& 'C:\Program Files\Google\Chrome\Application\chrome.exe' --headless=new --no-first-run --no-default-browser-check --disable-background-networking --disable-component-update --disable-sync --remote-debugging-address=127.0.0.1 --remote-debugging-port=9338 "--user-data-dir=$profile" about:blank
+& 'C:\Program Files\Google\Chrome\Application\chrome.exe' --headless=new --disable-extensions --no-first-run --no-default-browser-check --disable-background-networking --disable-component-update --disable-sync --remote-debugging-address=127.0.0.1 --remote-debugging-port=9338 "--user-data-dir=$profile" about:blank
 
 $env:SHF_UI_URL = 'http://127.0.0.1:4328'
 $env:SHF_CDP_URL = 'http://127.0.0.1:9338'
@@ -211,12 +215,48 @@ node checks/fixture-proxy-check.mjs
 ```
 
 The first check intercepts **all** API requests with synthetic responses. Optional
-`SHF_SEARCH_ONLY=1` runs only its search cases; omit it for the full regression.
+`SHF_SEARCH_ONLY=1` or `SHF_SCHEDULE_ONLY=1` skips the older current/detail block,
+but still runs search plus schedule; omit both for the full regression.
 The second disables interception and verifies actual Angular → proxy → explicit
-synthetic backend current/search/detail workflows, no-store responses and browser
+synthetic backend current/search/schedule/detail workflows, no-store responses and browser
 Back/Forward at 1440/390/320. For a manual known search use **15/10/2026,
 10:00–10:00**; narrower **10:01–10:01** is a real empty result. Do not point these
 checks at a shared, real-data or Oracle server. Other hosts/ports are not authorized.
+
+### Implemented schedule behavior / SHF-SCHEDULE-UI-18
+
+- `/my-shifts` requests `GET /api/v1/my-shifts/context?mode=self`.
+  Synthetic employeeId remains null: an honest no-selection panel, real
+  current/search links, no ID form, no list GET and no invented personal schedule.
+- Separate current/search row actions open `/my-shifts/selected/:employeeId`.
+  Context revalidates selection and supplies employee/team/parent labels, zone,
+  source and default14 dates before the list GET. Selected URL is not a grant.
+  Real-self is tested only with verified-provider doubles; no provider/login is
+  implemented and real selected mode is not enabled.
+- Two distinct Material calendars reuse the strict civil adapter and Hebrew
+  assistive labels. Inclusive 1–31 calendar dates, years 0001–9999, explicit
+  Apply/Reload, no browser-clock defaults, elapsed-millisecond or UTC arithmetic.
+  Dirty edits clear old rows and abort requests without erasing entered text.
+- Schedule rows show weekday, both civil dates, HH:mm with seconds in Hebrew
+  accessible precision text, null-end unavailable, ordered/duplicate activities
+  and explicit unknown labels. No attendance, invented status/site, editing,
+  swap, break, request or export command is exposed.
+- Nested current/search → schedule → own-ID detail → schedule → exact source row
+  retains committed filters/minute/page, range, scroll/RTL table scroll, technical
+  disclosure and opener. Each return refetches/revalidates; missing opener falls
+  back to the real heading. Only volatile navigation selectors/labels/form state
+  are kept, never result or principal caches, return URLs or browser storage.
+- Strict unknown-JSON guards enforce principal/mode/actor/default/source/zone,
+  applied range/ID, row ownership/order, nullable end and exact page invariants.
+  Generation guards protect caption, rows, messages, focus and permission even
+  when transport cancellation is deliberately ineffective. Identity recheck
+  retains date input and starts a fresh context/list generation.
+
+Latest schedule validation: **141/141 UI tests (100 existing + 41 new)**,
+strict application typecheck and production build PASS. See the dated
+SHF-SCHEDULE-UI-18 entry in `VERIFICATION.md` for actual browser/proxy distinctions,
+retest history and remaining manual accessibility review. Historical search-only
+counts below are retained as evidence of earlier milestones, not current totals.
 
 ### Actual Chrome checks (no additional npm package)
 
@@ -226,6 +266,8 @@ using the installed executable (never reuse/kill an unknown user browser):
 ```powershell
 $profile = Join-Path (Get-Location) '.angular/ui01-browser'
 & 'C:\Program Files\Google\Chrome\Application\chrome.exe' --headless=new --no-first-run --no-default-browser-check --disable-background-networking --disable-component-update --disable-sync --remote-debugging-address=127.0.0.1 --remote-debugging-port=9322 "--user-data-dir=$profile" about:blank
+$env:SHF_UI_URL = 'http://127.0.0.1:4328'
+$env:SHF_CDP_URL = 'http://127.0.0.1:9322'
 node checks/browser-check.mjs
 node checks/fixture-proxy-check.mjs
 ```

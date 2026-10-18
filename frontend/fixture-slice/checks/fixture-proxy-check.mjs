@@ -2,13 +2,13 @@
 // Refuses non-fixture identity before opening the UI or requesting business data.
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
-const app = process.env.SHF_UI_URL ?? 'http://127.0.0.1:4320';
-const cdp = process.env.SHF_CDP_URL ?? 'http://127.0.0.1:9322';
+const app = process.env.SHF_UI_URL ?? 'http://127.0.0.1:4328';
+const cdp = process.env.SHF_CDP_URL ?? 'http://127.0.0.1:9338';
 assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(app) && /^http:\/\/127\.0\.0\.1:\d+$/.test(cdp));
 const identity = await fetch(`${app}/api/v1/identity`, { cache: 'no-store' }).then(r => r.json());
 assert.equal(identity.dataSource, 'isolated-fixture', 'Never run against Oracle');
 assert.equal(identity.principal.synthetic, true);
-assert.deepEqual(identity.principal.capabilities, ['shift-day:read', 'current-shifts:read', 'shift-search:read']);
+assert.deepEqual(identity.principal.capabilities, ['shift-day:read', 'current-shifts:read', 'shift-search:read', 'my-shifts:read']);
 const target = (await fetch(`${cdp}/json/list`).then(r => r.json())).find(t => t.type === 'page');
 const socket = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise(r => { socket.onopen = r; });
@@ -20,6 +20,8 @@ socket.onmessage = e => {
     const p = pending.get(m.id); if (!p) return; pending.delete(m.id);
     m.error ? p.reject(new Error(JSON.stringify(m.error))) : p.resolve(m.result);
   } else if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.text);
+  else if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error')
+    errors.push(m.params.args.map(a => a.description?.split('\n')[0] ?? a.value ?? 'console error').join(' '));
   else if (m.method === 'Network.responseReceived' && m.params.response.url.includes('/api/v1/')) {
     apiResponses.push({ url: new URL(m.params.response.url).pathname, status: m.params.response.status,
       cache: m.params.response.headers['cache-control'] ?? m.params.response.headers['Cache-Control'] });
@@ -109,6 +111,44 @@ async function searchTokenScenarios() {
       console.log('PASS SHF-SEARCH-QA-UI-18-D01 DOM Range:', JSON.stringify(summary));
     }
 }
+async function scheduleScenarios() {
+      for (const width of [1440,390,320]) {
+        await send('Emulation.setDeviceMetricsOverride', { width, height: width === 1440 ? 900 : 844, deviceScaleFactor: 1, mobile: false });
+        await send('Page.navigate', { url: `${app}/my-shifts` });
+        await wait(`location.pathname === '/my-shifts' && document.querySelector('main')?.textContent.includes('נדרשת בחירת')`);
+        assert.equal(await evaluate(`document.querySelectorAll('main input').length`), 0);
+        await send('Page.navigate', { url: `${app}/shift-search` });
+        await wait(`location.pathname === '/shift-search' && !!document.getElementById('search-submit') && !document.getElementById('search-submit').disabled`);
+        await input('search-date','15/10/2026'); await input('search-timeFrom','10:00'); await input('search-timeTo','10:00');
+        await evaluate(`document.getElementById('search-submit').click()`);
+        await wait(`!!document.getElementById('search-schedule-3001')`);
+        await evaluate(`document.getElementById('search-schedule-3001').click()`);
+        await wait(`!!document.getElementById('schedule-dateFrom') && !document.getElementById('schedule-apply').disabled`);
+        await input('schedule-dateFrom','15/10/2026'); await input('schedule-dateTo','28/10/2026');
+        await evaluate(`document.getElementById('schedule-apply').click()`);
+        await wait(`!!document.getElementById('schedule-detail-3001')`);
+        assert.equal(await evaluate(`document.querySelectorAll('tbody tr').length`), 25);
+        assert(await evaluate(`document.querySelector('.actor').textContent.includes('תוצאת חיפוש')`));
+        await screenshot(`schedule18-proxy-${width}`);
+        await evaluate(`document.getElementById('schedule-next').click()`);
+        await wait(`!!document.getElementById('schedule-detail-3026')`);
+        assert.equal(await evaluate(`document.querySelectorAll('tbody tr').length`), 5);
+        await evaluate(`(() => { const n=document.getElementById('schedule-detail-3026'); n.scrollIntoView({block:'nearest'});
+          globalThis.__scheduleScroll=scrollY; globalThis.__scheduleTable=document.querySelector('.table-wrap').scrollLeft; n.click(); })()`);
+        await wait(`document.activeElement.id === 'result-heading'`);
+        assert.equal(await evaluate('location.pathname'), '/employees/1001/shift-days/3026');
+        assert(await evaluate(`document.querySelector('.detail-card').textContent.includes('צוות בדיקה סינתטי')`));
+        await evaluate('history.back()'); await wait(`document.activeElement.id === 'schedule-detail-3026'`);
+        assert.equal(await evaluate(`document.getElementById('schedule-dateFrom').value`), '15/10/2026');
+        assert(await evaluate(`Math.abs(scrollY-globalThis.__scheduleScroll)<=1 && document.querySelector('.table-wrap').scrollLeft===globalThis.__scheduleTable`));
+        await evaluate('history.forward()'); await wait(`document.activeElement.id === 'result-heading'`);
+        await evaluate(`document.getElementById('back-action').click()`); await wait(`document.activeElement.id === 'schedule-detail-3026'`);
+        await evaluate(`document.getElementById('schedule-back').click()`); await wait(`document.activeElement.id === 'search-schedule-3001'`);
+        assert.equal(await evaluate(`document.getElementById('search-date').value`), '15/10/2026');
+        assert(await evaluate(`document.documentElement.scrollWidth <= innerWidth`));
+        console.log('PASS actual fixture SCHEDULE18', { width, rows: '25+5', detail: '3026', nestedReturn: 'schedule -> exact search opener', noInterception: true });
+      }
+    }
 function send(method, params = {}) {
   return new Promise((resolve, reject) => {
     pending.set(++id, { resolve, reject }); socket.send(JSON.stringify({ id, method, params }));
@@ -169,11 +209,14 @@ try {
     console.log('PASS real fixture proxy:', { width, list: 200, detail: 200, historyBack: 'filters/page/vertical+table-scroll/exact-opener' });
   }
   await searchScenarios();
+  await scheduleScenarios();
   assert(apiResponses.some(r => r.url.endsWith('/filter-context')));
   assert(apiResponses.some(r => r.url.endsWith('/current-shifts')));
   assert(apiResponses.some(r => r.url.endsWith('/shift-days/2001')));
   assert(apiResponses.some(r => r.url.endsWith('/shift-search')));
   assert(apiResponses.some(r => r.url.endsWith('/shift-search/filter-context')));
+  assert(apiResponses.some(r => r.url.endsWith('/my-shifts/context')));
+  assert(apiResponses.some(r => r.url.endsWith('/my-shifts')));
   assert(apiResponses.some(r => r.url.endsWith('/shift-days/3026')));
   assert(apiResponses.every(r => r.status === 200 && r.cache === 'no-store'));
   assert.deepEqual(errors, []);

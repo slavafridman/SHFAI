@@ -550,3 +550,229 @@ keyboard/zoom/text-scale/full contrast matrix evidence and Hebrew business-copy
 review. Architect owns future contract revisions; deployment/real identity/live
 infrastructure are outside this task. Passing these checks is not WCAG sign-off,
 release approval, authentication proof or permission to deploy a synthetic demo.
+
+## SHF-SCHEDULE-UI-18 — 18 October 2026 / approved Angular implementation
+
+**Status: implementation DONE, ready for independent review/QA.**
+Approval: §26 API/architecture v0.1 + §27 UI v0.1 + existing HTML `#my-shifts`,
+user 18 October 12:02, recorded in §28 v0.1. Canonical owner files consumed
+type-only: `backend/fixture-slice/my-shifts-contracts.mts`,
+`contracts.mts`, current/search contracts. No canonical/backend/docs-design/root
+or legacy file was edited; all task writes are inside `frontend/fixture-slice`.
+No Git operation, agent, install, DB connection/query, Oracle application contact,
+EMS, batch or legacy build/execution was performed.
+
+### Implemented and reviewed boundary
+
+Source evidence read-only: `old/SHF/src/bzq/shf/actions/ShiftDataAction.java`
+134–162 (personal defaults/result branch);
+`old/SHF/src/bzq/shf/model/ShiftDataModel.java` 1250–1385 (personal membership,
+anomalous changed attendance join, positional descending order);
+`old/SHFWeb/WebContent/jsp/shifts_my_shifts_list.jsp` 119–146 and
+`shifts_my_shifts_table.jsp` 64–145 (single-date source form/seven expressions).
+Target visual: `docs/design/shifter-redesign-v0.1.html#my-shifts`.
+Source catalog is absent; controlling baseline §§26–28 and existing Angular
+current/search/detail/shell/navigation were used. Target finite range, no
+attendance join, cancellation/exact-scope/order and effective-display decisions
+are approved intentional differences, not claims about legacy deployed behavior.
+
+Real standalone Angular routes `/my-shifts` and
+`/my-shifts/selected/:employeeId`; exactly the approved context/list GETs.
+Synthetic self has null employee and never requests a schedule list. No ID form,
+implicit employee/default, profile linkage or Administrator fallback. Current and
+search expose distinct explicit row schedule actions; existing detail links still
+use their own employee/day selectors. The synthetic principal now requires the
+exact ordered four-capability array; real individual-capability tests remain
+valid. Selected context remains separate from identity and backend grants.
+
+Context is validated before list: mode, actor/null/selection invariants, real-self
+binding, synthetic selected permission indication, server default14 (including
+year-9999 clamp), zone and coherent source pair. List guards cover applied
+employee/range/order, all row employees, Unicode/catalog bounds, end >= start or
+null, duplicate/numeric day ordering and exact offset/limit/hasMore/nextOffset.
+Only `isolated-fixture` throughout, or identity/detail `oracle` paired with
+context/list `oracle-read-only`, is accepted. No invented cancellation,
+attendance, site, total, role grant, command or API alias.
+
+Two Material calendars share the existing strict civil adapter and Hebrew
+calendar labels. DD/MM/YYYY text is retained on invalid edits, wire dates are
+YYYY-MM-DD, calendar ordinal arithmetic has no UTC/DST elapsed-time dependency.
+Equal bounds =1, inclusive max31, leap years and 0001–9999 are supported. Server
+context alone supplies defaults. Display includes weekday, full start/end dates,
+HH:mm, Hebrew accessible seconds precision, overnight label and truthful null end.
+Ordered duplicate activity tokens and unknown codes remain visible.
+
+Two-level volatile navigation stores request/form/selector/unit-label/opener/
+disclosure/scroll context only, **not result rows or principals**. Every return
+reauthenticates, revalidates and refetches. Schedule detail keeps upstream current/
+search state intact, uses schedule's own day ID and retains its back path on 404.
+Dirty/context/identity/destroy generations abort and independently ignore late
+success/error/403 callbacks, even with intentionally ineffective abort.
+Identity recheck preserves entered dates and starts a new context/list generation.
+The shared mobile native dialog now contains CDK focus-trap anchors **inside**
+the modal, with Escape and exact trigger restoration.
+
+### Exact commands and final results
+
+Working directory for the following commands: `D:\AIProjects\SHFAI\frontend\fixture-slice`.
+Installed/preserved baseline: Node **24.21.0**, npm **11.19.0**,
+Angular **21.2.25**, Material/CDK **21.2.14**, TypeScript **5.9.3**;
+no manifest/lock/dependency version change.
+
+| Command | Actual final result / distinction |
+|---|---|
+| `npm test -- --include src/my-shifts-page.spec.ts --include src/my-shifts-generation.spec.ts` | **41/41 PASS**, 36 schedule component/guard cases + 5 deliberately uncooperative transport cases; Angular with synthetic HTTP/test doubles, not live auth/data |
+| `npm test` | **141/141 PASS**, 10 files: existing 100 + new 41. Existing jsdom `Window.scrollTo` not-implemented diagnostic remains; real scroll assertions run separately in Chrome |
+| `npm run typecheck` | PASS, `tsc --noEmit -p tsconfig.app.json` |
+| `npm run build` | PASS, production Angular output; not deployment authorization |
+| `node --check checks/browser-check.mjs` | PASS |
+| `node --check checks/fixture-proxy-check.mjs` | PASS |
+| `node --check checks/serve-synthetic.mjs` | PASS |
+| `node checks/browser-check.mjs` with the environment below | **PASS**, actual Chrome/155.0.8059.84, all API requests intercepted with synthetic data |
+| `node checks/fixture-proxy-check.mjs` with the environment below | **PASS**, actual Angular → loopback proxy → stable backend fixture implementation, **Fetch interception disabled**, no Oracle |
+
+Owned isolated startup/check commands actually used:
+
+```powershell
+$env:SHF_FIXTURE_PORT = '4318'
+node checks/serve-synthetic.mjs
+# Separate owned terminal:
+npm start -- --port 4328 --proxy-config proxy.schedule.conf.json --prebundle=false
+# Own Chrome, not an existing browser:
+& 'C:\Program Files\Google\Chrome\Application\chrome.exe' --headless=new --disable-gpu --disable-extensions --disable-component-extensions-with-background-pages --no-first-run --no-default-browser-check --remote-debugging-port=9338 --user-data-dir=D:/AIProjects/SHFAI/frontend/fixture-slice/.angular/chrome-schedule-18-clean about:blank
+$env:SHF_UI_URL = 'http://127.0.0.1:4328'
+$env:SHF_CDP_URL = 'http://127.0.0.1:9338'
+node checks/browser-check.mjs
+node checks/fixture-proxy-check.mjs
+```
+
+Ports 4318/4328/9338 were checked free before ownership. Existing 4320 application
+was neither contacted nor stopped. Fixture helper passes **only explicit
+synthetic environment values** to `startFromEnvironment`: config, detail rows,
+current fixture, optional search fixture and new `SHF_MY_SHIFTS_FIXTURE`.
+It extends the same synthetic search/day template to 30 rows, uses those exact
+schedule/detail pairs and rejects duplicate employee/day detail pairs before
+startup. Backend stable handoff README/server and `my-shifts-sample.mts` exports
+were read; no Oracle environment is forwarded and no missing-fixture fallback
+is installed.
+
+### Actual Chrome evidence, not static assertions
+
+At **1440×900, 390×844 and 320×844**, Hebrew/RTL, device scale factor1:
+
+- Fresh synthetic menu: no employee/default/ID input, two real discovery links,
+  no list request, active independent navigation and continuous compact mock
+  notice without any password-verification claim.
+- Both current/search explicit selection paths preserve source caption, actor,
+  exact own-ID schedule detail, detail → schedule → exact source opener;
+  Browser Back/Forward works. Native proxy additionally verifies schedule's
+  vertical/RTL table scroll, retained range and **25+5** pages through day3026.
+- Two distinct real Material calendar targets; keyboard Enter/Escape and exact
+  trigger restoration; February2024 leap-day selection independently updates
+  each target. Strict range31/32/equality, invalid US order/31April/year0000,
+  2000/2100 leap behavior, years0001/9999; en-US with Los_Angeles/Auckland keeps
+  wire civil dates unchanged.
+- Dirty input removes stale row links; late range A cannot replace B.
+  Empty/400/401/403/404/500/503, malformed actor/list/source/context responses
+  surface explicit failures. 404 on schedule is rejected as noncanonical;
+  existing detail404 remains independently valid with a schedule back path.
+  Future linked/unlinked real-self and denied real-selected are **doubles only**.
+- All six schedule fields remain in narrow cards; date/time tokens are single
+  line; a 38-digit selector in opened technical context creates no page overflow.
+  Schedule drawer strict Tab containment and Escape/opener restoration pass.
+- Existing current/search/detail calendar/minute-picker, seven search flags,
+  paging/source/error/identity/race checks and exact detail/current reload focus
+  pending/terminal200/503 remain PASS.
+- Limited computed-color pairs on white: heading/body **14.88:1**, muted
+  **6.37:1**, primary button text/background **5.00:1**. This is not a full
+  contrast matrix or proof of all focus/control states.
+- Final intercepted run: zero browser storage entries, external requests,
+  runtime exceptions **and Angular console errors**. Final native run:
+  all observed API responses200/no-store, no runtime/console errors, no interception.
+  Synthetic screenshots only: ignored `.angular/browser-evidence/schedule18-*`
+  and `schedule18-proxy-*`; selected320 image was also directly inspected.
+
+### Defects/retest history and remaining checks
+
+Do not interpret earlier failed attempts as final PASS:
+
+- First focused compilation exposed the required DateAdapter.parse second
+  argument; fixed and rerun. Worker startup intermittently timed out during
+  concurrent checks; those owned runners were stopped. Final serial focused/full
+  checks completed normally, including the final141-case regression.
+- Full regression exposed old three-capability expectations and a legacy
+  diagnostic-origin return case. Updated only the approved synthetic delta,
+  retained real subset tests, fixed origin restoration; full141 now PASS.
+- Ineffective-abort test exposed identity-recheck loading suppression due to
+  retained lastRequest. Fixed reset + preservation of typed range; all41 focused
+  and all141 regression checks now PASS.
+- Browser helper needed real document-load/form-control readiness instead of
+  reading the previous document. Calendar focus tests now use actual keyboard
+  focus/Enter rather than unfocused programmatic click.
+- An initial browser contained injected extension resource requests; a fresh
+  **owned** extension-disabled Chrome profile resolved that check.
+- During shared Material-helper refactoring, warm Vite prebundling produced
+  missing projected Material controls / `mat-form-field must contain a
+  MatFormFieldControl`. A cold owned server with `--prebundle=false` resolved
+  the observed development-server symptom (cache/token mismatch is the inferred
+  cause); dependency versions were not changed. Final cold browser and native
+  proxy both PASS.
+- Native-helper schedule function was initially nested in the token helper;
+  corrected scope and rerun. Strict drawer testing exposed CDK trap anchors
+  outside a native modal when attached to dialog itself; moved the trap onto
+  an inner container. Final strict containment/Escape test now PASS at390/320.
+
+**Not run / remaining owner:** independent QA/manual screen-reader and full
+keyboard/AT/200% text/400% browser zoom/text-spacing/complete contrast-state
+matrix; Hebrew business-copy review (QA/business owner). No full WCAG2.2AA
+conformance claim. Production mock-startup rejection, real authentication/
+employee-link issuance, Oracle SQL/data/plans and backend123-test/Oracle
+verification are backend/security/QA-owned and were **not rerun by this UI
+task**. Caller-provided backend Oracle results are not UI live-data evidence.
+Git preservation/diff/publication checks were not run because Git was excluded.
+No API decision/blocker remains; future real-provider/admin browsing and deferred
+commands require their own approval. Caller next action: independent integrated
+QA/review, then separately authorized publication/release.
+
+Cleanup completed: owned backend4318, Angular4328 and Chrome9338 stopped;
+those ports have no remaining listeners. Only the two browser profiles created
+by this task were removed. Retained evidence images are synthetic-only under the
+ignored frontend cache directory; no real-data/PII screenshots were captured.
+
+### Exact source/document paths changed by this task
+
+All paths below are relative to `frontend/fixture-slice/`; generated build/cache
+and synthetic screenshot outputs are not source deliverables.
+
+```text
+README.md
+VERIFICATION.md
+proxy.schedule.conf.json
+checks/browser-check.mjs
+checks/fixture-proxy-check.mjs
+checks/serve-synthetic.mjs
+src/api.ts
+src/civil-date-adapter.ts
+src/contract.ts
+src/contract.spec.ts
+src/current-shifts-page.html
+src/current-shifts-page.ts
+src/list-navigation.ts
+src/my-shifts-contract.ts
+src/my-shifts-fixtures.ts
+src/my-shifts-generation.spec.ts
+src/my-shifts-page.html
+src/my-shifts-page.scss
+src/my-shifts-page.spec.ts
+src/my-shifts-page.ts
+src/routes.ts
+src/shift-day-page.html
+src/shift-day-page.ts
+src/shift-search-page.html
+src/shift-search-page.ts
+src/shift-search-page.spec.ts
+src/test-fixtures.ts
+src/workspace-shell.html
+src/workspace-shell.spec.ts
+src/workspace-shell.ts
+```
