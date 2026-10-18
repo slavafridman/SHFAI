@@ -23,7 +23,8 @@ describe('shared RTL workspace shell (DOM only; native focus trap separately in 
     expect(dialog.open).toBe(false); expect(document.activeElement).toBe(opener);
     expect(opener.getAttribute('aria-expanded')).toBe('false');
     expect(dom.querySelector('.sidebar a')?.getAttribute('href')).toBe('/current-shifts');
-    expect(dom.querySelectorAll('.sidebar [aria-disabled="true"]')).toHaveLength(2);
+    expect(dom.querySelector('.sidebar a[href="/shift-search"]')).not.toBeNull();
+    expect(dom.querySelectorAll('.sidebar [aria-disabled="true"]')).toHaveLength(1);
     expect(dom.textContent).toContain('לא בוצע אימות סיסמה אמיתית');
     fixture.destroy();
   });

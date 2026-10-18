@@ -10,6 +10,7 @@ export const shiftDayMatcher: UrlMatcher = segments => {
   return null;
 };
 export const routes: Routes = [
+  { path: 'shift-search', loadComponent: () => import('./shift-search-page').then(m => m.ShiftSearchPage) },
   { path: 'current-shifts', loadComponent: () => import('./current-shifts-page').then(m => m.CurrentShiftsPage) },
   { matcher: shiftDayMatcher, component: ShiftDayPage },
   { path: '', pathMatch: 'full', redirectTo: 'current-shifts' },

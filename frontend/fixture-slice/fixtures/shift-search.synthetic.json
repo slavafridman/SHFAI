@@ -1,0 +1,23 @@
+{
+  "catalog": {
+    "mokedUnits": [{ "code": "P01", "label": "מוקד בדיקה סינתטי", "unitType": "G01" }],
+    "teams": [{ "code": "TEST-U", "label": "צוות בדיקה סינתטי", "unitType": "J01", "parentMokedCode": "P01" }]
+  },
+  "activities": [{ "code": "TEST", "label": "פעילות סינתטית" }],
+  "innerJobs": [{ "code": "1", "label": "תפקיד סינתטי", "orgUnitId": "TEST-U", "active": 1 }],
+  "exceptions": [{ "code": "1", "label": "חריגה סינתטית" }],
+  "missingReasons": [],
+  "employees": [{ "employeeId": "1001", "employeeNumber": "TEST0001", "firstName": "בדיקה", "lastName": "סינתטית", "teamCode": "TEST-U", "innerJobCode": "1" }],
+  "days": [{
+    "shiftDayId": "3001", "employeeKey": "TEST0001", "changedEmployeeKey": null, "hasChange": false,
+    "baselineStartLocal": "2026-10-15T10:00:00", "changedStartLocal": null,
+    "baselineEndLocal": "2026-10-16T01:00:13", "changedEndLocal": null,
+    "baselineDayType": 4, "changedDayType": null, "cancellationReason": null,
+    "baselineActivityData": "TEST;UNKNOWN;TEST", "changedActivityData": null,
+    "baselineHome": "Y", "changedHome": null,
+    "markers": { "remark": "synthetic", "cancelLoginApplier": null, "baselineSplit": "Y", "changedSplit": null,
+      "source": "fixture", "baselineExtension": "synthetic", "changedExtension": null, "exceptionCode": "1" }
+  }],
+  "attendance": [],
+  "cancelLogins": [{ "shiftDayId": "3001", "applier": "synthetic" }]
+}

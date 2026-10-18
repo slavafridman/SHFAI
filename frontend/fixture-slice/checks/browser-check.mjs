@@ -57,16 +57,22 @@ async function click(selector) {
   const r = await evaluate(`(async () => {
     const n = document.querySelector(${JSON.stringify(selector)});
     if (!n) throw Error('Missing click target'); n.scrollIntoView({block:'nearest'});
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-    const r = n.getBoundingClientRect(); return {x:r.x+r.width/2,y:r.y+r.height/2};
+    for (let i=0;i<90;i++) {
+      await new Promise(r => requestAnimationFrame(r));
+      const r=n.getBoundingClientRect(), x=r.x+r.width/2, y=r.y+r.height/2;
+      if (n.contains(document.elementFromPoint(x,y))) return {x,y};
+    }
+    throw Error('Click target obscured: ' + ${JSON.stringify(selector)});
   })()`);
   await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...r, button: 'left', clickCount: 1 });
   await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...r, button: 'left', clickCount: 1 });
+  await evaluate(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))`);
 }
 async function input(id, value) {
   await evaluate(`(() => { const n=document.getElementById(${JSON.stringify(id)});
     n.focus(); n.value=${JSON.stringify(value)}; n.dispatchEvent(new Event('input',{bubbles:true}));
     n.dispatchEvent(new Event('change',{bubbles:true})); })()`);
+    await evaluate(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))`);
 }
 async function screenshot(name) {
   const { data } = await send('Page.captureScreenshot', { captureBeyondViewport: false });
@@ -87,7 +93,7 @@ const sample = (employeeId = '1001', shiftDayId = '2001') => {
 const principal = () => ({
   principal: { subject: 'synthetic:administrator', provider: 'synthetic', synthetic: true,
     displayName: 'Synthetic Administrator (local/isolated only)', roles: ['Administrator'],
-    capabilities: ['shift-day:read', 'current-shifts:read'], employeeId: null, resourceScope: { orgUnitIds: ['TEST-U'] } },
+    capabilities: ['shift-day:read', 'current-shifts:read', 'shift-search:read'], employeeId: null, resourceScope: { orgUnitIds: ['TEST-U', 'TEST-V'] } },
   dataSource: 'isolated-fixture',
 });
 const context = () => ({
@@ -103,6 +109,37 @@ const row = (day = '2001') => ({
   attendanceDisplay: { kind: 'not-recorded' },
 });
 let listMode = 'normal', detailMode = 'normal', identityMode = 'normal', contextMode = 'normal', held = null;
+let searchMode = 'normal', searchContextMode = 'normal';
+const searchContext = () => ({
+  defaults: { attendanceDate: '2026-10-15', timeFrom: '10:00', timeTo: '10:00', mokedCode: null,
+    teamCodes: [], innerJobCodes: [], workLocations: [] },
+  mokedOptions: [...context().mokedOptions, { code: 'P02', label: 'מוקד נוסף', unitType: 'G01' }],
+  teamOptions: [{ code: 'TEST-U', label: 'צוות בדיקה', unitType: 'J01', parentMokedCode: 'P01' },
+    { code: 'TEST-V', label: 'צוות נוסף', unitType: 'J01', parentMokedCode: 'P02' }],
+  innerJobOptions: [{ code: '1', label: 'תפקיד בדיקה' }],
+  workLocationOptions: [{ code: 'home', label: 'בית' }, { code: 'site', label: 'אתר' }],
+  businessTimeZone: 'Asia/Jerusalem', dataSource: 'isolated-fixture',
+});
+function searchList(url) {
+  const p = url.searchParams, limit = Number(p.get('limit') ?? 25), offset = Number(p.get('offset') ?? 0);
+  const makeRow = day => {
+    const { attendanceDisplay, ...core } = row(day);
+    return { ...core, startLocal: `${p.get('attendanceDate')}T${p.get('timeFrom')}:00`,
+      endLocal: `${p.get('attendanceDate')}T23:59:37`, innerJob: { code: '1', label: 'תפקיד בדיקה' },
+      activityFallback: null, workingFromHome: null,
+      indicators: { hasRemark: true, hasCancelLoginAnnotation: true, timeOrLocationChanged: true,
+        split: true, addedStaffing: true, employeeReassigned: true, extensionAllocated: null } };
+  };
+  return { items: searchMode === 'empty' ? [] : searchMode === 'pages' ?
+    Array.from({ length: limit }, (_, i) => makeRow(String(3001 + offset + i))) : [makeRow('3001')],
+    applied: { attendanceDate: p.get('attendanceDate'), timeFrom: p.get('timeFrom'), timeTo: p.get('timeTo'),
+      mokedCode: p.get('mokedCode'), teamCodes: (p.get('teamCodes')?.split(',') ?? []).sort(),
+      innerJobCodes: (p.get('innerJobCodes')?.split(',') ?? []).sort(),
+      workLocations: ['home', 'site'].filter(x => p.get('workLocations')?.split(',').includes(x)), sort: 'effective-start-asc' },
+    page: { limit, offset, hasMore: searchMode === 'pages' && offset === 0,
+      nextOffset: searchMode === 'pages' && offset === 0 ? limit : null },
+    businessTimeZone: 'Asia/Jerusalem', dataSource: searchMode === 'source-mismatch' ? 'oracle-read-only' : 'isolated-fixture' };
+}
 const problem = status => ({
   type: `urn:shf:problem:${({ 400: 'INVALID_REQUEST', 401: 'UNAUTHENTICATED', 403: 'FORBIDDEN', 404: 'SHIFT_DAY_NOT_FOUND', 500: 'INVALID_SOURCE_DATA', 503: 'DEPENDENCY_TIMEOUT' })[status]}`,
   code: ({ 400: 'INVALID_REQUEST', 401: 'UNAUTHENTICATED', 403: 'FORBIDDEN', 404: 'SHIFT_DAY_NOT_FOUND', 500: 'INVALID_SOURCE_DATA', 503: 'DEPENDENCY_TIMEOUT' })[status],
@@ -120,7 +157,27 @@ handler = async event => {
     if (identityMode === 'failure') return fulfill(event.requestId, problem(503), 503);
     const value = principal();
     if (identityMode === 'malformed') value.principal.capabilities = ['shift-day:read'];
+    if (['no-search', 'search-only'].includes(identityMode)) {
+      value.principal.provider = 'real'; value.principal.synthetic = false;
+      value.principal.capabilities = identityMode === 'no-search' ? ['current-shifts:read'] : ['shift-search:read'];
+    }
     return fulfill(event.requestId, value);
+  }
+  if (url.pathname === '/api/v1/shift-search/filter-context') {
+    if (searchContextMode === 'hold') { held = { id: event.requestId, url }; return; }
+    const v = searchContext();
+    if (searchContextMode === 'source-mismatch') v.dataSource = 'oracle-read-only';
+    if (searchContextMode === 'malformed') v.teamOptions[0].parentMokedCode = 'absent';
+    return fulfill(event.requestId, v);
+  }
+  if (url.pathname === '/api/v1/shift-search') {
+    if (searchMode === 'hold') { held = { id: event.requestId, url }; return; }
+    if (typeof searchMode === 'number') return fulfill(event.requestId,
+      { ...problem(searchMode), ...(searchMode === 400 ?
+        { invalidParameters: [{ name: 'timeTo', reason: 'invalid-format' }] } : {}) }, searchMode);
+    const v = searchList(url);
+    if (searchMode === 'malformed') delete v.items[0].indicators;
+    return fulfill(event.requestId, v);
   }
   if (url.pathname.endsWith('/filter-context')) {
     if (contextMode === 'failure') return fulfill(event.requestId, problem(503), 503);
@@ -158,6 +215,7 @@ try {
   console.log('Browser:', (await send('Browser.getVersion')).product, 'Angular with intercepted synthetic HTTP ONLY');
   await send('Runtime.enable'); await send('Network.enable');
   await send('Fetch.enable', { patterns: [{ urlPattern: '*/api/v1/*', requestStage: 'Request' }] });
+  if (!process.env.SHF_SEARCH_ONLY) {
   await size(1440, 900); await navigate('/'); await readyList();
   assert.equal(await evaluate('location.pathname'), '/current-shifts');
   assert.equal(await evaluate('document.documentElement.lang'), 'he');
@@ -173,6 +231,8 @@ try {
   assert.equal(await evaluate(`document.getElementById('filter-date').value`), '15/10/2026');
   await evaluate(`globalThis.__calendar = document.querySelector('mat-datepicker-toggle button')`);
   await click('mat-datepicker-toggle button'); await wait(`!!document.querySelector('mat-datepicker-content')`);
+  await wait(`document.querySelector('mat-datepicker-content').contains(document.activeElement)`);
+  await new Promise(r => setTimeout(r, 300));
   await key('Escape'); await wait(`!document.querySelector('mat-datepicker-content')`);
   assert(await evaluate(`document.activeElement === globalThis.__calendar`));
   await input('filter-date', '31/02/2026'); await click('#list-search');
@@ -333,6 +393,144 @@ try {
   await wait(`!!document.querySelector('#list-error')`); contextMode = 'normal';
   await click('#list-retry'); await readyList();
   console.log('PASS: empty/error/retry/identity failure, detail 401/403/404/500/503, list 400/401/403/500/503; no fallback; long text; stale detail A/B.');
+  }
+  // SHF-SEARCH-UI-18: real Angular route, intercepted synthetic responses only.
+  contextMode = 'normal'; identityMode = 'normal';
+  const readySearchContext = () => wait(`!!document.getElementById('search-submit') && !document.getElementById('search-submit').disabled`);
+  const readySearch = () => wait(`!!document.getElementById('search-results')`);
+  for (const width of [1440, 390, 320]) {
+    await size(width, width === 1440 ? 900 : 844);
+    const before = calls.filter(c => c.startsWith('/api/v1/shift-search?')).length;
+    await navigate('/shift-search'); await readySearchContext();
+    assert.equal(calls.filter(c => c.startsWith('/api/v1/shift-search?')).length, before, 'No automatic result GET');
+    assert.equal(await evaluate(`document.getElementById('search-date').value`), '15/10/2026');
+    await click('#search-submit'); await readySearch(); await noOverflow();
+    assert.equal(await evaluate(`document.querySelectorAll('.indicators li').length`), 7);
+    assert(await evaluate(`document.querySelector('.indicators').textContent.includes('הערת ביטול כניסה') &&
+      document.querySelector('.indicators').textContent.includes('הקצאת שלוחה: לא ישים')`));
+    assert(await evaluate(`document.querySelector('.applied').textContent.includes('10:00–10:00')`));
+    await screenshot(`search18-results-${width}`);
+    if (width !== 1440) {
+      await click('#menu-open'); await wait(`document.getElementById('menu').open`); await key('Escape');
+      await wait(`document.activeElement.id === 'menu-open'`);
+    }
+  }
+  await size(1440, 900); await navigate('/shift-search'); await readySearchContext();
+  // The two controls target one dialog; every hour/minute exists, Escape restores exact opener.
+  for (const [target, hour, minute] of [['timeFrom', '00', '00'], ['timeTo', '23', '59'], ['timeFrom', '08', '07']]) {
+    const other = target === 'timeFrom' ? 'timeTo' : 'timeFrom';
+    const prior = await evaluate(`document.getElementById('search-${other}').value`);
+    await click(`#search-${target}-open`); await wait(`!!document.querySelector('shf-minute-picker')`);
+    await new Promise(r => setTimeout(r, 80));
+    await evaluate(`document.getElementById('picker-hour').focus()`); await key('Enter');
+    await wait(`document.querySelectorAll('[role="option"]').length === 24`);
+    await evaluate(`[...document.querySelectorAll('[role="option"]')].find(n=>n.textContent.trim()===${JSON.stringify(hour)}).click()`);
+    await evaluate(`document.getElementById('picker-minute').focus()`); await key('Enter');
+    await wait(`document.querySelectorAll('[role="option"]').length === 60`);
+    await evaluate(`[...document.querySelectorAll('[role="option"]')].find(n=>n.textContent.trim()===${JSON.stringify(minute)}).click()`);
+    await click('#time-apply'); await wait(`document.activeElement.id === 'search-${target}-open'`);
+    assert.equal(await evaluate(`document.getElementById('search-${target}').value`), `${hour}:${minute}`);
+    assert.equal(await evaluate(`document.getElementById('search-${other}').value`), prior);
+  }
+  await click('#search-timeTo-open'); await wait(`!!document.querySelector('shf-minute-picker')`);
+  await key('Escape'); await wait(`document.activeElement.id === 'search-timeTo-open'`);
+  assert.equal(await evaluate(`document.getElementById('search-timeTo').value`), '23:59');
+  await evaluate(`globalThis.__searchCalendar=document.querySelector('mat-datepicker-toggle button')`);
+  await click('mat-datepicker-toggle button'); await wait(`!!document.querySelector('mat-datepicker-content')`);
+  await wait(`document.querySelector('mat-datepicker-content').contains(document.activeElement)`);
+  // Datepicker registers terminal keyboard handling after its opening animation.
+  await new Promise(r => setTimeout(r, 300));
+  await key('Escape'); await wait(`!document.querySelector('mat-datepicker-content')`);
+  assert(await evaluate(`document.activeElement === globalThis.__searchCalendar`));
+  for (const bad of ['29/02/2027', '31/04/2026', '00/10/2026', '0001', '10/15/2026']) {
+    await input('search-date', bad); await click('#search-submit');
+    await wait(`document.activeElement.id === 'search-date'`);
+    assert.equal(await evaluate(`document.getElementById('search-date').value`), bad);
+    assert.equal(await evaluate(`document.getElementById('search-date').getAttribute('aria-invalid')`), 'true');
+  }
+  for (const zone of ['America/Los_Angeles', 'Pacific/Kiritimati']) {
+    await send('Emulation.setTimezoneOverride', { timezoneId: zone });
+    await send('Emulation.setLocaleOverride', { locale: 'en-US' });
+    for (const date of ['29/02/2028', '01/01/0001', '15/10/2026']) {
+      await input('search-date', date); await click('#search-submit'); await readySearch();
+      assert.equal(await evaluate(`document.getElementById('search-date').value`), date);
+      assert(calls.filter(c => c.startsWith('/api/v1/shift-search?')).at(-1).includes(`attendanceDate=${date.split('/').reverse().join('-')}`));
+    }
+  }
+  await send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Jerusalem' });
+  await send('Emulation.setLocaleOverride', { locale: 'he-IL' });
+  for (const bad of ['9:05', '24:00', '12:60', ' 08:07', '08:07:00']) {
+    await input('search-timeFrom', bad); await click('#search-submit');
+    await wait(`document.activeElement.id === 'search-timeFrom'`);
+    assert.equal(await evaluate(`document.getElementById('search-timeFrom').value`), bad);
+  }
+  await input('search-timeFrom', '10:01'); await input('search-timeTo', '10:00'); await click('#search-submit');
+  await wait(`document.activeElement.id === 'search-timeTo'`);
+  await input('search-timeFrom', '10:00'); await click('#search-submit'); await readySearch();
+  // Actual named Material options, selected values and parent-driven reset.
+  await click('#search-teamCodes'); await wait(`document.querySelectorAll('[role="option"]').length === 2`);
+  await evaluate(`[...document.querySelectorAll('[role="option"]')].find(n=>n.textContent.includes('צוות בדיקה')).click()`);
+  await key('Escape'); await click('#search-moked');
+  await wait(`document.querySelectorAll('[role="option"]').length === 3`);
+  await evaluate(`[...document.querySelectorAll('[role="option"]')].find(n=>n.textContent.includes('מוקד בדיקה')).click()`);
+  await wait(`document.querySelector('#search-teamCodes').textContent.trim() === ''`);
+  await click('#search-teamCodes'); await wait(`document.querySelectorAll('[role="option"]').length === 1`);
+  await evaluate(`document.querySelector('[role="option"]').click()`); await key('Escape');
+  await click('#search-innerJobCodes'); await wait(`document.querySelectorAll('[role="option"]').length === 1`);
+  await evaluate(`document.querySelector('[role="option"]').click()`); await key('Escape');
+  await click('#search-workLocations'); await wait(`document.querySelectorAll('[role="option"]').length === 2`);
+  await evaluate(`[...document.querySelectorAll('[role="option"]')].forEach(n=>n.click())`); await key('Escape');
+  await click('#search-submit'); await readySearch();
+  const selectedCall = calls.filter(c => c.startsWith('/api/v1/shift-search?')).at(-1);
+  assert(selectedCall.includes('teamCodes=TEST-U') && selectedCall.includes('innerJobCodes=1') &&
+    new URL(app + selectedCall).searchParams.get('workLocations') === 'home,site');
+  // Stable paging + actual browser Back restores submitted page, selections, scroll and exact link.
+  searchMode = 'pages'; await click('#search-submit'); await readySearch();
+  await click('#search-next'); await wait(`!!document.getElementById('search-detail-3026')`);
+  await evaluate(`(() => { const n=document.getElementById('search-detail-3026'); n.scrollIntoView({block:'center'});
+    globalThis.__searchScroll=scrollY; globalThis.__searchTable=document.querySelector('.table-wrap').scrollLeft; n.click(); })()`);
+  await readyDetail(); assert.equal(await evaluate('location.pathname'), '/employees/1001/shift-days/3026');
+  assert(await evaluate(`document.getElementById('back-action').textContent.includes('חזרה לחיפוש')`));
+  assert(await evaluate(`document.querySelector('.sidebar a[aria-current="page"]').getAttribute('href') === '/shift-search'`));
+  await evaluate('history.back()'); await wait(`document.activeElement.id === 'search-detail-3026'`);
+  assert(await evaluate(`Math.abs(scrollY-globalThis.__searchScroll)<=1 && document.querySelector('.table-wrap').scrollLeft===globalThis.__searchTable`));
+  assert(await evaluate(`document.getElementById('search-teamCodes').textContent.includes('צוות בדיקה')`));
+  assert(calls.filter(c => c.startsWith('/api/v1/shift-search?')).at(-1).includes('offset=25'));
+  await input('search-timeTo', '23:59'); assert.equal(await evaluate(`!!document.querySelector('.row-link')`), false);
+  searchMode = 'normal'; await click('#search-submit'); await readySearch();
+  // Search late success/error/403 are separately tested with uncooperative transport in Angular.
+  searchMode = 'hold'; held = null; await click('#search-submit');
+  await wait(`!!document.querySelector('mat-progress-bar')`); assert(held); const lateSearch = held;
+  searchMode = 'normal'; await input('search-timeTo', '23:58'); await click('#search-submit'); await readySearch();
+  await fulfill(lateSearch.id, searchList(lateSearch.url)).catch(() => {});
+  await new Promise(r => setTimeout(r, 100));
+  assert(await evaluate(`document.querySelector('.applied').textContent.includes('23:58')`));
+  assert.equal(await evaluate('document.activeElement.id'), 'search-results');
+  for (const mode of ['empty', 400, 401, 403, 500, 503, 'source-mismatch', 'malformed']) {
+    searchMode = mode; await navigate('/shift-search'); await readySearchContext(); await click('#search-submit');
+    await wait(mode === 'empty' ? `!!document.getElementById('search-results')` : `!!document.getElementById('search-error')`);
+    if (mode === 400) await wait(`document.activeElement.id === 'search-timeTo'`);
+    assert.equal(await evaluate(`!!document.querySelector('table')`), false);
+    if (mode === 503) { searchMode = 'normal'; await click('#search-retry'); await readySearch(); }
+    if (mode === 403) assert.equal(await evaluate(`document.getElementById('search-submit').disabled`), true);
+  }
+  searchMode = 'normal';
+  for (const mode of ['source-mismatch', 'malformed']) {
+    searchContextMode = mode; await navigate('/shift-search'); await wait(`!!document.getElementById('search-error')`);
+    assert.equal(await evaluate(`!!document.querySelector('table')`), false);
+  }
+  searchContextMode = 'normal';
+  for (const mode of ['failure', 'malformed', 'no-search', 'search-only']) {
+    identityMode = mode; const before = calls.length;
+    await navigate('/shift-search');
+    if (mode === 'search-only') { await readySearchContext(); await click('#search-submit'); await readySearch();
+      assert.equal(await evaluate(`!!document.querySelector('.row-link')`), false);
+    } else { await wait(`!!document.getElementById('search-error')`);
+      assert.equal(calls.slice(before).filter(c => c !== '/api/v1/identity').length, 0);
+    }
+  }
+  identityMode = 'normal';
+  console.log('PASS SEARCH18: 1440/390/320 RTL/no page overflow; two actual Material picker targets 24/60, 00:00/23:59/08:07; calendar Escape; invalid dates/minutes/range/equality; en-US UTC-/+; scoped named multiselects; 7 flags; pages -> effective detail -> browser Back exact filters/page/scroll/opener; dirty/race; empty/400/401/403/500/503/retry/malformed/source/capability failures.');
   assert.equal(await evaluate(`localStorage.length + sessionStorage.length`), 0);
   assert.deepEqual(external, [], 'No external runtime assets/API');
   assert.deepEqual(errors, [], 'No runtime JS exceptions');

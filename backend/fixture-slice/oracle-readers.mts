@@ -11,11 +11,11 @@ import type { CurrentFixtureDay, CurrentFixtureEmployee, CurrentFixtureAttendanc
 import { SliceError } from "./errors.mts";
 
 type Query = (sql: string, binds: BindParameters, bound: number) => Promise<unknown[]>;
-const numberText = (column: string) => `TO_CHAR(${column}, 'TM9', 'NLS_NUMERIC_CHARACTERS=''.,''')`;
-const civil = (column: string) =>
+export const numberText = (column: string) => `TO_CHAR(${column}, 'TM9', 'NLS_NUMERIC_CHARACTERS=''.,''')`;
+export const civil = (column: string) =>
   `CASE WHEN ${column} IS NULL THEN NULL WHEN TO_CHAR(${column},'AD','NLS_DATE_LANGUAGE=ENGLISH') = 'AD'
     THEN TO_CHAR(${column},'YYYY-MM-DD"T"HH24:MI:SS','NLS_DATE_LANGUAGE=ENGLISH') ELSE 'invalid-era' END`;
-const alias = (expression: string, name: string) => `${expression} AS "${name}"`;
+export const alias = (expression: string, name: string) => `${expression} AS "${name}"`;
 const detailExpressions = [
   alias(numberText("d.shf_employee_day_id"), "shiftDayId"),
   alias(numberText("e.employee_id"), "employeeId"), alias("e.first_name", "firstName"),
@@ -34,7 +34,7 @@ const detailFields = detailExpressions.join(",\n");
 const currentCoreNames = new Set(["shiftDayId", "employeeId", "firstName", "lastName", "orgUnitId",
   "baselineStartLocal", "changedStartLocal", "baselineEndLocal", "changedEndLocal",
   "baselineActivityData", "changedActivityData", "stationArrivalLocal"]);
-const currentFields = detailExpressions.filter(expression =>
+export const currentFields = detailExpressions.filter(expression =>
   currentCoreNames.has(/AS "([A-Za-z]+)"$/.exec(expression)?.[1] ?? "")).join(",\n");
 // Table/column names are exclusively static, source-observed identifiers.
 const baseJoin = `FROM SHIFTER.shf_employee_day d
@@ -58,7 +58,7 @@ function qualifyingBranches(columns: string, predicate: string): string {
     JOIN SHIFTER.shf_employees e ON SUBSTR(e.emp_id_number,1,8)=c.new_employee_id
     ${listTail} ${predicate} AND c.new_employee_id IS NOT NULL`;
 }
-async function requireGregorian(query: Query) {
+export async function requireGregorian(query: Query) {
   const rows = await query("SELECT value AS \"calendar\" FROM nls_session_parameters WHERE parameter='NLS_CALENDAR'", {}, 1);
   if (rows.length !== 1 || !record(rows[0]) || rows[0].calendar !== "GREGORIAN")
     throw new SliceError("DEPENDENCY_UNAVAILABLE");
@@ -95,13 +95,13 @@ function rawDetail(value: unknown): RawShiftDay {
     stationExitLocal: value.stationExitLocal,
   };
 }
-function scopeBinds(ids: readonly string[]) {
+export function scopeBinds(ids: readonly string[]) {
   if (ids.length > 100 || new Set(ids).size !== ids.length || !ids.every(unitCode)) sourceFailure();
   const binds: Record<string, string | number | null> = {};
   const placeholders = ids.map((id, i) => { binds[`team${i}`] = id; return `:team${i}`; });
   return { binds, placeholders };
 }
-async function teamsAndParents(query: Query, ids: readonly string[]) {
+export async function teamsAndParents(query: Query, ids: readonly string[]) {
   const { binds, placeholders } = scopeBinds(ids);
   if (ids.length === 0) return { options: [], teams: [] };
   const grants = placeholders.map(p => `SELECT ${p} AS grant_id FROM dual`).join(" UNION ALL ");
@@ -132,8 +132,9 @@ const catalogSql = {
   activities: { table: "SHIFTER.shf_activity_type", id: "activity_type_id", label: "activity_type_name" },
   innerJobs: { table: "SHIFTER.shf_inner_jobs", id: "inner_job_id", label: "inner_job_name" },
   missingReasons: { table: "SHIFTER.shf_event_reason", id: "reason_id", label: "reason_desc" },
+  exceptions: { table: "SHIFTER.shf_exception_type", id: "exception_type_id", label: "exception_type_name" },
 } as const;
-async function labelsFor(query: Query, kind: keyof typeof catalogSql, requested: readonly string[]): Promise<CatalogValueV1[]> {
+export async function labelsFor(query: Query, kind: keyof typeof catalogSql, requested: readonly string[]): Promise<CatalogValueV1[]> {
   const unique = [...new Set(requested)];
   if (unique.length > 10100 || !unique.every(catalogCode)) sourceFailure();
   const result: CatalogValueV1[] = [], seen = new Set<string>();
@@ -160,7 +161,7 @@ interface JoinedCurrent {
   employee: CurrentFixtureEmployee;
   attendance: CurrentFixtureAttendance;
 }
-function joinedCurrent(value: unknown): JoinedCurrent {
+export function joinedCurrent(value: unknown): JoinedCurrent {
   if (!record(value) || !decimalId(value.shiftDayId, 10) || !decimalId(value.employeeId) ||
       !text(value.firstName, 40) || !text(value.lastName, 40) || !unitCode(value.orgUnitId) ||
       !text(value.employeeKey, 240, 1) ||

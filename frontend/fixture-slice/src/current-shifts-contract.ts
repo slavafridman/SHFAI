@@ -9,21 +9,21 @@ import type {
 } from '../../../backend/fixture-slice/current-shifts-contracts.mts';
 import { id, localTime } from './contract';
 
-const obj = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
-const txt = (v: unknown, max: number, min = 0): v is string =>
+export const obj = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
+export const txt = (v: unknown, max: number, min = 0): v is string =>
   typeof v === 'string' && !/[\uD800-\uDFFF]/u.test(v) && [...v].length >= min && [...v].length <= max;
-const clean = (v: unknown, max: number, min = 1): v is string =>
+export const clean = (v: unknown, max: number, min = 1): v is string =>
   txt(v, max, min) && !/[\u0000-\u001f\u007f-\u009f]/u.test(v);
 export const unitCode = (v: unknown): v is string => clean(v, 8) && !/\s/u.test(v);
 export const civilDate = (v: unknown): v is string =>
   typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && localTime(`${v}T00:00:00`);
 export const minute = (v: unknown): v is string => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
-const zone = (v: unknown) => {
+export const zone = (v: unknown) => {
   if (!clean(v, 128)) return false;
   try { new Intl.DateTimeFormat('en', { timeZone: v }); return true; } catch { return false; }
 };
-const parent = (v: unknown): v is MokedOptionV1 => obj(v) && unitCode(v['code']) && clean(v['label'], 256) && v['unitType'] === 'G01';
-const catalog = (v: unknown): v is CatalogValueV1 => obj(v) && clean(v['code'], 128) &&
+export const parent = (v: unknown): v is MokedOptionV1 => obj(v) && unitCode(v['code']) && clean(v['label'], 256) && v['unitType'] === 'G01';
+export const catalog = (v: unknown): v is CatalogValueV1 => obj(v) && clean(v['code'], 128) &&
   (v['label'] === null || clean(v['label'], 256));
 export const coherentSource = (identitySource: unknown, listSource: unknown): boolean =>
   (identitySource === 'isolated-fixture' && listSource === 'isolated-fixture') ||
@@ -38,15 +38,20 @@ export function filterContext(v: unknown): v is CurrentShiftFilterContextV1 {
     d['mode'] === 'at' && civilDate(d['attendanceDate']) && minute(d['currentTime']) &&
     d['mokedCode'] === (codes.length === 1 ? codes[0] : null);
 }
-function row(v: unknown): v is CurrentShiftRowV1 {
+export function coreRow(v: unknown): v is Omit<CurrentShiftRowV1, 'attendanceDisplay'> & Record<string, unknown> {
   if (!obj(v) || !id(v['shiftDayId'], 10) || !obj(v['employee']) || !localTime(v['startLocal']) ||
     !localTime(v['endLocal']) || !(v['workingFromHome'] === null || typeof v['workingFromHome'] === 'boolean') ||
     !Array.isArray(v['activities']) || v['activities'].length > 100 || !v['activities'].every(catalog) ||
-    !(v['innerJob'] === null || catalog(v['innerJob'])) || !obj(v['attendanceDisplay'])) return false;
-  const e = v['employee'], a = v['attendanceDisplay'];
+    !(v['innerJob'] === null || catalog(v['innerJob']))) return false;
+  const e = v['employee'];
   return id(e['employeeId']) && txt(e['firstName'], 40) && txt(e['lastName'], 40) &&
     obj(e['unit']) && unitCode(e['unit']['code']) && clean(e['unit']['label'], 256) &&
-    parent(e['unit']['moked']) && (
+    parent(e['unit']['moked']);
+}
+function row(v: unknown): v is CurrentShiftRowV1 {
+  if (!coreRow(v) || !obj(v) || !obj(v['attendanceDisplay'])) return false;
+  const a = v['attendanceDisplay'];
+  return (
       a['kind'] === 'not-recorded' ||
       (a['kind'] === 'station-arrival' && localTime(a['atLocal'])) ||
       (a['kind'] === 'missing-reason' && catalog(a['reason']) && id(a['reason']['code']))

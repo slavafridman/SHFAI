@@ -10,10 +10,15 @@ import { CurrentShiftError } from "./current-shifts-errors.mts";
 import { validateCurrentRequest } from "./current-shifts-validation.mts";
 import { accessPolicy } from "./access-policy.mts";
 import { validateRuntimeConfig } from "./runtime-config.mts";
+import type { ShiftSearchReadPort, ShiftSearchRequestV1 } from "./shift-search-contracts.mts";
+import { ReadShiftSearch } from "./read-shift-search.mts";
+import { ShiftSearchError } from "./shift-search-errors.mts";
+import { validateSearchRequest } from "./shift-search-validation.mts";
 
 export interface CurrentRuntimeOptions {
   reader: CurrentShiftReadPort;
   clock?: Clock;
+  searchReader?: ShiftSearchReadPort;
 }
 
 export class SyntheticAdministratorProvider implements AuthenticationProvider {
@@ -29,7 +34,7 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
       subject: "synthetic:administrator",
       displayName: "Synthetic Administrator (local/isolated only)",
       provider: "synthetic", synthetic: true, roles: ["Administrator"],
-      capabilities: ["shift-day:read", "current-shifts:read"], employeeId: null,
+      capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read"], employeeId: null,
       resourceScope: { orgUnitIds: [...this.orgUnitIds] },
     };
   }
@@ -59,9 +64,16 @@ export async function createRuntime(
     ? new ReadCurrentShifts(currentOptions.reader, currentOptions.clock ?? systemClock,
       config.businessTimeZone, config.dataSource)
     : undefined;
+  if (currentOptions?.searchReader && (!("dataSource" in currentOptions.searchReader) ||
+      currentOptions.searchReader.dataSource !== config.dataSource))
+    throw new Error("Explicit search source mismatch");
+  const search = currentOptions?.searchReader
+    ? new ReadShiftSearch(currentOptions.searchReader, currentOptions.clock ?? systemClock,
+      config.businessTimeZone, config.dataSource) : undefined;
   if (current && config.authenticationMode === "synthetic") {
     // Validate the configured exact grants/catalog before accepting requests.
     await current.context(await new SyntheticAdministratorProvider(config).authenticate({ authorization: null }));
+    if (search) await search.context(await new SyntheticAdministratorProvider(config).authenticate({ authorization: null }));
   }
   const configuredProvider = config.authenticationMode === "synthetic"
     ? new SyntheticAdministratorProvider(config)
@@ -95,6 +107,16 @@ export async function createRuntime(
   }
   return Object.freeze({
     authenticate,
+    searchContext: (principal: PrincipalV1, signal?: AbortSignal) => {
+      validatePrincipal(principal); accessPolicy.requireShiftSearchRead(principal);
+      if (!search) throw new ShiftSearchError("DEPENDENCY_UNAVAILABLE");
+      return search.context(principal, signal);
+    },
+    searchList: (principal: PrincipalV1, request: ShiftSearchRequestV1, signal?: AbortSignal) => {
+      validatePrincipal(principal); validateSearchRequest(request); accessPolicy.requireShiftSearchRead(principal);
+      if (!search) throw new ShiftSearchError("DEPENDENCY_UNAVAILABLE");
+      return search.list(principal, request, signal);
+    },
     identity: (principal: PrincipalV1) => ({
       principal, dataSource: config.dataSource === "oracle-read-only" ? "oracle" as const : "isolated-fixture" as const,
     }),

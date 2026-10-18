@@ -44,7 +44,7 @@ export interface CurrentFixtureData {
   days: readonly CurrentFixtureDay[];
   attendance: readonly CurrentFixtureAttendance[];
 }
-function validateFixture(v: unknown): asserts v is CurrentFixtureData {
+export function validateFixture(v: unknown): asserts v is CurrentFixtureData {
   if (!record(v) || !record(v.catalog) || !Array.isArray(v.catalog.mokedUnits) ||
       v.catalog.mokedUnits.length > 100 || !v.catalog.mokedUnits.every(mokedOption) ||
       !Array.isArray(v.catalog.teams) || v.catalog.teams.length > 25000) sourceFailure();

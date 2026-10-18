@@ -317,3 +317,155 @@ autonomous-function/EMS/batch checks, hostile-network hard-cancellation probe,
 browser/RTL/accessibility verification. UI/QA owners retain NEXT01-12 browser
 generation/state and NEXT01-14; caller-reported frontend results are not claimed
 as this backend task's checks.
+
+## SHF-SEARCH-API-18 — approved search v0.1
+
+Implemented against approved design §§23/24 v0.1, approval §25, and the
+architect-owned `shift-search-contracts.mts`. Canonical contracts were not edited.
+The two independent read-only GETs are:
+
+- `/api/v1/shift-search/filter-context` (no query or body).
+- `/api/v1/shift-search?attendanceDate=2026-10-15&timeFrom=10:00&timeTo=10:00`
+  with optional `mokedCode`, comma-delimited `teamCodes`, `innerJobCodes`,
+  `workLocations=home,site`, `limit`, `offset`, `sort=effective-start-asc`.
+  Each key occurs once; no GET bodies, unknown keys, empty lists, sentinels,
+  implicit conversions or repeated keys. Dates are Gregorian YYYY-MM-DD,
+  minutes HH:mm; equal start bounds are valid. Upper bound is exactly `:00`,
+  not the entire final minute. Defaults are limit 25 / offset 0.
+
+Authentication precedes grammar, then centralized independent
+`shift-search:read`, scoped catalogs/filter policy and reading/projection.
+Synthetic Administrator now has exactly
+`["shift-day:read","current-shifts:read","shift-search:read"]`, employeeId null.
+Production rejection and the real-provider replacement seam are unchanged;
+no authentication/configuration error grants Administrator or switches sources.
+Search alone does not grant current/detail access or infrastructure authority.
+
+`ReadShiftSearch` reuses the configured-zone clock/default rounding, exact
+principal validation, policy, row/catalog validators, numeric ordering and
+five-second request-budget/abort context. Both endpoints return no-store JSON
+or sanitized problem JSON, including `AMBIGUOUS_SHIFT_SEARCH` before pagination
+even for empty pages. Catalog/row output is allowlisted, not serialized source
+objects. Empty results remain 200. Unknown source/provider exceptions never
+expose raw Oracle details or business values.
+
+### Controlling source and retained differences from current
+
+Read-only source evidence: `old/SHF/src/bzq/shf/model/ShiftDataModel.java`
+329–450, 475–654 (active `populateShiftList`, not ORIGINAL FUNCTION);
+`old/SHF/src/bzq/shf/bean/AgentDayBean.java` field mappings/effective getters;
+`old/SHF/src/bzq/shf/utils/ComplexCodeTable.java` role/exception catalogs;
+the SQL/control/permission trace in §§23.1–23.6.
+
+Search readers implement baseline without **any** day change UNION ALL changed
+rows. Changed membership needs its own employee/type 4/start and null
+cancellation; missing reason must be NULL (0 excludes), absent attendance can
+qualify. No employee-active, overlap, same-day-end, activity or status filter.
+Raw baseline versus changed home drives location filtering: omitted includes
+NULL, both selected excludes NULL, effective display may still fall back.
+`e_old` uses the changed employee in the changed branch. Employee, old employee,
+attendance, cancel-login and change multiplicity are preserved, not deduplicated.
+Scope/optional parent/role/location predicates precede ambiguity and windowing.
+
+Effective display preserves original seconds/local dates/decimal strings.
+The seven flags retain remark/applier presence (not cancellation), asymmetric
+same-reference location change, nonnull time change, effective split, lowercase
+source prefix `f`, reassignment and home-only extension presence. No remark
+bodies, applier/updater values, extension values or personal references leave
+projection. Fallback is baseline positive exception only if effective activity
+has no nonempty raw tokens; unknown activity labels do not trigger fallback.
+
+### Explicit fixture handoff (backend-owned only)
+
+`shift-search-sample.mts` exports:
+
+- `sampleConfig` (existing isolated source/zone/exact T01 grant).
+- `sampleSearchFixture` (synthetic employee **1001**, day **3001**, 15 October
+  2026 10:00:00–18:00:37; separate from the existing current sample).
+- `sampleSearchDetailRows` for the existing effective-detail endpoint.
+
+To start an isolated executable, explicitly supply:
+
+- `SHF_FIXTURE_CONFIG=JSON.stringify(sampleConfig)`, `SHF_FIXTURE_PORT`.
+- `SHF_FIXTURE_ROWS=JSON.stringify(sampleSearchDetailRows)`; combine with existing
+  sample detail rows if both sample workflows are needed.
+- `SHF_CURRENT_SHIFTS_FIXTURE=JSON.stringify(sampleCurrentFixture)` (existing
+  shared catalog/current fixture).
+- `SHF_SHIFT_SEARCH_FIXTURE=JSON.stringify(sampleSearchFixture)`.
+
+All values above are operator-provided environment values, not automatic
+defaults. Search fixture requires the explicit shared current configuration.
+No search fixture means search returns dependency unavailable, never current
+data or silently fabricated search results. No frontend file was changed;
+the frontend owner controls any extension of its separate fixture loader.
+
+`SearchFixtureReader` is an isolated relational double. `SearchFixtureData`
+reuses the current catalog/employees/attendance, adds explicit `hasChange`
+(including all-null changes), source markers, scoped active roles, exception
+labels and cancel-login multiplicity. Multiple change rows may share a day ID.
+Fixture methods clone/allowlist output and never mutate supplied data.
+
+### Oracle and native verification
+
+`OracleSearchReader` implements the canonical port with bound predicates,
+Oracle-11-compatible ROW_NUMBER window, full-scope ambiguity probe, <=limit+1
+(<=101) page rows, <=100 parents / <=1000 teams / <=1000 selectable roles.
+Overflow/duplicate/malformed catalogs fail; page-code labels are separately
+bounded, may resolve inactive entries, and unresolved labels stay null.
+No full-schema/catalog/business-data preload or arbitrary DISTINCT/first row.
+Each related catalog or page operation uses one explicit read-only transaction,
+Gregorian-session guard, rollback and release. Cancellation breaks the active
+native call; break/rollback failure discards the unsafe lease. No DML, DDL,
+PL/SQL, custom functions/procedures, commits, locks, retries or EMS.
+Underlying Oracle scan cost/query plans and cross-request snapshots are not
+claimed; concurrent legacy writers may change page membership.
+
+No new runtime/dependency installation: Node **24.21.0**, TypeScript **5.9.3**,
+node-oracledb **26.0.0**, installed Thick Client **19.3**, existing Oracle 11.2.
+Environment-only Oracle keys remain `SHF_ORACLE_CONFIG`, `SHF_ORACLE_PORT`,
+`SHF_ORACLE_CONNECT_STRING`, `SHF_ORACLE_USER`, `SHF_ORACLE_PASSWORD`,
+`SHF_ORACLE_CLIENT_LIB_DIR`. The typed config explicitly selects
+`dataSource:"oracle-read-only"`, isolated deployment, exact grants, zone and
+`oracleTestScopeConfirmed:true`. Oracle startup always constructs coherent
+detail/current/search readers and prohibits fixture inputs; no Oracle failure
+falls back to fixtures. Identity/detail retain source `oracle`; search/context
+use `oracle-read-only`.
+
+Executed on 18 October 2026:
+
+- First coherent focused check:
+  `node --test test/shift-search.test.mts`: **1/1 PASS**.
+- Expanded focused:
+  `node --test test/shift-search.test.mts test/search-http.test.mts test/oracle-search.test.mts`:
+  **22/22 PASS**, subsequently extended by two characterization tests.
+- Repair check:
+  `node --test test/shift-search.test.mts test/current-http.test.mts`: **PASS**.
+- `npm run typecheck`: **PASS**, strict no-emit/erasable TypeScript.
+- `npm test` and `npm test -- --test-reporter=dot`: **95/95 PASS**, 71 existing +
+  24 new. Native Node uses the established package file list; the latter
+  invocation emitted the normal per-test reporter, not dots. No live connection
+  in `npm test`. Unknown/inactive/nonselectable roles use 400 with
+  `innerJobCodes/invalid-format` (not scope-enumeration 403).
+- Authorized actual `node oracle-search-live-check.mts`: **PASS**. The external
+  disposable operator harness injected the approved reference into process
+  environment only; application/checker code never reads the brief. NUMBER
+  >2^53, Gregorian leap date/full seconds and synthetic Hebrew mapping PASS.
+  **10** candidate keys, **1** candidate, scoped catalog **1 parent / 1 team /
+  0 selectable roles**, search limit 2 **2 rows**, selected result/detail
+  ID/start/end coherence PASS, source coherence PASS, **4** HTTP GETs PASS,
+  explicit environment bootstrap/search/shutdown PASS. Only counts/flags output.
+- Existing actual `node oracle-live-check.mts`: **PASS** after search changes;
+  **1** candidate, **1** parent, at-list **2**, current **0**, ceiling **0**,
+  **4** HTTP GETs and environment bootstrap PASS.
+
+Initial checks exposed unsupported TS parameter properties, test type-narrowing
+errors and two stale two-capability expectations. These were repaired and
+rerun; final checks above pass. Mock Oracle tests cover SQL/binds/read-only
+lifecycle/failure/abort/discard, not query-plan or hostile-network guarantees.
+All owned listeners and pools were closed by finally paths.
+
+Not run: real authentication provider, production/deployment, business writes,
+legacy execution, EMS/batch, browser/RTL/accessibility checks, full catalog/data
+coverage, Oracle load plans and forced live network/cancellation failures.
+Remaining UI/browser verification belongs to frontend/QA; no implementation
+blocker or unresolved contract change was found. Ready for caller review.

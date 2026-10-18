@@ -38,11 +38,14 @@
         <a class="nav-item" [class.active]="active() === 'list'" routerLink="/current-shifts"
           [attr.aria-current]="active() === 'list' ? 'page' : null">משמרות נוכחיות</a>
       } @else { <span class="nav-item unavailable" aria-disabled="true">משמרות נוכחיות <small>אין הרשאה זמינה</small></span> }
-      <span class="nav-item unavailable" aria-disabled="true">חיפוש משמרות <small>מתוכנן</small></span>
+      @if (principal()?.principal?.capabilities?.includes('shift-search:read')) {
+        <a class="nav-item" [class.active]="active() === 'search'" routerLink="/shift-search"
+          [attr.aria-current]="active() === 'search' ? 'page' : null">חיפוש משמרות</a>
+      } @else { <span class="nav-item unavailable" aria-disabled="true">חיפוש משמרות <small>אין הרשאה זמינה</small></span> }
       <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>מתוכנן</small></span>
       @if (active() === 'detail') { <span class="nav-item active" aria-current="page">פרטי משמרת</span> }
     </nav>
-    <p class="nav-note">בירור משמרות לקריאה בלבד. חיפוש מורחב והמשמרות שלי עדיין אינם זמינים.</p>
+    <p class="nav-note">בירור משמרות לקריאה בלבד. המשמרות שלי עדיין אינן זמינות.</p>
   </aside>
   <main #main id="main" tabindex="-1"><ng-content /></main>
 </div>
@@ -56,9 +59,12 @@
       <a class="nav-item" [class.active]="active() === 'list'" routerLink="/current-shifts" (click)="closeMenu()"
         [attr.aria-current]="active() === 'list' ? 'page' : null">משמרות נוכחיות</a>
     } @else { <span class="nav-item unavailable" aria-disabled="true">משמרות נוכחיות <small>אין הרשאה זמינה</small></span> }
-    <span class="nav-item unavailable" aria-disabled="true">חיפוש משמרות <small>מתוכנן</small></span>
+    @if (principal()?.principal?.capabilities?.includes('shift-search:read')) {
+      <a class="nav-item" [class.active]="active() === 'search'" routerLink="/shift-search" (click)="closeMenu()"
+        [attr.aria-current]="active() === 'search' ? 'page' : null">חיפוש משמרות</a>
+    } @else { <span class="nav-item unavailable" aria-disabled="true">חיפוש משמרות <small>אין הרשאה זמינה</small></span> }
     <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>מתוכנן</small></span>
     @if (active() === 'detail') { <span class="nav-item active" aria-current="page">פרטי משמרת</span> }
   </nav>
-  <p class="nav-note">חיפוש מורחב והמשמרות שלי עדיין אינם זמינים.</p>
+  <p class="nav-note">המשמרות שלי עדיין אינן זמינות.</p>
 </dialog>

@@ -87,7 +87,7 @@ export class CurrentShiftsPage {
   private identityWork?: Subscription;
   private work?: Subscription;
   private lastRequest: CurrentShiftRequestV1 | null = null;
-  private restore = this.navigation.returning ? this.navigation.origin : null;
+  private restore = this.navigation.returning && this.navigation.detailOrigin !== 'shift-search' ? this.navigation.origin : null;
   constructor() {
     this.navigation.returning = false;
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
@@ -298,6 +298,7 @@ export class CurrentShiftsPage {
       unit: { code: row.employee.unit.code, label: row.employee.unit.label, parentLabel: row.employee.unit.moked.label },
     };
     this.navigation.returning = true;
+    this.navigation.detailOrigin = 'current-shifts';
     void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId], { state: { origin: 'current-shifts' } });
   }
 }

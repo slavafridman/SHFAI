@@ -1,4 +1,4 @@
-# SHF-IMPL-UI-01 — current shifts and effective detail
+# SHF-SEARCH-UI-18 — search, current shifts and effective detail
 
 Real standalone Angular application, not the design HTML or another prototype.
 Approved boundaries: baseline **§13 API/detail v0.1**, original **§14 UI v0.1**
@@ -6,6 +6,9 @@ Approved boundaries: baseline **§13 API/detail v0.1**, original **§14 UI v0.1*
 additive two-capability identity seam, accepted **§21 visual v0.1 including the
 timepicker**. Approval records and the additive source delta are in
 **§22.3–22.4** of `../../docs/SHF_REVERSE_ENGINEERING_DESIGN.md`.
+Search implements approved **§23 API v0.1 + §24 UI v0.1 + visual `#search`**,
+explicitly accepted **18 October 2026 10:11 +03:00** and materialized in **§25**.
+This completes the assigned read-only search feature, not the entire application.
 No shared/backend/design files are owned or edited by this frontend task.
 
 ## Implemented presentation
@@ -16,8 +19,8 @@ No shared/backend/design files are owned or edited by this frontend task.
   empty/loading/error states and bounded previous/next pagination.
 - Exact approved palette: navy `#16254F`, primary `#056AE5`, `#FAFAFA`, white
   12px surfaces, system Segoe UI/Arial stack. No CDN/fonts/icons/assets fetch.
-  Search and “my shifts” remain truthfully disabled/planned; the current list
-  is functional only with its verified capability.
+  Search and current list are independently capability-gated; “my shifts”
+  remains truthfully disabled/planned.
 - Actual **Material Datepicker**, Hebrew calendar names/assistive labels,
   strict `DD/MM/YYYY` parsing/display, wire `YYYY-MM-DD`. Invalid typed dates
   stay entered; never US-order parsing or fallback to browser “today”.
@@ -59,14 +62,37 @@ No shared/backend/design files are owned or edited by this frontend task.
 - `/shift-day` and its form/deep links are preserved. Technical ID entry is a
   **secondary collapsed diagnostic disclosure**, never a date filter or the
   primary business page. Known synthetic IDs only; no employee search implied.
+- `/shift-search` loads only identity and authorized filter context on entry.
+  Explicit submit applies **one date and two independent HH:mm start bounds**,
+  inclusive at seconds `00`. Equal bounds are valid; reversed bounds stay entered
+  with an error on `timeTo`. No current/overlap mode, UTC conversion, full-day
+  invented default, polling, hidden result request or local sorting.
+- Search reuses the actual Material Datepicker/civil adapter and one target-aware
+  `MinutePicker` dialog. Named G01 parent, scoped J01 teams, active internal-role
+  multiselects and home/site filters come only from context. Changing parent
+  clears teams. No locations means no restriction (including raw null); selecting
+  both means home/site only. No employee/activity/job/status/cancel controls.
+- Search results retain full local times/dates, ordered activities/explicit
+  exception fallback and unknown labels, separate team/parent, seven labeled
+  informational markers (not inferred cancellation/status) and effective-detail
+  links using the result's own employee/day IDs. The semantic table is internally
+  scrollable on desktop and stacked/labeled at <=760px. No total/statistics.
+- Search → effective detail → back/browser Back/Forward restores committed
+  filters/page/scroll/exact opener after rechecking identity/context and refetching.
+  Current/search origins stay separate; direct detail has an honest context-entry
+  fallback. Filter edits immediately clear rows and saved search context.
+- 400 field mapping, 401/403 context invalidation, explicit retries, malformed/
+  source-mismatched payload rejection and late A-after-B guards fail closed.
+  Disappeared catalogue selections stay as an explicit unavailable draft until
+  the user clears them; no silent widening. Backend remains authoritative.
 
 ## Identity, data source and contract boundary
 
 Canonical DTOs are imported **type-only** from backend-owned `contracts.mts`
-and `current-shifts-contracts.mts`; no backend runtime code enters the bundle.
+and `current-shifts-contracts.mts` / `shift-search-contracts.mts`; no backend runtime code enters the bundle.
 Unknown JSON is validated at runtime, including context, exact applied request,
 page window, parent relationship, dates, Unicode bounds and source consistency.
-Only four existing approved GETs are consumed, with no body, automatic retry,
+Only six approved GETs are consumed (including search context and results), with no body, automatic retry,
 mutation or persistent cache; the HTTP client requests `cache: 'no-store'`.
 
 Explicit coherent source pairs:
@@ -81,7 +107,9 @@ Oracle pair and not fixture fallback on Oracle error. Source selection belongs
 to the backend. No Oracle driver, credentials or direct DB/browser calls here.
 Synthetic Administrator is always identified as synthetic/local with **no real
 password verification** and null employee. Exact approved capabilities are
-`["shift-day:read", "current-shifts:read"]`; each workflow checks its capability
+`["shift-day:read", "current-shifts:read", "shift-search:read"]`, in that order
+for the synthetic principal; real principals may carry individual capabilities.
+Each workflow checks its capability
 independently. No Administrator fallback, browser authorization flag or inference
 of employee identity. Backend policy remains authoritative on every request.
 Production synthetic-mode rejection remains backend-enforced; do not deploy this
@@ -114,6 +142,10 @@ npm test
 npm run typecheck
 npm run build
 ```
+
+Latest SHF-SEARCH-UI-18 results: **99/99 tests**, typecheck and production build
+pass. Actual Chrome with intercepted synthetic HTTP and actual fixture-proxy
+checks both pass; see the dated verification entry for exact scope and caveats.
 
 Tests use Angular/Vitest/jsdom, not a browser or database. See `VERIFICATION.md`
 for exact executed results and historical failed/repaired checks. Lazy list
@@ -151,6 +183,41 @@ npm start -- --port 4320
 Explicit loopback only. No CORS widening or Oracle settings in frontend config.
 Stop owned services when done; clear the fixture environment variables.
 
+### Search-inclusive isolated fixture helper (recommended for the checks)
+
+Backend handoff uses the approved `SHF_SHIFT_SEARCH_FIXTURE` in addition to the
+existing fixture config/rows/current fixture/port; no runtime config field was added.
+The frontend-owned helper passes **only explicit synthetic configuration** to
+the existing backend `startFromEnvironment`. It merges current and search detail
+rows with a duplicate-pair assertion, and expands a synthetic search template to
+30 distinct day IDs (`3001`–`3030`) to exercise 25+5 pagination. No app fallback.
+No backend source is edited; no Oracle configuration/environment is forwarded.
+
+Check ports **4318 / 4328 / 9338 are free** before starting owned test services:
+
+```powershell
+# frontend/fixture-slice, separate terminals; stop all owned services afterward
+node checks/serve-synthetic.mjs
+npm start -- --port 4328 --proxy-config fixtures/proxy.synthetic.json
+
+# Isolated Chrome, unique profile and free CDP port (same installed executable)
+$profile = Join-Path (Get-Location) '.angular/search-ui18-browser'
+& 'C:\Program Files\Google\Chrome\Application\chrome.exe' --headless=new --no-first-run --no-default-browser-check --disable-background-networking --disable-component-update --disable-sync --remote-debugging-address=127.0.0.1 --remote-debugging-port=9338 "--user-data-dir=$profile" about:blank
+
+$env:SHF_UI_URL = 'http://127.0.0.1:4328'
+$env:SHF_CDP_URL = 'http://127.0.0.1:9338'
+node checks/browser-check.mjs
+node checks/fixture-proxy-check.mjs
+```
+
+The first check intercepts **all** API requests with synthetic responses. Optional
+`SHF_SEARCH_ONLY=1` runs only its search cases; omit it for the full regression.
+The second disables interception and verifies actual Angular → proxy → explicit
+synthetic backend current/search/detail workflows, no-store responses and browser
+Back/Forward at 1440/390/320. For a manual known search use **15/10/2026,
+10:00–10:00**; narrower **10:01–10:01** is a real empty result. Do not point these
+checks at a shared, real-data or Oracle server. Other hosts/ports are not authorized.
+
 ### Actual Chrome checks (no additional npm package)
 
 Start a separate isolated Chrome profile on a **free** loopback CDP port 9322,
@@ -171,7 +238,7 @@ reload element and checks object identity (never BODY text as a focus oracle).
 
 `fixture-proxy-check.mjs`: **real Angular proxy → owned loopback fixture backend**,
 no HTTP interception. Refuses non-fixture identity **before opening business UI**.
-Checks list/detail/no-store and real browser Back with filters/page/scroll/opener.
+Checks current/search/detail/no-store and real browser Back/Forward with filters/page/scroll/opener.
 Both scripts save screenshots only under ignored `.angular/browser-evidence/`.
 Do not run either against Oracle or capture real employee information.
 
@@ -179,7 +246,10 @@ No screen-reader, full contrast/AT/zoom suite or WCAG-conformance claim follows
 from these bounded checks. No frontend runtime against live Oracle was performed.
 Source-observed evidence: `ShiftDataAction` 118–132; `ShiftDataModel` 924–1074;
 `shifts_table.jsp` 37–96; detail popup 49–74 and `AgentDayBean` 1016–1030.
-Source contract catalog is absent. Legacy was read only, never built/executed.
-This implements the approved **current inquiry + detail**, not the whole SHF
-migration: search/my-shifts, employee cards, editing, exports, totals, EMS and
+Search evidence additionally includes `ShiftDataModel.populateShiftList`
+395–451 / 569–653 and `shifts_search_table.jsp` 78–190, interpreted through
+approved §§23/24/25. Source contract catalog is absent.
+Legacy was read only, never built/executed.
+This implements the approved **search + current inquiry + detail**, not the whole SHF
+migration: my-shifts, employee cards, editing, exports, totals, EMS and
 batch remain outside this frontend slice.

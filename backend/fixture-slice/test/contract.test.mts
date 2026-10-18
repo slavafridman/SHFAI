@@ -7,13 +7,13 @@ import { SliceError, toProblem } from "../errors.mts";
 import { startFromEnvironment } from "../server.mts";
 import { config, row } from "./fixtures.mts";
 
-test("exact synthetic principal, exact two approved capabilities and no employee impersonation", async () => {
+test("exact synthetic principal, exact three approved capabilities and no employee impersonation", async () => {
   const provider = new SyntheticAdministratorProvider(config);
   const principal = await provider.authenticate({ authorization: null });
   assert.deepEqual(principal, {
     subject: "synthetic:administrator", provider: "synthetic", synthetic: true,
     displayName: "Synthetic Administrator (local/isolated only)",
-    roles: ["Administrator"], capabilities: ["shift-day:read", "current-shifts:read"], employeeId: null,
+    roles: ["Administrator"],     capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read"], employeeId: null,
     resourceScope: { orgUnitIds: ["TEST-U"] },
   });
   validatePrincipal(principal);

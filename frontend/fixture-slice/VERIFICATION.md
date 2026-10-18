@@ -1,4 +1,228 @@
-# SHF-IMPL-UI-01 verification — 2026-10-15
+# SHF-SEARCH-UI-18 verification — 2026-10-18
+
+## SHF-SEARCH-FINAL-18 — publication checks, 18 October 10:56 +03:00
+
+- Backend `npm run typecheck`: **PASS**; `npm test`: **96/96 PASS**.
+- Frontend `npm run typecheck`: **PASS**; full `npm test`: **100/100 PASS**,
+  eight files, including the new D01 regression; `npm run build`: **PASS**.
+  The first full invocation timed out starting the Vitest worker before collecting
+  tests; only that owned hung process was stopped. The unchanged command passed
+  on rerun. The existing jsdom `scrollTo` diagnostic remains, not a browser check.
+- Root `node docs\reverse-engineering\verify-evidence.mjs`:
+  **passed_with_documented_source_anomaly**, 454 source hashes verified.
+  The pre-existing duplicate legacy route remains explicitly documented.
+
+These are fresh static/synthetic publication checks, not a production release,
+complete WCAG assessment, Oracle SLA, or replacement for the independent browser
+and authorized Oracle evidence recorded separately.
+
+## SHF-SEARCH-QA-UI-18-D01 — narrow fix, 18 October ~10:49 +03:00
+
+**Status: fixed; return to the same independent QA for narrow retest.**
+Approved §23/24 v0.1 / §25 unchanged. Only search result date/time `bdi` elements
+gain `.date-time-token { white-space:nowrap; overflow-wrap:normal }`. Existing
+date `cell-note` line breaks remain. Table intrinsic sizing now reserves the
+unbreakable token width; the existing internal table scroll handles desktop
+containment. No global nowrap, fixed column hack or current/detail style change.
+Long raw text retains inherited `overflow-wrap:anywhere`.
+
+Changed paths for this fix only (all under `frontend/fixture-slice/`):
+`src/shift-search-page.html`, `src/shift-search-page.scss`,
+`src/shift-search-page.spec.ts`, `checks/fixture-proxy-check.mjs`, `VERIFICATION.md`.
+No API/backend/canonical/manifest/dependency/Git/real-data work.
+
+Commands run from `frontend/fixture-slice`:
+
+- `npm test -- --include=src/shift-search-page.spec.ts --include=src/shift-search-generation.spec.ts`
+  → **27/27 PASS**, 2 files (23 component/guard/style cases + 4 generation).
+  New regression checks four exact complete LTR tokens, separate date lines,
+  class scope and actual computed nowrap/normal styles; nonnumeric fields do not
+  receive the class. jsdom scrollTo diagnostic remains; geometry is checked in
+  actual Chrome below.
+- `npm run typecheck` → **PASS**.
+- `npm run build` → **PASS**, no budget warnings; initial 537.08 kB, lazy search
+  49.79 kB. `node --check checks/fixture-proxy-check.mjs` → **PASS**.
+- Owned test services: `node checks/serve-synthetic.mjs`,
+  `npm start -- --port 4328 --proxy-config fixtures/proxy.synthetic.json`,
+  isolated Chrome profile `.angular/d01-browser`, CDP 9338.
+- `node checks/fixture-proxy-check.mjs` with
+  `SHF_UI_URL=http://127.0.0.1:4328`, `SHF_CDP_URL=http://127.0.0.1:9338`,
+  **`SHF_SEARCH_TOKEN_ONLY=1`** → **PASS**. Actual Angular → loopback proxy →
+  explicit synthetic backend; interception disabled. Narrow D01 branch only,
+  not a broad rerun of the recent full QA/browser/nav trace.
+
+Actual DOM Range text-node geometry, first row (all units CSS px):
+
+| Viewport | Page scroll width | Table viewport / scroll width | Start `10:00:00`: token / cell | End date `16/10/2026`: token / cell |
+|---|---:|---:|---:|---:|
+| 1440×900 | 1425 | 1135 / 1220 | 47.69 / 71.69 | 61.11 / 85.11 |
+| 390×844 | 375 | 341 / 341 | 47.69 / 317 | 61.11 / 317 |
+| 320×844 | 305 | 271 / 271 | 47.69 / 247 | 61.11 / 247 |
+
+Every viewport: **100/100 date/time tokens occupy exactly one DOM Range line**
+(25 rows × four tokens). First-row `15/10/2026`, `10:00:00`, `01:00:13`,
+`16/10/2026` remain complete, each `white-space:nowrap` / `overflow-wrap:normal`.
+All 25 records retain **10 visible fields and seven indicator items**; all ten
+mobile field labels exist. Page width <= viewport (15px vertical scrollbar is
+not horizontal overflow). Desktop scroll remains contained; mobile cards have
+no internal horizontal overflow. Activity text computes `overflow-wrap:anywhere`.
+Observed API responses are 200/no-store; no browser runtime exceptions.
+Ignored synthetic captures `.angular/browser-evidence/search18-D01-tokens-{1440,390,320}.png`;
+1440/320 captures visually inspected.
+
+Initial narrow harness attempts were not passes: first ran before the dev server
+was ready, then a helper scope error and overly strict page-width equality were
+corrected (vertical scrollbar permits page width < viewport). The terminal
+geometry run above passed. The recent full 99-case/QA trace was deliberately not
+rerun for this scoped CSS fix; no new whole-suite total or WCAG claim is made.
+Next action: same QA retests D01 token lines/containment before publication.
+Owned D01 server process trees and verified isolated Chrome PID 1204 stopped;
+cleanup confirmed no listeners on 4318/4328/9338. No unknown user service stopped.
+
+## Search implementation: done (supersedes historical current/detail-only scope below)
+
+**Completed assigned frontend feature, ready for caller/QA review; not a full-app
+migration, production release or authentication implementation.** Only
+`frontend/fixture-slice/` authored files were edited. No Git command, installs,
+dependency/manifest/lockfile changes, backend/canonical/design edits, legacy
+execution, Oracle connection, DB metadata/DML/DDL, EMS, batch or deployment.
+Other writers' `.github`/`docs` changes were not touched.
+
+### Approved contracts and evidence
+
+- **§23 v0.1 API/search + §24 v0.1 UI + approved HTML `#search`**, approval
+  **18 October 2026 10:11 +03:00**, recorded in **§25**. Existing
+  §13/14/17/19/21/22 current/detail/tooling baselines retained.
+- Type-only imports from architect-owned
+  `backend/fixture-slice/shift-search-contracts.mts`, with reused
+  `contracts.mts` and `current-shifts-contracts.mts`. No duplicate wire DTO/schema.
+  Synthetic identity now requires the exact ordered three approved capabilities;
+  real identities can have individual capabilities. No role-only authorization.
+- Read project instructions/agent brief/UI skill, exact §§23/24/25 and
+  `docs/design/shifter-redesign-v0.1.html#search`; controlling read-only
+  `ShiftDataModel.populateShiftList` baseline/changed predicates and ordering,
+  especially **395–451, 569–653**, and `shifts_search_table.jsp` **78–190**.
+  Source documents start-in-window, raw branch home filtering, ordered activities,
+  seven indicators and the distinct original-swap popup; it does not authorize
+  revival of deferred actions. Source catalog file is absent (`Test-Path
+  docs/SHF_SOURCE_CONTRACT_CATALOG.md` → False). Legacy Hebrew literal parity and
+  runtime behavior are not claimed from these static reads.
+- Backend owner relayed search readiness (95 backend tests, native Oracle checks).
+  Those backend/Oracle results are **caller-reported**, not tests executed by this
+  frontend task. This task independently ran the ready backend only in explicitly
+  configured **isolated-fixture** mode using its existing server binding.
+
+### Authored paths
+
+- New `src/shift-search-contract.ts`, `shift-search-page.ts/.html/.scss`,
+  `shift-search-fixtures.ts`, `shift-search-page.spec.ts`,
+  `shift-search-generation.spec.ts`.
+- Integrated `src/api.ts`, `routes.ts`, `contract.ts`, `current-shifts-contract.ts`
+  (reused core-row guard), `list-navigation.ts`, `current-shifts-page.ts`,
+  `shift-day-page.ts/.html`, `workspace-shell.ts/.html` and directly related
+  `contract.spec.ts`, `workspace-shell.spec.ts`, `test-fixtures.ts`.
+- Extended `checks/browser-check.mjs`, `checks/fixture-proxy-check.mjs`; added
+  `checks/serve-synthetic.mjs`, `fixtures/shift-search.synthetic.json`,
+  `fixtures/search-detail.synthetic.json`, `fixtures/proxy.synthetic.json`;
+  updated this document and `README.md`.
+- Generated optimized bundles/test caches and synthetic screenshots are confined
+  to existing ignored `dist/` / `.angular/`; screenshots are not live records.
+
+### Actual final commands/results
+
+All npm/Node commands below use `frontend/fixture-slice` as working directory.
+No dependencies were selected/upgraded: Node **24.21.0**, npm **11.19.0**,
+Angular **21.2.25**, Material/CDK **21.2.14**, CLI/build **21.2.27**,
+TS **5.9.3**, RxJS **7.8.2**, Vitest **4.0.8**, existing jsdom **27.1.0**.
+
+| Exact command | Result and evidence class |
+|---|---|
+| `npm test -- --include=src/shift-search-page.spec.ts` | First coherent edit found a type-guard narrowing error, repaired. Next invocation hit the existing five-second Vitest worker-start timeout; stopped only owned hung shell. Rerun **14/14 PASS** at that checkpoint. |
+| `npm test` | Final **99/99 PASS**, **8 files**: 73 existing cases + 26 search cases (22 component/guards + 4 deliberately uncooperative-generation cases). Angular/Vitest/jsdom + synthetic HTTP, not browser/DB. Final run 18 October ~10:37 +03:00. |
+| `npm run typecheck` | **PASS** (`tsc --noEmit -p tsconfig.app.json`). |
+| `npm run build` | **PASS**, production build, no budget warning. Initial **537.08 kB**, lazy search **49.66 kB**, existing shared lazy chunk **249.05 kB**, lazy current **63.86 kB**; budgets unchanged. |
+| `npm start -- --port 4328 --proxy-config fixtures/proxy.synthetic.json` | Owned loopback Angular server; no existing user/demo listener reused or stopped. |
+| `node checks/serve-synthetic.mjs` | Owned loopback backend **4318**, explicit fixture config only; no Oracle environment forwarded. Existing current rows + search detail rows merged with duplicate-pair assertion. 30 deterministic synthetic search days exercise 25+5 pagination. Uses approved `SHF_SHIFT_SEARCH_FIXTURE` and existing config/rows/current/port variables only. |
+| `node checks/browser-check.mjs` with `SHF_UI_URL=http://127.0.0.1:4328`, `SHF_CDP_URL=http://127.0.0.1:9338`, no `SHF_SEARCH_ONLY` | **PASS**, actual Chrome **155.0.8059.84**, actual Angular/Material; **all HTTP API requests intercepted with synthetic data**. Existing current/detail regressions plus full new search matrix below. |
+| Same browser command with `SHF_SEARCH_ONLY=1` | **PASS**, focused real-Chrome search matrix during refinement; not substituted for final full-suite run. |
+| `node checks/fixture-proxy-check.mjs` with the same two loopback URL variables | **PASS**, actual Angular → proxy → ready Node backend, **Fetch interception disabled**, explicit synthetic dataset only. Current/detail at 1440/390 and search/detail/Back/Forward at **1440/390/320**; all observed API responses **200 + no-store**, no runtime exceptions. |
+
+Final full test rerun also encountered one more existing Vitest worker-start
+timeout before collecting any tests; its owned hung process was stopped and the
+same command passed 99/99 on rerun. No timeout invocation is counted as passing.
+jsdom emits its known `window.scrollTo` not-implemented diagnostic on restoration;
+real scroll and exact opener were independently verified in Chrome.
+
+Browser-harness refinements: initial attempts raced Material select/calendar
+closing/opening lifecycle or the previous results DOM. The harness now waits for
+unobscured actual pointer targets, Angular rendering after input/click, actual
+calendar focus and terminal opening lifecycle before Escape. Earlier failed
+runs are not passing evidence. App result focus now scrolls into view on fresh
+search (verified visually at 320); restore uses preventScroll + saved scroll.
+
+### Bounded browser/behavior coverage actually run
+
+- **1440×900, 390×844, 320×844**, Hebrew/RTL/right desktop shell and active search,
+  mobile menu Escape/exact trigger restoration, no page-wide horizontal overflow.
+  Desktop table scroll is contained; mobile uses the same labeled stacked records.
+  Synthetic desktop/mobile screenshots captured; 1440/320 intercepted and
+  390 actual-proxy screenshots visually inspected. Not every viewport screenshot
+  or accessibility tree was manually reviewed.
+- Two independent from/to targets share the existing dialog. Actual 24 hours /
+  60 minute options; **00:00, 23:59, 08:07**, apply/cancel/Escape, exact opener,
+  no change to the other field. Material calendar Escape/opener and strict
+  DD/MM/YYYY. Invalid **29/02/2027, 31/04/2026, 00/10/2026, 0001,
+  10/15/2026**, malformed minutes and reversed range retain draft/focus. Equal
+  **10:00–10:00** succeeds. **29/02/2028, 01/01/0001, 15/10/2026** survive
+  en-US locale with **America/Los_Angeles / Pacific/Kiritimati** unchanged.
+- Actual named Material parent/team/role/location options, parent-driven team
+  reset, single comma-list serialization, selected filters, omission versus both
+  home/site semantics. Backend fixture **10:00–10:00** returns actual rows and
+  **10:01–10:01** is actually empty (not locally filtered or fabricated).
+- Seven noninteractive Hebrew indicator labels, null extension “not applicable,”
+  explicit unknown activity label, full end date, exact result employee/day link.
+  Original swap/card/export/breaks/commands have no fake links.
+- Stable offset 25/5-row second page → effective detail **1001/3026** →
+  actual browser Back/Forward retains page/window/selections/vertical and table
+  scroll/exact opener, with context revalidation and fresh GETs. Search stays
+  selected in detail. Search and current origin remain separate.
+- Identity absent/malformed/missing search capability → zero search/context
+  requests; individual search-only principal has no detail links. Context/source
+  mismatches/malformed rows, 400 field focus, 401/403 denial, 500/503 and retry,
+  empty, dirty hiding, no polling/automatic retry. Late browser A-after-B success
+  is ignored; unit fake transport additionally sends late error and **403**
+  after unsubscribe and verifies unchanged state/announcement/actual focus.
+- Existing actual current-list date/minute/current-mode regressions passed.
+  Existing exact reload checks **4/4** at 1440/320 × 200/503 preserve the **same
+  DOM button object**, pending/terminal focus and one request despite duplicate
+  Space — not BODY or merely matching text.
+- Intercepted suite asserts no browser storage, external network or JS exceptions;
+  real proxy asserts no-store, fixture identity before business reads and no
+  runtime exceptions. Screenshot data are synthetic only.
+
+### Explicit verification limits / ownership / next action
+
+No full WCAG conformance claim. Screen-reader/AT behavior, measured contrast,
+complete 200%/400% zoom and full search-specific text-spacing matrix, all browser/
+OS combinations and real-authenticated-provider deployment remain **not run**;
+independent QA owns those acceptance checks. Source Hebrew decoding parity is
+not claimed. No production mock startup was executed here (backend owns its
+guard); no UI Oracle/live-data query was run. Oracle readiness/95 backend tests
+are backend-owner reported only. No frontend implementation blocker remains.
+Backend contract handoff integrated with the approved env name and exact three
+capabilities; no new endpoint, source marker, config alias or shared change needed.
+Caller owns independent review/release decisions; no further approval gate is
+invented. Owned test servers/Chrome are stopped after checks; no user demo is left
+running by this task.
+Cleanup verified: no listeners on owned **4318/4328/9338**. Only verified isolated
+Chrome PID **10876** (`search-ui18-browser`, CDP 9338) and owned server process
+trees were stopped. Final `node --check checks/browser-check.mjs`,
+`node --check checks/fixture-proxy-check.mjs` and
+`node --check checks/serve-synthetic.mjs` all passed.
+
+---
+
+# Historical SHF-IMPL-UI-01 verification — 2026-10-15
 
 ## Current implementation scope (supersedes historical detail-only scope below)
 

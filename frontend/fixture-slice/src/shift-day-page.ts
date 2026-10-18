@@ -50,8 +50,9 @@ export class ShiftDayPage {
   readonly technical = viewChild<ElementRef<HTMLDetailsElement>>('technical');
   readonly fromDiagnostic = signal(false);
   readonly fromList = signal(false);
+  readonly fromSearch = signal(false);
   sourceUnit() {
-    const origin = this.navigation.origin;
+    const origin = this.fromSearch() ? this.navigation.searchOrigin : this.navigation.origin;
     return this.fromList() && origin && origin.unit.code === this.row()?.employee.orgUnitId ? origin.unit : null;
   }
   readonly form = new FormGroup({
@@ -97,8 +98,10 @@ export class ShiftDayPage {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(params => {
       const employeeId = params.get('employeeId'), shiftDayId = params.get('shiftDayId');
       const pair = employeeId !== null && shiftDayId !== null ? { employeeId, shiftDayId } : null;
-      const origin = this.navigation.origin;
+      const origin = this.navigation.detailOrigin === 'shift-search' ? this.navigation.searchOrigin : this.navigation.origin;
       this.fromList.set(!!pair && !!origin && pair.employeeId === origin.employeeId && pair.shiftDayId === origin.shiftDayId);
+      this.fromSearch.set(this.fromList() && this.navigation.detailOrigin === 'shift-search');
+      if (this.fromList()) this.navigation.returning = true;
       // Only our supported diagnostic origin is recognized; never follow a return URL.
       this.fromDiagnostic.set(!!pair &&
         this.router.currentNavigation()?.extras.state?.['origin'] === 'shift-day-diagnostic');
@@ -160,7 +163,7 @@ export class ShiftDayPage {
   backToEntry(): void {
     if (this.fromList()) {
       this.navigation.returning = true;
-      void this.router.navigate(['/current-shifts']);
+      void this.router.navigate([this.fromSearch() ? '/shift-search' : '/current-shifts']);
       return;
     }
     void this.router.navigate(['/shift-day']).then(() => this.focusInput());

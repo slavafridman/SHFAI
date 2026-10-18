@@ -1,0 +1,9 @@
+[
+  {
+    "employeeId": "1001", "shiftDayId": "3001", "firstName": "בדיקה", "lastName": "סינתטית", "orgUnitId": "TEST-U",
+    "baselineStartLocal": "2026-10-15T10:00:00", "changedStartLocal": null,
+    "baselineEndLocal": "2026-10-16T01:00:13", "changedEndLocal": null,
+    "baselineActivityData": "TEST;UNKNOWN;TEST", "changedActivityData": null,
+    "baselineSiteId": null, "changedSiteId": null, "stageArrivalLocal": null, "stationArrivalLocal": null, "stationExitLocal": null
+  }
+]

@@ -2,6 +2,7 @@ import oracledb from "oracledb";
 import type { BindParameters } from "oracledb";
 import { SliceError } from "./errors.mts";
 import { CurrentShiftError } from "./current-shifts-errors.mts";
+import { ShiftSearchError } from "./shift-search-errors.mts";
 import { currentRequestBudget } from "./request-budget-context.mts";
 import type { OracleEnvironment } from "./runtime-config.mts";
 import { record } from "./contract-validation.mts";
@@ -13,7 +14,7 @@ export interface OracleConnection {
   execute(sql: string, binds: BindParameters, maxRows: number): Promise<unknown[]>;
   break(): Promise<void>;
   rollback(): Promise<void>;
-  close(): Promise<void>;
+  close(drop?: boolean): Promise<void>;
 }
 export interface OraclePool {
   getConnection(): Promise<OracleConnection>;
@@ -43,7 +44,7 @@ export async function createOraclePool(env: OracleEnvironment): Promise<OraclePo
             });
             return result.rows ?? [];
           },
-          break: () => c.break(), rollback: () => c.rollback(), close: () => c.close(),
+          break: () => c.break(), rollback: () => c.rollback(), close: (drop = false) => c.close({ drop }),
         };
       },
       close: () => pool.close(0),
@@ -51,7 +52,7 @@ export async function createOraclePool(env: OracleEnvironment): Promise<OraclePo
   } catch (error) { return dependency(error); }
 }
 function dependency(error: unknown): never {
-  if (error instanceof SliceError || error instanceof CurrentShiftError) throw error;
+  if (error instanceof SliceError || error instanceof CurrentShiftError || error instanceof ShiftSearchError) throw error;
   const code = record(error) && typeof error.code === "string" ? error.code
     : record(error) && typeof error.errorNum === "number" &&
         Number.isInteger(error.errorNum) && error.errorNum > 0 && error.errorNum <= 99999
@@ -79,9 +80,10 @@ export class OracleReadSession {
     let pendingBreak: Promise<void> | undefined;
     let active = false;
     let primaryFailure = false;
+    let unsafe = false;
     const cancel = () => {
       if (active && connection)
-        pendingBreak = connection.break().catch(() => {});
+        pendingBreak = connection.break().catch(() => { unsafe = true; });
     };
     controller.signal.addEventListener("abort", cancel, { once: true });
     const query = async (sql: string, binds: BindParameters, bound: number) => {
@@ -117,8 +119,8 @@ export class OracleReadSession {
       if (connection) {
         // Wait for the native operation/break before releasing; never return a busy lease.
         let cleanupError: unknown;
-        try { connection.callTimeout = 1000; await connection.rollback(); } catch (error) { cleanupError = error; }
-        try { await connection.close(); } catch (error) { cleanupError ??= error; }
+        try { connection.callTimeout = 1000; await connection.rollback(); } catch (error) { cleanupError = error; unsafe = true; }
+        try { await connection.close(unsafe); } catch (error) { cleanupError ??= error; }
         if (cleanupError !== undefined && !primaryFailure) dependency(cleanupError);
       }
     }

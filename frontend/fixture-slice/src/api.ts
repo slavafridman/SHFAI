@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import type { CurrentShiftRequestV1 } from './current-shifts-contract';
+import type { ShiftSearchRequestV1 } from '../../../backend/fixture-slice/shift-search-contracts.mts';
 
 @Injectable({ providedIn: 'root' })
 export class SliceApi {
@@ -15,6 +16,19 @@ export class SliceApi {
   }
   filterContext() {
     return this.http.get<unknown>('/api/v1/current-shifts/filter-context', { cache: 'no-store' });
+  }
+  searchContext() {
+    return this.http.get<unknown>('/api/v1/shift-search/filter-context', { cache: 'no-store' });
+  }
+  shiftSearch(request: ShiftSearchRequestV1) {
+    const params: Record<string, string> = {
+      attendanceDate: request.attendanceDate, timeFrom: request.timeFrom, timeTo: request.timeTo,
+      limit: String(request.limit ?? 25), offset: String(request.offset ?? 0), sort: 'effective-start-asc',
+    };
+    if (request.mokedCode !== undefined) params['mokedCode'] = request.mokedCode;
+    for (const key of ['teamCodes', 'innerJobCodes', 'workLocations'] as const)
+      if (request[key]?.length) params[key] = request[key]!.join(',');
+    return this.http.get<unknown>('/api/v1/shift-search', { params, cache: 'no-store' });
   }
   currentShifts(request: CurrentShiftRequestV1) {
     const params: Record<string, string> = { mode: request.mode };
