@@ -35,7 +35,7 @@ test("EC18-01/03 employee capability is independent, actor denied before reads; 
       privateExtra: "must not escape" } } as never;
   } }, employeeCardAccessPolicy(sampleConfig), "Asia/Jerusalem");
   const mock = await new SyntheticAdministratorProvider(sampleConfig).authenticate({ authorization: null });
-  assert.equal(mock.employeeId, null); assert.equal(mock.capabilities.length, 6);
+  assert.equal(mock.employeeId, null); assert.equal(mock.capabilities.length, 7);
   const real: PrincipalV1 = { ...mock, provider: "real", synthetic: false, employeeId: "1",
     capabilities: mock.capabilities.filter(c => c !== "employee:read") };
   await assert.rejects(app.execute(real, { employeeId: "1" }), { code: "FORBIDDEN" });

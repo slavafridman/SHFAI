@@ -2,11 +2,16 @@
 // No Oracle/backend readiness probe and no app-level fake catalog/fallback.
 import assert from 'node:assert/strict';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { attendanceBrowserContext, attendanceBrowserList, runAttendanceChecks } from './attendance-browser-check.mjs';
+import { physicalInput, formReadyExpression } from './browser-interactions.ts';
+import { runAttendanceReviewChecks } from './attendance-review-check.mjs';
+import { waitForKeyboardModalReady } from './keyboard-modal.ts';
 const app = process.env.SHF_UI_URL ?? 'http://127.0.0.1:4328';
 const cdp = process.env.SHF_CDP_URL ?? 'http://127.0.0.1:9338';
-assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(app));
-const target = (await fetch(`${cdp}/json/list`).then(r => r.json())).find(t => t.type === 'page');
-assert(target, 'Start your OWN isolated Chrome as documented');
+assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(app) && /^http:\/\/127\.0\.0\.1:\d+$/.test(cdp));
+// Never bind an arbitrary old/background tab returned first by /json/list.
+const target = await fetch(`${cdp}/json/new?about:blank`,{method:'PUT'}).then(r=>r.json());
+assert(target.type === 'page' && target.webSocketDebuggerUrl, 'Create a fresh page in your OWN isolated Chrome');
 const socket = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise((resolve, reject) => { socket.onopen = resolve; socket.onerror = reject; });
 let sequence = 0, handler, navigationLoaded;
@@ -27,11 +32,51 @@ socket.onmessage = event => {
     void handler(m.params).catch(e => errors.push(e.message));
   }
 };
-function send(method, params = {}) {
+function rawSend(method, params = {}) {
   return new Promise((resolve, reject) => {
     const id = ++sequence; pending.set(id, { resolve, reject });
     socket.send(JSON.stringify({ id, method, params }));
   });
+}
+async function activePage() {
+  await rawSend('Page.bringToFront');
+  await wait(`document.hasFocus() && document.visibilityState==='visible'`);
+}
+async function send(method, params = {}) {
+  if ((method==='Input.dispatchKeyEvent' && params.type==='keyDown') ||
+      method==='Input.insertText' || (method==='Input.dispatchMouseEvent' && params.type==='mousePressed')) await activePage();
+  if (method==='Input.dispatchKeyEvent' && params.type==='keyDown' && params.key==='Escape') {
+    const ready=await evaluate(`(${waitForKeyboardModalReady.toString()})(5000)`);
+    const object=await rawSend('Runtime.evaluate',{expression:ready.kind==='native-dialog' ? `document.querySelector('dialog[open]')` : 'document.body'});
+    assert(object.result.objectId,'Live keyboard dispatcher target');
+    let installed;
+    try {
+      const listeners=await rawSend('DOMDebugger.getEventListeners',{objectId:object.result.objectId});
+      installed=listeners.listeners.filter(l=>l.type===(ready.kind==='native-dialog'?'cancel':'keydown')).length;
+    } finally { await rawSend('Runtime.releaseObject',{objectId:object.result.objectId}); }
+    assert(installed>0,'Native cancel/CDK body-keydown handler installed before Escape');
+    await evaluate(`(() => {
+      const report={ready:${JSON.stringify(ready)},handlerCount:${installed}};
+      window.__shfNativeEscape=report;
+      document.addEventListener('keydown',e=>{
+        report.down={key:e.key,code:e.keyCode,trusted:e.isTrusted,hasFocus:document.hasFocus(),target:e.target.id||e.target.tagName};
+        window.__shfNativeEscapeEvent=e;
+      },{capture:true,once:true});
+      document.addEventListener('keyup',e=>{report.up={key:e.key,trusted:e.isTrusted}},{capture:true,once:true});
+    })()`);
+  }
+  const result=await rawSend(method,params);
+  if (method==='Input.dispatchKeyEvent' && params.type==='keyUp' && params.key==='Escape') {
+    const report=await evaluate(`(() => {const report=window.__shfNativeEscape;
+      if(report?.down)report.down.prevented=window.__shfNativeEscapeEvent?.defaultPrevented;
+      window.__shfNativeEscapeEvent=null;return report;})()`);
+    assert(report?.down?.trusted && report.down.hasFocus && report.down.key==='Escape' && report.down.code===27 &&
+      report?.up?.trusted && report.up.key==='Escape','Native Escape delivered to the actual focused CDP page');
+    console.log('PASS native Escape delivery', {kind:report.ready.kind,hasFocus:report.down.hasFocus,
+      stableFrames:report.ready.stableFrames,finiteAnimations:0,peakFinite:report.ready.peakFiniteAnimations,
+      handlerCount:report.handlerCount,keyCode:report.down.code,trusted:report.down.trusted,prevented:report.down.prevented});
+  }
+  return result;
 }
 async function evaluate(expression) {
   const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
@@ -51,6 +96,7 @@ async function size(width, height) {
 }
 async function navigate(path) {
   await send('Page.enable');
+  await activePage();
   const loaded = new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(Error('Document load timed out')), 20000);
     navigationLoaded = () => { clearTimeout(timer); resolve(); };
@@ -63,7 +109,16 @@ async function key(key, code = key, modifiers = 0) {
     ...(key === ' ' ? { text: ' ' } : key === 'Enter' ? { text: '\r' } : {}) });
   await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, modifiers, windowsVirtualKeyCode: vk });
 }
+async function activate(selector) {
+  await activePage();
+  await evaluate(`(() => {const n=document.querySelector(${JSON.stringify(selector)});
+    if(!n || n.matches(':disabled'))throw Error('Inactive keyboard activation target');
+    n.scrollIntoView({block:'center'});n.focus({preventScroll:true});
+    if(document.activeElement!==n)throw Error('Activation target not focused');})()`);
+  await key('Enter');
+}
 async function click(selector) {
+  await activePage();
   const r = await evaluate(`(async () => {
     const n = document.querySelector(${JSON.stringify(selector)});
     if (!n) throw Error('Missing click target'); n.scrollIntoView({block:'nearest'});
@@ -78,12 +133,8 @@ async function click(selector) {
   await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...r, button: 'left', clickCount: 1 });
   await evaluate(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))`);
 }
-async function input(id, value) {
-  await evaluate(`(() => { const n=document.getElementById(${JSON.stringify(id)});
-    n.focus(); n.value=${JSON.stringify(value)}; n.dispatchEvent(new Event('input',{bubbles:true}));
-    n.dispatchEvent(new Event('change',{bubbles:true})); })()`);
-    await evaluate(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))`);
-}
+const enterInput = physicalInput({ send, evaluate, wait });
+async function input(id,value) { await activePage(); await enterInput(id,value); }
 async function screenshot(name) {
   const { data } = await send('Page.captureScreenshot', { captureBeyondViewport: false });
   await mkdir('.angular/browser-evidence', { recursive: true });
@@ -103,7 +154,7 @@ const sample = (employeeId = '1001', shiftDayId = '2001') => {
 const principal = () => ({
   principal: { subject: 'synthetic:administrator', provider: 'synthetic', synthetic: true,
     displayName: 'Synthetic Administrator (local/isolated only)', roles: ['Administrator'],
-    capabilities: ['shift-day:read', 'current-shifts:read', 'shift-search:read', 'my-shifts:read', 'shift-items:read', 'employee:read'], employeeId: null, resourceScope: { orgUnitIds: ['TEST-U', 'TEST-V'] } },
+    capabilities: ['shift-day:read', 'current-shifts:read', 'shift-search:read', 'my-shifts:read', 'shift-items:read', 'employee:read', 'attendance:read'], employeeId: null, resourceScope: { orgUnitIds: ['TEST-U', 'TEST-V'] } },
   dataSource: 'isolated-fixture',
 });
 const context = () => ({
@@ -123,6 +174,7 @@ let searchMode = 'normal', searchContextMode = 'normal';
 let scheduleMode = 'normal', scheduleContextMode = 'normal';
 let itemsMode = 'normal';
 let cardMode = 'normal';
+let attendanceMode = 'normal', attendanceContextMode = 'normal';
 function operationalCard(url) {
   const employeeId = url.pathname.split('/')[4];
   const v = { employeeId, employee: {
@@ -242,6 +294,14 @@ handler = async event => {
   if (url.pathname.endsWith('/identity')) {
     if (identityMode === 'failure') return fulfill(event.requestId, problem(503), 503);
     const value = principal();
+    if (identityMode === 'no-attendance') {
+      value.principal.provider = 'real'; value.principal.synthetic = false;
+      value.principal.capabilities = value.principal.capabilities.filter(c => c !== 'attendance:read');
+    }
+    if (identityMode === 'attendance-only') {
+      value.principal.provider = 'real'; value.principal.synthetic = false;
+      value.principal.capabilities = ['attendance:read'];
+    }
     if (identityMode === 'oracle-items') value.dataSource = 'oracle';
     if (['no-items','no-card'].includes(identityMode)) {
       value.principal.provider = 'real'; value.principal.synthetic = false; value.principal.employeeId = '1001';
@@ -262,6 +322,18 @@ handler = async event => {
       value.principal.employeeId = identityMode === 'self-linked' ? '1001' : null;
     }
     return fulfill(event.requestId, value);
+  }
+  if (url.pathname === '/api/v1/attendance/filter-context') {
+    const value = attendanceBrowserContext();
+    if (attendanceContextMode === 'source') value.dataSource = 'oracle-read-only';
+    if (attendanceContextMode === 'hierarchy') value.teamOptions[0].code = value.mokedOptions[0].code;
+    return fulfill(event.requestId, value);
+  }
+  if (url.pathname === '/api/v1/attendance') {
+    if (attendanceMode === 'hold') { held = { id: event.requestId, url }; return; }
+    if (typeof attendanceMode === 'number') return fulfill(event.requestId,
+      { ...problem(attendanceMode), ...(attendanceMode === 400 ? { invalidParameters: [{ name: 'timeTo', reason: 'invalid-format' }] } : {}) }, attendanceMode);
+    return fulfill(event.requestId, attendanceBrowserList(url, attendanceMode));
   }
   if (url.pathname === '/api/v1/my-shifts/context') {
     if (scheduleContextMode === 'hold') { held = { id: event.requestId, url }; return; }
@@ -347,8 +419,20 @@ const readyDetail = () => wait(`document.activeElement.id === 'result-heading'`)
 try {
   console.log('Browser:', (await send('Browser.getVersion')).product, 'Angular with intercepted synthetic HTTP ONLY');
   await send('Runtime.enable'); await send('Network.enable');
+  console.log('Fresh owned CDP page before activation',await evaluate(`({hasFocus:document.hasFocus(),visibility:document.visibilityState})`));
   await send('Fetch.enable', { patterns: [{ urlPattern: '*/api/v1/*', requestStage: 'Request' }] });
-  if (process.env.SHF_CARD_ONLY) {
+  if (process.env.SHF_ATTENDANCE_ONLY) {
+    const run = process.env.SHF_ATTENDANCE_REVIEW_ONLY === '1' ? runAttendanceReviewChecks : runAttendanceChecks;
+    await run({ assert, send, evaluate, wait, size, navigate, key, click, activate, input, screenshot, noOverflow, calls,
+      setIdentity: v => { identityMode = v; }, setAttendance: v => { attendanceMode = v; },
+      setAttendanceContext: v => { attendanceContextMode = v; },
+      release: async (status = 200) => {
+        const old = held; held = null;
+        if (old) try { await fulfill(old.id, status===200 ? attendanceBrowserList(old.url, attendanceMode) : problem(status), status); }
+        catch (e) { if (!e.message.includes('Invalid InterceptionId')) throw e; }
+      },
+    });
+  } else if (process.env.SHF_CARD_ONLY) {
     await (await import('./employee-card-browser-check.mjs')).runEmployeeCardChecks({
       assert, send, evaluate, wait, size, navigate, key, click, input, screenshot, noOverflow, calls, readyList, readyDetail,
       setCard: v => { cardMode = v; }, setIdentity: v => { identityMode = v; }, setList: v => { listMode = v; },
@@ -559,8 +643,7 @@ try {
   }
   // SHF-SEARCH-UI-18: real Angular route, intercepted synthetic responses only.
   contextMode = 'normal'; identityMode = 'normal';
-  const readySearchContext = () => wait(`!!document.getElementById('search-submit') && !document.getElementById('search-submit').disabled &&
-    !!document.getElementById('search-date').value && !!document.getElementById('search-timeFrom').value && !!document.getElementById('search-timeTo').value`);
+  const readySearchContext = () => wait(formReadyExpression('shf-shift-search','search-date','search-submit'));
   const readySearch = () => wait(`!!document.getElementById('search-results')`);
   for (const width of [1440, 390, 320]) {
     await size(width, width === 1440 ? 900 : 844);
@@ -845,4 +928,5 @@ try {
   console.log('PASS: no browser storage, external requests or runtime exceptions. Screenshots .angular/browser-evidence, synthetic only.');
 } finally {
   await send('Fetch.disable').catch(() => {}); socket.close();
+  await fetch(`${cdp}/json/close/${target.id}`).catch(()=>{});
 }

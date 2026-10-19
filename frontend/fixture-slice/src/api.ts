@@ -4,10 +4,24 @@ import type { CurrentShiftRequestV1 } from './current-shifts-contract';
 import type { ShiftSearchRequestV1 } from '../../../backend/fixture-slice/shift-search-contracts.mts';
 import type { MyShiftsContextRequestV1, MyShiftsRequestV1 } from '../../../backend/fixture-slice/my-shifts-contracts.mts';
 import type { SelectedShiftItemsRequestV1 } from './shift-items-contract';
+import type { AttendanceRequestV1 } from '../../../backend/fixture-slice/attendance-contracts.mts';
 
 @Injectable({ providedIn: 'root' })
 export class SliceApi {
   private readonly http = inject(HttpClient);
+  attendanceContext() {
+    return this.http.get<unknown>('/api/v1/attendance/filter-context', { cache: 'no-store' });
+  }
+  attendance(request: AttendanceRequestV1) {
+    const params: Record<string, string> = {
+      attendanceDate: request.attendanceDate, timeFrom: request.timeFrom, timeTo: request.timeTo,
+      limit: String(request.limit ?? 25), offset: String(request.offset ?? 0), sort: 'effective-start-asc',
+    };
+    if (request.mokedCode !== undefined) params['mokedCode'] = request.mokedCode;
+    for (const key of ['teamCodes', 'innerJobCodes', 'workLocations'] as const)
+      if (request[key]?.length) params[key] = request[key]!.join(',');
+    return this.http.get<unknown>('/api/v1/attendance', { params, cache: 'no-store' });
+  }
   employeeCard(employeeId: string) {
     return this.http.get<unknown>(`/api/v1/employees/${employeeId}/operational-card`, { cache: 'no-store' });
   }

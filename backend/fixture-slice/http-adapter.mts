@@ -15,6 +15,8 @@ import { itemsProblem, ShiftItemsError } from "./shift-items-errors.mts";
 import { parseItemsQuery } from "./shift-items-validation.mts";
 import { EmployeeCardError, cardProblem } from "./employee-card-errors.mts";
 import { invalidCard, validateCardRequest } from "./read-employee-card.mts";
+import { invalidAttendance, parseAttendanceQuery } from "./attendance-validation.mts";
+import { attendanceProblem, AttendanceError } from "./attendance-errors.mts";
 
 export const REQUEST_BUDGET_MS = 5000;
 export const RESPONSE_LIMIT_BYTES = 16 * 1024;
@@ -31,6 +33,14 @@ function route(request: IncomingMessage) {
   const target = request.url ?? "";
   const question = target.indexOf("?");
   const path = question < 0 ? target : target.slice(0, question);
+  if (path === "/api/v1/attendance" || path === "/api/v1/attendance/filter-context") {
+    if (path.endsWith("/filter-context")) {
+      if (question >= 0) invalidAttendance("query", "unsupported");
+      return { kind: "attendance-context" as const };
+    }
+    return { kind: "attendance-list" as const,
+      query: parseAttendanceQuery(question < 0 ? "" : target.slice(question + 1)) };
+  }
   const cardMatch = /^\/api\/v1\/employees\/([^/]*)\/operational-card$/.exec(path);
   if (cardMatch) {
     const rawQuery = question < 0 ? "" : target.slice(question + 1);
@@ -125,6 +135,8 @@ function send(response: ServerResponse, status: number, contentType: string, pay
 export function createLoopbackServer(runtime: SliceRuntime) {
   const server = createServer(async (request, response) => {
     const requestId = randomUUID();
+    const attendanceEndpoint = ["/api/v1/attendance", "/api/v1/attendance/filter-context"]
+      .includes((request.url ?? "").split("?")[0]);
     const cardEndpoint = /^\/api\/v1\/employees\/[^/]*\/operational-card$/
       .test((request.url ?? "").split("?")[0]);
     const itemsEndpoint = /^\/api\/v1\/employees\/[^/]*\/shift-days\/[^/]*\/breaks-and-exceptions$/
@@ -155,6 +167,7 @@ export function createLoopbackServer(runtime: SliceRuntime) {
       // One budget spans authentication, input streaming and read. No automatic retries.
       // Promise.race suppresses late success; fixture/provider work has no connection to cancel.
       const work = async () => {
+        if (attendanceEndpoint && request.method !== "GET") throw new AttendanceError("INVALID_REQUEST");
         if (cardEndpoint && request.method !== "GET") throw new EmployeeCardError("INVALID_REQUEST");
         if (itemsEndpoint && request.method !== "GET") throw new ShiftItemsError("INVALID_REQUEST");
         const authorization = request.headers.authorization;
@@ -166,6 +179,8 @@ export function createLoopbackServer(runtime: SliceRuntime) {
         await requireEmptyBody(request);
         cancellation.signal.throwIfAborted();
         if (selected.kind === "identity") return runtime.identity(principal);
+        if (selected.kind === "attendance-context") return await runtime.attendanceContext(principal, cancellation.signal);
+        if (selected.kind === "attendance-list") return await runtime.attendanceList(principal, selected.query, cancellation.signal);
         if (selected.kind === "employee-card") return await runtime.employeeCard(principal,
           { employeeId: selected.employeeId }, cancellation.signal);
         if (selected.kind === "shift-items") return await runtime.shiftItems(principal,
@@ -181,7 +196,7 @@ export function createLoopbackServer(runtime: SliceRuntime) {
       const payload = await Promise.race([
         withRequestBudget(cancellation.signal, REQUEST_BUDGET_MS, async () => {
           const value = await work();
-          const json = serializeSuccess(value, itemsEndpoint || currentEndpoint || searchEndpoint || scheduleEndpoint
+          const json = serializeSuccess(value, attendanceEndpoint || itemsEndpoint || currentEndpoint || searchEndpoint || scheduleEndpoint
             ? CURRENT_RESPONSE_LIMIT_BYTES : RESPONSE_LIMIT_BYTES);
           if (performance.now() >= currentRequestBudget()!.deadline) throw new SliceError("DEPENDENCY_TIMEOUT");
           cancellation.signal.throwIfAborted();
@@ -192,17 +207,22 @@ export function createLoopbackServer(runtime: SliceRuntime) {
         payload);
     } catch (error) {
       if (!response.destroyed && !response.headersSent) {
-        const problem = cardEndpoint ? cardProblem(error, requestId) : itemsEndpoint ? itemsProblem(error, requestId) : scheduleEndpoint ? myShiftsProblem(error, requestId) : searchEndpoint ? searchProblem(error, requestId) : currentEndpoint ? currentProblem(
+        let problem = attendanceEndpoint ? attendanceProblem(error, requestId) : cardEndpoint ? cardProblem(error, requestId) : itemsEndpoint ? itemsProblem(error, requestId) : scheduleEndpoint ? myShiftsProblem(error, requestId) : searchEndpoint ? searchProblem(error, requestId) : currentEndpoint ? currentProblem(
           error instanceof SliceError && error.code === "INVALID_REQUEST"
             ? new CurrentShiftError("INVALID_REQUEST", error.invalidParameters?.map(p => ({
               name: p.name === "body" ? "body" : "query", reason: p.reason,
             }))) : error, requestId) : toProblem(error, requestId);
         response.setHeader("Connection", "close");
-        if ((cardEndpoint || itemsEndpoint) && request.method !== "GET") {
+        if ((attendanceEndpoint || cardEndpoint || itemsEndpoint) && request.method !== "GET") {
           problem.status = 405;
           response.setHeader("Allow", "GET");
         }
-        send(response, problem.status, "application/problem+json; charset=utf-8", JSON.stringify(problem));
+        let problemPayload = JSON.stringify(problem);
+        if (attendanceEndpoint && Buffer.byteLength(problemPayload, "utf8") > RESPONSE_LIMIT_BYTES) {
+          problem = attendanceProblem(new AttendanceError("INTERNAL_ERROR"), requestId);
+          problemPayload = JSON.stringify(problem);
+        }
+        send(response, problem.status, "application/problem+json; charset=utf-8", problemPayload);
         // Reject unread body without retaining a slow or oversized stream.
         request.resume();
       }

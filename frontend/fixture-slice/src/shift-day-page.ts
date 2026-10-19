@@ -54,6 +54,7 @@ export class ShiftDayPage {
   readonly fromDiagnostic = signal(false);
   readonly fromList = signal(false);
   readonly fromSearch = signal(false);
+  readonly fromAttendance = signal(false);
   readonly fromSchedule = signal(false);
   sourceUnit() {
     if (this.fromSchedule()) {
@@ -61,7 +62,8 @@ export class ShiftDayPage {
       return row && row.dataSource === this.principal()?.dataSource &&
         row.unit.code === this.row()?.employee.orgUnitId ? row.unit : null;
     }
-    const origin = this.fromSearch() ? this.navigation.searchOrigin : this.navigation.origin;
+    const origin = this.fromAttendance() ? this.navigation.attendanceOrigin :
+      this.fromSearch() ? this.navigation.searchOrigin : this.navigation.origin;
     return this.fromList() && origin && origin.dataSource === this.principal()?.dataSource &&
       origin.unit.code === this.row()?.employee.orgUnitId ? origin.unit : null;
   }
@@ -112,9 +114,11 @@ export class ShiftDayPage {
       const schedule = this.navigation.scheduleDetail;
       this.fromSchedule.set(this.navigation.detailOrigin === 'my-shifts' && !!pair &&
         pair.employeeId === schedule?.employeeId && pair.shiftDayId === schedule?.shiftDayId);
-      const origin = this.navigation.detailOrigin === 'shift-search' ? this.navigation.searchOrigin : this.navigation.origin;
+      const origin = this.navigation.detailOrigin === 'attendance' ? this.navigation.attendanceOrigin :
+        this.navigation.detailOrigin === 'shift-search' ? this.navigation.searchOrigin : this.navigation.origin;
       this.fromList.set(!!pair && !!origin && pair.employeeId === origin.employeeId && pair.shiftDayId === origin.shiftDayId);
       this.fromSearch.set(this.fromList() && this.navigation.detailOrigin === 'shift-search');
+      this.fromAttendance.set(this.fromList() && this.navigation.detailOrigin === 'attendance');
       if (this.fromList()) this.navigation.returning = true;
       // Only our supported diagnostic origin is recognized; never follow a return URL.
       this.fromDiagnostic.set(!!pair &&
@@ -183,8 +187,9 @@ export class ShiftDayPage {
     }
     if (this.fromList()) {
       this.navigation.returning = true;
-      if (this.journey.backIf(this.fromSearch() ? '/shift-search' : '/current-shifts')) return;
-      void this.router.navigate([this.fromSearch() ? '/shift-search' : '/current-shifts']);
+      const path = this.fromAttendance() ? '/attendance' : this.fromSearch() ? '/shift-search' : '/current-shifts';
+      if (this.journey.backIf(path)) return;
+      void this.router.navigate([path]);
       return;
     }
     void this.router.navigate(['/shift-day']).then(() => this.focusInput());

@@ -2,13 +2,14 @@
 // Refuses non-fixture identity before opening the UI or requesting business data.
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { physicalInput, formReadyExpression } from './browser-interactions.ts';
 const app = process.env.SHF_UI_URL ?? 'http://127.0.0.1:4328';
 const cdp = process.env.SHF_CDP_URL ?? 'http://127.0.0.1:9338';
 assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(app) && /^http:\/\/127\.0\.0\.1:\d+$/.test(cdp));
 const identity = await fetch(`${app}/api/v1/identity`, { cache: 'no-store' }).then(r => r.json());
 assert.equal(identity.dataSource, 'isolated-fixture', 'Never run against Oracle');
 assert.equal(identity.principal.synthetic, true);
-assert.deepEqual(identity.principal.capabilities, ['shift-day:read', 'current-shifts:read', 'shift-search:read', 'my-shifts:read', 'shift-items:read', 'employee:read']);
+assert.deepEqual(identity.principal.capabilities, ['shift-day:read', 'current-shifts:read', 'shift-search:read', 'my-shifts:read', 'shift-items:read', 'employee:read', 'attendance:read']);
 const target = (await fetch(`${cdp}/json/list`).then(r => r.json())).find(t => t.type === 'page');
 const socket = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise(r => { socket.onopen = r; });
@@ -23,15 +24,15 @@ socket.onmessage = e => {
   else if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error')
     errors.push(m.params.args.map(a => a.description?.split('\n')[0] ?? a.value ?? 'console error').join(' '));
   else if (m.method === 'Network.responseReceived' && m.params.response.url.includes('/api/v1/')) {
-    apiResponses.push({ url: new URL(m.params.response.url).pathname, status: m.params.response.status,
+    apiResponses.push({ url: new URL(m.params.response.url).pathname, query: new URL(m.params.response.url).search, status: m.params.response.status,
       cache: m.params.response.headers['cache-control'] ?? m.params.response.headers['Cache-Control'] });
   }
 };
 async function searchScenarios() {
   for (const width of [1440, 390, 320]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: width === 1440 ? 900 : 844, deviceScaleFactor: 1, mobile: false });
-    await send('Page.navigate', { url: `${app}/shift-search` });
-    await wait(`!!document.getElementById('search-submit') && !document.getElementById('search-submit').disabled`);
+    await navigate('/shift-search');
+    await wait(formReadyExpression('shf-shift-search','search-date','search-submit'));
     assert.equal(await evaluate(`!!document.querySelector('table')`), false, 'No hidden automatic search');
     await input('search-date', '15/10/2026'); await input('search-timeFrom', '10:00'); await input('search-timeTo', '10:00');
     await evaluate(`document.getElementById('search-submit').click()`);
@@ -72,8 +73,8 @@ async function searchScenarios() {
 async function searchTokenScenarios() {
     for (const width of [1440, 390, 320]) {
       await send('Emulation.setDeviceMetricsOverride', { width, height: width === 1440 ? 900 : 844, deviceScaleFactor: 1, mobile: false });
-      await send('Page.navigate', { url: `${app}/shift-search` });
-      await wait(`!!document.getElementById('search-submit') && !document.getElementById('search-submit').disabled`);
+      await navigate('/shift-search');
+      await wait(formReadyExpression('shf-shift-search','search-date','search-submit'));
       await input('search-date', '15/10/2026'); await input('search-timeFrom', '10:00'); await input('search-timeTo', '10:00');
       await evaluate(`document.getElementById('search-submit').click()`);
       await wait(`!!document.getElementById('search-detail-3001')`);
@@ -114,17 +115,19 @@ async function searchTokenScenarios() {
 async function scheduleScenarios() {
       for (const width of [1440,390,320]) {
         await send('Emulation.setDeviceMetricsOverride', { width, height: width === 1440 ? 900 : 844, deviceScaleFactor: 1, mobile: false });
-        await send('Page.navigate', { url: `${app}/my-shifts` });
+        await navigate('/my-shifts');
         await wait(`location.pathname === '/my-shifts' && document.querySelector('main')?.textContent.includes('נדרשת בחירת')`);
         assert.equal(await evaluate(`document.querySelectorAll('main input').length`), 0);
-        await send('Page.navigate', { url: `${app}/shift-search` });
-        await wait(`location.pathname === '/shift-search' && !!document.getElementById('search-submit') && !document.getElementById('search-submit').disabled`);
+        await navigate('/shift-search');
+        await wait(formReadyExpression('shf-shift-search','search-date','search-submit'));
         await input('search-date','15/10/2026'); await input('search-timeFrom','10:00'); await input('search-timeTo','10:00');
         await evaluate(`document.getElementById('search-submit').click()`);
         await wait(`!!document.getElementById('search-schedule-3001')`);
         await evaluate(`document.getElementById('search-schedule-3001').click()`);
         await wait(`!!document.getElementById('schedule-dateFrom') && !document.getElementById('schedule-apply').disabled`);
-        await input('schedule-dateFrom','15/10/2026'); await input('schedule-dateTo','28/10/2026');
+        // Keep the original 30-row schedule scenario isolated from the new
+        // explicitly merged 19 October attendance days.
+        await input('schedule-dateFrom','15/10/2026'); await input('schedule-dateTo','16/10/2026');
         await evaluate(`document.getElementById('schedule-apply').click()`);
         await wait(`!!document.getElementById('schedule-detail-3001')`);
         assert.equal(await evaluate(`document.querySelectorAll('tbody tr').length`), 25);
@@ -165,9 +168,14 @@ async function wait(expression) {
   }
   throw Error(`Timed out ${expression}`);
 }
-async function input(id, value) {
-  await evaluate(`(() => { const n=document.getElementById('${id}'); n.value='${value}';
-    n.dispatchEvent(new Event('input',{bubbles:true})); n.dispatchEvent(new Event('change',{bubbles:true})); })()`);
+const input = physicalInput({ send, evaluate, wait });
+async function navigate(path) {
+  const marker=crypto.randomUUID(),url=new URL(path,app);
+  await evaluate(`window.__shfRunnerLeaving=${JSON.stringify(marker)}`);
+  await send('Page.navigate',{url:url.href});
+  await wait(`window.__shfRunnerLeaving!==${JSON.stringify(marker)} &&
+    location.pathname===${JSON.stringify(url.pathname)} && location.search===${JSON.stringify(url.search)} &&
+    document.readyState==='complete'`);
 }
 async function screenshot(name) {
   const r = await send('Page.captureScreenshot', { captureBeyondViewport: false });
@@ -176,13 +184,20 @@ async function screenshot(name) {
 }
 try {
   await send('Fetch.disable'); await send('Runtime.enable'); await send('Network.enable');
-  if (process.env.SHF_CARD_ONLY === '1') {
+  if (process.env.SHF_ATTENDANCE_ONLY === '1') {
+    await (await import('./attendance-proxy-check.mjs')).runAttendanceProxyChecks({
+      assert, app, send, evaluate, wait, input, screenshot, apiResponses,
+    });
+    assert(apiResponses.some(r=>r.url==='/api/v1/attendance'));
+    assert(apiResponses.every(r=>r.cache==='no-store')); assert.deepEqual(errors,[]);
+    console.log('PASS actual Node attendance fixture proxy: no interception, exact seven-cap synthetic identity, no runtime exceptions. No Oracle.');
+  } else if (process.env.SHF_CARD_ONLY === '1') {
     await (await import('./employee-card-proxy-check.mjs')).runEmployeeCardProxyChecks({
       assert, app, send, evaluate, wait, input, screenshot, apiResponses,
     });
     assert(apiResponses.some(r=>r.url.endsWith('/operational-card')));
     assert(apiResponses.every(r=>r.cache==='no-store')); assert.deepEqual(errors,[]);
-    console.log('PASS actual Node fixture proxy CARD: no interception, isolated synthetic six-cap identity, no runtime exceptions. No real provider/Oracle.');
+    console.log('PASS actual Node fixture proxy CARD: no interception, isolated synthetic seven-cap identity, no runtime exceptions. No real provider/Oracle.');
   } else if (process.env.SHF_ITEMS_ONLY === '1') {
     const { runItemsProxyChecks } = await import('./items-proxy-check.mjs');
     await runItemsProxyChecks({ assert, app, send, evaluate, wait, input, screenshot, apiResponses });
@@ -198,8 +213,8 @@ try {
   } else {
   for (const width of [1440, 390]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: width === 1440 ? 900 : 844, deviceScaleFactor: 1, mobile: false });
-    await send('Page.navigate', { url: `${app}/current-shifts` });
-    await wait(`!!document.getElementById('results-heading')`);
+    await navigate('/current-shifts');
+    await wait(formReadyExpression('shf-current-shifts','filter-date','list-search'));
     await input('filter-date', '15/10/2026'); await input('filter-time', '23:59');
     await evaluate(`document.getElementById('list-search').click()`);
     await wait(`!!document.getElementById('detail-2001') && document.querySelector('.applied').textContent.includes('23:59')`);

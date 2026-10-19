@@ -26,6 +26,10 @@ import { validateItemsRequest } from "./shift-items-validation.mts";
 import type { EmployeeOperationalCardReadPort, EmployeeOperationalCardRequestV1 } from "./employee-card-contracts.mts";
 import { GetEmployeeOperationalCard, validateCardRequest } from "./read-employee-card.mts";
 import { employeeCardAccessPolicy } from "./access-policy.mts";
+import type { AttendanceReadPort, AttendanceRequestV1 } from "./attendance-contracts.mts";
+import { ReadAttendance } from "./read-attendance.mts";
+import { validateAttendanceRequest } from "./attendance-validation.mts";
+import { AttendanceError } from "./attendance-errors.mts";
 
 export interface CurrentRuntimeOptions {
   reader: CurrentShiftReadPort;
@@ -34,6 +38,7 @@ export interface CurrentRuntimeOptions {
   myShiftsReader?: MyShiftsReader;
   shiftItemsReader?: SelectedShiftItemsReadPort;
   employeeCardReader?: EmployeeOperationalCardReadPort;
+  attendanceReader?: AttendanceReadPort;
 }
 
 export class SyntheticAdministratorProvider implements AuthenticationProvider {
@@ -49,7 +54,7 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
       subject: "synthetic:administrator",
       displayName: "Synthetic Administrator (local/isolated only)",
       provider: "synthetic", synthetic: true, roles: ["Administrator"],
-      capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read"], employeeId: null,
+      capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read", "attendance:read"], employeeId: null,
       resourceScope: { orgUnitIds: [...this.orgUnitIds] },
     };
   }
@@ -79,6 +84,9 @@ export async function createRuntime(
     ? new ReadCurrentShifts(currentOptions.reader, currentOptions.clock ?? systemClock,
       config.businessTimeZone, config.dataSource)
     : undefined;
+  const attendance = currentOptions?.attendanceReader
+    ? new ReadAttendance(currentOptions.attendanceReader, currentOptions.clock ?? systemClock,
+      config.businessTimeZone, config.dataSource) : undefined;
   if (currentOptions?.searchReader && (!("dataSource" in currentOptions.searchReader) ||
       currentOptions.searchReader.dataSource !== config.dataSource))
     throw new Error("Explicit search source mismatch");
@@ -139,6 +147,16 @@ export async function createRuntime(
   }
   return Object.freeze({
     authenticate,
+    attendanceContext: (p: PrincipalV1, signal?: AbortSignal) => {
+      validatePrincipal(p); accessPolicy.requireAttendanceRead(p);
+      if (!attendance) throw new AttendanceError("DEPENDENCY_UNAVAILABLE");
+      return attendance.context(p, signal);
+    },
+    attendanceList: (p: PrincipalV1, r: AttendanceRequestV1, signal?: AbortSignal) => {
+      validatePrincipal(p); validateAttendanceRequest(r); accessPolicy.requireAttendanceRead(p);
+      if (!attendance) throw new AttendanceError("DEPENDENCY_UNAVAILABLE");
+      return attendance.list(p, r, signal);
+    },
     employeeCard: async (p: PrincipalV1, request: EmployeeOperationalCardRequestV1, signal?: AbortSignal) => {
       validatePrincipal(p); validateCardRequest(request); cardPolicy.requireEmployeeRead(p);
       if (!cardPolicy.canReadSelectedEmployee(p, request.employeeId)) throw new SliceError("FORBIDDEN");

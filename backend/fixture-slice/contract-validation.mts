@@ -58,16 +58,17 @@ export function validatePrincipal(value: unknown): asserts value is PrincipalV1 
       !Array.isArray(value.roles) || value.roles.some(role => role !== "Administrator") ||
       new Set(value.roles).size !== value.roles.length ||
       !Array.isArray(value.capabilities) ||
-      value.capabilities.some(c => c !== "shift-day:read" && c !== "current-shifts:read" && c !== "shift-search:read" && c !== "my-shifts:read" && c !== "shift-items:read" && c !== "employee:read") ||
+      value.capabilities.some(c => c !== "shift-day:read" && c !== "current-shifts:read" && c !== "shift-search:read" && c !== "my-shifts:read" && c !== "shift-items:read" && c !== "employee:read" && c !== "attendance:read") ||
       new Set(value.capabilities).size !== value.capabilities.length ||
       !(value.employeeId === null || decimalId(value.employeeId)) ||
       !record(value.resourceScope) || !units(value.resourceScope.orgUnitIds, false)) return fail();
   if (value.synthetic && (value.subject !== "synthetic:administrator" ||
       value.displayName !== "Synthetic Administrator (local/isolated only)" ||
-      value.employeeId !== null || value.roles.length !== 1 || value.capabilities.length !== 6 ||
+      value.employeeId !== null || value.roles.length !== 1 || value.capabilities.length !== 7 ||
       value.capabilities[0] !== "shift-day:read" || value.capabilities[1] !== "current-shifts:read" ||
       value.capabilities[2] !== "shift-search:read" || value.capabilities[3] !== "my-shifts:read" ||
       value.capabilities[4] !== "shift-items:read" || value.capabilities[5] !== "employee:read" ||
+      value.capabilities[6] !== "attendance:read" ||
       value.resourceScope.orgUnitIds.length === 0 || value.resourceScope.orgUnitIds.length > 100)) return fail();
 }
 export function validateIds(employeeId: unknown, shiftDayId: unknown): void {

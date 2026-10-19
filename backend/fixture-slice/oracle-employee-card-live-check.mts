@@ -196,7 +196,7 @@ export async function runOracleEmployeeCardLiveCheck(env: NodeJS.ProcessEnv, tes
     result.identityVerified = identityResponse.status === 200 && record(identity) && identity.dataSource === "oracle" &&
       record(identity.principal) && identity.principal.employeeId === null && identity.principal.synthetic === true &&
       isDeepStrictEqual(identity.principal.capabilities, ["shift-day:read", "current-shifts:read",
-        "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read"]);
+        "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read", "attendance:read"]);
     if (!result.identityVerified) throw new SliceError("INVALID_SOURCE_DATA");
     result.sourceCoherent = result.privacyAllowlist && result.identityVerified;
     result.workflow = result.cardHttpStatus === 200 ? "PASS" : "CANONICAL_ERROR";

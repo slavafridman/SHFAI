@@ -74,6 +74,7 @@ export class EmployeeCardPage {
     return path?.endsWith('/breaks-and-exceptions') ? 'חזרה להפסקות וחריגות חלקיות' :
       path?.includes('/shift-days/') ? 'חזרה לפרטי משמרת' :
       path?.startsWith('/my-shifts') ? 'חזרה למשמרות העובד/ת' :
+      path === '/attendance' ? 'חזרה לבירור נוכחות' :
       path === '/shift-search' ? 'חזרה לחיפוש משמרות' :
       path === '/current-shifts' ? 'חזרה למשמרות נוכחיות' : 'משמרות נוכחיות — ללא רשימת מקור שמורה';
   }

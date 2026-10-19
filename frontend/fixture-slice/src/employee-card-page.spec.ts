@@ -34,7 +34,7 @@ describe('CARD real Angular component / synthetic HTTP', () => {
   });
   it('old five rights and Administrator role do not grant the independent right', () => {
     const p = fixtureIdentity(); p.principal.synthetic = false; p.principal.provider = 'real';
-    p.principal.employeeId = '1001'; p.principal.capabilities.pop();
+    p.principal.employeeId = '1001'; p.principal.capabilities = p.principal.capabilities.filter(c => c !== 'employee:read');
     http.expectOne('/api/v1/identity').flush(p); render(); http.expectNone(endpoint);
     expect(page.state()).toBe('error'); expect(page.canRead()).toBe(false);
   });

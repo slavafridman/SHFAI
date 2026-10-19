@@ -10,6 +10,23 @@ const search = await load('shift-search.synthetic.json'), detail = await load('s
 // Stable synthetic IDs; 30 rows exercise offset pagination without personal data.
 search.days = Array.from({ length: 30 }, (_, i) => ({ ...structuredClone(search.days[0]), shiftDayId: String(3001 + i) }));
 const details = search.days.map(d => ({ ...structuredClone(detail[0]), shiftDayId: d.shiftDayId }));
+const attendance = process.env.SHF_UI_ATTENDANCE_FIXTURE === '1' ? await load('attendance.synthetic.json') : null;
+if (attendance) {
+  attendance.days.push(...Array.from({ length: 28 }, (_, i) => ({
+    ...structuredClone(attendance.days[0]), shiftDayId: String(5203 + i),
+  })));
+  details.push(...attendance.days.map(d => {
+    const employee = attendance.employees.find(e => e.employeeNumber === d.employeeKey);
+    assert(employee, 'Exact synthetic employee key required');
+    const a = attendance.attendance.find(a => a.shiftDayId === d.shiftDayId);
+    return { employeeId: employee.employeeId, shiftDayId: d.shiftDayId, firstName: employee.firstName, lastName: employee.lastName,
+      orgUnitId: employee.teamCode, baselineStartLocal: d.baselineStartLocal, changedStartLocal: d.changedStartLocal,
+      baselineEndLocal: d.baselineEndLocal, changedEndLocal: d.changedEndLocal,
+      baselineActivityData: d.baselineActivityData, changedActivityData: d.changedActivityData,
+      baselineSiteId: null, changedSiteId: null, stageArrivalLocal: a?.stageArrivalLocal ?? null,
+      stationArrivalLocal: a?.stationArrivalLocal ?? null, stationExitLocal: a?.stationExitLocal ?? null };
+  }));
+}
 const merged = [...await load('rows.synthetic.json'), ...details];
 const current = await load('current-shifts.synthetic.json');
 // Explicit frontend test opt-in to the stable backend §29 fixture seam.
@@ -37,6 +54,11 @@ const selectedItems = process.env.SHF_UI_ITEMS_FIXTURE === '1' ? {
 } : null;
 const schedule = structuredClone(search);
 schedule.days = search.days.map(d => ({ ...d, hasChange: false }));
+if (attendance) {
+  for (const employee of attendance.employees)
+    if (!schedule.employees.some(e => e.employeeId === employee.employeeId)) schedule.employees.push(employee);
+  schedule.days.push(...attendance.days.map(d => ({ ...structuredClone(search.days[0]), ...d })));
+}
 assert.equal(new Set(merged.map(r => `${r.employeeId}/${r.shiftDayId}`)).size, merged.length, 'No duplicate detail pairs');
 const server = await startFromEnvironment({
   SHF_FIXTURE_CONFIG: JSON.stringify(config),
@@ -44,6 +66,7 @@ const server = await startFromEnvironment({
   SHF_CURRENT_SHIFTS_FIXTURE: JSON.stringify(current),
   SHF_SHIFT_SEARCH_FIXTURE: JSON.stringify(search),
   SHF_MY_SHIFTS_FIXTURE: JSON.stringify(schedule),
+  ...(attendance ? { SHF_ATTENDANCE_FIXTURE: JSON.stringify(attendance) } : {}),
   ...(selectedItems ? { SHF_SHIFT_ITEMS_FIXTURE: JSON.stringify(selectedItems) } : {}),
   ...(process.env.SHF_UI_EMPLOYEE_CARD_FIXTURE === '1'
     ? { SHF_EMPLOYEE_CARD_FIXTURE: JSON.stringify(await load('employee-card.synthetic.json')) } : {}),

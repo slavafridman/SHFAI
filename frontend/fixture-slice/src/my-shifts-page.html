@@ -3,14 +3,14 @@
   <div class="heading"><h1 tabindex="-1">{{ selector.mode === 'self' && !context()?.selectionRequired && principal()?.principal?.provider === 'real' ? 'המשמרות שלי' : 'משמרות העובד/ת' }}</h1><span>קריאה בלבד</span></div>
   @if (upstream()) {
     <button id="schedule-back" mat-stroked-button type="button" (click)="back()">
-      {{ upstream() === 'shift-search' ? 'חזרה לחיפוש משמרות' : 'חזרה למשמרות נוכחיות' }}</button>
+      {{ upstream() === 'attendance' ? 'חזרה לבירור נוכחות' : upstream() === 'shift-search' ? 'חזרה לחיפוש משמרות' : 'חזרה למשמרות נוכחיות' }}</button>
   }
   @if (context()?.actor?.employee; as employee) {
     <section class="surface actor" aria-label="הקשר עובד/ת נבחר/ת">
       <shf-employee-name [principal]="principal()" [employeeId]="employee.employeeId"
         [firstName]="employee.firstName" [lastName]="employee.lastName" opener="card-schedule-header" />
       <span>{{ employee.unit.label }} · {{ employee.unit.moked.label }}</span>
-      <span>{{ upstream() === 'shift-search' ? 'מקור: תוצאת חיפוש' : upstream() === 'current-shifts' ? 'מקור: משמרות נוכחיות' : selector.mode === 'self' ? 'מקור: קישור עובד/ת מאומת בשירות' : 'מקור: קישור ישיר — בחירה שנבדקה בשירות' }}</span>
+      <span>{{ upstream() === 'attendance' ? 'מקור: בירור נוכחות' : upstream() === 'shift-search' ? 'מקור: תוצאת חיפוש' : upstream() === 'current-shifts' ? 'מקור: משמרות נוכחיות' : selector.mode === 'self' ? 'מקור: קישור עובד/ת מאומת בשירות' : 'מקור: קישור ישיר — בחירה שנבדקה בשירות' }}</span>
     </section>
     <form [formGroup]="form" (ngSubmit)="apply()">
       <fieldset class="surface filters"><legend>טווח תחילת משמרת</legend>

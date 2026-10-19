@@ -1,4 +1,5 @@
 // Invoked by the existing intercepted Chrome checker; all data is synthetic.
+import { formReadyExpression } from './browser-interactions.ts';
 export async function runItemsChecks(h) {
   const { assert, send, evaluate, wait, size, navigate, key, click, input, screenshot,
     noOverflow, calls, readyList, readyDetail, setItems, setIdentity, setList, setSearch, setSchedule, release } = h;
@@ -31,7 +32,7 @@ export async function runItemsChecks(h) {
   await forward(route); await ready();
   await back('/current-shifts'); await readyList();
   await navigate('/shift-search');
-  await wait(`!!document.getElementById('search-timeFrom') && !document.getElementById('search-timeFrom').disabled && !document.querySelector('mat-progress-bar')`);
+  await wait(formReadyExpression('shf-shift-search','search-timeFrom','search-submit'));
   await input('search-timeFrom','09:00'); await input('search-timeTo','11:00');
   await click('#search-submit'); await wait(`!!document.getElementById('search-items-3001')`);
   await click('#search-items-3001'); await ready();
@@ -98,7 +99,7 @@ export async function runItemsChecks(h) {
   setList('normal');
   // Search's second-page filters remain independent of schedule's own page/range.
   setSearch('pages'); await navigate('/shift-search');
-  await wait(`!!document.getElementById('search-timeFrom') && !document.getElementById('search-timeFrom').disabled`);
+  await wait(formReadyExpression('shf-shift-search','search-timeFrom','search-submit'));
   await input('search-timeFrom','09:00'); await input('search-timeTo','11:00'); await click('#search-submit');
   await wait(`!!document.getElementById('search-items-3001')`);
   await click('#search-next'); await wait(`!!document.getElementById('search-items-3026')`);
@@ -149,7 +150,8 @@ export async function runItemsChecks(h) {
   for (const mode of ['failure','malformed','no-items','no-detail-items']) {
     setIdentity(mode); const before=count(); await navigate(route); await error(); assert.equal(count(),before);
     if (mode==='no-items') {
-      assert.equal(await evaluate(`document.querySelectorAll('.sidebar a').length`),4);
+      assert.deepEqual(await evaluate(`[...document.querySelectorAll('.sidebar a')].map(a=>a.getAttribute('href'))`),
+        ['/current-shifts','/shift-search','/my-shifts','/employee-card','/attendance']);
       assert.equal(await evaluate(`document.querySelector('.sidebar a[href="/employee-card"]').textContent.trim()`),'כרטיס עובד/ת');
     }
   }
@@ -182,7 +184,7 @@ export async function runItemsChecks(h) {
   await evaluate(`document.querySelectorAll('a.row-link').forEach(n=>n.style.fontSize='30px')`); await noOverflow();
   assert(await evaluate(`getComputedStyle(document.getElementById('items-2001')).whiteSpace==='normal'`));
   await navigate('/shift-search');
-  await wait(`!!document.getElementById('search-timeFrom') && !document.getElementById('search-timeFrom').disabled`);
+  await wait(formReadyExpression('shf-shift-search','search-timeFrom','search-submit'));
   await click('#search-submit'); await wait(`!!document.getElementById('search-items-3001')`);
   await evaluate(`document.querySelectorAll('a.row-link').forEach(n=>n.style.fontSize='30px')`); await noOverflow();
   await click('#search-schedule-3001'); await wait(`!!document.getElementById('schedule-items-4001')`);

@@ -1,0 +1,37 @@
+{
+  "catalog": {
+    "mokedUnits": [{ "code": "P01", "label": "מוקד בדיקה סינתטי", "unitType": "G01" }],
+    "teams": [{ "code": "TEST-U", "label": "צוות בדיקה סינתטי", "unitType": "J01", "parentMokedCode": "P01" }]
+  },
+  "employees": [
+    { "employeeId": "1001", "employeeNumber": "TEST0001", "firstName": "דנה", "lastName": "סינתטית", "teamCode": "TEST-U", "innerJobCode": "1" },
+    { "employeeId": "1002", "employeeNumber": "TEST0002", "firstName": "נועם", "lastName": "סינתטי", "teamCode": "TEST-U", "innerJobCode": null }
+  ],
+  "days": [
+    {
+      "shiftDayId": "5201", "employeeKey": "TEST0001", "changedEmployeeKey": null, "hasChange": false,
+      "baselineStartLocal": "2026-10-19T10:00:00", "changedStartLocal": null,
+      "baselineEndLocal": "2026-10-19T18:00:00", "changedEndLocal": null,
+      "baselineSplitEndLocal": null, "changedSplitEndLocal": null,
+      "baselineDayType": 4, "changedDayType": null, "cancellationReason": null,
+      "baselineActivityData": "UNKNOWN;TEST;UNKNOWN", "changedActivityData": null,
+      "baselineHome": null, "changedHome": null, "exceptionCode": null
+    },
+    {
+      "shiftDayId": "5202", "employeeKey": "TEST0002", "changedEmployeeKey": null, "hasChange": false,
+      "baselineStartLocal": "2026-10-19T08:00:00", "changedStartLocal": null,
+      "baselineEndLocal": "2026-10-20T02:00:00", "changedEndLocal": null,
+      "baselineSplitEndLocal": "2026-10-19T10:00:00", "changedSplitEndLocal": null,
+      "baselineDayType": 4, "changedDayType": null, "cancellationReason": null,
+      "baselineActivityData": null, "changedActivityData": null,
+      "baselineHome": "N", "changedHome": null, "exceptionCode": null
+    }
+  ],
+  "attendance": [
+    { "shiftDayId": "5202", "stageArrivalLocal": null, "stationArrivalLocal": "2026-10-20T00:07:13",
+      "stationExitLocal": "2026-10-20T02:03:41", "missingReasonCode": "0", "briefingCode": "0" }
+  ],
+  "activities": [{ "code": "TEST", "label": "פעילות סינתטית" }],
+  "innerJobs": [{ "code": "1", "label": "תפקיד סינתטי", "orgUnitId": "TEST-U", "active": 1 }],
+  "exceptions": []
+}

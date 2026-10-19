@@ -6,6 +6,7 @@ import type { MyShiftsAccessPolicy } from "./my-shifts-contracts.mts";
 import { validateRuntimeConfig } from "./runtime-config.mts";
 import type { SelectedShiftItemsAccessPolicy } from "./shift-items-contracts.mts";
 import type { EmployeeOperationalCardAccessPolicy } from "./employee-card-contracts.mts";
+import type { AttendanceAccessPolicy } from "./attendance-contracts.mts";
 
 export function employeeCardAccessPolicy(configuration: unknown): EmployeeOperationalCardAccessPolicy {
   const config = validateRuntimeConfig(configuration);
@@ -17,7 +18,9 @@ export function employeeCardAccessPolicy(configuration: unknown): EmployeeOperat
   };
 }
 
-export const accessPolicy: AccessPolicy & CurrentShiftAccessPolicy & ShiftSearchAccessPolicy = {
+export const accessPolicy: AccessPolicy & CurrentShiftAccessPolicy & ShiftSearchAccessPolicy & AttendanceAccessPolicy = {
+  requireAttendanceRead(p) { this.requireCapability(p, "attendance:read"); },
+  authorizedAttendanceTeamIds(p) { return [...p.resourceScope.orgUnitIds]; },
   requireShiftSearchRead(principal) {
     this.requireCapability(principal, "shift-search:read");
   },

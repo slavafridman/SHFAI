@@ -1,0 +1,24 @@
+@use './shift-search-page.scss';
+table { min-width:1560px }
+.date-time-token { display:inline-block; white-space:nowrap; overflow-wrap:normal }
+.reload { margin-block:12px; min-height:48px }
+// Material's button reset outranks the generic global :focus-visible rule.
+// Keep this scoped to the actual focusable reload node, including aria-disabled
+// pending states; the Material 12% state layer alone is not a focus indicator.
+#attendance-reload:focus-visible { outline:3px solid #002f65; outline-offset:3px }
+#attendance-reload { scroll-margin-block-start:84px }
+.catalog-code { overflow-wrap:anywhere }
+.planned-help { line-height:1.7 }
+// Material's transformed floating label can overflow its notch when root-rem
+// text is enlarged. Bound the projected label to its OWN field, not the page.
+// Ellipsis is visual only: the complete Hebrew label remains the input's
+// accessible name, and the planned-start/split meaning is also in the helper.
+mat-form-field { container-type:inline-size }
+mat-label {
+  display:inline-block; max-inline-size:calc(100cqi - 64px);
+  overflow:hidden; text-overflow:ellipsis; vertical-align:middle;
+}
+@media(max-width:760px) {
+  table { min-width:0 }
+  .date-time-token { font-size:1em }
+}

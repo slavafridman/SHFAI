@@ -1,4 +1,5 @@
 // Real Angular -> own loopback proxy -> own Node isolated fixture. NO interception.
+import { formReadyExpression } from './browser-interactions.ts';
 export async function runEmployeeCardProxyChecks(h) {
   const {assert,app,send,evaluate,wait,input,screenshot,apiResponses} = h;
   const ready = () => wait(`!!document.querySelector('.operational-card') && !document.querySelector('mat-progress-bar')`);
@@ -15,9 +16,20 @@ export async function runEmployeeCardProxyChecks(h) {
   };
   for (const width of [1440,390,320]) {
     await send('Emulation.setDeviceMetricsOverride',{width,height:width===1440?900:844,deviceScaleFactor:1,mobile:false});
-    await navigate('/current-shifts'); await wait(`!!document.getElementById('list-search') && !document.getElementById('list-search').disabled`);
+    await navigate('/current-shifts');
+    await wait(formReadyExpression('shf-current-shifts', 'filter-date', 'list-search'));
     await input('filter-date','15/10/2026'); await input('filter-time','23:59'); await click('list-search');
     await wait(`!!document.getElementById('card-current-2001')`);
+    // Verify the effective route/source/query, not just a DOM input value.
+    // This is the old timeout's actual producer: the authoritative current
+    // response must reflect the explicitly entered date/minute before linking.
+    const current = apiResponses.filter(r=>r.url==='/api/v1/current-shifts').at(-1);
+    const query = new URLSearchParams(current.query);
+    assert.equal(current.status,200);
+    assert.equal(query.get('attendanceDate'),'2026-10-15'); assert.equal(query.get('currentTime'),'23:59');
+    assert(await evaluate(`document.querySelector('shf-current-shifts .applied').textContent.includes('23:59')`));
+    assert(await evaluate(`document.getElementById('filter-date').classList.contains('ng-touched') &&
+      document.getElementById('filter-time').classList.contains('ng-touched')`));
     const n = apiResponses.filter(r=>r.url.endsWith('/operational-card')).length;
     await click('card-current-2001'); await ready();
     assert.equal(await evaluate('location.pathname'),'/employees/1001/operational-card');
@@ -31,7 +43,8 @@ export async function runEmployeeCardProxyChecks(h) {
     await click('card-back'); await wait(`document.activeElement.id==='card-current-2001'`);
     assert.equal(await evaluate(`document.getElementById('filter-time').value`),'23:59');
   }
-  await navigate('/shift-search'); await wait(`!!document.getElementById('search-submit') && !document.getElementById('search-submit').disabled`);
+  await navigate('/shift-search');
+  await wait(formReadyExpression('shf-shift-search', 'search-date', 'search-submit'));
   await input('search-date','15/10/2026'); await input('search-timeFrom','10:00'); await input('search-timeTo','10:00');
   await click('search-submit'); await wait(`!!document.getElementById('card-search-3001')`);
   await click('card-search-3001'); await ready(); await click('card-back');

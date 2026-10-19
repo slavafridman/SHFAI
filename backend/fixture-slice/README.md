@@ -1,4 +1,4 @@
-# SHF read-only backend: detail, current, search, schedule, items and operational card
+# SHF read-only backend: detail, current, search, schedule, items, card and attendance
 
 Implements approved section 13 v0.1 of `docs/SHF_REVERSE_ENGINEERING_DESIGN.md`;
 section 15 records detail approval and section 17 approves the local tooling.
@@ -877,3 +877,158 @@ query-plan/load/policy/grant certification, frontend/browser/RTL/a11y checks.
 Database/platform owners retain deployed policy/performance/native network
 failure risks; frontend/QA own browser acceptance. No dependency installation,
 upgrade, root/docs/frontend/legacy/canonical change or deployment was needed.
+
+## SHF-ATTENDANCE-API-19 — approved attendance inquiry v0.1
+
+Authority: design §§35/36 v0.1, approval/canonical handoff §37 v0.1,
+user approval 19 October 2026 13:46. `attendance-contracts.mts` and all other
+canonical contracts are consumed unchanged. Existing Node24 / TS5.9.3 /
+oracledb26 Thick / Client19.3 dependencies and lockfile are unchanged.
+
+New endpoints:
+
+* `GET /api/v1/attendance/filter-context` — **no query, even bare `?`**, no body.
+* `GET /api/v1/attendance` — required `attendanceDate=YYYY-MM-DD`,
+  `timeFrom=HH:mm`, `timeTo=HH:mm`; optional `mokedCode`, comma-delimited
+  `teamCodes`, `innerJobCodes`, `workLocations=home,site`, `limit`, `offset`,
+  `sort=effective-start-asc`. Unknown/repeated/array keys, malformed UTF-8,
+  coercions, reversed times and bodies fail400. Other methods405/Allow GET.
+  Bounds are inclusive at **seconds00**, not the entire final minute.
+
+Both require **only the independent `attendance:read` capability**, never
+Administrator role or any of the prior six rights. Synthetic Administrator now
+has exactly seven approved capabilities in canonical order, still employeeId
+NULL. Existing explicit isolated mock opt-in, production rejection, configured
+real-provider replacement seam and no-error-fallback rules remain in force.
+No new real provider or credential verification is implemented.
+
+`ReadAttendance` owns admission, defaults, response validation and allowlisted
+projection. `AttendanceFixtureReader` is a finite isolated relational double;
+`OracleAttendanceReader` uses one `OracleReadSession.read` per context/list GET.
+Scope hierarchy, original-grant active role eligibility, filter validation,
+relevant multiplicity probe, page and selected labels share that snapshot.
+The operation-local AsyncLocalStorage admission holds a frozen copy of ORIGINAL
+grants and whether teams were explicitly selected; it is not a request field
+or extra port operation. The adapter intersects selected parent/teams against
+the same-snapshot hierarchy before any business-row query.
+
+Membership follows controlling `AttendanceDataModel.populateAttendanceList`,
+367–705, not current/search eligibility: disjoint baseline-with-no-ANY-change
+and changed-own-employee/type4; branch planned start **OR split end**; changed
+cancellation must be NULL (zero is excluded). Removed E_OLD and CTI joins.
+No active-employee/missing-reason/actual-arrival filter, attendance-only union,
+DISTINCT/first-row suppression or changed membership NVL rescue.
+Raw branch location controls filtering; changed-nonnull fallback controls display.
+Prefix employee, day/change and attendance multiplicity is rejected BEFORE
+offset, including an empty requested page. Oracle11 ROW_NUMBER ordering is
+effective start NULLS LAST, numeric day/employee IDs; SQL transfers <=limit+1
+(<=101), with offset<=10000 and no total. Selected label probes return <=2 per
+identity; scoped hierarchy<=101 and role options<=1001 including overflow.
+No unbounded employee directory/catalog preload.
+
+`planned` is separate from all three independent actual timestamps; stored
+Gregorian local dates/seconds, precision-safe IDs and overnight dates survive
+unchanged. Missing attendance gives five NULL fields. MissingReasonCode remains
+raw signed integral text, including zero and negatives; there is no absence,
+lateness, current-status, duration, counter or reason-description inference.
+Briefing is NULL/0/1 only. Unknown selected labels remain NULL; activities retain
+order/duplicates and baseline exception fallback applies only with no tokens.
+No personal-reference/user/contact/national-ID/private-text fields are selected
+into DTOs. Join personal references occur in SQL predicates only.
+
+Both endpoints use no-store/nosniff, sanitized RFC9457 problems, the existing
+5000ms end-to-end budget, 8192-byte raw query cap, 2MiB success and16KiB problem
+limits. Cancellation/timeout never returns late200 or fixture fallback.
+Native break is awaited, rollback/release is attempted, and unsafe leases are
+dropped; cleanup can outlast the response deadline. All SQL is bound data and
+reviewed nonmutating SELECTs/built-ins under explicit READ ONLY transactions.
+No DML/DDL/custom SHF function/procedure/legacy initialization, CTI, EMS or batch.
+
+### Fixture handoff (frontend-owned integration, no frontend changes here)
+
+Exact module: **`backend/fixture-slice/attendance-sample.mts`**.
+Exports: **`sampleConfig`, `sampleAttendanceFixture`,
+`sampleAttendanceDetailRows`**. Data is synthetic; same catalog/current employee
+as existing samples, own day IDs19001/19002. One planned-start match with no
+attendance and one split-only match with independent recorded station/exit and
+negative raw reason. Use `2026-10-19`, `10:00`–`10:00`.
+
+Environment input is **`SHF_ATTENDANCE_FIXTURE`** (JSON serialized
+`sampleAttendanceFixture`), alongside explicit `SHF_FIXTURE_CONFIG`,
+`SHF_FIXTURE_PORT`, `SHF_FIXTURE_ROWS` (`sampleAttendanceDetailRows`) and
+`SHF_CURRENT_SHIFTS_FIXTURE` (existing `sampleCurrentFixture`). No implicit
+sample loading. When adding attendance to an existing multi-screen fixture
+handoff, MERGE `sampleAttendanceDetailRows` into the existing detail rows by
+their own IDs; do not replace the previous workflows' rows. The minimal
+attendance-only detail input above is for a standalone isolated check.
+Missing shared current configuration or mixing any fixture with
+Oracle configuration fails startup. Oracle uses `OracleAttendanceReader`
+automatically alongside the existing source-bound readers, never a fixture
+fallback. Existing detail navigation is exercised using the row's OWN IDs;
+the sample does not fabricate unimplemented item/card fixtures.
+
+### Checks and authorized native TEST result
+
+From `backend/fixture-slice`:
+
+```powershell
+npm run test:attendance
+npm run typecheck
+npm test
+# Explicit operator-only TEST invocation; NOT part of test/start:
+npm run check:attendance:oracle
+```
+
+`test:attendance` registers five files: pure fixture/query, application/policy,
+HTTP, mocked Oracle and isolated native-checker tests. They cover AT19-01–11
+backend portions; browser/navigation acceptance AT19-12 remains frontend/QA.
+Native checker tests use an explicitly labeled isolated double and never claim
+Oracle completion. The existing card native-checker's exact capability check
+and seven prior identity regression expectations were updated to seven.
+
+Final executed checks (19 October): `npm run test:attendance` **31/31 PASS**;
+`npm run typecheck` (`tsc --project tsconfig.json`) **PASS**; `npm test`
+**223/223 PASS** (192 existing +31 attendance). Intermediate strip-only syntax,
+strict fixture-index typing, a too-broad SQL-test regexp and the existing card
+checker's six-right identity expectation were repaired and rerun. No checks
+were left failing. Actual installed versions: Node24.21.0, TypeScript5.9.3,
+oracledb26.0.0.
+
+`oracle-attendance-live-check.mts` accepts **environment only**:
+existing `SHF_ORACLE_CONNECT_STRING/USER/PASSWORD/CLIENT_LIB_DIR`,
+`SHF_ORACLE_TEST_SCOPE_CONFIRMED=true`, new
+`SHF_ORACLE_ATTENDANCE_SCOPE_CONFIRMED=true`, and explicit
+`SHF_ORACLE_EXPECTED_DB_NAME=WFMT`, `SHF_ORACLE_EXPECTED_SERVER_HOST`,
+`SHF_ORACLE_TNS_ENDPOINT`. Supply approved TNS_ADMIN/wallet/native PATH only in
+the child environment. The checker has NO file/brief/credential parser.
+The operator may bootstrap approved local references **in memory** and invoke
+`node oracle-attendance-live-check.mts` in a child; never credentials in command
+arguments, persistent environment, output files or logs.
+
+Executed authorized CTIDBT_WFMT check via an in-memory operator
+`node --input-type=module -` harness which spawned that exact checker, with
+child-only environment. Initial identity gate correctly stopped before business
+reads because TNS used an alias; independently DNS-verified alias/canonical-host
+equivalence was added, then the bounded check **PASS**:
+
+* Actual Node24.21.0, driver26 Thick, Client19.3; TEST database/session/host and
+  TNS endpoint DNS verified **before** business reads.
+* SELECT1;38-digit NUMBER; synthetic Hebrew; Gregorian leap date/full seconds
+  mapping PASS.
+* **1 scoped team,10 candidate keys,1 chosen civil day, limit2;2 returned rows**;
+  bounded manual inclusive planned-start/split comparison (10 rows) PASS.
+* Identity/context/list HTTP **200/200/200**, coherent Oracle source,
+  exact list privacy allowlist and **one snapshot per new GET** PASS.
+* **7 leases,7 read-only transactions,28 statements**; rollback/release,
+  owned port0 listener closure and pool closure PASS.
+
+Only flags/counts were output. No live row/ID/name/credential was printed,
+saved, added to fixtures or Git. No existing listener4349/4319/4328/4320
+interaction. Optional live detail was not requested using separately approved
+IDs; fixture detail navigation was checked instead.
+
+Not run/claimed: native fault injection, load/plan certification, deployed
+VPD/grant review, production, legacy execution, writes, EMS/batch or browser/
+RTL/a11y checks. DB/platform owners retain deployed-policy/query-cost/native
+failure risks; frontend/QA own UI integration. No release/deployment approval
+is inferred from these checks.

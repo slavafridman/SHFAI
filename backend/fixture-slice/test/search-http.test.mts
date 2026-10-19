@@ -42,7 +42,7 @@ test("SEARCH01 HTTP context/search/detail same selected synthetic identity, exac
     const identity = await responses[0].json() as { principal: PrincipalV1 };
     const context = await responses[1].json() as ShiftSearchFilterContextV1;
     const list = await responses[2].json() as ShiftSearchListV1;
-    assert.deepEqual(identity.principal.capabilities, ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read"]);
+    assert.deepEqual(identity.principal.capabilities, ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read", "attendance:read"]);
     assert.equal(identity.principal.employeeId, null);
     assert.equal(context.dataSource, "isolated-fixture");
     assert.equal(list.dataSource, "isolated-fixture");

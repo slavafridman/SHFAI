@@ -1,0 +1,36 @@
+// The CDK portal is outside the component host. Every override is limited to
+// this datepicker's public panelClass; current/search/schedule stay unchanged.
+// Touch UI uses CDK's block strategy. Remove its reserved scrollbar only while
+// THIS modal exists: 320px must provide at least 7*44=308px of real grid width.
+html.cdk-global-scrollblock:has(.shf-attendance-calendar) { overflow-y:hidden }
+
+.mat-datepicker-content-touch:has(.shf-attendance-calendar) {
+  // Scroll the content, not Material's outer surface: its off-surface hidden
+  // close button must not manufacture two scrollbars over real day targets.
+  max-height:none;
+  overflow:visible;
+  min-height:0;
+}
+.mat-datepicker-content-touch:has(.shf-attendance-calendar) .mat-datepicker-content-container {
+  width:min(360px, 100vw);
+  height:auto;
+  min-width:0;
+  min-height:0;
+  max-height:calc(100dvh - 16px);
+  overflow:auto;
+}
+.mat-datepicker-content .mat-calendar.shf-attendance-calendar {
+  width:min(360px, 100vw);
+  height:auto;
+}
+.shf-attendance-calendar .mat-calendar-content { padding-inline:0 }
+.shf-attendance-calendar .mat-calendar-body-cell { min-width:44px; min-height:44px }
+// Material normally extends the divider into its 8px content padding. This
+// panel deliberately has no inline padding, so keep that decoration in bounds.
+.shf-attendance-calendar .mat-calendar-table-header-divider::after { left:0; right:0 }
+.mat-datepicker-content-touch:has(.shf-attendance-calendar) .mat-datepicker-close-button.cdk-visually-hidden {
+  top:0; left:0; min-width:0; min-height:0;
+}
+.mat-datepicker-content-touch:has(.shf-attendance-calendar) .mat-datepicker-close-button:not(.cdk-visually-hidden) {
+  position:static; align-self:center; margin:8px;
+}

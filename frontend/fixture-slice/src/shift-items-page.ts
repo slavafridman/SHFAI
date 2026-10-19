@@ -81,16 +81,16 @@ export class ShiftItemsPage {
     return this.identityState() === 'ready' && !this.denied() &&
       !!caps?.includes('shift-items:read') && caps.includes('shift-day:read');
   }
-  active(): 'list' | 'search' | 'schedule' {
+  active(): 'list' | 'search' | 'schedule' | 'attendance' {
     const origin = this.navigation.detailOrigin;
-    return origin === 'my-shifts' ? 'schedule' : origin === 'shift-search' ? 'search' : 'list';
+    return origin === 'attendance' ? 'attendance' : origin === 'my-shifts' ? 'schedule' : origin === 'shift-search' ? 'search' : 'list';
   }
   originLabel() {
     const parent = this.journey.parentPath();
     if (parent?.endsWith('/breaks-and-exceptions')) return 'הפסקות וחריגות חלקיות';
     if (parent?.startsWith('/employees/')) return 'פרטי משמרת';
     return parent?.startsWith('/my-shifts') ? 'משמרות העובד/ת' :
-      parent === '/shift-search' ? 'חיפוש משמרות' : parent === '/current-shifts' ? 'משמרות נוכחיות' : 'משמרות נוכחיות — ללא רשימת מקור שמורה';
+      parent === '/attendance' ? 'בירור נוכחות' : parent === '/shift-search' ? 'חיפוש משמרות' : parent === '/current-shifts' ? 'משמרות נוכחיות' : 'משמרות נוכחיות — ללא רשימת מקור שמורה';
   }
   private cancel() { this.generation++; this.work?.unsubscribe(); this.result.set(null); this.reference.set(''); this.code.set(''); }
   recheckIdentity() {

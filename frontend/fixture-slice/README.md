@@ -1,3 +1,237 @@
+# SHF-ATTENDANCE-UI-19 — actual Angular attendance inquiry
+
+## Latest root correction — whole keyboard-modal readiness / cold CDP focus
+
+The initial calendar Escape had bypassed the narrower picker lifecycle checks.
+The stock runner now applies one common barrier **before every native modal
+Escape**, not a new per-assertion wait:
+
+- create a new owned CDP page instead of selecting an arbitrary `/json/list`
+  tab; activate with `Page.bringToFront` and require actual document focus;
+- native input/mouse/key entry uses that active page; calendar toggles use the
+  real focused button + native Enter;
+- require focus in the intended live calendar/select/dialog,0 finite opening
+  animations,3 stable geometry frames and coherent aria/open state;
+- inspect the installed CDK body-keydown/native cancel listener, then record
+  trusted native Escape keydown/keyup delivery. No recovery key or fake focus.
+
+Source evidence: Material datepicker `close()` intentionally returns while
+`_isAnimating` is true. Both independent cold runs actually started with
+`document.hasFocus=false` and observed an initial calendar opening animation.
+They now send its **single Escape only after readiness**.
+
+Bounded developer result: **cold FULL A PASS**, **one review-only PASS**,
+**cold FULL B PASS**, with two different newly created Chrome user-data
+profiles. FROM/TO still use exactly the two separate select/dialog Escapes.
+All62 physical dates/corners and D01 focus criteria pass in each run.
+All relevant helper regressions **20/20 PASS**, strict typecheck PASS.
+No application/CSS/API/dependency change or broad suite/Oracle rerun.
+SAME QA owns the final stock-full retest; see VERIFICATION for source/trace
+evidence, preserved failed history, exact bounded checks and teardown.
+
+## Latest narrow correction — select Escape, then dialog Escape
+
+Independent QA has closed D01/D02/H02. Its remaining full-runner finding was
+two Escapes dispatched back-to-back while a Material select was still closing.
+This is fixed **only in the checker**, with no application/CSS/API change.
+
+`checks/picker-overlay.ts` observes this picker's exact panel/aria/focus and
+scoped finite animations. After the first native Escape, the select panel must
+be absent, `aria-expanded=false`, actual focus back on `picker-minute`, and
+finite select/dialog animations complete for2 consecutive rAF observations.
+Only then does the second native Escape close the dialog; removal, exact opener
+focus and the opener's afterClosed-driven `aria-expanded=false` are required.
+Deadline5000ms; no sleeps, retries, Cancel button or extra third Escape.
+The earlier hour-select Escape is its original separate preparatory check.
+
+Final bounded sequence **full attendance PASS → review-only PASS → one fresh
+full attendance repeat PASS**. Both FROM/TO values remain unchanged after the
+two-key select/dialog cancellation. Each run retains31+31 physical calendar
+selections,≥44px/corner assertions and the D01 focus checks.
+`npm test -- --include src/picker-overlay.spec.ts`: **3/3 PASS**;
+`npm run typecheck`: **PASS**. No broad old suite/Oracle rerun.
+See [VERIFICATION.md](VERIFICATION.md) for preserved failures and the SAME-QA
+final narrow full-runner handoff. No new approval/contract gate.
+
+## H02 follow-up — measured calendar readiness, no application/CSS changes
+
+Latest independent QA closed **D01/H01** and confirmed292/strict/build/old
+browser/proxy modes. Its remaining finding was **H02**: the calendar checker
+sampled opening animation, not a confirmed new application layout defect.
+
+The stock bounded/full attendance runners now share
+`checks/calendar-geometry.ts` on **every calendar open**:
+
+- only the actual popup/calendar and positioning ancestors are observed;
+  finite entry/month/cell animations finish first, infinite ripples are ignored;
+- current month, focused day and any aria-active descendant must agree;
+- the same cell nodes, exact rects and corner hit-test state are stable for
+  **3 consecutive rAF samples**, with a **5000ms rejection deadline**;
+- the original **≥44×44** and four-corner assertions are unchanged. Stable
+  undersize/clipping is returned as failing data, never polled until it passes.
+
+Native Enter activates the real focused Material toggle; all31+31 date
+selections remain physical mouse clicks. Final stock **full attendance and
+review-only PASS**: each selected31 normal +31 root/main/calendar30px dates,
+minimum45.703125×45.6875px,0 corner failures,0 finite animations at measurement.
+Six focused checker regressions and strict app typecheck PASS. The pre-H02
+full292/build were not rerun for this test-driver-only change; no new aggregate
+full-suite pass is claimed.
+
+Same independent QA owns D02 closure/retest; publication is not implied.
+See the latest [VERIFICATION.md](VERIFICATION.md) entry, including failed
+historical animation sampling and the additional stock-opener diagnostic.
+
+## Independent-QA correction — UI19-D01/D02
+
+Implemented the two confirmed findings under the same approved §35/36/37
+v0.1 baseline; no contract, business-rule, navigation-history or dependency
+change:
+
+- Scoped reload `:focus-visible` outline: **3px**, offset3px, **12.62:1**
+  against #fafafa. Actual Tab/Space tests at1440/320 retain the same DOM node
+  through pending→200/503, send only one GET and keep the ring unobscured.
+- Attendance-only **Material touch datepicker**, public
+  `panelClass="shf-attendance-calendar"` and scoped portal stylesheet.
+  At320px CDK block-scroll frees the reserved scrollbar: client305→320,
+  real day targets **≥45.70×45.69px**. All31 dates were physically clicked
+  at normal and30px root/main/calendar text, with corner hit-tests against
+  scrollbar clipping, no offscreen targets or page overflow. Existing search
+  picker stays296px; no global calendar resize.
+- Root runner fix: effective `:disabled` (including fieldset ancestry), enabled
+  submit, completed context/progress and expected server defaults before entry.
+  Shared physical Ctrl+A/insertText/Tab blur verifies Angular acceptance and
+  rendered DOM. No arbitrary delay, assertion skip or operator-only workaround.
+  Full navigation in the proxy runner also crosses a new-document barrier.
+  Four regression cases cover delayed identity/context and inherited disabling.
+- Stock attendance → base → card → items → items-review runners pass **chained**,
+  including original09:00/date assertions. All actual fixture-proxy flag
+  variants pass without interception; card proxy additionally verifies the
+  authoritative outgoing date/minute and accepted applied response.
+
+Developer retest is PASS; **the same independent QA owns the bounded retest**,
+not a new approval gate. Failed historical runs and corrected test-development
+attempts remain in [VERIFICATION.md](VERIFICATION.md).
+
+## Approved baseline — 19 October 2026
+
+Implemented **§35/36 v0.1 + existing HTML `#attendance`**, approved by the user
+at 13:46 and recorded in **§37 v0.1**. Type-only canonical imports are from
+`backend/fixture-slice/attendance-contracts.mts`. The exact synthetic identity
+now requires the prior six capabilities followed by **`attendance:read`**;
+missing, duplicate or reordered synthetic rights fail closed. Real-provider
+capabilities remain independent; Administrator role alone grants nothing.
+Synthetic `employeeId=null` is never the selected employee.
+
+The existing Angular **21.2.25**, Material/CDK **21.2.14**, TS **5.9.3**,
+Node **24.21.0** / npm **11.19.0** stack is retained. No dependencies, manifest,
+lockfile, scaffold, backend, shared contracts, design, legacy or root files
+were changed. Historical implementation records below retain their original
+six-capability baseline; this section supersedes that count for current usage.
+
+- New navigation group **נוכחות → בירור נוכחות**, route **`/attendance`**.
+  Exactly two new resource GETs: `/api/v1/attendance/filter-context` and
+  `/api/v1/attendance`; identity and existing linked resources are unchanged.
+  Neither attendance resource is called without validated independent rights.
+- One strict Gregorian DD/MM/YYYY Material datepicker and two independent
+  all-minute HH:mm Material dialogs. Defaults come exclusively from context.
+  Equal bounds are valid; inversion is an associated TO error, not midnight
+  rollover. The helper explains planned start **OR split restart**, inclusive
+  at seconds00, **not actual arrival**. No current/NOW control or auto-polling.
+- Exact scoped moked/team/internal-job/location filters; parent changes retain
+  compatible teams only. Empty location selection is omitted, not an invented
+  home/site default. Catalog changes retain unavailable selections for explicit
+  correction, without widening scope.
+- Twelve source-mapped columns reflow to labeled mobile records. Planned
+  endpoints/location/activity/job are separate from independently nullable full
+  local stage/station-arrival/station-exit timestamps. Raw missing-reason
+  NULL/0/negative and briefing NULL/false/true remain distinct, never a factual
+  absence/late/current-worker status. Unknown activity labels retain exact codes.
+  No private HR/reference/user fields, write buttons, export, CTI or EMS.
+- Strict atomic unknown-payload guards validate source/zone/applied filters,
+  pagination/order/own day IDs, exact J01/direct-G01 hierarchy, bounds and nested
+  row shapes. They deliberately do **not** copy search's start-in-range rule:
+  split-end-only/null-start rows are legitimate, and split-end is not public.
+  Raw branch location membership also cannot be reconstructed from display
+  fallback. Only the backend decides membership.
+- Edits clear stale rows immediately. Apply starts at offset0; paging freezes
+  the applied query and follows returned lookahead without inventing totals.
+  Explicit reload starts again at offset0. The same mounted reload element
+  preserves focus through pending and terminal states; duplicate activation
+  during pending sends no GET. Denied reload is focusable/aria-disabled and its
+  handler cannot issue resource requests.
+- Own employee/day links lead to card, schedule, detail and items. Volatile,
+  per-history-entry cloned drafts/requests/actor/upstream metadata retain page,
+  vertical/RTL scroll and exact opener through nested Back/Forward journeys.
+  A removed opener falls back to results with a Hebrew changed-results notice.
+  No employee-keyed global cache, personal return URL/blob, browser storage or
+  API response cache is introduced. Cold entry invents no employee/day.
+
+## Reproduce checks (from this directory)
+
+```powershell
+npm test -- --include src/attendance*.spec.ts
+npm test -- --include src/attendance*.spec.ts --include src/browser-readiness.spec.ts
+npm test
+npm run typecheck
+npm run build
+```
+
+Pre-H02 full verification checkpoint: **39 attendance cases +4 driver-readiness cases**,
+**43/43 focused**, **292/292 overall** (286 original checkpoint +6 QA
+regressions), **20 files**, strict app typecheck and production build.
+See [VERIFICATION.md](VERIFICATION.md) for exact browser/proxy variants,
+nonpassing harness attempts, evidence and limitations.
+
+### Explicit synthetic integration only
+
+`checks/serve-synthetic.mjs` forwards only its constructed synthetic environment,
+never the parent's Oracle settings. Additive opt-in:
+
+```powershell
+$env:SHF_UI_ATTENDANCE_FIXTURE='1'
+$env:SHF_UI_ITEMS_FIXTURE='1'
+$env:SHF_UI_EMPLOYEE_CARD_FIXTURE='1'
+$env:SHF_FIXTURE_PORT='4358' # verify genuinely free; own helpers only
+node checks/serve-synthetic.mjs
+```
+
+It uses frontend-owned `fixtures/attendance.synthetic.json` in the stable
+backend `AttendanceFixtureData` shape, explicitly sends **`SHF_ATTENDANCE_FIXTURE`**
+and **merges** new own-ID detail rows with prior current/search rows.
+Schedule/items/card fixture seams stay available; existing detail rows are not
+replaced. Backend `attendance-sample.mts` was read as handoff evidence, not
+mutated or substituted for the existing multi-screen frontend fixtures.
+
+In another owned helper process:
+
+```powershell
+npm exec ng serve -- --host 127.0.0.1 --port 4348 --proxy-config proxy.attendance.conf.json
+```
+
+Use a separate isolated Chrome profile/CDP9368 (verify free first), never a
+user session. Set the following for each browser check:
+
+```powershell
+$env:SHF_UI_URL='http://127.0.0.1:4348'
+$env:SHF_CDP_URL='http://127.0.0.1:9368'
+$env:SHF_ATTENDANCE_ONLY='1'
+node checks/browser-check.mjs       # actual Angular/Chrome, synthetic interception
+node checks/fixture-proxy-check.mjs # actual Angular -> proxy -> Node; NO interception
+```
+
+The default stock attendance suite includes D01/D02. For the same QA's bounded
+retest only, add `SHF_ATTENDANCE_REVIEW_ONLY=1` to the intercepted browser command
+(keep `SHF_ATTENDANCE_ONLY=1`). It physically measures all four reload lifecycles
+and all31 calendar targets twice, using the same assertions as the full suite.
+
+Do not leave `*_ONLY` flags set when running other suites. Screenshots are
+**SYNTHETIC**, under ignored `.angular/browser-evidence/`. These checks are not
+Oracle UI verification, real login verification, release approval or a WCAG
+conformance claim. See verification for helper teardown and bounded QA handoff.
+
+---
+
 # SHF-EMPLOYEE-UI-19 — read-only operational employee card
 
 ## Approved baseline and implementation — 19 October 2026

@@ -1,4 +1,5 @@
 // Actual Chrome + Angular, exclusively intercepted synthetic network data.
+import { formReadyExpression } from './browser-interactions.ts';
 export async function runEmployeeCardChecks(h) {
   const {assert,send,evaluate,wait,size,navigate,key,click,input,screenshot,noOverflow,calls,
     readyList,readyDetail,setCard,setIdentity,setList,release} = h;
@@ -25,7 +26,8 @@ export async function runEmployeeCardChecks(h) {
   await click('#card-back'); await wait(`document.activeElement.id==='card-current-2001'`);
   // Search own-ID anchor, nested schedule -> detail -> items -> card -> exact reverse chain.
   await navigate('/shift-search');
-  await wait(`!!document.getElementById('search-timeFrom') && !document.getElementById('search-timeFrom').disabled && !document.querySelector('mat-progress-bar')`);
+  await wait(formReadyExpression('shf-shift-search', 'search-timeFrom', 'search-submit',
+    { 'search-timeFrom': '10:00', 'search-timeTo': '10:00', 'search-date': '15/10/2026' }));
   await input('search-timeFrom','09:00'); await input('search-timeTo','11:00'); await click('#search-submit');
   await wait(`!!document.getElementById('card-search-3001')`); await click('#card-search-3001'); await ready();
   await click('#card-back'); await wait(`document.activeElement.id==='card-search-3001'`);

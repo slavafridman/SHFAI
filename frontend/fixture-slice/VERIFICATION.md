@@ -1,3 +1,828 @@
+# SHF-ATTENDANCE-UI-19 — whole keyboard-modal readiness / two cold Chrome checks
+
+**Status: developer verification PASS within the requested bounded plan;
+ready for SAME-QA final stock-full retest.** Latest QA failure was earlier than
+the picker check: the initial calendar was mounted/open but ignored its Escape.
+That remains a historical **nonpass**. D01/D02/H02 closures are caller-reported
+and not reopened; no new application defect or publication approval is claimed.
+
+## Actual underlying evidence (not a per-assertion workaround)
+
+- **Source-observed:** installed Material21.2.14 `datepicker.mjs` implements
+  `close()` with an early return when the content instance `_isAnimating`.
+  Its native overlay close stream does call preventDefault and `close()`;
+  DOM presence/DOM day focus alone does not imply the opening handler can close.
+  CDK21.2.14's `OverlayKeyboardDispatcher` attaches a native **body keydown**
+  listener while overlays are attached.
+- **Runner-source defect:** old startup bound the first page from `/json/list`,
+  did not establish active WebContents/document focus, and initial calendar
+  Escape waited only for `mat-calendar` DOM presence. Review-only had a more
+  complete calendar geometry barrier, explaining the different entry paths.
+- **Observed on BOTH independent cold runs:** a newly created CDP page before
+  activation had `{hasFocus:false, visibility:'visible'}`. The initial calendar
+  admission saw a finite opening animation (`peakFinite=1`), then waited for0
+  and3 stable frames. No intentionally unsafe extra Escape was sent to recreate
+  the old failure. The evidence supports the missing admission conditions;
+  it does not invent an application keydown fault.
+- **After readiness:** one calendar Escape was delivered as trusted keyCode27
+  keydown/keyup to an actually focused document, with one installed body handler.
+  Calendar dismissal/exact opener assertions passed. FROM/TO select/dialog
+  pairs also passed after the same common admission and existing lifecycle
+  checks. No ignored ready key was observed, so application handlers were not
+  modified.
+
+## Exact changed paths / root implementation
+
+All writes under `frontend/fixture-slice/`:
+
+- New `checks/keyboard-modal.ts`: one self-contained bounded observer for live
+  Material calendar/select/dialog and native dialog. Actual document focus,
+  intended scope/trigger relationship, aria/open state, no closing select above
+  the dialog,0 finite scoped animations and3 identical geometry frames. Ignores
+  infinite decorative ripples, never sends a key/focuses/closes anything.
+- `checks/browser-check.mjs`: a fresh **owned** CDP target via `/json/new`,
+  close only that target afterwards; Page.bringToFront plus actual
+  `document.hasFocus()`/visibility before native input, mouse and key-down.
+  Every native Escape goes through shared modal readiness, installed listener
+  inspection via DOMDebugger, and temporary observational key-event evidence.
+  Actual keydown/keyup must be trusted, focused and keyCode27. Calendar
+  activation is real native Enter, not Runtime `.click()`/`picker.open()`.
+- `checks/attendance-browser-check.mjs`,
+  `checks/attendance-review-check.mjs`: use the same active-page native toggle
+  activation. No initial/narrow/review Escape bypasses the central barrier.
+- New `src/keyboard-modal.spec.ts`:7 focused regressions.
+- `README.md`, this file.
+
+No application TypeScript/template/CSS/layout, calendar/picker acceptance
+threshold, existing H01 helper, API/canonical/backend, manifests/dependencies,
+legacy, Git, database or agent changes. Approved §35/36/37 v0.1 unchanged.
+No unrelated page/network-idle wait, animation disabling, fake hasFocus,
+arbitrary sleep, Escape retry, Cancel substitution or assertion weakening.
+
+## Native-key evidence / bounded outcomes
+
+Before Escape: Page.bringToFront, actual focused/visible document, focus inside
+the frozen intended modal (or its controlling select trigger),3 stable
+geometry/control/focus samples,0 finite animations and an installed CDK
+body-keydown listener (native dialog uses its cancel listener). Deadline5000ms.
+Then exactly one original keydown/up pair. Postconditions remain authoritative;
+an ignored ready key would fail, not cause another Escape.
+
+| Deliberate check | Isolation / result |
+|---|---|
+| cold FULL attendance A | new `.angular/attendance-cold-keyboard-a-19`, new Chrome process: **PASS** |
+| stock review-only | one run after A, fresh owned tab: **PASS** |
+| cold FULL attendance B | A process stopped/profile removed; new `.angular/attendance-cold-keyboard-b-19`, independent new Chrome process: **PASS** |
+
+Exactly **two cold full attempts**, each passed on its first invocation; no
+retry-until-green or third full attempt. Both profiles were required absent
+before startup. Same unchanged readiness/key behavior was used; only the
+diagnostic defaultPrevented read was corrected from a too-early capture
+checkpoint to after native keyup before review/B. A's capture-time false flag
+was not an assertion or a swallowed-key claim; actual close assertions passed.
+B's final event report records `prevented:true`.
+
+Both FULL runs include:
+
+- initial calendar **one Escape**, actual focus true, trusted keyCode27,
+  handlerCount1,0 finite animations and3 stable frames at dispatch;
+- FROM/TO: original hour prep, then exactly **two separate** minute-select /
+  dialog Escapes, exact opener and both values unchanged; no third recovery key;
+- all62 physical calendar date selections, minimum45.703125×45.6875px,
+  cornerFailures0/offscreen0/page overflow none, normal and root/main/day30px;
+- unchanged D01 keyboard lifecycle:3px ring,12.62:1, same DOM/focus and one GET;
+- no browser storage, external runtime requests or JS exceptions.
+
+The single review-only run retains the same62 dates, D01 checks and settled
+old-search calendar comparison. All test data/interception is synthetic.
+No Oracle or backend fixture server was started for these intercepted runs.
+
+## Exact check commands / scope
+
+Directory `frontend/fixture-slice`:
+
+```powershell
+npm test -- --include src/keyboard-modal.spec.ts --include src/calendar-geometry.spec.ts --include src/picker-overlay.spec.ts --include src/browser-readiness.spec.ts
+npm run typecheck
+```
+
+**20/20 helper regressions PASS**,4 files:7 whole-modal +6 geometry +3 picker
+lifecycle +4 context readiness. Existing strict app typecheck PASS; the focused
+Angular build also compiles the imported checker TS.
+New cases cover a mounted focused calendar with unfocused document, finite
+opening animation, moving geometry, select trigger outside listbox/infinite
+ripple, closing select above dialog, native modal support, and bounded refusal
+when actual focus remains outside the live calendar. Synthetic unit geometry
+is not relabeled as native browser evidence.
+
+Chrome155 stock commands used
+`SHF_UI_URL=http://127.0.0.1:4348`,
+`SHF_CDP_URL=http://127.0.0.1:9368`:
+
+```powershell
+$env:SHF_ATTENDANCE_ONLY='1'
+node checks/browser-check.mjs # cold A: review flag absent
+$env:SHF_ATTENDANCE_REVIEW_ONLY='1'
+node checks/browser-check.mjs # single review
+# Stop only own A, verify port free; launch NEW independent B profile.
+# Use fresh shell/environment (review flag absent):
+$env:SHF_ATTENDANCE_ONLY='1'
+node checks/browser-check.mjs # cold B
+```
+
+No manual synchronization/runtime patch. No broad old tests, production build,
+actual proxy, Oracle/native DB, deployment or WCAG audit rerun in this bounded
+harness correction. The prior aggregate results remain prior/caller results;
+no new aggregate full unit-suite pass is claimed. Existing Node module-type
+warning unchanged. Prior initial-calendar and picker/geometry failures remain
+below; there were no failed full attempts in this bounded A/B verification.
+
+## SAME-QA last full retest
+
+Owner: **SAME independent QA through caller**. Recreate a fresh own Chrome
+profile and free Angular/CDP helpers, run stock full attendance with only
+`SHF_ATTENDANCE_ONLY=1`. Check initial native calendar Escape, actual
+document.hasFocus/key delivery/listener evidence, FROM/TO pairs and all original
+D01/D02 criteria. Any key ignored **after** readiness must stay FAIL with the
+event report; do not add another Escape. Publication stays with caller after
+that retest. No new approval or API gate.
+
+Cold-check teardown verified: own A process/profile removed before B startup;
+after B, only `attendance-cold-keyboard-ui` and `attendance-cold-keyboard-b`
+were stopped.4348/9368 are free; only the own A/B profile directories were
+removed. No backend, user or parent-QA process/profile/port was altered.
+Ignored synthetic evidence is retained.
+
+---
+
+# Historical narrow select/dialog Escape-stack checker correction
+
+**Status: developer verification PASS; ready for SAME-QA final narrow full-runner
+retest.** Caller reports independent closure of D01/D02/H02. The new finding
+was a reproducible checker sequence: two native Escapes sent while the minute
+select was closing; panel closed, dialog remained, focus `picker-minute`.
+An operator's extra Escape after settling closed it with values unchanged.
+That historical timeout remains a **nonpassing run**, not a confirmed app bug.
+
+## Exact paths / scope
+
+All writes under `frontend/fixture-slice/`:
+
+- New `checks/picker-overlay.ts`: bounded, contract-specific state observer for
+  this minute picker's select-open/select-closed/dialog-closed phases.
+- `checks/attendance-browser-check.mjs`: call the observer between the original
+  separate native Escape inputs; also wait for the original preparatory hour
+  select's dismissal before opening the minute select.
+- New `src/picker-overlay.spec.ts`:3 focused checker lifecycle regressions.
+- `README.md`, this file.
+
+**No application, CSS/layout, calendar geometry checker, H01 shared input
+helper, API/canonical/backend, dependency/manifest, Git, database or agent
+change.** Approved §35/36/37 v0.1 and all prior44px/corner/focus criteria remain.
+
+## Root sequence / non-weakened assertions
+
+For each FROM and TO target:
+
+1. Observe the real select panel/dialog IDs, expanded aria and finite scoped
+   overlay animations. Infinite decorative animations do not block this check.
+2. Send **one native Escape** to the minute select.
+3. Require panel absence, `aria-expanded=false`, actual focus exactly on
+   `picker-minute` inside the still-open dialog, no active finite select/dialog
+   animations and **2 consecutive rAF observations** of that same state.
+4. Only after those facts, send **one second native Escape** to the dialog.
+5. Require no dialog container, focus on the exact
+   `attendance-timeFrom-open` / `attendance-timeTo-open`, and opener
+   `aria-expanded=false` (set by the application's afterClosed subscription).
+   Assert **both** filter values unchanged.
+
+The observer itself sends no key, does not close/focus any component and has a
+**5000ms rejecting deadline**. No arbitrary sleep, retry, Cancel activation,
+third Escape, skipped assertion or operator-only patch. The hour-select Escape
+earlier in the existing test is a separate preparatory interaction, not an extra
+key to force the minute-select/dialog pair to pass.
+
+## Exact checks / bounded final sequence
+
+Working directory: `frontend/fixture-slice`.
+
+| Exact command | Result |
+|---|---|
+| `npm test -- --include src/picker-overlay.spec.ts` | **3/3 PASS**, synthetic checker lifecycle/animation fixtures |
+| `npm run typecheck` | **PASS**, existing strict app TypeScript check; focused build also typechecks imported helper |
+| `node checks/browser-check.mjs`, `SHF_ATTENDANCE_ONLY=1` | **stock full attendance PASS**, first successful deliberate check |
+| same plus `SHF_ATTENDANCE_REVIEW_ONLY=1` | **stock review-only PASS** |
+| same after removing `SHF_ATTENDANCE_REVIEW_ONLY` | **stock full attendance PASS**, exactly one fresh-document repeat |
+
+All three browser invocations were in one exit-code-gated sequence, using own
+`SHF_UI_URL=http://127.0.0.1:4348`,
+`SHF_CDP_URL=http://127.0.0.1:9368`, isolated Chrome155 and intercepted synthetic
+APIs only. Full runner performs fresh `Page.navigate` document entry. There
+were **exactly two fully successful full-attendance checks**, not an unbounded
+rerun loop. No failed development browser invocation in this follow-up.
+
+Both full passes log, independently for FROM and TO:
+`selectFocus=picker-minute`, dismissalStableFrames2, finiteAnimations0,
+the matching exact opener and unchangedValues=true. The dialog is explicitly
+asserted still open between the first and second Escape, then absent afterwards.
+No BODY/ancestor approximation.
+
+All three runs preserve the existing D01 checks and D02's31 normal +31
+root/main/calendar30px physical selections. Each D02 variant still reports
+minimum45.703125×45.6875px,3 stable geometry frames,0 finite animations at
+measurement,0 corner failures,0 offscreen targets and no page overflow.
+Thus no44px/corner/focus criterion was lowered to fix the Escape checker.
+Browser storage/external request/runtime-exception assertions remain PASS.
+
+Three unit cases cover finite dismissal animation plus exact trigger focus,
+dialog removal without afterClosed/opener readiness, and bounded rejection on
+wrong focus with no injected key/third Escape. Unit fixtures are not claimed as
+native browser behavior; the two full Chrome passes provide that evidence.
+
+## Preserved history / limits / handoff
+
+- The caller's original full-runner Escape timeout is retained above and older
+  H02/initial nonpassing records remain below. Extra operator Escape demonstrated
+  eventual closure but was **not** used by the final committed runner.
+- Prior independent D01/D02/H02 closure is caller-reported; this correction
+  does not reopen an app defect or silently relabel the timeout as PASS.
+- No broad old suite, production build, proxy, backend/native Oracle or database
+  run in this bounded harness-only follow-up. No new aggregate full-suite pass
+  or WCAG conformance claim. Existing module-typeless warning unchanged.
+- **SAME QA through caller** owns the final narrow stock-full retest. Recreate
+  own free Angular/Chrome helpers per README, set only
+  `SHF_ATTENDANCE_ONLY=1` (not review-only), run
+  `node checks/browser-check.mjs`; observe the two Escape checkpoints for both
+  targets, unchanged values/exact openers and all existing D01/D02 assertions.
+  No new approval/contract gate.
+
+Teardown verified: only `attendance-escape-ui` / `attendance-escape-chrome`
+stopped;4348/9368 free; only `.angular/attendance-escape-profile-19` removed.
+No backend/user/parent-QA helper or profile affected; synthetic ignored evidence
+retained.
+
+---
+
+# Historical H02 calendar-measurement readiness follow-up
+
+**Status: H02 checker correction implemented and developer-verified; ready for
+SAME-QA D02 retest. Publication is still pending independent D02 closure.**
+Latest caller retest closed D01/H01 and passed292/strict/build/base/card/items/
+review and all four actual fixture-proxy variants. Remaining H02 was reproduced
+by QA on the10th opening after9 selections: during Material animation,44px
+rects and80 corner failures; after rendering,45.703×45.688px and0 failures.
+That is **QA-reported timing evidence**, not a newly confirmed application
+layout defect. Historical nonpassing runs below are not erased.
+
+## Exclusive changed files for this follow-up
+
+- New `checks/calendar-geometry.ts`: self-contained scoped animation/stability
+  checker, shared verbatim by Chrome evaluation and focused regressions.
+- `checks/attendance-review-check.mjs`: invoke the checker on every normal and
+  root/main/calendar30px opening; native Enter on the real focused toggle,
+  with every day selection still a physical mouse click. The old search
+  calendar width comparison also samples settled geometry.
+- New `src/calendar-geometry.spec.ts`:6 synthetic checker regression cases.
+- `README.md`, this file.
+
+All are under `frontend/fixture-slice/`. **No application TypeScript, templates,
+CSS/layout, Material panel class, focus ring, API/backend/canonical, dependency,
+manifest, legacy, Git or database changes.** H01's input/readiness helper is
+not changed. No agent or unknown/user-port/process operation.
+Authority remains approved §35/36 v0.1 + HTML#attendance +§37 v0.1.
+
+## Exact measurable geometry-ready contract
+
+For each calendar opening, including each of31 normal +31 font30 iterations:
+
+1. Resolve only the requested calendar, its `.cdk-overlay-pane` subtree and
+   own positioning-ancestor animations, not `document.getAnimations`, network
+   idle or unrelated background UI. Require one current `mat-month-view`,
+   exactly31 cells, October2026 period, the expected focused current day and
+   coherent aria-active IDs on the calendar/root/descendants.
+2. Active finite Web Animations must be finished; relevant counts are sampled
+   both before and after geometry/style reads. Infinite-timing animations are
+   ignored so an unrelated continuous focus ripple cannot stall the checker.
+3. Require the same calendar/cell node identities and **exactly identical**
+   rect/font/viewport/corner-hit snapshots on **3 consecutive rAF callbacks**.
+   No geometric epsilon or reduced acceptance threshold is used.
+4. Reject at **5000ms** if animation/context/geometry never becomes ready;
+   cancel the rAF/deadline on completion or failure. There is no arbitrary
+   sleep, test retry or catch-and-ignore.
+5. Return the settled snapshot to the original assertions:31 targets,
+   **width≥44 and height≥44**, viewport containment and all four inset-corner
+   `elementFromPoint` hits, page overflow absent, physical selection and exact
+   opener return. **Stable clipping/undersize is returned promptly and FAILS
+   those unchanged assertions**, rather than waiting for a lucky passing frame.
+
+The checker does not alter animations, CSS, selected dates, app state or focus.
+The runner opens through native keyboard activation of the real toggle; it
+does not call `picker.open()` or inject a DOM click. This makes opener focus
+explicit during enlarged-text reflow; all date-target selections remain actual
+mouse input.
+
+## Checks actually run in this follow-up
+
+Directory: `frontend/fixture-slice`.
+
+| Exact command | Result / distinction |
+|---|---|
+| `npm test -- --include src/calendar-geometry.spec.ts` | **6/6 PASS**, final invocation, synthetic rAF/animation fixtures; not real geometry |
+| `npm run typecheck` | **PASS**, existing strict `tsc --noEmit -p tsconfig.app.json` |
+| `node checks/browser-check.mjs`, `SHF_ATTENDANCE_ONLY=1` | **PASS**, final stock full attendance; actual Chrome + synthetic API interception |
+| same, plus `SHF_ATTENDANCE_REVIEW_ONLY=1` | **PASS**, final stock review-only immediately after full attendance |
+
+Both final Chrome commands used
+`SHF_UI_URL=http://127.0.0.1:4348`,
+`SHF_CDP_URL=http://127.0.0.1:9368`, own Chrome155/profile. No runtime/operator
+patch, disabled animations, rewritten assertion or per-failure retry was used.
+An initial review-only pass also completed before the final paired run.
+
+**Measured in EACH final command:**
+
+| Signal | Normal | Root/main/calendar30px |
+|---|---:|---:|
+| geometry-ready opens / physical day clicks |31 /31 |31 /31 |
+| minimum target width |45.703125px |45.703125px |
+| minimum target height |45.6875px |45.6875px |
+| consecutive stable rAF snapshots before assertion |3 |3 |
+| active finite animations at measurement |0 |0 |
+| peak scoped active finite animations observed while waiting |9 |100 |
+| corner failures / offscreen targets |0 /0 |0 /0 |
+| root client before/during modal |305 /320px |305 /320px |
+| page overflow |none |none |
+
+Thus the final pair exercised **124 physical selections**, including the
+previously failing10th opening in both variants on both commands. Existing
+old-search calendar assertion296px passes after its own geometry barrier.
+D01's unchanged four keyboard lifecycle checks also pass with12.62:1 ring,
+same node/focus and one GET. Browser reports no local/session storage,
+unexpected external requests or runtime exceptions. Evidence remains synthetic
+under ignored `.angular/browser-evidence/`.
+
+Six focused regressions prove finite-animation waiting, changing rects until
+three stable frames, infinite-ripple nonblocking, stable clipped/undersize facts
+returned for caller failure, finite-animation deadline rejection, and
+outgoing/wrong focus/aria/month admission refusal. They use synthetic geometry;
+the real45.7px/physical/corner findings above come from Chrome, not jsdom.
+
+## Preserved failures and bounded scope
+
+- QA's review-only/full-attendance failures during opening animation remain
+  historical nonpasses; earlier immediate corner measurement was not adequate
+  evidence of settled targets. D02 is **not independently closed here**.
+- One development full-attendance attempt reached normal31 PASS, then the first
+  enlarged-text pointer opener produced no popup. Diagnostic state was
+  date19/10/2026, opened=false, disabled=false, zero panes/cells; this was not a
+  measured static calendar clipping failure. The committed runner now explicitly
+  focuses the real toggle and opens it with native Enter, avoiding dependence
+  on a reflowing pointer-down/up opener. No date-selection or geometry assertion
+  is skipped. The final stock full+review pair passes.
+- Existing Node module-typeless warning remains benign; manifests unchanged.
+- **Not rerun by this follow-up:** old292 suite, production build, old browser
+  modes or actual fixture-proxy modes, per requested harness-only scope. Their
+  latest PASS is the caller's independent QA result, not relabeled as a new run.
+  Six new tests were added; no aggregate full-suite298 PASS is claimed.
+- No live Oracle, backend/native DB checks, real provider, EMS/batch, deployment
+  or WCAG conformance assessment. Backend223/native evidence is unchanged.
+
+## SAME-QA retest handoff
+
+On own free helpers/profile as documented in README:
+
+```powershell
+$env:SHF_UI_URL='http://127.0.0.1:4348'
+$env:SHF_CDP_URL='http://127.0.0.1:9368'
+$env:SHF_ATTENDANCE_ONLY='1'
+$env:SHF_ATTENDANCE_REVIEW_ONLY='1'
+node checks/browser-check.mjs
+Remove-Item Env:SHF_ATTENDANCE_REVIEW_ONLY
+node checks/browser-check.mjs
+```
+
+Require3 stable frames and0 finite animations before every original≥44×44/
+four-corner assertion,31+31 physical selections,0 corner failures, no page
+overflow. Repeated10th-open failures must remain failures; a persistent static
+clip must not be ignored. **Owner: SAME independent QA through caller.**
+No new approval or contract question; publication remains blocked until that
+owner closes D02.
+
+H02 teardown verified: only `attendance-h02-ui` and `attendance-h02-chrome`
+were stopped;4348/9368 are free and only
+`.angular/attendance-h02-profile-19` was removed. No backend helper was started
+or stopped in this follow-up. Ignored synthetic evidence is retained; no user
+or parent-QA process/profile was touched.
+
+---
+
+# Historical independent-QA corrections UI19-D01/D02
+
+**Status: fixes implemented; developer verification PASS; ready for the SAME
+independent QA bounded retest.** This is not independent acceptance/publication.
+Authority remains approved **§35/36 v0.1 + HTML#attendance + §37 v0.1**.
+Canonical API/identity types, backend, manifests/dependencies and history/range
+application code are unchanged. QA supplied two confirmed UI defects and
+cleared the earlier range observation as a **runner-readiness problem**, not
+a confirmed application range bug. Prior failed runs are preserved below.
+
+## Correction paths (all under frontend/fixture-slice)
+
+- `src/attendance-page.scss`: ID-scoped keyboard ring with sufficient
+  specificity over Material; enlarged floating labels constrained to their
+  own field with visual ellipsis, full Hebrew accessible names retained.
+- `src/attendance-page.html`: existing Material datepicker now uses touch UI
+  and public attendance-only panelClass.
+- New `src/attendance-calendar.scss`; `src/styles.scss` adds only its `@use`.
+  CDK portal is outside the component host, so overlay rules must be global
+  **but every override is scoped to shf-attendance-calendar**. Root scrollbar
+  override is active only while that modal exists. Surface/content overflow,
+  divider decoration and Material close-button placement do not cover targets.
+  Current/search/schedule calendars are not resized or replaced.
+- `src/attendance-page.spec.ts`: two new scoped-style/Material-config cases.
+- New `src/browser-readiness.spec.ts`: four shared-driver regression cases.
+- New `checks/browser-interactions.ts`: effective readiness expression and
+  trusted native input/blur with Angular acceptance and render checkpoint.
+- New `checks/attendance-review-check.mjs`: bounded physical D01/D02 retest,
+  also included by the full stock attendance runner.
+- `checks/attendance-browser-check.mjs`, `checks/browser-check.mjs`,
+  `checks/employee-card-browser-check.mjs`, `checks/items-browser-check.mjs`:
+  consume shared effective readiness/native input; original assertions retained.
+- `checks/fixture-proxy-check.mjs`, `checks/employee-card-proxy-check.mjs`:
+  shared physical entry, new-document barriers, scoped form readiness and
+  authoritative current query/applied-response assertions.
+- `README.md`, this file.
+
+No Git, backend/shared/canonical/legacy/root/.github writes, installs/upgrades,
+live Oracle or unknown/user process termination. The stable backend223/native
+PASS remains **caller-reported and unchanged**, not rerun or relabeled UI-live.
+
+## Confirmed defects: actual measured correction
+
+### UI19-D01 — keyboard focus ring
+
+At1440×900 and320×844, physical Tab reaches the exact reload button, then
+Space→pending→200 or503. Four lifecycle cases PASS:
+
+- `:focus-visible=true`, `document.activeElement===savedButton`, same DOM node;
+- solid **3px** outline, **3px** offset, RGB(0,47,101) on #fafafa:
+  **12.617858:1** for initial, pending and terminal states;
+- opacity1, center hit-test exposed, ring bounds clear of header and viewport;
+- repeat Space during pending leaves request delta **exactly1**, not a duplicate;
+- no BODY/ancestor-contains approximation.
+
+The generic global focus rule was outranked by Material's button reset.
+The fix is component-scoped, with no blind `!important`, and retains the
+existing mounted/aria-disabled reload lifecycle.
+
+Evidence: ignored synthetic
+`.angular/browser-evidence/attendance19-D01-{1440,320}-{200,503}-SYNTHETIC.png`.
+
+### UI19-D02 — real calendar click targets
+
+At320×844, normal text and forced **30px root/main/calendar-day text**:
+
+| Measurement | Both variants |
+|---|---|
+| root client width before/during modal | 305 /320px |
+| actual Material calendar width | 320px |
+| minimum button width /height | **45.703125 /45.6875px** |
+| physical date selections | **1–31 each**, 62 total |
+| offscreen/covered/clipped day targets | **0** |
+| page-wide overflow | **none** |
+| return focus after each date | exact datepicker toggle |
+
+Every day target is checked at all four inset corners with `elementFromPoint`,
+not only its bounding box/text span, and is physically clicked. This caught
+an intermediate scrollport issue: Material's padded divider and hidden
+off-surface close button could create scrollbars despite nominal45px rects.
+The final scoped surface/content rules remove that coverage, retain a scrollable
+viewport-bound content area and keep the close button reachable when focused.
+An exploratory root30px pass also exposed floating-label overflow after close;
+the component's field-local container sizing corrected it without changing
+the complete accessible label or approved copy.
+
+Existing search calendar is explicitly measured at **296px**, with no attendance
+panel class. Old current/search/schedule picker regressions pass. This is the
+approved≥44px design criterion, **not a claim that the former40px violated
+WCAG2.5.8's24px baseline**, and not full WCAG conformance.
+
+Evidence: ignored synthetic
+`.angular/browser-evidence/attendance19-D02-grid-320-{normal,30px}-SYNTHETIC.png`.
+The final30px screenshot was visually inspected: no scrollbar overlays the
+first/last columns; all31 dates are visible.
+
+## Runner root correction / synchronization proof
+
+1. `input.disabled` does not account for a disabled ancestor fieldset; mounted
+   initial controls and absence of a progress bar are not context completion.
+   Shared `formReadyExpression` requires the scoped live form/input/submit,
+   effective native `:disabled=false`, nonempty/expected API fixture defaults
+   and no pending progress. Original server-date and09:00 assertions remain.
+2. The driver now uses CDP Ctrl+A, native `Input.insertText` and physical Tab
+   blur, not `.value=` plus injected input/change events. It checks the accepted
+   value and Angular touched/dirty state (an unchanged logical Material date
+   legitimately stays pristine).
+3. Acceptance/class changes precede Angular's scheduled DOM render. A shared
+   two-animation-frame **render checkpoint**, not a fixed sleep or retry, waits
+   for e.g. stale table removal. An intermediate stock schedule assertion caught
+   the missing render barrier; the original assertion was preserved.
+4. Proxy base navigation crosses a new-document marker/path/query barrier,
+   so a previous route's ready DOM cannot satisfy a subsequent navigation.
+5. Four regression cases import the **same committed predicate**, including
+   actual Angular delayed identity→delayed context admission on attendance and
+   search, inherited-fieldset disabling, and expected-default/progress gating.
+   Browser geometry is not inferred from jsdom's visibility stub.
+6. Actual card proxy verifies the outgoing current GET really has
+   `attendanceDate=2026-10-15&currentTime=23:59`, gets200, and the accepted UI
+   applied echo is23:59 before awaiting the own-ID card link. Its complete stock
+   runner passes with **9 successful card responses** on the final chain.
+
+No application history/range change was used to “fix” the old10:00/09:00
+observation. Independent QA's physical64-checkpoint/two-actor result remains
+its evidence; stock runners now also pass without operator-only synchronization.
+The historical proxy timeout is not erased or called a business-source defect:
+the producer's effective route/source/query is now asserted directly.
+
+## Final exact checks / distinctions
+
+Working directory `frontend/fixture-slice`; Node24.21.0/npm11.19.0 and the
+previously approved Angular21.2.25/Material-CDK21.2.14/TS5.9.3 unchanged:
+
+| Command | Final result |
+|---|---|
+| `npm test -- --include src/attendance-page.spec.ts` | **21/21 PASS**, including2 new UI cases |
+| `npm test -- --include src/attendance-page.spec.ts --include src/browser-readiness.spec.ts` | **25/25 PASS**, focused correction checkpoint |
+| `npm test -- --include src/attendance*.spec.ts --include src/browser-readiness.spec.ts` | **43/43 PASS**,4 files:39 attendance +4 driver-readiness |
+| `npm test` | **292/292 PASS**,20 files:286 original checkpoint +6 new cases |
+| `npm run typecheck` | **PASS**, existing strict `tsc --noEmit -p tsconfig.app.json` |
+| `npm run build` | **PASS**, production budgets; initial555.68kB, attendance lazy53.95kB |
+
+Browser environment for every invocation:
+`SHF_UI_URL=http://127.0.0.1:4348`,
+`SHF_CDP_URL=http://127.0.0.1:9368`, own Chrome155 isolated profile.
+All candidate ports were checked free before starting owned helpers. Backend
+helper uses only constructed synthetic environment and merged frontend fixtures:
+`SHF_UI_ATTENDANCE_FIXTURE=1`, `SHF_UI_ITEMS_FIXTURE=1`,
+`SHF_UI_EMPLOYEE_CARD_FIXTURE=1`, `SHF_FIXTURE_PORT=4358`,
+`node checks/serve-synthetic.mjs`; Angular helper:
+`npm exec ng serve -- --host 127.0.0.1 --port 4348 --proxy-config proxy.attendance.conf.json`.
+
+**One stock intercepted chain, without manual synchronization, all PASS:**
+
+| Exact command | Per-invocation environment |
+|---|---|
+| `node checks/browser-check.mjs` | `SHF_ATTENDANCE_ONLY=1`, includes D01/D02 |
+| same | no `*_ONLY` flags: base current/search/schedule/detail |
+| same | `SHF_CARD_ONLY=1` |
+| same | `SHF_ITEMS_ONLY=1` |
+| same | `SHF_ITEMS_ONLY=1`, `SHF_ITEMS_REVIEW_ONLY=1` |
+
+Flags are cleared between variants; commands were gated on the preceding
+exit code. No original date/range/count/keyboard assertion was skipped or
+weakened. No operator-only patched runner was used.
+
+**One actual Angular→proxy→Node fixture chain, NO interception, all PASS:**
+`node checks/fixture-proxy-check.mjs` with, sequentially,
+`SHF_ATTENDANCE_ONLY=1`, no `*_ONLY` flags, `SHF_CARD_ONLY=1`,
+`SHF_ITEMS_ONLY=1`. Card had9 and items18 successful browser resource responses.
+No Oracle, real-provider login, credential verification, production, EMS/batch
+or broad accessibility-conformance check was performed.
+
+## Preserved nonpassing attempts in this correction
+
+- Two focused invocations hit the existing Windows Vitest worker-start timeout,
+  collected **zero tests** and hung. Only owned test sessions were stopped;
+  the identical final commands passed. No tooling/dependency workaround.
+- Initial new unit assertions incorrectly assumed jsdom keyboard modality and
+  a string panelClass. Corrected to a scoped CSS-rule assertion plus actual
+  Material's normalized array; real keyboard/contrast remains a Chrome check.
+- Initial enlarged-root pass exposed Material floating-label overflow and
+  initial rect-only calendar sizing hid scrollbar coverage. Fixed scoped label
+  containment, divider/close-button/scrollport sizing; strengthened corner
+  hit-tests. Final root30px and all31 physical targets pass.
+- First native-input helper required dirty even for unchanged dates; actual
+  accepted15/10 value was correctly pristine/touched. It now handles unchanged
+  semantics without dropping value/touched checks.
+- A stock base schedule run caught table DOM before Angular's render had
+  cleared it. Added the rendering checkpoint in the shared helper, not a
+  sleep, per-case bypass or weaker “no table” assertion. Final full chain PASS.
+- Earlier QA-supplied attendance/card/card-proxy readiness failures and the
+  initial implementation's nonpassing history are retained below. Their
+  original assertions now pass on the committed stock runner.
+
+## SAME-QA bounded retest handoff
+
+Recreate own helpers/profile only on genuinely free ports as above, then:
+
+```powershell
+$env:SHF_UI_URL='http://127.0.0.1:4348'
+$env:SHF_CDP_URL='http://127.0.0.1:9368'
+$env:SHF_ATTENDANCE_ONLY='1'
+$env:SHF_ATTENDANCE_REVIEW_ONLY='1'
+node checks/browser-check.mjs
+```
+
+This committed bounded command uses the same D01/D02 checks included in the
+full stock attendance runner:1440/320 × pending/200/503, native Tab/Space,
+same node, one GET, visible unobscured≥3:1 ring;320px normal/root30px all31
+real day targets≥44×44, full corner exposure, physical selections, no page
+overflow and exact opener. Clear `SHF_ATTENDANCE_REVIEW_ONLY` for the complete
+attendance runner; clear other flags between base/card/items/proxy cases.
+**Owner: the same independent QA through caller.** No contract ambiguity,
+backend dependency or new approval gate remains. Final publication stays with
+caller after that retest, not implied by this developer report.
+
+Correction teardown verified: only owned `attendance-qa-ui`,
+`attendance-qa-backend`, `attendance-qa-chrome` were stopped; listener checks
+confirmed4348/4358/9368 free. Removed only
+`.angular/attendance-qa-profile-19`, retained ignored synthetic screenshots.
+No unknown/user/parent-QA helper or Oracle process was terminated.
+
+---
+
+# Historical SHF-ATTENDANCE-UI-19 implementation verification — 19 October 2026
+
+**Status: frontend implementation done, ready for independent review.**
+Authority: §35/36 **v0.1**, existing HTML `#attendance`, user approval13:46,
+§37 **v0.1**, canonical `backend/fixture-slice/attendance-contracts.mts`;
+exact seven-capability identity delta only. No unresolved contract question.
+Historical records below are retained, not rewritten as current test results.
+
+## Ownership / review paths
+
+All task writes are under `frontend/fixture-slice/`, using targeted patches:
+
+- New `src/attendance-contract.ts`, `src/attendance-fixtures.ts`,
+  `src/attendance-page.{ts,html,scss}`,
+  `src/attendance-{page,contract,generation}.spec.ts`.
+- Integrated `src/api.ts`, `src/routes.ts`, `src/contract.ts`,
+  `src/test-fixtures.ts`, `src/contract.spec.ts`,
+  `src/employee-card-page.spec.ts` (remove the named employee right, not the
+  formerly last capability).
+- Navigation/history: `src/list-navigation.ts`, `src/view-history.ts`,
+  `src/workspace-shell.{ts,html}`, `src/my-shifts-page.{ts,html}`,
+  `src/shift-day-page.{ts,html}`, `src/shift-items-page.ts`,
+  `src/employee-card-page.ts`. Existing services are extended, not replaced.
+  History drafts returned to components are cloned, including Date/array data;
+  attendance has an explicit missing-opener results fallback.
+- New `fixtures/attendance.synthetic.json`, `proxy.attendance.conf.json`,
+  `checks/attendance-browser-check.mjs`, `checks/attendance-proxy-check.mjs`.
+- Updated `checks/serve-synthetic.mjs`, `checks/browser-check.mjs`,
+  `checks/fixture-proxy-check.mjs`, `checks/items-browser-check.mjs`,
+  this file and `README.md`.
+
+No Git operations; no backend/canonical/design/root/.github/legacy edits,
+dependency installation/upgrades, Oracle connection, EMS or batch execution.
+Unrelated working-tree changes were not reset or replaced. Ports4349/4319/
+4328/4320 and all unknown/user listeners were not stopped.
+
+## Evidence and framework
+
+- Approved reverse-engineering baseline §§35/36/37; source-contract catalog
+  confirmed absent. Direct read-only evidence includes
+  `old/SHF/src/bzq/shf/model/AttendanceDataModel.java:430–465`
+  (left attendance join and planned-start OR SPLIT_END predicate) and
+  `old/SHFWeb/WebContent/jsp/attendance_table.jsp:175–225`
+  (source rendering/independent recorded fields, deferred legacy actions).
+  Broader source traces are documented in §35, not claimed as new runtime proof.
+- Canonical type-only attendance module and reused current/search/catalog types.
+  Exact shape/error/source rules are guarded against unknown JSON. J01 team and
+  G01 parent cannot share an exact code; wrong/missing/duplicate hierarchy fails.
+  No search-membership or employee-card self-only policy is copied into inquiry.
+- Existing Angular21.2.25, Material/CDK21.2.14, CLI/build21.2.27, TS5.9.3,
+  Node24.21.0, npm11.19.0 reused; manifest/lockfile unchanged. Existing project
+  compatibility evidence and installed runtime were inspected; no new dependency
+  selection or fresh external compatibility certification is claimed.
+- Actual stable backend `server.mts:65–96`, README attendance section881+ and
+  `attendance-sample.mts` were read. Parent later reported stable `ec056…`,
+  **223/223 backend + strict + Native Oracle TEST PASS**. Those backend/native
+  results are **caller-reported**, not frontend checks executed here.
+  Own fixture backend was restarted from the stable files for final proxy runs.
+
+## Commands / measured results
+
+Commands run with working directory `frontend/fixture-slice`:
+
+| Exact command | Result / distinction |
+|---|---|
+| `node --version`; `npm --version` | **24.21.0 / 11.19.0**, installed runtime |
+| `npm test -- --include src/attendance-page.spec.ts` | First coherent test build succeeded; worker-start failure described below. Repaired dialog-close timing assertion, then **12/12 PASS** at that checkpoint. |
+| `npm test -- --include src/attendance*.spec.ts` | Final **37/37 PASS**, 3 files:19 page/boundary cases,14 dedicated guard cases,4 deliberately uncooperative-transport generation cases. Synthetic HTTP/jsdom, not browser/Oracle. |
+| `npm test` | Final **286/286 PASS**, **19 files** (249 previous +37 attendance). Existing jsdom `window.scrollTo` diagnostic remains; real scroll/focus is checked in Chrome, not inferred from jsdom. |
+| `npm run typecheck` | **PASS**, `tsc --noEmit -p tsconfig.app.json`, existing strict config |
+| `npm run build` | **PASS**, production build/budgets; initial554.67kB, attendance lazy53.52kB at final application-code build |
+| `npm exec ng serve -- --host 127.0.0.1 --port 4348 --proxy-config proxy.attendance.conf.json` | Owned Angular helper, readiness confirmed |
+| `node checks/serve-synthetic.mjs` with `SHF_UI_ATTENDANCE_FIXTURE=1`, `SHF_UI_ITEMS_FIXTURE=1`, `SHF_UI_EMPLOYEE_CARD_FIXTURE=1`, `SHF_FIXTURE_PORT=4358` | Owned **isolated-fixture** Node helper, exact seven-cap identity and attendance GET200 verified; fresh stable-backend restart also used |
+
+All browser commands below use **`SHF_UI_URL=http://127.0.0.1:4348`** and
+**`SHF_CDP_URL=http://127.0.0.1:9368`**, own isolated
+Chrome **155.0.8059.84**, verified-free ports and
+`.angular/attendance-profile-19`. `*_ONLY` flags are per invocation:
+
+| Command / additional environment | Result |
+|---|---|
+| `node checks/browser-check.mjs`; `SHF_ATTENDANCE_ONLY=1` | **PASS**, actual Angular/Material/Chrome, exclusively intercepted synthetic JSON |
+| same command, no `*_ONLY` flags | **PASS**, old current/search/detail/schedule browser regressions |
+| same command; `SHF_CARD_ONLY=1` | **PASS on isolated rerun**, with one intermittent chained-run failure retained below |
+| same command; `SHF_ITEMS_ONLY=1` | **PASS**, old full items browser regressions after exact five-link navigation expectation update |
+| same command; `SHF_ITEMS_ONLY=1`, `SHF_ITEMS_REVIEW_ONLY=1` | **PASS**, D01/D02/D03/D04 focused items review, real DOM/keyboard/outline geometry |
+| `node checks/fixture-proxy-check.mjs`; `SHF_ATTENDANCE_ONLY=1` | **PASS**, actual Angular → proxy → Node attendance read port, **NO interception**, synthetic fixtures only |
+| same command, no `*_ONLY` flags | **PASS**, old current/search/schedule/detail actual proxy regressions after isolating the original schedule fixture interval |
+| same command; `SHF_CARD_ONLY=1` | **PASS**, old card actual proxy regressions |
+| same command; `SHF_ITEMS_ONLY=1` | **PASS**, old items actual proxy regressions |
+
+## New behavior actually exercised
+
+- Exact GET/query/no-body/no-store API client behavior and independent rights;
+  malformed/absent identity and six-right synthetic identity have no fallback or
+  reader calls. Real attendance-only double can inquire but has no other
+  resource links; Administrator role without attendance right cannot inquire.
+- Context-only initial entry and API-supplied clock/defaults; strict Gregorian
+  leap input/0001/9999, invalid retained DD/MM/YYYY, en-US with UTC-/UTC+ zones.
+  Actual Material calendar Escape and exact opener; both actual Material minute
+  dialogs expose24 hours/60 minutes and Apply00:00/23:59/08:07 independently.
+  Equality succeeds, inversion focuses associated TO error, no rollover/NOW.
+- Planned/split-only/null-start/no-attendance rows; full local seconds and
+  next-day actual values; independent stage-only/station-only/exit-only fields,
+  negative/0/NULL reason, nullable briefing. Plaintext names/catalog injection
+  strings remain text with no img/script/iframe DOM. Exact leading-zero codes,
+  unresolved labels, duplicate activity order and unknown location survive.
+- Atomic rejection of malformed second row, missing own day, wrong parent kind,
+  same-code J01/G01, duplicate catalogs, source/zone/applied/date/order/page
+  mismatch, private extra fields and wrong resource problem/status. No cached
+  success/partial rows/false inferred403 or attendance-only invented day.
+- Page cases include optional-list comma serialization, dirty
+  cancellation, immutable applied paging25+5/lookahead, reload offset0 and
+  stable actual reload node/focus for400/401/403/500/503. Chrome confirms
+  one GET on repeated Space during hold and focus through pending/success/error.
+  Generation doubles intentionally deliver callbacks after ineffective abort:
+  old success/error/403 cannot change result, permission, announcement or focus.
+- Own employee/day links; Attendance→schedule→detail→items→card and exact
+  reverse chain; browser Back/Forward; **two employee IDs with independent
+  schedule ranges and two attendance entries**. Exact opener, page, RTL and
+  vertical scroll restored. Removed opener gives results heading + Hebrew
+  changed-results announcement. Existing current/search memories remain intact.
+- Actual fixture proxy: merged30 attendance rows,25+5, planned-only/no-attendance,
+  split-only08:00 selected by10:00 restart, independent next-day actuals/raw0,
+  empty10:01, genuine malformed-query400, privacy projection, no-store/nosniff,
+  nested source-preserving schedule/detail/items/card return. No backend edits.
+- 1440/390/320, long40-character names and128-character activity codes,
+  real30px main text, no page-wide overflow, contained table scroll and
+  reachable Material calendar. Hebrew names/error associations and keyboard
+  Escape/focus were exercised. Existing regression samples measure dark3px
+  focus ring contrast12.62:1 against #fafafa and text/button pairs separately;
+  those are limited measurements, **not complete WCAG conformance**.
+- Synthetic screenshots only under ignored `.angular/browser-evidence/`;
+  desktop/narrow/30px examples inspected. Browser harnesses assert no app
+  local/session storage, unexpected external assets/API, or runtime exceptions.
+
+## Nonpassing attempts / risks / not run
+
+1. Two attendance-focused invocations hit the pre-existing five-second Windows
+   Vitest worker-start timeout, collected **zero tests** and hung. Only those
+   owned sessions were stopped; unchanged subsequent runs passed. The timeout
+   runs are not counted as passing.
+2. First minute-dialog test asserted before `afterClosed`; fixed test to await
+   closure. First full suite found the old employee-card test's positional
+   `.pop()` no longer removed employee:read; fixed it to remove that exact
+   named right. Neither fix weakens the runtime capability allowlist.
+3. Old full items browser expected four sidebar links; now checks the exact
+   approved five paths, including attendance. Old proxy schedule15–28October
+   also included the newly merged19October days; restricted that original
+   30-row scenario explicitly to15–16October. Both reruns passed; assertions
+   were not weakened into arbitrary counts.
+4. One old card browser run chained after the base suite returned FROM10:00
+   where its nested history assertion expected09:00. An isolated unchanged
+   full card rerun passed (as did earlier card runs and actual proxy suite).
+   Root cause is **not established**; retain as intermittent harness/history
+   risk for independent **QA/frontend** recheck rather than assert a repair.
+5. Node emits `MODULE_TYPELESS_PACKAGE_JSON` when the browser harness imports
+   frontend TS fixtures through Node24's existing type stripping. Benign tooling
+   warning, not a browser runtime error; no manifest/dependency change made.
+6. **Not run here:** actual Oracle UI/browser, Oracle native checks, real
+   identity-provider login, production deployment, EMS/batch, independent
+   screen-reader/assistive-technology audit or full WCAG2.2AA assessment.
+   Oracle/native evidence belongs to backend owner + later final executor.
+   No contract ambiguity or blocked frontend prerequisite remains.
+
+Next action: caller reviews these frontend paths and independent QA repeats
+the intermittent old-card chain. Release/final integrated acceptance stays
+with caller; backend Native Oracle PASS is not relabeled UI-live PASS.
+
+## Helper teardown
+
+Final stable-backend proxy closure passed attendance, base current/search/
+schedule/detail, card and items variants without interception. Afterwards only
+owned sessions `attendance-ui`, `attendance-backend-stable` and
+`attendance-chrome` were stopped (the earlier owned backend had been stopped
+before its stable restart). Listener checks confirmed **4348/4358/9368 released**.
+Only the owned `.angular/attendance-profile-19` was recursively removed;
+ignored synthetic screenshots were retained. No unknown/user process or parent
+QA helper was killed. Final verification rerun after the last test assertions:
+**37/37 focused, 286/286 full, typecheck/build PASS**.
+
+---
+
 # SHF-EMPLOYEE-UI-19 — 19 October 2026
 
 **Status: frontend implementation done; ready for caller/independent review.**

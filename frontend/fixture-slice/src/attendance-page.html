@@ -1,0 +1,177 @@
+<shf-workspace-shell active="attendance" [principal]="principal()" [identityState]="identityState()"
+  [identityMessage]="identityError()" (recheck)="recheckIdentity()">
+  <nav class="breadcrumbs" aria-label="מיקום במערכת"><span>נוכחות</span><span aria-hidden="true">/</span><span>בירור נוכחות</span></nav>
+  <div class="heading"><h1 tabindex="-1">בירור נוכחות</h1><span class="version">קריאה בלבד</span></div>
+  <p class="planned-help">תחילת משמרת מתוכננת או חזרה מתוכננת מפיצול בטווח שנבחר. זה אינו סינון לפי הגעה בפועל.
+    יום משמרת ללא דיווח נוכחות עשוי להופיע; אין כאן קביעת היעדרות, איחור או מצב עובד/ת.</p>
+  <form [formGroup]="form" (ngSubmit)="apply()">
+    <fieldset class="surface filters" [disabled]="!canRead() || !context()">
+      <legend>מסננים לבירור נוכחות</legend>
+      <div class="filter-grid">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>תאריך</mat-label>
+          <input matInput id="attendance-date" formControlName="date" [matDatepicker]="calendar" dir="ltr"
+            [min]="minDate" [max]="maxDate" placeholder="DD/MM/YYYY" autocomplete="off">
+          <mat-datepicker-toggle matIconSuffix [for]="calendar" aria-label="פתיחת לוח שנה" [disabled]="!canRead() || !context()" />
+          <mat-datepicker #calendar [restoreFocus]="true" [touchUi]="true" panelClass="shf-attendance-calendar" />
+          <mat-hint>יום/חודש/שנה · תאריך אחד</mat-hint>
+          @if (form.controls.date.invalid && form.controls.date.touched) { <mat-error>יש להזין תאריך תקין בפורמט DD/MM/YYYY</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>משעה — תחילה או חזרה מפיצול</mat-label>
+          <input matInput id="attendance-timeFrom" formControlName="timeFrom" dir="ltr" placeholder="HH:mm" autocomplete="off">
+          <button id="attendance-timeFrom-open" mat-icon-button matSuffix type="button" aria-label="פתיחת בחירת שעה — משעה"
+            [disabled]="!canRead() || !context()" [attr.aria-expanded]="pickerTarget() === 'timeFrom'" aria-haspopup="dialog"
+            (click)="openTime('timeFrom')"><span aria-hidden="true">◷</span></button>
+          <mat-hint>24 שעות · כל הדקות · HH:mm</mat-hint>
+          @if (form.controls.timeFrom.invalid && form.controls.timeFrom.touched) { <mat-error>יש להזין שעה תקינה HH:mm בין 00:00 ל־23:59</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>עד שעה — תחילה או חזרה מפיצול</mat-label>
+          <input matInput id="attendance-timeTo" formControlName="timeTo" dir="ltr" placeholder="HH:mm" autocomplete="off">
+          <button id="attendance-timeTo-open" mat-icon-button matSuffix type="button" aria-label="פתיחת בחירת שעה — עד שעה"
+            [disabled]="!canRead() || !context()" [attr.aria-expanded]="pickerTarget() === 'timeTo'" aria-haspopup="dialog"
+            (click)="openTime('timeTo')"><span aria-hidden="true">◷</span></button>
+          <mat-hint>כולל שעת הגבול בשניות 00 בלבד</mat-hint>
+          @if (form.controls.timeTo.invalid && form.controls.timeTo.touched) {
+            <mat-error>{{ form.controls.timeTo.hasError('range') ? 'עד שעה חייבת להיות שווה למשעה או מאוחרת ממנה; אין מעבר אוטומטי ליום הבא' : 'יש להזין שעה תקינה HH:mm בין 00:00 ל־23:59' }}</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>מוקד</mat-label>
+          <mat-select id="attendance-moked" formControlName="moked">
+            <mat-option [value]="null">כל המוקדים המורשים</mat-option>
+            @for (p of context()?.mokedOptions ?? []; track p.code) { <mat-option [value]="p.code">{{ p.label }} ({{ p.code }})</mat-option> }
+          </mat-select>
+          <mat-hint>שינוי מוקד מסיר רק צוותים שאינם תואמים</mat-hint>
+          @if (form.controls.moked.hasError('server')) { <mat-error>יש לבדוק את המוקד שנבחר</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>צוותים</mat-label>
+          <mat-select id="attendance-teamCodes" formControlName="teamCodes" multiple>
+            @for (t of teams(); track t.code) { <mat-option [value]="t.code">{{ t.label }} ({{ t.code }})</mat-option> }
+          </mat-select>
+          <mat-hint>{{ teams().length ? 'ללא בחירה — כל הצוותים המורשים במוקד שנבחר' : 'אין צוותים מורשים לבירור' }}</mat-hint>
+          @if (form.controls.teamCodes.hasError('server')) { <mat-error>יש לבדוק את הצוותים שנבחרו</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>תפקידים פנימיים</mat-label>
+          <mat-select id="attendance-innerJobCodes" formControlName="innerJobCodes" multiple>
+            @for (r of context()?.innerJobOptions ?? []; track r.code) { <mat-option [value]="r.code">{{ r.label }} ({{ r.code }})</mat-option> }
+          </mat-select>
+          <mat-hint>ללא בחירה — ללא הגבלת תפקיד</mat-hint>
+          @if (form.controls.innerJobCodes.hasError('server')) { <mat-error>יש לבדוק את התפקידים שנבחרו</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>מיקום עבודה מתוכנן</mat-label>
+          <mat-select id="attendance-workLocations" formControlName="workLocations" multiple>
+            @for (l of context()?.workLocationOptions ?? []; track l.code) { <mat-option [value]="l.code">{{ l.label }}</mat-option> }
+          </mat-select>
+          <mat-hint>ללא בחירה — כולל לא ידוע. בית וגם אתר — ללא ערך ריק במקור</mat-hint>
+          @if (form.controls.workLocations.hasError('server')) { <mat-error>יש לבדוק את המיקומים שנבחרו</mat-error> }
+        </mat-form-field>
+        <div class="apply"><button id="attendance-submit" mat-flat-button type="submit"
+          [disabled]="!canRead() || !context() || state() === 'loading'">החלה</button></div>
+      </div>
+      <p class="subtle window-help">שעות זהות תקינות · הגבולות כלולים בשניות 00 · ללא מעבר אוטומטי ליום הבא · ללא רענון אוטומטי</p>
+      @if (unavailable()) {
+        <p>בחירה שמורה אינה זמינה בקטלוג העדכני. לא בוצע בירור ולא הורחב התחום.</p>
+        <p>קודי הבחירה השמורה: <bdi dir="auto">{{ unavailableSelection() }}</bdi></p>
+        <button mat-stroked-button type="button" (click)="clearUnavailable()">ניקוי בחירות לא זמינות</button>
+      }
+    </fieldset>
+  </form>
+  <button id="attendance-reload" class="reload" mat-stroked-button type="button" (click)="reload()"
+    [attr.aria-disabled]="!canRead() || state() === 'loading' || state() === 'context-loading'"
+    [attr.aria-busy]="state() === 'loading' || state() === 'context-loading'"
+    aria-describedby="attendance-reload-help">טעינה מחדש</button>
+  <p id="attendance-reload-help" class="subtle">בעת טעינה אין בקשה נוספת. ללא זהות או הרשאה יש לבדוק זהות מחדש.</p>
+  <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ announcement() }}</p>
+  <section aria-label="רשומות בירור נוכחות" [attr.aria-busy]="state() === 'loading' || state() === 'context-loading'">
+    @if (state() === 'loading' || state() === 'context-loading') {
+      <div class="surface state-panel"><p>{{ message() }}</p><mat-progress-bar mode="indeterminate" aria-label="טעינת בירור נוכחות" /></div>
+    }
+    @if (state() === 'dirty' || state() === 'initial') { <p class="surface state-panel">{{ message() }}</p> }
+    @if (state() === 'error') {
+      <div class="surface state-panel error"><h2 id="attendance-error" tabindex="-1">לא ניתן להציג רשומות</h2><p>{{ message() }}</p>
+        @if (reference()) { <p>מזהה פנייה לתמיכה: <bdi dir="ltr">{{ reference() }}</bdi></p> }
+      </div>
+    }
+    @if (result(); as data) {
+      <h2 id="attendance-results" tabindex="-1">ימי משמרת שנבחרו לפי תכנון</h2>
+      <p class="applied">תאריך <bdi class="date-time-token" dir="ltr">{{ data.applied.attendanceDate.slice(8) }}/{{ data.applied.attendanceDate.slice(5,7) }}/{{ data.applied.attendanceDate.slice(0,4) }}</bdi>
+        · משעה <bdi class="date-time-token" dir="ltr">{{ data.applied.timeFrom }}</bdi> עד <bdi class="date-time-token" dir="ltr">{{ data.applied.timeTo }}</bdi>
+        · אזור זמן <bdi dir="ltr">{{ data.businessTimeZone }}</bdi>
+        · מקור: {{ data.dataSource === 'oracle-read-only' ? 'Oracle — קריאה בלבד' : 'הדגמה מבודדת' }}</p>
+      <p>הבחירה היא לפי תחילה מתוכננת או חזרה מפיצול, לא לפי שעות הדיווח. ערך חסר אינו היעדרות.</p>
+      @if (!data.items.length) { <p class="surface state-panel">{{ message() }}</p> }
+      @else {
+        <div class="table-wrap" tabindex="0" role="region" aria-label="טבלת בירור נוכחות — ניתן לגלול לרוחב">
+          <table role="table">
+            <caption class="sr-only">תכנון ודיווח נפרדים — קריאה בלבד, ללא סיכומים או קביעת מצב</caption>
+            <thead role="rowgroup"><tr role="row">
+              <th scope="col">עובד/ת</th><th scope="col">צוות ומוקד</th><th scope="col">פעילות ותפקיד פנימי</th>
+              <th scope="col" aria-sort="ascending">תכנון: התחלה</th><th scope="col">תכנון: סיום</th><th scope="col">תכנון: מיקום</th>
+              <th scope="col">דיווח: הגעה לשלב</th><th scope="col">דיווח: כניסה לעמדה</th><th scope="col">דיווח: יציאה מעמדה</th>
+              <th scope="col">קוד סיבה רשום</th><th scope="col">תדריך רשום</th><th scope="col">ניווט</th>
+            </tr></thead>
+            <tbody role="rowgroup">
+              @for (row of data.items; track row.shiftDayId) {
+                <tr role="row">
+                  <th scope="row" role="rowheader" data-label="עובד/ת"><shf-employee-name [principal]="principal()" [employeeId]="row.employee.employeeId"
+                    [firstName]="row.employee.firstName" [lastName]="row.employee.lastName" [opener]="'card-attendance-' + row.shiftDayId" /></th>
+                  <td role="cell" data-label="צוות ומוקד"><bdi>{{ row.employee.unit.label }}</bdi> <bdi dir="ltr">{{ row.employee.unit.code }}</bdi>
+                    <span class="cell-note">מוקד: <bdi>{{ row.employee.unit.moked.label }}</bdi> <bdi dir="ltr">{{ row.employee.unit.moked.code }}</bdi></span></td>
+                  <td role="cell" data-label="פעילות ותפקיד פנימי">
+                    @for (activity of row.planned.activities; track $index) {
+                      <span class="activity-line"><bdi>{{ label(activity) }}</bdi> · קוד <bdi class="catalog-code" dir="auto">{{ activity.code }}</bdi></span>
+                    } @empty {
+                      @if (row.planned.activityFallback; as fallback) { <span>חלופת חריגה: <bdi>{{ label(fallback) }}</bdi> · קוד <bdi dir="auto">{{ fallback.code }}</bdi></span> }
+                      @else { <span>פעילות: לא צוין</span> }
+                    }
+                    <span class="cell-note">תפקיד פנימי:
+                      @if (row.planned.innerJob; as job) { <bdi>{{ label(job) }}</bdi> · קוד <bdi dir="ltr">{{ job.code }}</bdi> } @else { לא צוין }
+                    </span>
+                  </td>
+                  <td role="cell" data-label="תכנון: התחלה"><bdi class="date-time-token" dir="ltr">{{ displayTime(row.planned.startLocal) }}</bdi></td>
+                  <td role="cell" data-label="תכנון: סיום"><bdi class="date-time-token" dir="ltr">{{ displayTime(row.planned.endLocal) }}</bdi></td>
+                  <td role="cell" data-label="תכנון: מיקום">{{ row.planned.workingFromHome === null ? 'לא ידוע' : row.planned.workingFromHome ? 'בית' : 'אתר' }}</td>
+                  <td role="cell" data-label="דיווח: הגעה לשלב"><bdi class="date-time-token" dir="ltr">{{ displayTime(row.attendance.stageArrivalLocal) }}</bdi></td>
+                  <td role="cell" data-label="דיווח: כניסה לעמדה"><bdi class="date-time-token" dir="ltr">{{ displayTime(row.attendance.stationArrivalLocal) }}</bdi></td>
+                  <td role="cell" data-label="דיווח: יציאה מעמדה"><bdi class="date-time-token" dir="ltr">{{ displayTime(row.attendance.stationExitLocal) }}</bdi></td>
+                  <td role="cell" data-label="קוד סיבה רשום"><bdi dir="ltr">{{ row.attendance.missingReasonCode ?? 'לא ידוע' }}</bdi><small class="cell-note">קוד רשום בלבד, לא קביעת היעדרות</small></td>
+                  <td role="cell" data-label="תדריך רשום">{{ row.attendance.briefingRecorded === null ? 'לא ידוע' : row.attendance.briefingRecorded ? 'כן' : 'לא' }}</td>
+                  <td role="cell" data-label="ניווט">
+                    @if (row.shiftDayId && principal()?.principal?.capabilities?.includes('shift-day:read')) {
+                      <a class="row-link" [id]="'attendance-detail-' + row.shiftDayId" [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId]"
+                        [attr.aria-label]="'פרטי משמרת של ' + row.employee.firstName + ' ' + row.employee.lastName"
+                        (click)="open(row, $event, 'detail')">פרטי משמרת</a>
+                    }
+                    @if (row.shiftDayId && canReadItems()) {
+                      <a class="row-link" [id]="'attendance-items-' + row.shiftDayId" [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'breaks-and-exceptions']"
+                        [attr.aria-label]="'הפסקות וחריגות חלקיות עבור ' + row.employee.firstName + ' ' + row.employee.lastName"
+                        (click)="open(row, $event, 'items')">הפסקות וחריגות חלקיות</a>
+                    }
+                    @if (principal()?.principal?.synthetic && principal()?.principal?.capabilities?.includes('my-shifts:read')) {
+                      <a class="row-link" [id]="'attendance-schedule-' + row.shiftDayId" [routerLink]="['/my-shifts/selected', row.employee.employeeId]"
+                        [attr.aria-label]="'משמרות העובד/ת ' + row.employee.firstName + ' ' + row.employee.lastName"
+                        (click)="open(row, $event, 'schedule')">משמרות העובד/ת</a>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      <div class="surface pager"><span>היסט: <bdi dir="ltr">{{ data.page.offset }}</bdi> · {{ data.items.length }} בעמוד · ללא ספירה כוללת</span>
+        <div class="pager-controls">
+          <button id="attendance-prev" mat-stroked-button type="button" [disabled]="data.page.offset === 0" (click)="page(data.page.offset - data.page.limit)">הקודם</button>
+          <button id="attendance-next" mat-stroked-button type="button" [disabled]="data.page.nextOffset === null" (click)="page(data.page.nextOffset!)">הבא</button>
+        </div>
+        @if (data.page.hasMore && data.page.nextOffset === null) { <p>הגעת למגבלת הדפדוף; יש לצמצם את החיפוש.</p> }
+      </div>
+    }
+  </section>
+  <p class="footer-note">בירור בלבד. אין כאן רישום, עריכה, ביטול, ייצוא, CTI או EMS. הנתונים נבדקים מחדש בכל בקשה; אין תמונת מצב קבועה בין עמודים.</p>
+</shf-workspace-shell>

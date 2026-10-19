@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { ListNavigation } from './list-navigation';
 
-type Slots = Pick<ListNavigation, 'origin' | 'searchOrigin' | 'schedule' | 'scheduleDetail' |
+type Slots = Pick<ListNavigation, 'origin' | 'searchOrigin' | 'attendanceOrigin' | 'schedule' | 'scheduleDetail' |
   'detailOrigin' | 'scheduleUpstream'>;
 interface Entry {
   itemsJourney: boolean;
@@ -40,7 +40,7 @@ export class ViewHistory {
       if (event instanceof NavigationEnd) {
         const token = this.target ?? crypto.randomUUID();
         if (!this.entries.has(token)) this.entries.set(token, {
-          itemsJourney: /\/(breaks-and-exceptions|operational-card)$/.test(event.urlAfterRedirects) ||
+          itemsJourney: event.urlAfterRedirects === '/attendance' || /\/(breaks-and-exceptions|operational-card)$/.test(event.urlAfterRedirects) ||
             !!(this.current && this.entries.get(this.current)?.itemsJourney),
           path: event.urlAfterRedirects, parent: this.popping ? null : this.current,
           slots: this.slots(), view: null, local: null,
@@ -58,14 +58,14 @@ export class ViewHistory {
         // Do not serialize route context, form values, employee names or IDs.
         const origin: unknown = history.state?.origin;
         const provenance = typeof origin === 'string' &&
-          ['current-shifts', 'shift-search', 'my-shifts', 'shift-day-diagnostic'].includes(origin) ? { origin } : {};
+          ['current-shifts', 'shift-search', 'my-shifts', 'attendance', 'shift-day-diagnostic'].includes(origin) ? { origin } : {};
         history.replaceState({ ...provenance, navigationId: event.id, shfView: token }, '');
       }
     });
   }
   private slots(): Slots {
-    const { origin, searchOrigin, schedule, scheduleDetail, detailOrigin, scheduleUpstream } = this.nav;
-    return structuredClone({ origin, searchOrigin, schedule, scheduleDetail, detailOrigin, scheduleUpstream });
+    const { origin, searchOrigin, attendanceOrigin, schedule, scheduleDetail, detailOrigin, scheduleUpstream } = this.nav;
+    return structuredClone({ origin, searchOrigin, attendanceOrigin, schedule, scheduleDetail, detailOrigin, scheduleUpstream });
   }
   private save() {
     const entry = this.current && this.entries.get(this.current);
@@ -83,9 +83,11 @@ export class ViewHistory {
   saved<T>(): T | null {
     const key = this.target;
     const entry = key ? this.entries.get(key) : undefined;
-    return entry?.local as T ?? null;
+    // A restored form must not retain references into the prior history entry.
+    // This is entry-scoped state (including dates/arrays), never actor-keyed cache.
+    return entry?.local == null ? null : structuredClone(entry.local) as T;
   }
-  restore(host: HTMLElement): boolean {
+  restore(host: HTMLElement, fallback?: { selector: string; onMissing: () => void }): boolean {
     if (this.restoration !== this.current) return false;
     const entry = this.current && this.entries.get(this.current), view = entry && entry.view;
     if (!view || !entry || !entry.itemsJourney) return false;
@@ -96,7 +98,9 @@ export class ViewHistory {
     const table = host.querySelector<HTMLElement>('.table-wrap');
     if (table) table.scrollLeft = view.horizontal;
     const opener = view.opener ? document.getElementById(view.opener) : null;
-    (opener && host.contains(opener) && opener.getClientRects().length ? opener : host.querySelector<HTMLElement>('h1'))
+    const visible = opener && host.contains(opener) && opener.getClientRects().length;
+    if (!visible && view.opener) fallback?.onMissing();
+    (visible ? opener : host.querySelector<HTMLElement>(fallback?.selector ?? 'h1') ?? host.querySelector<HTMLElement>('h1'))
       ?.focus({ preventScroll: true });
     window.scrollTo(0, view.scroll);
     return true;

@@ -38,7 +38,7 @@ test("EC18-01/08/10/12 HTTP exact six capabilities/null actor, one card, privacy
       principal: { employeeId: null; capabilities: string[] }; mockMode: boolean };
     assert.equal(identity.principal.employeeId, null);
     assert.deepEqual(identity.principal.capabilities, ["shift-day:read", "current-shifts:read",
-      "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read"]);
+      "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read", "attendance:read"]);
   });
 });
 test("EC18-10 HTTP malformed IDs/query/body rejected before reader, exact invalidParameters", async () => {

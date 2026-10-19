@@ -19,6 +19,8 @@ import { OracleShiftItemsReader } from "./oracle-shift-items-reader.mts";
 import { ShiftItemsFixtureReader } from "./shift-items-fixture.mts";
 import { EmployeeCardFixtureReader } from "./employee-card-fixture.mts";
 import { OracleEmployeeCardReader } from "./oracle-employee-card-reader.mts";
+import { OracleAttendanceReader } from "./oracle-attendance-reader.mts";
+import { AttendanceFixtureReader } from "./attendance-fixture.mts";
 
 const resources = new WeakMap<Server, OraclePool>();
 export async function stopBackendServer(server: Server) {
@@ -50,7 +52,8 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv) {
     if (config.dataSource === "oracle-read-only") {
       if (environment.SHF_FIXTURE_ROWS !== undefined || environment.SHF_CURRENT_SHIFTS_FIXTURE !== undefined ||
           environment.SHF_SHIFT_SEARCH_FIXTURE !== undefined || environment.SHF_MY_SHIFTS_FIXTURE !== undefined ||
-          environment.SHF_SHIFT_ITEMS_FIXTURE !== undefined || environment.SHF_EMPLOYEE_CARD_FIXTURE !== undefined)
+          environment.SHF_SHIFT_ITEMS_FIXTURE !== undefined || environment.SHF_EMPLOYEE_CARD_FIXTURE !== undefined ||
+          environment.SHF_ATTENDANCE_FIXTURE !== undefined)
         throw new Error("Oracle mode prohibits fixture input");
       pool = await createOraclePool(oracleEnvironment(environment));
       const session = new OracleReadSession(pool);
@@ -61,7 +64,7 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv) {
       runtime = await createRuntime(config, new OracleDetailReader(session), undefined,
         { reader: new OracleCurrentReader(session), searchReader: new OracleSearchReader(session),
           myShiftsReader: new OracleMyShiftsReader(session), shiftItemsReader: new OracleShiftItemsReader(session),
-          employeeCardReader: new OracleEmployeeCardReader(session) });
+          employeeCardReader: new OracleEmployeeCardReader(session), attendanceReader: new OracleAttendanceReader(session) });
     } else {
       const rows: unknown = JSON.parse(environment.SHF_FIXTURE_ROWS ?? "null");
       if (!Array.isArray(rows)) throw new Error("Explicit synthetic fixture rows required");
@@ -71,6 +74,8 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv) {
       itemsReader?.assertDetailCoherence(validatedRows);
       const currentOptions = environment.SHF_CURRENT_SHIFTS_FIXTURE === undefined ? undefined
         : { shiftItemsReader: itemsReader,
+          attendanceReader: environment.SHF_ATTENDANCE_FIXTURE === undefined ? undefined
+            : new AttendanceFixtureReader(JSON.parse(environment.SHF_ATTENDANCE_FIXTURE)),
           employeeCardReader: environment.SHF_EMPLOYEE_CARD_FIXTURE === undefined ? undefined
             : new EmployeeCardFixtureReader(JSON.parse(environment.SHF_EMPLOYEE_CARD_FIXTURE), config.syntheticOrgUnitIds),
           reader: new CurrentFixtureReader(JSON.parse(environment.SHF_CURRENT_SHIFTS_FIXTURE),
@@ -86,6 +91,8 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv) {
         throw new Error("Shift items fixture requires explicit shared current catalog configuration");
       if (environment.SHF_EMPLOYEE_CARD_FIXTURE !== undefined && !currentOptions)
         throw new Error("Employee card fixture requires explicit shared current catalog configuration");
+      if (environment.SHF_ATTENDANCE_FIXTURE !== undefined && !currentOptions)
+        throw new Error("Attendance fixture requires explicit shared current catalog configuration");
       runtime = await createRuntime(config, new FixtureReader(validatedRows), undefined, currentOptions);
     }
   } catch (error) {

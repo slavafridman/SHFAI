@@ -35,7 +35,7 @@ test("BRX18-01/03 HTTP single endpoint, five-capability identity, headers and se
     assert.equal(body.items.length, 1); assert.equal(body.shiftDay.dataSource, "isolated-fixture");
     const identity = await (await fetch(url + "/api/v1/identity")).json() as { principal: { capabilities: string[]; employeeId: null } };
     assert.deepEqual(identity.principal.capabilities,
-      ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read"]);
+      ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read", "attendance:read"]);
     assert.equal(identity.principal.employeeId, null);
   });
 });

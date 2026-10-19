@@ -110,7 +110,8 @@ export class MyShiftsPage {
   upstream() {
     if (this.selector.mode !== 'selected') return null;
     const kind = this.navigation.scheduleUpstream;
-    const source = kind === 'shift-search' ? this.navigation.searchOrigin : kind === 'current-shifts' ? this.navigation.origin : null;
+    const source = kind === 'attendance' ? this.navigation.attendanceOrigin :
+      kind === 'shift-search' ? this.navigation.searchOrigin : kind === 'current-shifts' ? this.navigation.origin : null;
     return source?.employeeId === this.selector.employeeId ? kind : null;
   }
   private cancel() { this.generation++; this.work?.unsubscribe(); this.result.set(null); this.reference.set(''); }

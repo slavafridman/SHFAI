@@ -26,7 +26,7 @@ test("MY18-01 synthetic self is honest and never performs a read", async () => {
   assert.deepEqual(context.defaults, { dateFrom: "2024-02-29", dateTo: "2024-03-13" });
   await assert.rejects(noRead.list(principal, { mode: "self", dateFrom: "2024-02-29", dateTo: "2024-03-01" }),
     { code: "EMPLOYEE_CONTEXT_REQUIRED" });
-  assert.deepEqual(principal.capabilities, ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read"]);
+  assert.deepEqual(principal.capabilities, ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read", "attendance:read"]);
 });
 
 const actorId = "9007199254740993";
