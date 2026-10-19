@@ -47,6 +47,10 @@
           [attr.aria-current]="active() === 'schedule' ? 'page' : null">המשמרות שלי</a>
       } @else { <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>אין הרשאה זמינה</small></span> }
       @if (active() === 'detail') { <span class="nav-item active" aria-current="page">פרטי משמרת</span> }
+      @if (principal()?.principal?.capabilities?.includes('employee:read')) {
+        <a class="nav-item" routerLink="/employee-card" [class.active]="active() === 'card'"
+          [attr.aria-current]="active() === 'card' ? 'page' : null">כרטיס עובד/ת</a>
+      } @else { <span class="nav-item unavailable" aria-disabled="true">כרטיס עובד/ת <small>אין הרשאה זמינה</small></span> }
     </nav>
     <p class="nav-note">בירור משמרות לקריאה בלבד.</p>
   </aside>
@@ -72,6 +76,10 @@
         [attr.aria-current]="active() === 'schedule' ? 'page' : null">המשמרות שלי</a>
     } @else { <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>אין הרשאה זמינה</small></span> }
     @if (active() === 'detail') { <span class="nav-item active" aria-current="page">פרטי משמרת</span> }
+    @if (principal()?.principal?.capabilities?.includes('employee:read')) {
+      <a class="nav-item" routerLink="/employee-card" (click)="closeMenu()" [class.active]="active() === 'card'"
+        [attr.aria-current]="active() === 'card' ? 'page' : null">כרטיס עובד/ת</a>
+    } @else { <span class="nav-item unavailable" aria-disabled="true">כרטיס עובד/ת <small>אין הרשאה זמינה</small></span> }
   </nav>
   <p class="nav-note">בירור משמרות לקריאה בלבד.</p>
   </div>

@@ -5,6 +5,17 @@ import { SliceError } from "./errors.mts";
 import type { MyShiftsAccessPolicy } from "./my-shifts-contracts.mts";
 import { validateRuntimeConfig } from "./runtime-config.mts";
 import type { SelectedShiftItemsAccessPolicy } from "./shift-items-contracts.mts";
+import type { EmployeeOperationalCardAccessPolicy } from "./employee-card-contracts.mts";
+
+export function employeeCardAccessPolicy(configuration: unknown): EmployeeOperationalCardAccessPolicy {
+  const config = validateRuntimeConfig(configuration);
+  const actor = shiftItemsAccessPolicy(config);
+  return {
+    requireEmployeeRead(p) { accessPolicy.requireCapability(p, "employee:read"); },
+    canReadSelectedEmployee: (p, id) => actor.canReadSelectedEmployee(p, id),
+    authorizedEmployeeTeamIds: p => [...p.resourceScope.orgUnitIds],
+  };
+}
 
 export const accessPolicy: AccessPolicy & CurrentShiftAccessPolicy & ShiftSearchAccessPolicy = {
   requireShiftSearchRead(principal) {

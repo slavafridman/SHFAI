@@ -62,7 +62,8 @@
           <span class="avatar" aria-hidden="true">ש</span>
           <div class="employee-info">
             <h2 id="result-heading" tabindex="-1" aria-describedby="result-context">פרטי עובד/ת:
-              <bdi>{{ data.employee.firstName }} {{ data.employee.lastName }}</bdi></h2>
+              <shf-employee-name [principal]="principal()" [employeeId]="data.employeeId"
+                [firstName]="data.employee.firstName" [lastName]="data.employee.lastName" opener="card-detail" /></h2>
             <p id="result-context" class="subtle">פרטי המשמרת נטענו · ההקשר שנבחר אינו זהות היישום</p>
           </div>
           <span class="tag">המשמרת האפקטיבית</span>

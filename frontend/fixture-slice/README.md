@@ -1,4 +1,85 @@
-# SHF-ITEMS-UI-18 — selected items, schedule, search, current shifts and detail
+# SHF-EMPLOYEE-UI-19 — read-only operational employee card
+
+## Approved baseline and implementation — 19 October 2026
+
+Implemented **§32 v0.1 + §33 v0.1 + `#employee-card` visual**, accepted at
+19 October 08:41 and materialized in **§34 v0.1**. Canonical erased types:
+`backend/fixture-slice/employee-card-contracts.mts`; identity consumes the exact
+six capabilities in §34, including the independent `employee:read`. No backend,
+shared type, design, root manifest, legacy or `.github` edits by this task.
+
+- Selected route: `/employees/:employeeId/operational-card` (caller-assigned
+  route spelling); exactly one `GET /api/v1/employees/{employeeId}/operational-card`
+  after validated identity. No query/body/context/catalog/related-resource calls.
+- `/employee-card` is an honest **no-selection** menu/preview entry. It offers
+  existing source routes, not an employee-ID form, synthetic self or default person.
+- Actual name anchors on current/search, selected schedule header/rows,
+  accepted detail and accepted items use their **own employee ID**. Existing
+  employee/day shift actions remain distinct. Missing `employee:read` produces
+  plain names with Hebrew unavailability help; other read workflows still work.
+- Strict unknown boundary checks ID, exact granted team, direct G01/non-self
+  parent, names/labels, nullable signed 38-digit jobs, zone and source pairing.
+  `oracle` identity maps to `oracle-read-only` card; fixtures cannot mix with
+  Oracle. An explicit nested allowlist projection discards unknown extras
+  before component state/DOM; never stores a broad HR payload.
+- Only names, current master team/direct parent, job/internal job and collapsed
+  internal-ID/source/zone disclosure. Missing job is **לא צוין**; present code
+  with null label is **תיאור לא זמין** plus original code. No shift activity,
+  site, times or attendance are promoted into employee attributes. No HR tabs,
+  image/contact/personal-reference fields, editors or write controls.
+- Synthetic app actor remains `employeeId=null`, visibly separate from selected
+  employee. Persistent identity/source indication is enabled on this page.
+  No fallback Administrator or new authentication claims.
+- Volatile `ViewHistory` preserves independent draft/applied requests, paging,
+  scroll/RTL-table position, disclosures and exact name opener through nested
+  search → schedule → detail → items → card and reverse/Back/Forward. History
+  stores opaque tokens and allowlisted route-origin labels only, not card data;
+  restoration also requires matching route provenance. Cold links never
+  fabricate prior results. Return reloads/revalidates the original resource.
+- Superseded requests are canceled and generation/ID/identity-source/scope
+  epochs guard every outcome. Identity recheck removes the entire card
+  immediately. All terminal errors clear success. Reload/retry is one stable
+  native focusable button with guarded `aria-disabled` pending state.
+
+### Checks and isolated local reproduction
+
+Existing Node **24.21.0**, npm **11.19.0**, Angular **21.2.25**,
+Material/CDK **21.2.14**, TS **5.9.3**, CLI/build **21.2.27** retained;
+no installs/upgrades/manifest changes. Final: **249/249 tests**, strict
+typecheck and production build PASS. These are the previous **196 + 53** new
+card guard/component/ineffective-abort tests. Chrome **155.0.8059.84** card,
+old workflows and actual isolated Node proxy checks PASS; details, exact
+commands, earlier harness failures and verification limits are in
+[VERIFICATION.md](VERIFICATION.md#shf-employee-ui-19--19-october-2026).
+
+Use only checked-free own ports, not running user services. This task used
+UI **4348**, backend **4358**, CDP **9368**, all stopped at completion.
+From this directory, in separate owned shells:
+
+```powershell
+$env:SHF_FIXTURE_PORT='4358'
+$env:SHF_UI_ITEMS_FIXTURE='1'
+$env:SHF_UI_EMPLOYEE_CARD_FIXTURE='1'
+node checks/serve-synthetic.mjs
+# Separate shell:
+node node_modules/@angular/cli/bin/ng.js serve --host 127.0.0.1 --port 4348 --proxy-config proxy.employee-card.conf.json
+```
+
+The explicit UI helper loads `fixtures/employee-card.synthetic.json` through
+the backend's confirmed `SHF_EMPLOYEE_CARD_FIXTURE` seam:
+`employees`, `units`, `activeJobPairs`, `innerJobs`. These invented IDs
+1001/1002 and TEST-U/P01 hierarchy are isolated from the backend's different
+sample module and from real data. No backend sample/config edits are needed.
+Missing card fixture configuration never enables an app fallback.
+
+The actual proxy runs do **not** intercept HTTP and refuse non-fixture identity.
+They do not verify Oracle/native drivers, real authentication, production
+authorization/deployment or full WCAG conformance. Screenshots/profile are
+synthetic-only, ignored under `.angular/`; no personal data or business storage.
+
+---
+
+# SHF-ITEMS-UI-18 — prior implementation and verification history
 
 ## Selected breaks and partial exceptions — approved v0.1
 

@@ -24,13 +24,14 @@ import { WorkspaceShell } from './workspace-shell';
 import { MinutePicker } from './minute-picker';
 import { ListNavigation } from './list-navigation';
 import { ViewHistory } from './view-history';
+import { EmployeeName } from './employee-name';
 
 const timeControl = () => new FormControl('', { nonNullable: true,
   validators: [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/)] });
 
 @Component({
   selector: 'shf-shift-search',
-  imports: [WorkspaceShell, ReactiveFormsModule, RouterLink, MatDatepickerModule, MatButtonModule,
+  imports: [EmployeeName,WorkspaceShell, ReactiveFormsModule, RouterLink, MatDatepickerModule, MatButtonModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressBarModule],
   providers: [{ provide: DateAdapter, useClass: CivilDateAdapter }, { provide: MAT_DATE_FORMATS, useValue: CIVIL_FORMATS },
     { provide: MAT_DATE_LOCALE, useValue: 'he-IL' }, { provide: MatDatepickerIntl, useFactory: calendarLabels }],

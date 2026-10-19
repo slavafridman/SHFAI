@@ -19,10 +19,11 @@ import { CivilDateAdapter, CIVIL_FORMATS, dateFromWire, dateWire, calendarLabels
 import { WorkspaceShell } from './workspace-shell';
 import { ListNavigation } from './list-navigation';
 import { ViewHistory } from './view-history';
+import { EmployeeName } from './employee-name';
 
 @Component({
   selector: 'shf-my-shifts',
-  imports: [WorkspaceShell, ReactiveFormsModule, RouterLink, MatDatepickerModule, MatButtonModule,
+  imports: [EmployeeName, WorkspaceShell, ReactiveFormsModule, RouterLink, MatDatepickerModule, MatButtonModule,
     MatFormFieldModule, MatInputModule, MatProgressBarModule],
   providers: [{ provide: DateAdapter, useClass: CivilDateAdapter }, { provide: MAT_DATE_FORMATS, useValue: CIVIL_FORMATS },
     { provide: MAT_DATE_LOCALE, useValue: 'he-IL' }, { provide: MatDatepickerIntl, useFactory: calendarLabels }],

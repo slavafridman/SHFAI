@@ -1,4 +1,190 @@
-# SHF-ITEMS-UI-18 verification — 2026-10-18
+# SHF-EMPLOYEE-UI-19 — 19 October 2026
+
+**Status: frontend implementation done; ready for caller/independent review.**
+Developer verification only, not release approval or independent acceptance.
+Controlling approved contracts: §32/33 **v0.1**, existing `#employee-card`
+visual, §34 **v0.1**, canonical
+`backend/fixture-slice/employee-card-contracts.mts` and additive
+`CapabilityV1`/exact six-capability synthetic identity. The caller's explicit
+route is `/employees/:employeeId/operational-card`; no API shape changes.
+There are no outstanding contract questions or frontend implementation blockers.
+
+## Changed paths and ownership
+
+All writes are under `frontend/fixture-slice/`:
+
+- New: `src/employee-card-contract.ts`, `src/employee-card-fixtures.ts`,
+  `src/employee-card-page.{ts,html,scss}`, `src/employee-name.ts`,
+  `src/employee-card-{contract,page,generation}.spec.ts`.
+- Integration: `src/api.ts`, `src/routes.ts`, `src/contract.ts`,
+  `src/test-fixtures.ts`, `src/view-history.ts`,
+  `src/workspace-shell.{ts,html,scss}` and five existing
+  `src/{current-shifts,shift-search,my-shifts,shift-day,shift-items}-page.{ts,html}`.
+- Existing tests aligned without dropping tests:
+  `src/contract.spec.ts`, `src/shift-items-{contract,navigation,page}.spec.ts`.
+  Missing-right tests use a valid real-provider **test double** rather than
+  accepting a malformed partial synthetic Administrator.
+- New harness/data: `checks/employee-card-{browser,proxy}-check.mjs`,
+  `fixtures/employee-card.synthetic.json`, `proxy.employee-card.conf.json`.
+  Updated existing `checks/{browser-check,fixture-proxy-check,serve-synthetic,
+  items-browser-check}.mjs`, `README.md`, this document.
+
+No Git commands, dependency installation, legacy execution/build, database,
+broker, batch, live user application or agent delegation. Existing caller-owned
+dirty changes were not reset/replaced; patches touch only related frontend
+ranges. No Git/diff-based certification of the reported 23 dirty paths is made.
+Backend changes/readiness belong to the concurrent backend owner, not this UI task.
+
+## Source and static evidence
+
+Read instructions/brief/ui-developer skill; baseline §§32/33/34, canonical
+type-only card contract and existing approved HTML `#employee-card:475–510`.
+Source catalog is unavailable. Controlling read-only legacy evidence:
+`EmployeeTag.java:28–38` links the internal employee ID, not day/personal
+reference; `EmployeeDataAction.java:46–94` selects employee/self branches;
+`EmployeeDataModel.java:735–763` binds EMPLOYEE_ID in `populate`.
+Its broad `t.*`, manager join and logs are deliberately not copied.
+`ComplexCodeTable.java:31–34,53–57,68–75` establishes inner jobs, active grouped
+job labels and org labels. UI does not reimplement those backend lookup rules.
+The new unknown guard rejects required malformed fields and negative job labels
+inconsistent with the approved positive-only job source. Extra source fields
+are discarded by a recursive explicit projection, not hidden in the DOM.
+
+## Exact commands and fresh results
+
+All npm/Node commands below run from `D:\AIProjects\SHFAI\frontend\fixture-slice`.
+Installed runtime observed: Node24.21.0/npm11.19.0; unchanged approved
+Angular21.2.25/Material-CDK21.2.14/TS5.9.3/CLI-build21.2.27.
+
+| Command | Actual result / distinction |
+|---|---|
+| `npm test -- --include src/employee-card-contract.spec.ts --include src/employee-card-page.spec.ts` | Final **48/48 PASS**, two files (30 guard +18 component); initial45/45 before the last three plain-label/sentinel cases; Angular + synthetic HTTP/jsdom |
+| `npm test -- --include src/employee-card-generation.spec.ts` | **5/5 PASS**; intentionally ineffective unsubscribe, late success/error/403, identity revocation, scope epoch and destruction |
+| `npm test` (final, 19 Oct 09:16 local) | **249/249 PASS**, **16 files** = existing196 + new53; no failed/unhandled tests |
+| `npm run typecheck` | **PASS**, strict app tsc/noEmit, canonical types imported only as types |
+| `npm run build` | **PASS**, final initial551.47kB / estimated127.83kB; all budgets pass; production output ignored |
+| `SHF_CARD_ONLY=1` + `node checks/browser-check.mjs` | **PASS**, actual Chrome155.0.8059.84 + Angular, intercepted synthetic HTTP only; final complete matrix passed twice after final history changes |
+| `SHF_ITEMS_ONLY=1` + `node checks/browser-check.mjs` | **PASS**, previous items four origins/nested return/page25/RTL scroll/dirty drafts/25+5/empty/reload/error/keyboard regressions |
+| `node checks/browser-check.mjs` (no scenario flag) | **PASS**, previous current/detail/search/schedule calendars/minute pickers, all errors, 25+5, exact focus and nested histories at1440/390/320 |
+| `SHF_CARD_ONLY=1` + `node checks/fixture-proxy-check.mjs` | **PASS**, actual Angular→own proxy→Node fixture; **9 browser card200 responses**, five origins/nested exact-focus returns, 1440/390/320, null/unknown, genuine400/404, no-store/nosniff and serialized key allowlist |
+| `SHF_ITEMS_ONLY=1` + `node checks/fixture-proxy-check.mjs` | **PASS**, actual Node fixture, **18 browser item200 responses**, four origins and 25+5/previous/reload/detail excursion at1440/390/320, genuine400/404 |
+| `node checks/fixture-proxy-check.mjs` (no scenario flag) | **PASS**, actual Node fixture current/detail1440/390; search/schedule1440/390/320, 25+5, equality/empty, Back/Forward and independent exact filters/page/scroll/opener |
+
+The scenario flags in the table are environment variables, not shell syntax.
+Exact browser invocation template used (set one flag, or neither for old flows):
+
+```powershell
+$env:SHF_UI_URL='http://127.0.0.1:4348'
+$env:SHF_CDP_URL='http://127.0.0.1:9368'
+$env:SHF_CARD_ONLY='1' # Or SHF_ITEMS_ONLY='1'; independent fresh shell per run.
+node checks/browser-check.mjs
+# In a fresh shell with the same URL/CDP/one scenario flag:
+node checks/fixture-proxy-check.mjs
+```
+
+Owned services were started with:
+
+```powershell
+$env:SHF_FIXTURE_PORT='4358'
+$env:SHF_UI_ITEMS_FIXTURE='1'
+$env:SHF_UI_EMPLOYEE_CARD_FIXTURE='1'
+node checks/serve-synthetic.mjs
+# Separate owned shell:
+node node_modules/@angular/cli/bin/ng.js serve --host 127.0.0.1 --port 4348 --proxy-config proxy.employee-card.conf.json
+```
+
+Own Chrome only:
+`C:\Program Files\Google\Chrome\Application\chrome.exe --headless=new --disable-gpu --no-first-run --no-default-browser-check --disable-background-networking --remote-debugging-port=9368 --user-data-dir=D:/AIProjects/SHFAI/frontend/fixture-slice/.angular/card19-chrome about:blank`.
+Ports4348/4358/9368 were checked free before startup; no user port4319/4328/4320
+operations. Services/profile closed at completion; evidence PNGs remain ignored.
+
+## Actual card browser coverage and limits
+
+- Five actual name origins and all nested reverse returns, exact own employee
+  IDs rather than day IDs; source filters, page25/evaluated minute, physical RTL
+  table scroll, vertical scroll, disclosures and exact DOM anchor focus.
+  Browser Back/Forward consumes entries without a duplicate card/origin cycle.
+- Six-field semantic definition list, collapsed internal identifier, name auto
+  direction/LTR codes, no date/time controls, related requests, private/hidden
+  sentinel fields, images, HR tabs or command controls. Synthetic actor and source
+  indication remain distinct from selected employee, including on scroll.
+- Both approved source pairs and source mismatch; null internal job versus
+  unresolved negative job; malformed signed zero, wrong resource, self-parent,
+  unauthorized team and error400/401/403/404/500/503 all clear the whole card.
+  No-card capability denies without card GET while current view still works.
+- Identity failure immediately removes prior card; A→B cancellation keeps only
+  B. Chrome can truly abort A before late fulfillment, so the **ineffective-abort
+  callback proof is the five Angular generation tests**, not a native-abort claim.
+- Actual keyboard Space on stable reload generates **one** pending GET despite
+  repeated Space and preserves the same element/focus on200/503. Previous
+  drawer Tab/Escape, calendars and minute pickers regressions also passed.
+- Long40-code-point names,256-character labels,38-digit IDs/codes, widths
+  1440×900/390/320 and30px main text wrap without page overflow. Main fields
+  above fold1440; one-column mobile. Back/reload targets measured>=48px;
+  name links have48px minimum dimensions. Sampled card `dt`/white contrast
+  **6.12:1**; previous sampled color pairs also pass their limited thresholds.
+- Screenshots: ignored `.angular/browser-evidence/card19-{1440,null-unknown,
+  long-1440,long-390,long-320,large-1440,large-390,large-320,proxy-1440,
+  proxy-390,proxy-320,proxy-unknown}.png`; desktop and mobile images visually
+  inspected. All values are invented synthetic fixtures, not captured data.
+- Runtime checks reported no external asset/API requests, business local/session
+  storage or JS exceptions. No automatic polling/retry or app fallback source.
+
+## Failed/initial attempts retained for audit
+
+1. First focused test build succeeded but Vitest's existing one-thread runner
+   timed out at startup, executed **zero tests**, then hung. Stopped only that
+   owned tool session. Same command/config rerun passed45/45; no installation,
+   pool changes or skipped test workaround. Later two guard-only attempts
+   (`npm test -- --include src/employee-card-contract.spec.ts`) also timed out
+   starting the worker with zero executed tests; the hung owned session was
+   stopped, the second attempt exited1. No passing result is claimed for those
+   commands. Final full249/249 and combined focused48/48 runs passed with the
+   same runner/dependencies. Its installed startup ceiling is5s; no dependency
+   or test-configuration patch was made to hide the environment startup issue.
+2. First `npx ng serve ... --port4348` produced no listener/output. Stopped only
+   that owned session and used the installed CLI via `node .../ng.js`; readiness
+   then confirmed. No successful browser result is attributed to that attempt.
+3. Initial card CDP late-A release failed with **Invalid InterceptionId** because
+   Chrome had canceled A. Harness now permits only that precise canceled-ID
+   transport outcome; every other CDP failure still fails. Application guards
+   were not weakened; late callbacks are separately forced in unit tests.
+4. Existing items harness first expected three sidebar links after items denial;
+   the approved card adds a fourth independent link. Updated to assert four
+   **and** the actual card label/href. Next run caught the prior two-key
+   history assertion after allowlisted route-origin preservation was added.
+   History now explicitly preserves only opaque token/navigation ID + approved
+   origin label, verifies restored token/path, and the assertion checks that
+   allowlist. Final complete items run passed, no test removed.
+5. One card rerun during the edit/rebuild period saw search09:00 restored as
+  10:00 and failed. It was not counted as PASS or silently relaxed. No stable
+   reproduction established; the next two complete stable card runs passed the
+   unchanged09:00 assertion and final actual proxy passed exact10:00 origin
+   restoration. Treat any recurrence as a frontend/harness investigation, not a
+   backend contract question.
+6. Existing jsdom `Window.scrollTo` not-implemented diagnostics remain. Real
+   vertical/horizontal scroll assertions are Chrome checks, not jsdom evidence.
+
+## Not run / owners / next action
+
+- **No Oracle/native/real-provider/production check in this frontend task.**
+  Backend offline187/187/typecheck readiness was reported by caller, not rerun
+  or relabeled native here. Live TEST/native verification, provider deployment
+  and infrastructure safety belong to backend/platform/database owner + caller.
+- No screen-reader/assistive-technology session, exhaustive accessibility tree,
+  all color/state contrast audit, actual browser400% zoom or full WCAG2.2AA
+  certification. Limited keyboard/reflow/contrast evidence is not conformance.
+  Independent UI/QA owns remaining acceptance review.
+- No source catalog exists in this checkout; controlling legacy anchors and
+  approved baseline were used instead. No legacy execution or Hebrew-literal
+  recovery claims.
+- No frontend blocker or genuine shared-contract question remains. Caller may
+  review this frontend and rerun the documented synthetic checks independently;
+  release/publication remains caller/user approval, not implied by these results.
+
+---
+
+# SHF-ITEMS-UI-18 verification — 2026-10-18 (historical)
 
 ## Independent QA D01–D04 correction — 18 October, 15:07 handoff
 

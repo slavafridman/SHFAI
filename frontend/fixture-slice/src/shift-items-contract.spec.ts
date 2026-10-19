@@ -6,10 +6,8 @@ import { fixtureItems } from './shift-items-fixtures';
 
 describe('ITEMS canonical runtime boundary', () => {
   const request = { employeeId: '1001', shiftDayId: '2001', limit: 25, offset: 0 };
-  it('accepts the approved fifth capability additively without breaking old sessions', () => {
+  it('accepts the approved six-capability identity without weakening duplicate rejection', () => {
     const p = fixtureIdentity();
-    expect(identity(p)).toBe(true);
-    p.principal.capabilities.push('shift-items:read');
     expect(identity(p)).toBe(true);
     p.principal.capabilities.push('shift-items:read');
     expect(identity(p)).toBe(false);

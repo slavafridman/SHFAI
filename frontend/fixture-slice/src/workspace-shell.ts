@@ -12,14 +12,15 @@ import type { IdentityResponseV1 } from './contract';
   imports: [MatButtonModule, RouterLink, CdkTrapFocus],
   templateUrl: './workspace-shell.html',
   styleUrl: './workspace-shell.scss',
-  host: { '[class.pinned]': 'pinned()' },
+  host: { '[class.pinned]': 'pinned()', '[class.identity-pinned]': 'persistentIdentity()' },
 })
 export class WorkspaceShell {
   readonly pinned = input(false);
+  readonly persistentIdentity = input(false);
   readonly principal = input<IdentityResponseV1 | null>(null);
   readonly identityState = input<'loading' | 'ready' | 'error'>('loading');
   readonly identityMessage = input('');
-  readonly active = input<'detail' | 'list' | 'search' | 'schedule'>('detail');
+  readonly active = input<'detail' | 'list' | 'search' | 'schedule' | 'card'>('detail');
   readonly recheck = output<void>();
   readonly menu = viewChild.required<ElementRef<HTMLDialogElement>>('menu');
   readonly opener = viewChild.required<unknown, ElementRef<HTMLButtonElement>>('opener', { read: ElementRef });

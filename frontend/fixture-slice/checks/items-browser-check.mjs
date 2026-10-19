@@ -148,7 +148,10 @@ export async function runItemsChecks(h) {
   setItems('normal');
   for (const mode of ['failure','malformed','no-items','no-detail-items']) {
     setIdentity(mode); const before=count(); await navigate(route); await error(); assert.equal(count(),before);
-    if (mode==='no-items') assert.equal(await evaluate(`document.querySelectorAll('.sidebar a').length`),3);
+    if (mode==='no-items') {
+      assert.equal(await evaluate(`document.querySelectorAll('.sidebar a').length`),4);
+      assert.equal(await evaluate(`document.querySelector('.sidebar a[href="/employee-card"]').textContent.trim()`),'כרטיס עובד/ת');
+    }
   }
   setIdentity('normal');
   await navigate('/employees/01/shift-days/2001/breaks-and-exceptions'); await error();
@@ -184,7 +187,8 @@ export async function runItemsChecks(h) {
   await evaluate(`document.querySelectorAll('a.row-link').forEach(n=>n.style.fontSize='30px')`); await noOverflow();
   await click('#search-schedule-3001'); await wait(`!!document.getElementById('schedule-items-4001')`);
   await evaluate(`document.querySelectorAll('a.row-link').forEach(n=>n.style.fontSize='30px')`); await noOverflow();
-  assert(await evaluate(`Object.keys(history.state).every(k=>['navigationId','shfView'].includes(k))`));
+  assert(await evaluate(`Object.keys(history.state).every(k=>['navigationId','shfView','origin'].includes(k)) &&
+    (!history.state.origin || ['current-shifts','shift-search','my-shifts','shift-day-diagnostic'].includes(history.state.origin))`));
   setItems('normal'); setList('normal'); setSearch('normal'); setSchedule('normal');
   console.log('PASS ITEMS raw/null/negative/classification/source, 25+5/empty/reload0, stale abort, 400/401/403/404/500/503/ambiguity/malformed, both rights, keyboard reload/drawer, RTL 1440/390/320 +30px navigation. Synthetic interception only; not full WCAG.');
 }

@@ -25,6 +25,7 @@ import { WorkspaceShell } from './workspace-shell';
 import { MinutePicker } from './minute-picker';
 import { ListNavigation } from './list-navigation';
 import { ViewHistory } from './view-history';
+import { EmployeeName } from './employee-name';
 
 function hebrewCalendar(): MatDatepickerIntl {
   const intl = new MatDatepickerIntl();
@@ -43,7 +44,7 @@ function hebrewCalendar(): MatDatepickerIntl {
 @Component({
   selector: 'shf-current-shifts',
   imports: [
-    WorkspaceShell, ReactiveFormsModule, RouterLink, MatDatepickerModule, MatButtonModule,
+    EmployeeName, WorkspaceShell, ReactiveFormsModule, RouterLink, MatDatepickerModule, MatButtonModule,
     MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressBarModule,
   ],
   providers: [

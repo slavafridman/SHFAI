@@ -1,0 +1,68 @@
+<shf-workspace-shell [pinned]="true" [persistentIdentity]="true" [principal]="principal()" [identityState]="identityState()"
+  [identityMessage]="identityError()" active="card" (recheck)="recheckIdentity()">
+  <nav class="breadcrumbs" aria-label="נתיב ניווט">
+    <button id="card-back" mat-button type="button" (click)="journey.back()">{{ backLabel() }}</button>
+    <span aria-current="page">כרטיס עובד/ת</span>
+  </nav>
+  <header class="page-heading">
+    <div><p class="eyebrow">בירור תפעולי · קריאה בלבד</p><h1 tabindex="-1">כרטיס עובד/ת</h1></div>
+    <button id="card-reload" mat-stroked-button type="button" (click)="reload()"
+      aria-controls="card-region" aria-describedby="card-status" [attr.aria-busy]="state() === 'loading'"
+      [attr.aria-disabled]="!canRead() || state() === 'loading' ? 'true' : null">
+      טעינה מחדש / ניסיון נוסף
+    </button>
+  </header>
+  <p class="scope-note">העובד/ת הנבחר/ת אינו/ה זהות היישום. הקשר ארגוני נוכחי עשוי להיות שונה מהקשר משמרת היסטורית.</p>
+  <p id="card-status" role="status" aria-live="polite" [class.error]="state() === 'error'">{{ message() }}</p>
+  @if (reference()) { <p class="reference">מזהה פנייה: <bdi dir="ltr">{{ reference() }}</bdi></p> }
+  <section id="card-region" class="card-region" aria-label="כרטיס תפעולי לקריאה בלבד" [attr.aria-busy]="state() === 'loading'">
+    @if (state() === 'loading') { <mat-progress-bar mode="indeterminate" aria-label="טוענים כרטיס עובד/ת" /> }
+    @if (result(); as data) {
+      <article class="operational-card">
+        <header class="person-heading">
+          <p class="eyebrow">עובד/ת נבחר/ת — לא זהות היישום</p>
+          <h2><bdi dir="auto">{{ data.employee.firstName }} {{ data.employee.lastName }}</bdi></h2>
+          <p>כרטיס תפעולי · ללא פעולות עריכה</p>
+        </header>
+        <dl class="fields">
+          <div><dt>שם פרטי</dt><dd><bdi dir="auto">{{ data.employee.firstName }}</bdi></dd></div>
+          <div><dt>שם משפחה</dt><dd><bdi dir="auto">{{ data.employee.lastName }}</bdi></dd></div>
+          <div><dt>צוות</dt><dd><bdi dir="auto">{{ data.employee.unit.label }}</bdi>
+            <small>קוד <bdi dir="ltr">{{ data.employee.unit.code }}</bdi></small></dd></div>
+          <div><dt>מוקד — הורה ישיר</dt><dd><bdi dir="auto">{{ data.employee.unit.moked.label }}</bdi>
+            <small>קוד <bdi dir="ltr">{{ data.employee.unit.moked.code }}</bdi> · <bdi dir="ltr">G01</bdi></small></dd></div>
+          <div><dt>תפקיד</dt><dd>
+            @if (data.employee.job; as job) {
+              <bdi dir="auto">{{ job.label === null ? 'תיאור לא זמין' : job.label }}</bdi>
+              <small>קוד <bdi dir="ltr">{{ job.code }}</bdi></small>
+            } @else { לא צוין }
+          </dd></div>
+          <div><dt>תפקיד פנימי</dt><dd>
+            @if (data.employee.innerJob; as job) {
+              <bdi dir="auto">{{ job.label === null ? 'תיאור לא זמין' : job.label }}</bdi>
+              <small>קוד <bdi dir="ltr">{{ job.code }}</bdi></small>
+            } @else { לא צוין }
+          </dd></div>
+        </dl>
+        <p class="resource-source">מקור הכרטיס:
+          {{ data.dataSource === 'isolated-fixture' ? 'נתוני הדגמה מבודדים — סינתטיים בלבד' : 'Oracle — קריאה בלבד' }}
+        </p>
+        <details id="card-technical"><summary>פרטים טכניים — מזהה פנימי ומקור</summary>
+          <dl><div><dt>מזהה עובד/ת פנימי</dt><dd><bdi dir="ltr">{{ data.employeeId }}</bdi></dd></div>
+            <div><dt>מקור נתונים</dt><dd><bdi dir="ltr">{{ data.dataSource }}</bdi></dd></div>
+            <div><dt>אזור זמן עסקי מוגדר</dt><dd><bdi dir="ltr">{{ data.businessTimeZone }}</bdi></dd></div></dl>
+        </details>
+      </article>
+    }
+  </section>
+  @if (state() === 'selection') {
+    <nav class="chooser" aria-label="בחירת עובד/ת מתוך מקור">
+      <a routerLink="/current-shifts">משמרות נוכחיות</a>
+      <a routerLink="/shift-search">חיפוש משמרות</a>
+      <a routerLink="/my-shifts">משמרות העובד/ת — נדרשת בחירה</a>
+    </nav>
+  }
+  <details class="scope-disclosure"><summary>היקף התצוגה</summary>
+    <p>מוצגים רק שם, צוות ומוקד, תפקיד ותפקיד פנימי. זהו בירור תפעולי בלבד, לא כרטיס משאבי אנוש.</p>
+  </details>
+</shf-workspace-shell>

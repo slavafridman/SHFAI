@@ -112,7 +112,8 @@ export async function teamsAndParents(query: Query, ids: readonly string[]) {
   const { binds, placeholders } = scopeBinds(ids);
   if (ids.length === 0) return { options: [], teams: [] };
   const grants = placeholders.map(p => `SELECT ${p} AS grant_id FROM dual`).join(" UNION ALL ");
-  const rows = await query(`SELECT * FROM (SELECT g.grant_id AS "grantCode", t.org_unit_id AS "teamCode",
+  const rows = await query(`SELECT "grantCode","teamCode","teamLabel","teamType","code","label","unitType"
+    FROM (SELECT g.grant_id AS "grantCode", t.org_unit_id AS "teamCode",
     t.org_unit_name AS "teamLabel", t.unit_type_id AS "teamType",
     p.org_unit_id AS "code", p.org_unit_name AS "label", p.unit_type_id AS "unitType"
     FROM (${grants}) g LEFT JOIN SHIFTER.shf_org_unit t ON t.org_unit_id=g.grant_id
@@ -142,7 +143,8 @@ const catalogSql = {
   exceptions: { table: "SHIFTER.shf_exception_type", id: "exception_type_id", label: "exception_type_name" },
   timeoffs: { table: "SHIFTER.shf_timeoff_types", id: "wm_timeoff_type_id", label: "wm_name" },
 } as const;
-export async function labelsFor(query: Query, kind: keyof typeof catalogSql, requested: readonly string[]): Promise<CatalogValueV1[]> {
+export async function labelsFor(query: Query, kind: keyof typeof catalogSql, requested: readonly string[],
+  normalizeLabel?: (value: unknown) => string | null): Promise<CatalogValueV1[]> {
   const unique = [...new Set(requested)];
   if (unique.length > 10100 || !unique.every(catalogCode)) sourceFailure();
   const result: CatalogValueV1[] = [], seen = new Set<string>();
@@ -157,7 +159,8 @@ export async function labelsFor(query: Query, kind: keyof typeof catalogSql, req
       FROM ${catalog.table} WHERE ${id} IN (${placeholders.join(",")}))
       WHERE ROWNUM <= :lookupBound`, { ...binds, lookupBound: chunk.length + 1 }, chunk.length + 1);
     if (rows.length > chunk.length) sourceFailure();
-    for (const row of rows) {
+    for (const raw of rows) {
+      const row = normalizeLabel && record(raw) ? { code: raw.code, label: normalizeLabel(raw.label) } : raw;
       if (!catalogValue(row) || seen.has(row.code) || !chunk.includes(row.code)) sourceFailure();
       seen.add(row.code); result.push({ code: row.code, label: row.label });
     }

@@ -19,7 +19,7 @@ import { fixtureItems } from './shift-items-fixtures';
 describe('ITEMS four actual effective-pair entry actions', () => {
   let http: HttpTestingController, harness: RouterTestingHarness;
   const event = () => new MouseEvent('click', { button: 0, cancelable: true });
-  const p = () => { const v = fixtureIdentity(); v.principal.capabilities.push('shift-items:read');
+  const p = () => { const v = fixtureIdentity();
     v.principal.resourceScope.orgUnitIds.push('TEST-V'); return v; };
   const identity = () => http.expectOne('/api/v1/identity').flush(p());
   const settle = async () => { await new Promise(r => setTimeout(r,0)); harness.detectChanges(); };

@@ -17,7 +17,11 @@ describe('ITEMS Angular page / single unknown HTTP boundary', () => {
   const dom = () => harness.routeNativeElement!;
   const text = () => dom().textContent!;
   const identity = (withItems = true) => {
-    const p = fixtureIdentity(); if (withItems) p.principal.capabilities.push('shift-items:read');
+    const p = fixtureIdentity();
+    if (!withItems) {
+      p.principal.provider = 'real'; p.principal.synthetic = false; p.principal.employeeId = '1001';
+      p.principal.capabilities = p.principal.capabilities.filter(c => c !== 'shift-items:read');
+    }
     http.expectOne('/api/v1/identity').flush(p); render();
   };
   const get = () => http.expectOne(r => r.url === endpoint);

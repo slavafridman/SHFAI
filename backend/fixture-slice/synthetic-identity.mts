@@ -23,6 +23,9 @@ import type { SelectedShiftItemsReadPort, SelectedShiftItemsRequestV1 } from "./
 import { GetSelectedShiftItems } from "./read-shift-items.mts";
 import { ShiftItemsError } from "./shift-items-errors.mts";
 import { validateItemsRequest } from "./shift-items-validation.mts";
+import type { EmployeeOperationalCardReadPort, EmployeeOperationalCardRequestV1 } from "./employee-card-contracts.mts";
+import { GetEmployeeOperationalCard, validateCardRequest } from "./read-employee-card.mts";
+import { employeeCardAccessPolicy } from "./access-policy.mts";
 
 export interface CurrentRuntimeOptions {
   reader: CurrentShiftReadPort;
@@ -30,6 +33,7 @@ export interface CurrentRuntimeOptions {
   searchReader?: ShiftSearchReadPort;
   myShiftsReader?: MyShiftsReader;
   shiftItemsReader?: SelectedShiftItemsReadPort;
+  employeeCardReader?: EmployeeOperationalCardReadPort;
 }
 
 export class SyntheticAdministratorProvider implements AuthenticationProvider {
@@ -45,7 +49,7 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
       subject: "synthetic:administrator",
       displayName: "Synthetic Administrator (local/isolated only)",
       provider: "synthetic", synthetic: true, roles: ["Administrator"],
-      capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read"], employeeId: null,
+      capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read"], employeeId: null,
       resourceScope: { orgUnitIds: [...this.orgUnitIds] },
     };
   }
@@ -88,6 +92,11 @@ export async function createRuntime(
   if (currentOptions?.shiftItemsReader && currentOptions.shiftItemsReader.dataSource !== config.dataSource)
     throw new Error("Explicit shift items source mismatch");
   const itemsPolicy = shiftItemsAccessPolicy(config);
+  const cardPolicy = employeeCardAccessPolicy(config);
+  if (currentOptions?.employeeCardReader && currentOptions.employeeCardReader.dataSource !== config.dataSource)
+    throw new Error("Explicit employee card source mismatch");
+  const card = currentOptions?.employeeCardReader
+    ? new GetEmployeeOperationalCard(currentOptions.employeeCardReader, cardPolicy, config.businessTimeZone) : undefined;
   const shiftItems = currentOptions?.shiftItemsReader
     ? new GetSelectedShiftItems(currentOptions.shiftItemsReader, itemsPolicy, config.businessTimeZone) : undefined;
   const schedule = currentOptions?.myShiftsReader
@@ -130,6 +139,12 @@ export async function createRuntime(
   }
   return Object.freeze({
     authenticate,
+    employeeCard: async (p: PrincipalV1, request: EmployeeOperationalCardRequestV1, signal?: AbortSignal) => {
+      validatePrincipal(p); validateCardRequest(request); cardPolicy.requireEmployeeRead(p);
+      if (!cardPolicy.canReadSelectedEmployee(p, request.employeeId)) throw new SliceError("FORBIDDEN");
+      if (!card) throw new SliceError("DEPENDENCY_UNAVAILABLE");
+      return await card.execute(p, request, signal);
+    },
     shiftItems: (p: PrincipalV1, request: SelectedShiftItemsRequestV1, signal?: AbortSignal) => {
       validatePrincipal(p); validateItemsRequest(request); itemsPolicy.requireSelectedShiftItemsRead(p);
       if (!itemsPolicy.canReadSelectedEmployee(p, request.employeeId)) throw new ShiftItemsError("FORBIDDEN");

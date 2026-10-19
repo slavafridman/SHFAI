@@ -1,0 +1,35 @@
+:host { display:block; min-inline-size:0; }
+.breadcrumbs, .page-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.breadcrumbs { justify-content:flex-start; color:#526473; margin-block-end:14px; }
+.breadcrumbs button, #card-reload { white-space:normal; block-size:auto; min-block-size:48px; height:auto; padding-block:10px; max-inline-size:100%; overflow-wrap:anywhere; }
+h1 { margin:0; font-size:1.65rem; color:#133c56; }
+h2 { margin:4px 0; font-size:1.45rem; color:#133c56; overflow-wrap:anywhere; }
+.eyebrow, dt { color:#526473; font-size:.88rem; }
+.eyebrow { margin:0; }
+.scope-note { color:#526473; max-inline-size:78ch; font-size:.9rem; }
+#card-status { min-block-size:24px; }
+.error { background:#fff0f0; color:#9b1c1c; border-inline-start:4px solid #b42318; padding:14px; }
+.operational-card { background:white; border:1px solid #cbd8e2; border-radius:12px; overflow:hidden; }
+.person-heading { background:#eff6fb; border-block-end:1px solid #d4e2ed; padding:18px 22px; }
+.person-heading p:last-child { margin:6px 0 0; font-size:.88rem; color:#526473; }
+dl { margin:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 24px; padding:4px 22px 12px; }
+dl > div { min-inline-size:0; padding-block:13px; border-block-end:1px solid #e1e8ee; }
+dt { margin-block-end:5px; }
+dd { margin:0; overflow-wrap:anywhere; font-weight:600; line-height:1.5; }
+small { display:block; font-weight:normal; color:#526473; }
+.resource-source { padding:0 22px; color:#526473; font-size:.88rem; }
+details { padding:8px 22px; }
+summary { min-block-size:48px; cursor:pointer; display:list-item; align-content:center; overflow-wrap:anywhere; color:#174f73; }
+details dl { padding:0; }
+.scope-disclosure { padding-inline:0; margin-block-start:8px; }
+.chooser { display:flex; flex-wrap:wrap; gap:16px; }
+.chooser a { display:inline-flex; min-block-size:48px; align-items:center; color:#0067a5; }
+:focus-visible { outline:3px solid #0067a5; outline-offset:3px; }
+button, a, summary, h1 { scroll-margin-block-start:210px; }
+@media(max-width:600px) {
+  dl { grid-template-columns:minmax(0,1fr); padding-inline:16px; }
+  .person-heading { padding:16px; }
+  details { padding-inline:16px; }
+  .resource-source { padding-inline:16px; }
+  h1 { font-size:1.45rem; }
+}

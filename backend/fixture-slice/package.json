@@ -7,7 +7,8 @@
     "node": ">=24.0.0 <25"
   },
   "scripts": {
-    "test": "node --test test/projection.test.mts test/contract.test.mts test/use-case.test.mts test/http.test.mts test/current-shifts.test.mts test/current-http.test.mts test/oracle.test.mts test/shift-search.test.mts test/search-http.test.mts test/oracle-search.test.mts test/my-shifts.test.mts test/my-shifts-http.test.mts test/oracle-my-shifts.test.mts test/shift-items-projection.test.mts test/shift-items.test.mts test/shift-items-http.test.mts test/oracle-shift-items.test.mts",
+    "test": "node --test test/projection.test.mts test/contract.test.mts test/use-case.test.mts test/http.test.mts test/current-shifts.test.mts test/current-http.test.mts test/oracle.test.mts test/shift-search.test.mts test/search-http.test.mts test/oracle-search.test.mts test/my-shifts.test.mts test/my-shifts-http.test.mts test/oracle-my-shifts.test.mts test/shift-items-projection.test.mts test/shift-items.test.mts test/shift-items-http.test.mts test/oracle-shift-items.test.mts test/employee-card.test.mts test/employee-card-http.test.mts test/oracle-employee-card.test.mts test/oracle-employee-card-live-check.test.mts",
+    "test:employee-card": "node --test test/employee-card.test.mts test/employee-card-http.test.mts test/oracle-employee-card.test.mts test/oracle-employee-card-live-check.test.mts",
     "typecheck": "tsc --project tsconfig.json",
     "start": "node server.mts"
   },

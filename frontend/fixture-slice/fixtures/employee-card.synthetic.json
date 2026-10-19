@@ -1,0 +1,12 @@
+{
+  "employees": [
+    { "employeeId": "1001", "firstName": "דנה", "lastName": "לוי", "orgUnitId": "TEST-U", "jobCode": "11", "innerJobCode": "101" },
+    { "employeeId": "1002", "firstName": "נועם", "lastName": "כהן", "orgUnitId": "TEST-U", "jobCode": "-9", "innerJobCode": null }
+  ],
+  "units": [
+    { "code": "TEST-U", "label": "צוות בדיקה סינתטי", "unitType": "J01", "parentCode": "P01" },
+    { "code": "P01", "label": "מוקד בדיקה סינתטי", "unitType": "G01", "parentCode": null }
+  ],
+  "activeJobPairs": [{ "code": "11", "label": "תפקיד בדיקה סינתטי" }],
+  "innerJobs": [{ "code": "101", "label": "תפקיד פנימי סינתטי" }]
+}

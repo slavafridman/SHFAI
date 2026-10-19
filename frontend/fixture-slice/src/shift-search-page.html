@@ -108,7 +108,8 @@
             <tbody role="rowgroup">
               @for (row of data.items; track row.shiftDayId) {
                 <tr role="row" [class.selected]="navigation.searchOrigin?.shiftDayId === row.shiftDayId">
-                  <th role="rowheader" scope="row" data-label="עובד/ת"><bdi>{{ row.employee.firstName }} {{ row.employee.lastName }}</bdi></th>
+                  <th role="rowheader" scope="row" data-label="עובד/ת"><shf-employee-name [principal]="principal()" [employeeId]="row.employee.employeeId"
+                    [firstName]="row.employee.firstName" [lastName]="row.employee.lastName" [opener]="'card-search-' + row.shiftDayId" /></th>
                   <td role="cell" data-label="יום ותאריך התחלה">{{ weekday(row) }}<bdi class="cell-note date-time-token" dir="ltr">{{ displayTime(row.startLocal).slice(0, 10) }}</bdi></td>
                   <td role="cell" data-label="התחלה"><bdi class="date-time-token" dir="ltr">{{ row.startLocal.slice(11) }}</bdi></td>
                   <td role="cell" data-label="סיום"><bdi class="date-time-token" dir="ltr">{{ row.endLocal.slice(11) }}</bdi><bdi class="cell-note date-time-token" dir="ltr">{{ displayTime(row.endLocal).slice(0, 10) }}</bdi></td>

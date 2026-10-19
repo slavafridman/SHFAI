@@ -84,7 +84,8 @@
               <tbody>
                 @for (row of data.items; track row.shiftDayId) {
                   <tr [class.selected]="navigation.origin?.shiftDayId === row.shiftDayId">
-                    <th scope="row"><bdi>{{ row.employee.firstName }} {{ row.employee.lastName }}</bdi></th>
+                    <th scope="row"><shf-employee-name [principal]="principal()" [employeeId]="row.employee.employeeId"
+                      [firstName]="row.employee.firstName" [lastName]="row.employee.lastName" [opener]="'card-current-' + row.shiftDayId" /></th>
                     <td>{{ weekday(row) }}<bdi class="cell-note" dir="ltr">{{ startDate(row) }}</bdi></td>
                     <td><bdi dir="ltr">{{ row.startLocal.slice(11, 16) }}</bdi></td>
                     <td><bdi dir="ltr">{{ row.endLocal.slice(11, 16) }}</bdi>

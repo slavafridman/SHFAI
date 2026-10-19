@@ -1,5 +1,7 @@
 :host { display: block; }
 :host(.pinned) .topbar { position:sticky; inset-block-start:0; z-index:5; }
+:host(.identity-pinned) .mockbar { position:sticky; inset-block-start:68px; z-index:4; }
+@media(max-width:760px) { :host(.identity-pinned) .mockbar { inset-block-start:64px; } }
 :host(.pinned) .sidebar { position:sticky; inset-block-start:68px; align-self:start; min-height:calc(100dvh - 68px); }
 .skip { position: fixed; inset-block-start: -100px; inset-inline-start: 16px; z-index: 20; background: white; padding: 12px; }
 .skip:focus { inset-block-start: 8px; }

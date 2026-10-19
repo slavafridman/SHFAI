@@ -45,6 +45,8 @@ const server = await startFromEnvironment({
   SHF_SHIFT_SEARCH_FIXTURE: JSON.stringify(search),
   SHF_MY_SHIFTS_FIXTURE: JSON.stringify(schedule),
   ...(selectedItems ? { SHF_SHIFT_ITEMS_FIXTURE: JSON.stringify(selectedItems) } : {}),
+  ...(process.env.SHF_UI_EMPLOYEE_CARD_FIXTURE === '1'
+    ? { SHF_EMPLOYEE_CARD_FIXTURE: JSON.stringify(await load('employee-card.synthetic.json')) } : {}),
   SHF_FIXTURE_PORT: process.env.SHF_FIXTURE_PORT ?? '4318',
 });
 console.log('Explicit synthetic fixture backend ready on loopback:', server.address().port);

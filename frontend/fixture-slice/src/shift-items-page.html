@@ -26,7 +26,8 @@
     }
     @if (result(); as data) {
       <article class="surface context-card" aria-label="הקשר העובד ויום העבודה מהשירות">
-        <h2><bdi>{{ data.shiftDay.employee.firstName }} {{ data.shiftDay.employee.lastName }}</bdi></h2>
+        <h2><shf-employee-name [principal]="principal()" [employeeId]="data.shiftDay.employeeId"
+          [firstName]="data.shiftDay.employee.firstName" [lastName]="data.shiftDay.employee.lastName" opener="card-items" /></h2>
         <p class="subtle">הקשר מהתשובה הנוכחית · העובד/ת הנבחר/ת אינו/ה זהות היישום</p>
         <dl class="context-grid">
           <div><dt>תחילת משמרת</dt><dd><bdi dir="ltr" class="token">{{ data.shiftDay.effectiveShift.startLocal ? time(data.shiftDay.effectiveShift.startLocal).slice(0,10) : 'לא זמין במקור' }}</bdi> <bdi dir="ltr" class="token">{{ data.shiftDay.effectiveShift.startLocal?.slice(11) }}</bdi></dd></div>

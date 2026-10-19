@@ -9,6 +9,7 @@ import type { OracleEnvironment } from "./runtime-config.mts";
 import { record } from "./contract-validation.mts";
 import { randomUUID } from "node:crypto";
 import { ShiftItemsError } from "./shift-items-errors.mts";
+import { EmployeeCardError } from "./employee-card-errors.mts";
 
 // Minimal isolated-mockable infrastructure port; never exposes raw Oracle errors.
 export interface OracleConnection {
@@ -55,7 +56,7 @@ export async function createOraclePool(env: OracleEnvironment): Promise<OraclePo
 }
 function dependency(error: unknown): never {
   if (error instanceof SliceError || error instanceof CurrentShiftError || error instanceof ShiftSearchError ||
-      error instanceof MyShiftsError || error instanceof ShiftItemsError) throw error;
+      error instanceof MyShiftsError || error instanceof ShiftItemsError || error instanceof EmployeeCardError) throw error;
   const code = record(error) && typeof error.code === "string" ? error.code
     : record(error) && typeof error.errorNum === "number" &&
         Number.isInteger(error.errorNum) && error.errorNum > 0 && error.errorNum <= 99999
@@ -71,12 +72,15 @@ function dependency(error: unknown): never {
 export class OracleReadSession {
   private readonly pool: OraclePool;
   constructor(pool: OraclePool) { this.pool = pool; }
-  async read<T>(work: (query: (sql: string, binds: BindParameters, bound: number) => Promise<unknown[]>) => Promise<T>): Promise<T> {
+  async read<T>(work: (query: (sql: string, binds: BindParameters, bound: number) => Promise<unknown[]>) => Promise<T>,
+    signal?: AbortSignal): Promise<T> {
     const context = currentRequestBudget();
     const controller = new AbortController();
     const deadline = context?.deadline ?? performance.now() + 5000;
     const abort = () => controller.abort(new SliceError("DEPENDENCY_TIMEOUT"));
     context?.signal.addEventListener("abort", abort, { once: true });
+    signal?.addEventListener("abort", abort, { once: true });
+    if (signal?.aborted) abort();
     if (context?.signal.aborted) abort();
     const timer = setTimeout(abort, Math.max(1, deadline - performance.now()));
     let connection: OracleConnection | undefined;
@@ -117,6 +121,7 @@ export class OracleReadSession {
     } finally {
       clearTimeout(timer);
       context?.signal.removeEventListener("abort", abort);
+      signal?.removeEventListener("abort", abort);
       controller.signal.removeEventListener("abort", cancel);
       if (pendingBreak) await pendingBreak;
       if (connection) {

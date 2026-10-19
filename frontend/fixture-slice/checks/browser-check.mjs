@@ -103,7 +103,7 @@ const sample = (employeeId = '1001', shiftDayId = '2001') => {
 const principal = () => ({
   principal: { subject: 'synthetic:administrator', provider: 'synthetic', synthetic: true,
     displayName: 'Synthetic Administrator (local/isolated only)', roles: ['Administrator'],
-    capabilities: ['shift-day:read', 'current-shifts:read', 'shift-search:read', 'my-shifts:read', 'shift-items:read'], employeeId: null, resourceScope: { orgUnitIds: ['TEST-U', 'TEST-V'] } },
+    capabilities: ['shift-day:read', 'current-shifts:read', 'shift-search:read', 'my-shifts:read', 'shift-items:read', 'employee:read'], employeeId: null, resourceScope: { orgUnitIds: ['TEST-U', 'TEST-V'] } },
   dataSource: 'isolated-fixture',
 });
 const context = () => ({
@@ -122,6 +122,29 @@ let listMode = 'normal', detailMode = 'normal', identityMode = 'normal', context
 let searchMode = 'normal', searchContextMode = 'normal';
 let scheduleMode = 'normal', scheduleContextMode = 'normal';
 let itemsMode = 'normal';
+let cardMode = 'normal';
+function operationalCard(url) {
+  const employeeId = url.pathname.split('/')[4];
+  const v = { employeeId, employee: {
+    firstName: 'דנה', lastName: 'לוי',
+    unit: { code: 'TEST-U', label: 'צוות בדיקה', moked: { code: 'P01', label: 'מוקד בדיקה', unitType: 'G01' } },
+    job: { code: '11', label: 'תפקיד בדיקה' }, innerJob: { code: '101', label: 'תפקיד פנימי לבדיקה' },
+    privateSentinel: 'PRIVATE_CARD_SENTINEL',
+  }, businessTimeZone: 'Asia/Jerusalem', dataSource: 'isolated-fixture', privateSentinel: 'PRIVATE_CARD_SENTINEL' };
+  if (cardMode === 'unknown') { v.employee.job = {code:'-9',label:null}; v.employee.innerJob = null; }
+  if (cardMode === 'self-parent') v.employee.unit.moked.code = v.employee.unit.code;
+  if (cardMode === 'wrong-id') v.employeeId = '999';
+  if (cardMode === 'scope') v.employee.unit.code = 'OTHER';
+  if (cardMode === 'malformed') v.employee.job.code = '0';
+  if (cardMode === 'source') v.dataSource = 'oracle-read-only';
+  if (cardMode === 'oracle') v.dataSource = 'oracle-read-only';
+  if (cardMode === 'long') {
+    v.employee.firstName = 'א'.repeat(40); v.employee.lastName = 'ב'.repeat(40);
+    v.employee.unit.label = 'צ'.repeat(256); v.employee.unit.moked.label = 'מ'.repeat(256);
+    v.employee.job.code = '9'.repeat(38); v.employee.innerJob.label = 'ת'.repeat(256);
+  }
+  return v;
+}
 function selectedItems(url) {
   const parts = url.pathname.split('/'), employee = parts[4], day = parts[6];
   const limit = Number(url.searchParams.get('limit')), offset = Number(url.searchParams.get('offset'));
@@ -220,7 +243,10 @@ handler = async event => {
     if (identityMode === 'failure') return fulfill(event.requestId, problem(503), 503);
     const value = principal();
     if (identityMode === 'oracle-items') value.dataSource = 'oracle';
-    if (identityMode === 'no-items') value.principal.capabilities.pop();
+    if (['no-items','no-card'].includes(identityMode)) {
+      value.principal.provider = 'real'; value.principal.synthetic = false; value.principal.employeeId = '1001';
+      value.principal.capabilities = value.principal.capabilities.filter(c => c !== (identityMode === 'no-items' ? 'shift-items:read' : 'employee:read'));
+    }
     if (identityMode === 'no-detail-items') {
       value.principal.provider = 'real'; value.principal.synthetic = false;
       value.principal.capabilities = ['shift-items:read']; value.principal.employeeId = '1001';
@@ -286,6 +312,15 @@ handler = async event => {
     }, 500);
     return fulfill(event.requestId, selectedItems(url));
   }
+  if (url.pathname.endsWith('/operational-card')) {
+    if (cardMode === 'hold') { held = { id: event.requestId, url }; return; }
+    if (typeof cardMode === 'number') {
+      const code = ({400:'INVALID_REQUEST',401:'UNAUTHENTICATED',403:'FORBIDDEN',404:'EMPLOYEE_NOT_FOUND',
+        500:'INVALID_SOURCE_DATA',503:'DEPENDENCY_UNAVAILABLE'})[cardMode];
+      return fulfill(event.requestId, {...problem(cardMode),code,type:`urn:shf:problem:${code}`},cardMode);
+    }
+    return fulfill(event.requestId, operationalCard(url));
+  }
   if (url.pathname.startsWith('/api/v1/employees/')) {
     if (detailMode === 'hold') { held = { id: event.requestId, url }; return; }
     if (typeof detailMode === 'number') return fulfill(event.requestId, problem(detailMode), detailMode);
@@ -313,7 +348,24 @@ try {
   console.log('Browser:', (await send('Browser.getVersion')).product, 'Angular with intercepted synthetic HTTP ONLY');
   await send('Runtime.enable'); await send('Network.enable');
   await send('Fetch.enable', { patterns: [{ urlPattern: '*/api/v1/*', requestStage: 'Request' }] });
-  if (process.env.SHF_ITEMS_ONLY) {
+  if (process.env.SHF_CARD_ONLY) {
+    await (await import('./employee-card-browser-check.mjs')).runEmployeeCardChecks({
+      assert, send, evaluate, wait, size, navigate, key, click, input, screenshot, noOverflow, calls, readyList, readyDetail,
+      setCard: v => { cardMode = v; }, setIdentity: v => { identityMode = v; }, setList: v => { listMode = v; },
+      release: async () => {
+        const old = held; held = null;
+        if (old) {
+          try { await fulfill(old.id, operationalCard(old.url)); }
+          catch (e) {
+            // Chrome may already have invalidated an actually aborted A. Only
+            // that exact CDP transport outcome is expected; unit tests separately
+            // deliver late callbacks using an intentionally ineffective abort.
+            if (!e.message.includes('Invalid InterceptionId')) throw e;
+          }
+        }
+      },
+    });
+  } else if (process.env.SHF_ITEMS_ONLY) {
     const run = process.env.SHF_ITEMS_REVIEW_ONLY === '1'
       ? (await import('./items-review-check.mjs')).runItemsReviewChecks
       : (await import('./items-browser-check.mjs')).runItemsChecks;

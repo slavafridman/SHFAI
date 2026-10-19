@@ -73,7 +73,7 @@ test("NEXT01-06/10/13 HTTP: exact capabilities, fixtures, context, list and unch
   await withServer(await runtime(), async url => {
     const identity = await (await fetch(url + "/api/v1/identity")).json();
     assert.ok(record(identity) && record(identity.principal));
-    assert.deepEqual(identity.principal.capabilities, ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read"]);
+    assert.deepEqual(identity.principal.capabilities, ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read"]);
     assert.equal(identity.principal.employeeId, null);
     const ctx = await fetch(url + contextPath);
     assert.equal(ctx.status, 200);

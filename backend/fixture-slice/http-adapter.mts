@@ -13,6 +13,8 @@ import { myShiftsProblem } from "./my-shifts-errors.mts";
 import { parseMyShiftsQuery, invalidMyShifts } from "./my-shifts-validation.mts";
 import { itemsProblem, ShiftItemsError } from "./shift-items-errors.mts";
 import { parseItemsQuery } from "./shift-items-validation.mts";
+import { EmployeeCardError, cardProblem } from "./employee-card-errors.mts";
+import { invalidCard, validateCardRequest } from "./read-employee-card.mts";
 
 export const REQUEST_BUDGET_MS = 5000;
 export const RESPONSE_LIMIT_BYTES = 16 * 1024;
@@ -29,6 +31,16 @@ function route(request: IncomingMessage) {
   const target = request.url ?? "";
   const question = target.indexOf("?");
   const path = question < 0 ? target : target.slice(0, question);
+  const cardMatch = /^\/api\/v1\/employees\/([^/]*)\/operational-card$/.exec(path);
+  if (cardMatch) {
+    const rawQuery = question < 0 ? "" : target.slice(question + 1);
+    if (Buffer.byteLength(rawQuery, "utf8") > REQUEST_TARGET_LIMIT_BYTES || question >= 0)
+      invalidCard("query", "unsupported");
+    let employeeId: string;
+    try { employeeId = decodeURIComponent(cardMatch[1]); } catch { invalidCard("employeeId"); }
+    validateCardRequest({ employeeId });
+    return { kind: "employee-card" as const, employeeId };
+  }
   const itemMatch = /^\/api\/v1\/employees\/([^/]*)\/shift-days\/([^/]*)\/breaks-and-exceptions$/.exec(path);
   if (itemMatch) {
     let employeeId: string, shiftDayId: string;
@@ -113,6 +125,8 @@ function send(response: ServerResponse, status: number, contentType: string, pay
 export function createLoopbackServer(runtime: SliceRuntime) {
   const server = createServer(async (request, response) => {
     const requestId = randomUUID();
+    const cardEndpoint = /^\/api\/v1\/employees\/[^/]*\/operational-card$/
+      .test((request.url ?? "").split("?")[0]);
     const itemsEndpoint = /^\/api\/v1\/employees\/[^/]*\/shift-days\/[^/]*\/breaks-and-exceptions$/
       .test((request.url ?? "").split("?")[0]);
     const currentEndpoint = (request.url ?? "").split("?")[0] === "/api/v1/current-shifts" ||
@@ -141,6 +155,7 @@ export function createLoopbackServer(runtime: SliceRuntime) {
       // One budget spans authentication, input streaming and read. No automatic retries.
       // Promise.race suppresses late success; fixture/provider work has no connection to cancel.
       const work = async () => {
+        if (cardEndpoint && request.method !== "GET") throw new EmployeeCardError("INVALID_REQUEST");
         if (itemsEndpoint && request.method !== "GET") throw new ShiftItemsError("INVALID_REQUEST");
         const authorization = request.headers.authorization;
         const principal = await runtime.authenticate({
@@ -151,6 +166,8 @@ export function createLoopbackServer(runtime: SliceRuntime) {
         await requireEmptyBody(request);
         cancellation.signal.throwIfAborted();
         if (selected.kind === "identity") return runtime.identity(principal);
+        if (selected.kind === "employee-card") return await runtime.employeeCard(principal,
+          { employeeId: selected.employeeId }, cancellation.signal);
         if (selected.kind === "shift-items") return await runtime.shiftItems(principal,
           { employeeId: selected.employeeId, shiftDayId: selected.shiftDayId, ...selected.query }, cancellation.signal);
         if (selected.kind === "schedule-context") return await runtime.myShiftsContext(principal, selected.query, cancellation.signal);
@@ -175,13 +192,13 @@ export function createLoopbackServer(runtime: SliceRuntime) {
         payload);
     } catch (error) {
       if (!response.destroyed && !response.headersSent) {
-        const problem = itemsEndpoint ? itemsProblem(error, requestId) : scheduleEndpoint ? myShiftsProblem(error, requestId) : searchEndpoint ? searchProblem(error, requestId) : currentEndpoint ? currentProblem(
+        const problem = cardEndpoint ? cardProblem(error, requestId) : itemsEndpoint ? itemsProblem(error, requestId) : scheduleEndpoint ? myShiftsProblem(error, requestId) : searchEndpoint ? searchProblem(error, requestId) : currentEndpoint ? currentProblem(
           error instanceof SliceError && error.code === "INVALID_REQUEST"
             ? new CurrentShiftError("INVALID_REQUEST", error.invalidParameters?.map(p => ({
               name: p.name === "body" ? "body" : "query", reason: p.reason,
             }))) : error, requestId) : toProblem(error, requestId);
         response.setHeader("Connection", "close");
-        if (itemsEndpoint && request.method !== "GET") {
+        if ((cardEndpoint || itemsEndpoint) && request.method !== "GET") {
           problem.status = 405;
           response.setHeader("Allow", "GET");
         }

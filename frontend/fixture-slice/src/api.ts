@@ -8,6 +8,9 @@ import type { SelectedShiftItemsRequestV1 } from './shift-items-contract';
 @Injectable({ providedIn: 'root' })
 export class SliceApi {
   private readonly http = inject(HttpClient);
+  employeeCard(employeeId: string) {
+    return this.http.get<unknown>(`/api/v1/employees/${employeeId}/operational-card`, { cache: 'no-store' });
+  }
   shiftItems(request: SelectedShiftItemsRequestV1) {
     return this.http.get<unknown>(
       `/api/v1/employees/${request.employeeId}/shift-days/${request.shiftDayId}/breaks-and-exceptions`,

@@ -14,6 +14,7 @@ import { SliceApi } from './api';
 import { WorkspaceShell } from './workspace-shell';
 import { ListNavigation } from './list-navigation';
 import { ViewHistory } from './view-history';
+import { EmployeeName } from './employee-name';
 import {
   detail, displayTime, id, identity, problem,
   type EmployeeShiftDayResponseV1, type IdentityResponseV1,
@@ -34,7 +35,7 @@ const COPY = {
 @Component({
   selector: 'shf-shift-day',
   imports: [
-    ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule,
+    EmployeeName, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule,
     MatInputModule, MatProgressBarModule, WorkspaceShell,
   ],
   templateUrl: './shift-day-page.html',

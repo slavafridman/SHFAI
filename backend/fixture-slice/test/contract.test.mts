@@ -13,7 +13,7 @@ test("exact synthetic principal, exact five approved capabilities and no employe
   assert.deepEqual(principal, {
     subject: "synthetic:administrator", provider: "synthetic", synthetic: true,
     displayName: "Synthetic Administrator (local/isolated only)",
-    roles: ["Administrator"],     capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read"], employeeId: null,
+    roles: ["Administrator"],     capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read"], employeeId: null,
     resourceScope: { orgUnitIds: ["TEST-U"] },
   });
   validatePrincipal(principal);

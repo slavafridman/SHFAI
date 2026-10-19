@@ -7,7 +7,8 @@
   }
   @if (context()?.actor?.employee; as employee) {
     <section class="surface actor" aria-label="הקשר עובד/ת נבחר/ת">
-      <strong>{{ employee.firstName }} {{ employee.lastName }}</strong>
+      <shf-employee-name [principal]="principal()" [employeeId]="employee.employeeId"
+        [firstName]="employee.firstName" [lastName]="employee.lastName" opener="card-schedule-header" />
       <span>{{ employee.unit.label }} · {{ employee.unit.moked.label }}</span>
       <span>{{ upstream() === 'shift-search' ? 'מקור: תוצאת חיפוש' : upstream() === 'current-shifts' ? 'מקור: משמרות נוכחיות' : selector.mode === 'self' ? 'מקור: קישור עובד/ת מאומת בשירות' : 'מקור: קישור ישיר — בחירה שנבדקה בשירות' }}</span>
     </section>
@@ -79,7 +80,8 @@
             <table><thead><tr><th scope="col">עובד/ת</th><th scope="col">צוות / מוקד</th><th scope="col">תחילה</th><th scope="col">סיום</th><th scope="col">פעילות</th><th scope="col">פרטים</th></tr></thead>
               <tbody>
                 @for (row of list.items; track row.shiftDayId) {
-                  <tr><th scope="row" data-label="עובד/ת">{{ row.employee.firstName }} {{ row.employee.lastName }}</th>
+                  <tr><th scope="row" data-label="עובד/ת"><shf-employee-name [principal]="principal()" [employeeId]="row.employee.employeeId"
+                    [firstName]="row.employee.firstName" [lastName]="row.employee.lastName" [opener]="'card-schedule-' + row.shiftDayId" /></th>
                     <td data-label="צוות / מוקד">{{ row.employee.unit.label }} · {{ row.employee.unit.moked.label }}</td>
                     <td data-label="תחילה"><span class="cell-note">{{ weekday(row.startLocal) }}</span><bdi class="date-time-token" dir="ltr" [attr.aria-label]="precision(row.startLocal)">{{ time(row.startLocal) }}</bdi></td>
                     <td data-label="סיום"><bdi class="date-time-token" dir="ltr" [attr.aria-label]="precision(row.endLocal)">{{ time(row.endLocal) }}</bdi>

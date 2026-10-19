@@ -31,7 +31,7 @@ export class ViewHistory {
         this.save();
         this.popping = event.navigationTrigger === 'popstate';
         const token: unknown = event.restoredState?.['shfView'];
-        this.target = typeof token === 'string' && this.entries.has(token) ? token : null;
+        this.target = typeof token === 'string' && this.entries.get(token)?.path === event.url ? token : null;
         if (this.target) {
           Object.assign(this.nav, structuredClone(this.entries.get(this.target)!.slots));
           this.nav.returning = true;
@@ -40,13 +40,13 @@ export class ViewHistory {
       if (event instanceof NavigationEnd) {
         const token = this.target ?? crypto.randomUUID();
         if (!this.entries.has(token)) this.entries.set(token, {
-          itemsJourney: event.urlAfterRedirects.includes('/breaks-and-exceptions') ||
+          itemsJourney: /\/(breaks-and-exceptions|operational-card)$/.test(event.urlAfterRedirects) ||
             !!(this.current && this.entries.get(this.current)?.itemsJourney),
           path: event.urlAfterRedirects, parent: this.popping ? null : this.current,
           slots: this.slots(), view: null, local: null,
         });
         this.current = token; this.target = null;
-        if (event.urlAfterRedirects.includes('/breaks-and-exceptions')) {
+        if (/\/(breaks-and-exceptions|operational-card)$/.test(event.urlAfterRedirects)) {
           let ancestor: string | null = token;
           while (ancestor) {
             const e: Entry | undefined = this.entries.get(ancestor);
@@ -56,7 +56,10 @@ export class ViewHistory {
         }
         this.restoration = this.popping ? token : null;
         // Do not serialize route context, form values, employee names or IDs.
-        history.replaceState({ navigationId: event.id, shfView: token }, '');
+        const origin: unknown = history.state?.origin;
+        const provenance = typeof origin === 'string' &&
+          ['current-shifts', 'shift-search', 'my-shifts', 'shift-day-diagnostic'].includes(origin) ? { origin } : {};
+        history.replaceState({ ...provenance, navigationId: event.id, shfView: token }, '');
       }
     });
   }

@@ -1,4 +1,4 @@
-# SHF read-only backend: detail, current, search, schedule and selected items
+# SHF read-only backend: detail, current, search, schedule, items and operational card
 
 Implements approved section 13 v0.1 of `docs/SHF_REVERSE_ENGINEERING_DESIGN.md`;
 section 15 records detail approval and section 17 approves the local tooling.
@@ -54,14 +54,135 @@ They exercise the actual five-second request budget. Routes are:
 - `GET /api/v1/my-shifts` (explicit schedule fixture required)
 - `GET /api/v1/employees/{employeeId}/shift-days/{shiftDayId}/breaks-and-exceptions`
   (explicit items fixture in fixture mode)
+- `GET /api/v1/employees/{employeeId}/operational-card`
+  (explicit employee-card fixture in fixture mode; no query/body)
 
 Identity/detail prohibit query/body input; current/search filter-context prohibits
 query/body. Lists and schedule context accept only their canonical query keys,
 with no body. All send `Cache-Control: no-store`.
 Identity is not an authorization token; every request authenticates independently.
-Administrator has exactly `["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read"]`,
+Administrator has exactly `["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read"]`,
 no employee identity, and cannot
 bypass source validation, explicit employee context or the fixture-unit allowlist.
+
+## SHF-EMPLOYEE-API-19 — operational card v0.1
+
+Approved baseline: design sections 32/33 v0.1, approval/canonical handoff section34
+(19 October). Architect-owned `employee-card-contracts.mts` and existing public
+contracts are consumed unchanged. `employee:read` is independent of the five
+existing rights. Real actors can read only their verified nonnull self-ID through
+the existing provider seam; this adds no real provider. Explicit isolated synthetic
+Administrator can select a scoped employee, but its actor `employeeId` stays null.
+Missing capability/actor denial precedes read/hierarchy access. Current exact J01
+scope (including leading zeros) is checked on every request, with no inheritance.
+
+Public allowlist: internal `employeeId`, `employee.firstName/lastName`,
+`employee.unit.{code,label,moked.{code,label,unitType}}`,
+`employee.job/innerJob` (null or `{code,label}`), `businessTimeZone`, `dataSource`.
+No shift activity/site, HR/contact/national-ID/reference/manager/settings/dates,
+attendance or related-resource prefetch. Unknown input fields are never copied.
+Names remain literal JSON text; consuming UI must render them as text, not HTML.
+Present unresolved numeric codes keep `label:null`; missing/null/numeric zero
+codes are null. Signed nonzero decimal codes retain up to38 digits.
+
+`OracleEmployeeCardReader` uses one existing session/explicit read-only snapshot:
+one bound six-column `EMPLOYEE_ID` lookup (cap2), bounded exact hierarchy
+(cap101), selected positive active job grouped code/name pairs (cap2),
+selected inner-job labels (cap2). Active status3 is from `SHFConstants`;
+the selected employee itself has **no** active-status exclusion. The job source
+is `ComplexCodeTable.getJobRows`, not a new jobs table. Grouped ambiguity fails
+before trimming, and duplicate inner-job identities fail even for equal labels.
+Missing/out-of-scope/null-team candidates produce the same404 before labels;
+two admitted candidates produce500 `AMBIGUOUS_EMPLOYEE`. Optional unresolved
+labels do not permit malformed/missing required hierarchy. No custom function,
+write, schema change, legacy initialization, EMS or fallback is involved.
+
+Fixture handoff (UI owner/caller): `employee-card-sample.mts` exports exactly
+`sampleConfig` and `sampleEmployeeCardFixture`. Synthetic employee (עובד סינתטי),
+internal key `9007199254740993`, shares the existing detail/current sample key and name;
+synthetic Noam Cohen (נועם כהן), key `2`, demonstrates unresolved job `-9` and
+null inner job. Both use exact synthetic team `T01` / direct moked `01`.
+This is not actor identity or evidence about live employees.
+
+Add `SHF_EMPLOYEE_CARD_FIXTURE=JSON.stringify(sampleEmployeeCardFixture)` to
+the existing explicit fixture environment, alongside `SHF_FIXTURE_CONFIG`,
+`SHF_FIXTURE_ROWS`, `SHF_CURRENT_SHIFTS_FIXTURE`, and `SHF_FIXTURE_PORT`.
+No default fixture is installed. Both existing current catalog and card fixture
+validate configured exact grants before listen; the card reader owns its immutable
+employee/context snapshot.
+Oracle construction injects the Oracle card port into the same configured source;
+Oracle mode rejects this and every other fixture input. Missing/mismatched port
+fails explicitly, never by falling back to a fixture or Administrator.
+
+Focused static/synthetic checks:
+
+```powershell
+npm run test:employee-card
+npm run typecheck
+npm test
+```
+
+Card tests cover backend EC18-01–12 application/HTTP/Oracle doubles, total5000ms HTTP
+budget/abort/no-late-success, bound queries, native-operation wait ordering,
+rollback/release and discard after unsafe cleanup. These do not prove native
+Oracle encoding/cancellation, deployed policies/synonyms/grants or query cost.
+EC18-13/14 navigation, UI races and accessibility remain the UI/QA owners' checks.
+Native TEST checks require environment-only `SHF_ORACLE_CONNECT_STRING`,
+`SHF_ORACLE_USER`, `SHF_ORACLE_PASSWORD`, `SHF_ORACLE_CLIENT_LIB_DIR` for the
+explicitly approved read-only CTIDBT_WFMT account and one approved candidate.
+Do not reuse broad HR/workflow live-check scripts for this card's narrower scope.
+Never print source fields/values, credentials, SQL/binds or real identifiers.
+No live result is implied by the offline checks.
+
+### Bounded native card checker — SHF-EMPLOYEE-API-19 follow-up
+
+`oracle-employee-card-live-check.mts` is an explicit operator tool, never run
+automatically by `npm test` or app startup. It consumes environment-only Oracle
+configuration above plus:
+
+- `SHF_ORACLE_TEST_SCOPE_CONFIRMED=true`
+- `SHF_ORACLE_EXPECTED_DB_NAME=WFMT`
+- `SHF_ORACLE_EXPECTED_SERVER_HOST`: uppercase short canonical server hostname,
+  independently established from the approved local TEST TNS endpoint/DNS.
+  Do not infer it from the alias spelling or copy it from the database response.
+
+An operator may bootstrap an authorized reference into a child environment in
+memory; the checker/application never reads that reference or persists secrets.
+No credential command-line arguments, logs, global environment changes or
+credential files are needed. With the approved child environment:
+
+```powershell
+node oracle-employee-card-live-check.mts
+```
+
+Before any business query, it verifies actual Oracle database name/server host/
+session user within an explicit read-only transaction. It then checks SELECT1,
+38-digit NUMBER text, synthetic Hebrew echo and full-second Gregorian DATE using
+existing helpers. Candidate discovery returns one existing J01/direct-G01 team
+key and at most10 employee keys in that exact team; only the first employee is
+selected. No active-status filter is invented for that employee. One card GET
+and one identity GET use the same instrumented native pool/runtime; unrelated
+workflow SELECTs and SELECT-star are rejected before execution.
+
+The checker validates exact recursive public JSON shape, source coherence,
+six capabilities/null actor, privacy headers, single bounded card snapshot,
+label query caps and lease cleanup. Canonical404/500/503 remains an honest
+`CANONICAL_ERROR`, not another candidate, relaxed validation or fixture fallback.
+Only aggregates/booleans/sanitized codes are printed. A clearly labeled
+`isolated-test-double` seam tests the checker itself; it is not native evidence.
+
+**19 October actual native execution:** driver26 Thick/Client19.3; TEST identity,
+SELECT1/precision/Hebrew/Gregorian mapping PASS; one team,10 candidate keys,
+one employee, two HTTP GETs, card200; exact privacy allowlist/source coherence
+PASS. One card snapshot, one employee query, one job-label query and one
+inner-job query (one returned row each). Six read-only transactions/leases,
+18 statements including transaction housekeeping; every lease rolled back and
+released, pool and owned ephemeral listener closed. Two preliminary identity-only
+attempts stopped before business reads because the alias spelling was not the
+server hostname; the independent configured TNS/DNS identity resolved this.
+No real record fields/values or credentials were printed or persisted.
+This does not prove query plans, deployed-policy purity, production readiness,
+native timeout/break behavior or UI accessibility/navigation.
 
 Optional executable from this directory: `npm start` (runs `node server.mts`).
 It **fails closed

@@ -13,10 +13,11 @@ import { itemsQuery, itemsResponse, itemsProblem, type SelectedShiftItemsV1,
 import { WorkspaceShell } from './workspace-shell';
 import { ListNavigation } from './list-navigation';
 import { ViewHistory } from './view-history';
+import { EmployeeName } from './employee-name';
 
 @Component({
   selector: 'shf-shift-items',
-  imports: [WorkspaceShell, RouterLink, MatButtonModule, MatProgressBarModule, JsonPipe],
+  imports: [EmployeeName, WorkspaceShell, RouterLink, MatButtonModule, MatProgressBarModule, JsonPipe],
   templateUrl: './shift-items-page.html', styleUrl: './shift-items-page.scss',
 })
 export class ShiftItemsPage {
