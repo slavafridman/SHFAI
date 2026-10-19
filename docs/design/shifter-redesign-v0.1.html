@@ -230,7 +230,53 @@
     body.employee-card-view .sidebar{position:sticky;top:68px;align-self:start;max-height:calc(100dvh - 68px);overflow-y:auto}
     #employee-card-title{scroll-margin-top:80px}
     @media(max-width:760px){#employee-card .card-core{padding:16px}#employee-card .card-fields{grid-template-columns:minmax(0,1fr);gap:12px}#employee-card .card-links .btn{max-inline-size:100%}}
+    /* §36 attendance: additive, read-only design preview. */
+    #attendance{overflow-wrap:anywhere;min-width:0}
+    #attendance .heading{flex-wrap:wrap}
+    #attendance .attendance-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    #attendance .attendance-checks{display:flex;flex-wrap:wrap;gap:8px 20px}
+    #attendance .attendance-checks label{display:flex;align-items:center;gap:8px;min-height:44px}
+    #attendance fieldset{min-width:0}
+    #attendance .attendance-table{min-width:1340px}
+    #attendance td,#attendance th{vertical-align:top}
+    #attendance bdi{display:inline-block;overflow-wrap:anywhere;max-width:100%}
+    #attendance .item-time-token{white-space:nowrap;overflow-wrap:normal;max-width:none}
+    #attendance .attendance-table td:has(.item-time-token){min-inline-size:11ch}
+    #attendance a,#attendance button{white-space:normal;overflow-wrap:anywhere}
+    #attendance .attendance-note{padding:12px 16px;margin-block:12px}
+    #attendance-title{scroll-margin-top:80px}
+    @media(max-width:760px){
+      #attendance .attendance-fields{grid-template-columns:minmax(0,1fr)}
+      #attendance .attendance-table{min-width:0}
+      #attendance .attendance-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+      #attendance .attendance-table,#attendance .attendance-table tbody,#attendance .attendance-table tr{display:block;width:100%}
+      #attendance .attendance-table tr{padding:12px;border-bottom:2px solid var(--border)}
+      #attendance .attendance-table td,#attendance .attendance-table tbody th{display:block;white-space:normal;padding:6px 0;border:0;background:transparent}
+      #attendance .attendance-table [data-label]::before{display:block;content:attr(data-label);font-weight:600;color:var(--muted)}
+      #attendance .attendance-checks{flex-direction:column;gap:0}
+      #attendance .filters{padding:12px}
+    }
     @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.btn:active{transform:none}}
+    /* D03: bounded seven-column calendars; no fixed minimum table width. */
+    #calendar-dialog .calendar,#schedule-calendar .calendar{width:100%;min-inline-size:0;padding:0;border:0}
+    #calendar-dialog .calendar-scroll,#schedule-calendar .calendar-scroll{padding:0;min-inline-size:0;overflow:visible}
+    #calendar-dialog .calendar table,#schedule-calendar .calendar table{width:100%;min-width:0;display:block}
+    #calendar-dialog .calendar thead,#calendar-dialog .calendar tbody,
+    #schedule-calendar .calendar thead,#schedule-calendar .calendar tbody{display:block;width:100%}
+    #calendar-dialog .calendar tr,#schedule-calendar .calendar tr{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:0;width:100%}
+    #calendar-dialog .calendar td,#calendar-dialog .calendar th,
+    #schedule-calendar .calendar td,#schedule-calendar .calendar th{min-inline-size:0;width:auto;height:auto;min-block-size:44px;display:grid;place-items:center}
+    #calendar-dialog .calendar button,#schedule-calendar .calendar button{width:100%;min-width:0;min-height:44px;height:auto;padding:0;line-height:1.4}
+    #calendar-dialog .calendar button:focus-visible,#schedule-calendar .calendar button:focus-visible{outline-offset:-3px}
+    #calendar-dialog .drawer-head,#schedule-calendar .drawer-head{flex-wrap:wrap}
+    @media(max-width:400px){
+      #calendar-dialog,#schedule-calendar{width:100%;max-width:100%;margin-inline:auto}
+      #calendar-dialog .calendar,#schedule-calendar .calendar{padding-inline:2px}
+      #schedule-calendar>.design-content{padding:12px 0}
+      #schedule-calendar .field{padding-inline:12px}
+      #schedule-calendar select{height:auto;min-height:48px}
+      #calendar-dialog .calendar-title{padding-inline:12px}
+    }
   </style>
 </head>
 <body>
@@ -248,6 +294,8 @@
         <a class="nav-item active" href="#list" data-list-nav aria-current="page"><span class="nav-icon" aria-hidden="true">▦</span>משמרות נוכחיות</a>
         <a class="nav-item" href="#search" data-search-nav>חיפוש משמרות <small>עיצוב בלבד</small></a>
         <a class="nav-item" href="#my-shifts" data-my-shifts-nav>המשמרות שלי <small>עיצוב בלבד</small></a>
+        <p class="nav-title">נוכחות</p>
+        <a class="nav-item" href="#attendance" data-attendance-nav>בירור נוכחות <small>קריאה בלבד · הצעה</small></a>
       </nav>
       <p class="nav-note">במוקאפ: משמרות נוכחיות, חיפוש, פרטים ומשמרות עובד/ת. עיצוב בלבד, ללא טענה למוכנות לייצור.</p>
     </aside>
@@ -510,6 +558,53 @@
           <p><a href="../SHF_REVERSE_ENGINEERING_DESIGN.md#32-employee-operational-card-target-proposal-v01">§32 — מקור, שדות וחוזה מוצע</a> · <a href="../SHF_REVERSE_ENGINEERING_DESIGN.md#33-employee-operational-card-ui-proposal-v01">§33 — הצעת UI ובדיקות</a></p>
         </div></details>
       </section>
+      <section id="attendance" aria-labelledby="attendance-title" hidden>
+        <nav class="breadcrumbs" aria-label="מיקום במערכת"><span>נוכחות</span><span aria-hidden="true">/</span><span>בירור נוכחות</span></nav>
+        <div class="heading"><div><h1 id="attendance-title" tabindex="-1">בירור נוכחות</h1><p class="subtle">תכנון ודיווחים רשומים — קריאה בלבד</p></div><span class="version">הצעה לאישור <bdi>v0.1</bdi></span></div>
+        <p class="surface attendance-note">נתונים ושמות סינתטיים קבועים בלבד. אין API, נתוני Oracle או עובד אמיתי. מנהל המערכת הסינתטי אינו עובד נבחר; ההרשאה החדשה לבירור נוכחות עדיין מוצעת לאישור.</p>
+        <form id="attendance-form" novalidate>
+          <fieldset class="surface filters"><legend>בחירת משמרות לבירור</legend>
+            <p id="attendance-selection-help" class="hint">התאריך והשעות בוחרים תחילת משמרת מתוכננת או חזרה מתוכננת מפיצול (SPLIT_END), כולל שני הגבולות בשנייה 00. זה אינו סינון לפי הגעה בפועל. טווח שווה מותר; אין מעבר אוטומטי ליום הבא.</p>
+            <div class="attendance-fields">
+              <div class="field"><label for="attendance-date">תאריך</label><div class="date-control"><input id="attendance-date" type="text" value="19/10/2026" placeholder="DD/MM/YYYY" maxlength="10" aria-describedby="attendance-date-help attendance-date-error"><button class="calendar-toggle" type="button" data-schedule-calendar="attendance-date" aria-label="פתיחת לוח שנה לתאריך בירור נוכחות" aria-haspopup="dialog" aria-controls="schedule-calendar">▦</button></div><p class="hint" id="attendance-date-help">יום/חודש/שנה · תאריך אחד בלבד</p><p class="field-error" id="attendance-date-error" hidden>יש להזין תאריך תקין במבנה DD/MM/YYYY.</p></div>
+              <div class="field"><label for="attendance-from">משעה — תחילה או חזרה מפיצול</label><div class="date-control"><input id="attendance-from" type="text" value="10:00" maxlength="5" aria-describedby="attendance-selection-help attendance-from-error"><button class="calendar-toggle" id="attendance-from-open" type="button" aria-label="בחירת שעת תחילת הטווח לבירור נוכחות" aria-haspopup="dialog" aria-controls="time-dialog">◷</button></div><p class="field-error" id="attendance-from-error" hidden>יש להזין שעה ודקה במבנה HH:mm, בין 00:00 ל־23:59.</p></div>
+              <div class="field"><label for="attendance-to">עד שעה — תחילה או חזרה מפיצול</label><div class="date-control"><input id="attendance-to" type="text" value="10:00" maxlength="5" aria-describedby="attendance-selection-help attendance-to-error attendance-range-error"><button class="calendar-toggle" id="attendance-to-open" type="button" aria-label="בחירת שעת סוף הטווח לבירור נוכחות" aria-haspopup="dialog" aria-controls="time-dialog">◷</button></div><p class="field-error" id="attendance-to-error" hidden>יש להזין שעה ודקה במבנה HH:mm, בין 00:00 ל־23:59.</p><p class="field-error" id="attendance-range-error" hidden>שעת הסיום חייבת להיות שווה לשעת ההתחלה או מאוחרת ממנה, באותו תאריך.</p></div>
+              <div class="field"><label for="attendance-moked">מוקד</label><select id="attendance-moked"><option value="">כל המוקדים המורשים בדוגמה</option><option value="0012">מוקד שירות מרכז · 0012</option><option value="0014">מוקד הדגמה נוסף · 0014</option></select><p class="hint">דוגמת קטלוג תחום בלבד; בחירת מוקד אינה מעניקה הרשאה.</p></div>
+            </div>
+            <fieldset><legend>צוותים</legend><div class="attendance-checks" id="attendance-teams">
+              <label><input type="checkbox" value="0021" data-parent="0012">צוות אופק · <bdi>0021</bdi></label>
+              <label><input type="checkbox" value="0023" data-parent="0012">צוות לילה · <bdi>0023</bdi></label>
+              <label><input type="checkbox" value="0041" data-parent="0014">צוות הדגמה · <bdi>0041</bdi></label>
+            </div><p class="hint">ללא בחירה: כל הצוותים המורשים במסגרת המוקד. שינוי מוקד מסיר רק בחירות שאינן מתאימות.</p></fieldset>
+            <fieldset><legend>תפקידים פנימיים</legend><div class="attendance-checks"><label><input type="checkbox" name="attendance-inner" value="101">נציג/ת שירות · <bdi>101</bdi></label><label><input type="checkbox" name="attendance-inner" value="102">תפקיד הדגמה · <bdi>102</bdi></label></div><p class="hint">ללא בחירה: ללא הגבלת תפקיד פנימי בתחום המורשה.</p></fieldset>
+            <fieldset><legend>מיקום עבודה מתוכנן</legend><div class="attendance-checks"><label><input type="checkbox" name="attendance-location" value="home">בית</label><label><input type="checkbox" name="attendance-location" value="site">אתר</label></div><p class="hint">ללא בחירה: גם ערך מקור חסר עשוי להיכלל. בית ואתר יחד אינם כוללים ערך מקור חסר. ביעד הסינון לפי שדה ענף המקור, לא לפי השלמת התצוגה; כאן אין סינון שרת.</p></fieldset>
+            <p class="hint">ברירות מחדל מוצעות: דגימת שעון מוגדר קבועה לדוגמה <bdi class="item-time-token">19/10/2026</bdi> <bdi class="item-time-token">09:11:00</bdi> · <bdi>Asia/Jerusalem</bdi> → שתי השעות <bdi class="item-time-token">10:00</bdi>. לא שעון חי, לא מצב ״עכשיו״. לוח האב־טיפוס משותף לטווחי המשמרות, לשנים 2024–2028; הקלדה מאפשרת 0001–9999.</p>
+            <button class="btn primary" type="submit">הצגת דוגמת בירור</button>
+          </fieldset>
+        </form>
+        <p id="attendance-status" role="status" aria-live="polite">טרם הוחלו המסננים. יש לשלוח את הטופס כדי להציג רשומות דוגמה קבועות.</p>
+        <div id="attendance-samples" hidden>
+          <div class="results-head"><h2 id="attendance-results-title" tabindex="-1">רשומות דוגמה — לא תוצאת סינון</h2></div>
+          <p class="hint">תרחיש קבוע: <bdi class="item-time-token">19/10/2026</bdi> <bdi class="item-time-token">10:00–10:00</bdi>. דנה: תחילה ב־<bdi class="item-time-token">10:00</bdi>, ללא רשומת נוכחות. נועם: תחילה ב־<bdi class="item-time-token">08:00</bdi>, ורק SPLIT_END ב־<bdi class="item-time-token">10:00</bdi> מכניס את היום לטווח. זמן הפיצול מתואר כאן כתרחיש בלבד — אינו שדה תגובה או עמודת נוכחות.</p>
+          <p class="hint">כל הזמנים מקומיים מלאים, כולל שניות · <bdi>Asia/Jerusalem</bdi> כתווית הקשר, לא המרת UTC. מקף בנוכחות = לא נרשם / לא ידוע, לא קביעת היעדרות.</p>
+          <div class="surface"><div class="table-wrap" role="region" aria-label="רשומות בירור נוכחות לדוגמה" tabindex="0">
+            <table class="attendance-table"><caption class="sr-only">תכנון משמרת ולצדו שלושה דיווחי זמן עצמאיים. כל הרשומות סינתטיות.</caption>
+              <thead><tr><th scope="col">עובד/ת</th><th scope="col">צוות ומוקד</th><th scope="col">תכנון: התחלה</th><th scope="col">תכנון: סיום</th><th scope="col">תכנון: מיקום</th><th scope="col">פעילות ותפקיד פנימי</th><th scope="col">דיווח: הגעה לשלב</th><th scope="col">דיווח: כניסה לעמדה</th><th scope="col">דיווח: יציאה מעמדה</th><th scope="col">קוד סיבה רשום</th><th scope="col">תדריך רשום</th><th scope="col">צפייה בלבד</th></tr></thead>
+              <tbody id="attendance-rows"></tbody>
+            </table>
+          </div><div class="pager"><span>עמוד דוגמה יחיד · ללא סך כולל או דפדוף אמיתי · ביעד 25 רשומות לעמוד</span><div class="pager-controls"><button class="btn secondary" type="button" disabled>הקודם</button><button class="btn secondary" type="button" disabled>הבא</button></div></div></div>
+          <p class="hint">קוד סיבה הוא ערך רשום בלבד, לא קביעת היעדרות; 0, ערך שלילי וחסר שונים. תדריך: כן / לא / לא ידוע. אין סיווג איחור, היעדרות או ״עובד עכשיו״. ללא שינוי, ייצוא או פעולות נוכחות.</p>
+        </div>
+        <details class="surface design-tools"><summary>מצבי יעד והיקף — לסקירת העיצוב</summary><div class="design-content">
+          <p><strong>טעינה:</strong> ״טוען הקשר לבירור נוכחות…״ / ״טוען רשומות…״. שליחה מושבתת בבקשה תואמת; אין נתונים וקישורים ישנים. שינוי מסנן מבטל את הדור הקודם. כאן אין בקשות.</p>
+          <p><strong>אין תוצאות:</strong> ״לא נמצאו ימי משמרת עם תחילה או חזרה מפיצול בטווח שנבחר״. אין פירוש של היעדרות. עמוד מאוחר ריק מאפשר חזרה לעמוד הקודם; בתקרת דפדוף מוסבר שיש לצמצם טווח, ללא סך מומצא.</p>
+          <p><strong>400 / 401 / 403:</strong> שגיאה משויכת בעברית; קלט נשמר, מיקוד בשדה השגוי הראשון. זהות לא תקפה / אין הרשאה לבירור או למסנן — אין הרחבה ל״הכול״ או התחזות לעובד.</p>
+          <p><strong>500 / 503 / מקור לא תואם:</strong> ״לא ניתן להציג רשומות עקביות״ / ״השירות אינו זמין כעת״ / ״מקור הנתונים אינו תואם״. אין מידע חלקי, מזהי כפילויות או טקסט פרטי. מסננים נשמרים; ניסיון חוזר מפורש בלבד, ללא מעבר אוטומטי לדוגמה.</p>
+          <p><strong>חזרה:</strong> מסננים, טיוטה, עמוד, גלילה וקישור הפתיחה נשמרים בנפרד לכל מקור ושרשרת. ביישום העתידי יש לאמת הרשאה ולהביא נתונים מחדש לפני שחזור קישור זמין. במוקאפ נשמרת דוגמה בלבד בזיכרון נדיף.</p>
+          <p>כרטיס עובד/ת, פרטי משמרת, פריטי משמרת ולוח משמרות הם ניווט נפרד לפי המזהים וההרשאות שלהם; זוהי הצעת מודרניזציה ממתינה, לא תפריט ישן משוחזר. פרטי HR, הערות וסיבות חופשיות, CTI ופקודות לא נכללים בבירור.</p>
+          <p><a href="../SHF_REVERSE_ENGINEERING_DESIGN.md#35-attendance-inquiry-target-proposal-v01">§35 — מקור וחוזה מוצע</a> · <a href="../SHF_REVERSE_ENGINEERING_DESIGN.md#36-attendance-inquiry-ui-proposal-v01">§36 — הצעת UI וקבלה</a></p>
+        </div></details>
+      </section>
     </main>
   </div>
   <dialog id="time-dialog" aria-labelledby="time-dialog-title" aria-describedby="time-dialog-help">
@@ -533,11 +628,13 @@
       <a href="#list" class="nav-item active" data-list-nav aria-current="page">משמרות נוכחיות</a>
       <a href="#search" class="nav-item" data-search-nav>חיפוש משמרות <small>עיצוב בלבד</small></a>
       <a class="nav-item" href="#my-shifts" data-my-shifts-nav>המשמרות שלי <small>עיצוב בלבד</small></a>
+      <p class="nav-title">נוכחות</p>
+      <a class="nav-item" href="#attendance" data-attendance-nav>בירור נוכחות <small>קריאה בלבד · הצעה</small></a>
       <p class="nav-note">מנהל מערכת סינתטי · ללא שיוך לעובד. ניווט פעיל במוקאפ בלבד.</p>
     </nav>
   </dialog>
   <dialog id="schedule-calendar" aria-labelledby="schedule-calendar-title" aria-describedby="schedule-calendar-help">
-    <div class="drawer-head"><h2 id="schedule-calendar-title">בחירת תאריך לטווח</h2><button class="btn secondary" id="schedule-calendar-close" type="button" aria-label="סגירת לוח תאריכי הטווח">סגירה ×</button></div>
+    <div class="drawer-head"><h2 id="schedule-calendar-title">בחירת תאריך</h2><button class="btn secondary" id="schedule-calendar-close" type="button" aria-label="סגירת לוח השנה">סגירה ×</button></div>
     <div class="design-content">
       <div class="field"><label for="schedule-calendar-year">שנה לדוגמה</label><select id="schedule-calendar-year"><option>2024</option><option>2025</option><option selected>2026</option><option>2027</option><option>2028</option></select></div>
       <div class="field"><label for="schedule-calendar-month">חודש</label><select id="schedule-calendar-month"></select></div>
@@ -550,7 +647,7 @@
     const $ = id => document.getElementById(id);
     history.scrollRestoration='manual';
     let selected = 'dana', origin = 'list', previousScreen = null;
-    const returnMemory={list:{opener:null,scroll:0},search:{opener:null,scroll:0},'my-shifts':{opener:null,scroll:0}};
+    const returnMemory={list:{opener:null,scroll:0},search:{opener:null,scroll:0},'my-shifts':{opener:null,scroll:0},attendance:{opener:null,scroll:0}};
     let schedulePerson=null, scheduleUpstream='list';
     const examples = {
       dana:['דנה לוי','דל','יום חמישי','15/10/2026','08:00','16:00','15/10/2026','צוות אופק','כניסה לעמדה: 07:56','באתר','1001','2001'],
@@ -558,13 +655,109 @@
       searchDana:['דנה לוי','דל','יום חמישי','15/10/2026','10:00','18:00','15/10/2026','צוות אופק','לא מוצג בחיפוש · דוגמה בלבד','מהבית','1001','3001'],
       yael:['יעל הדר','יה','יום חמישי','15/10/2026','09:00','17:00','15/10/2026','צוות אופק','לא הודגם','באתר','1003','2003']
     };
+    // D01/D02: immutable, volatile history entries; fixtures keyed by actor, not origin.
+    const scheduleFixtures=Object.freeze(Object.fromEntries(['dana','noam','yael'].map(person=>{
+      const employee=Object.freeze(examples[person].slice()),night=employee[10]==='1002';
+      const rows=[
+        ['יום ראשון','18/10/2026',night?'23:30':'08:00',night?'07:00':'16:00',night?'19/10/2026':'18/10/2026','שירות לקוחות','4101'],
+        ['יום שני','19/10/2026','09:00','לא זמין','לא זמין','פעילות לא מוכרת (קוד ACT-DEMO)','4102']
+      ].map(row=>Object.freeze(row));
+      return [employee[10],Object.freeze({employee,rows:Object.freeze(rows)})];
+    })));
+    const scheduleJourneys=new Map();
+    let scheduleSequence=0;
+    let viewportRestoreGeneration=0,viewportRestorePending=false,calendarScrollLock=null;
+    // Restore only after synchronous render/name-link changes and focus have settled.
+    function restoreViewportAfterLayout(target,top,left=0,onSettled=null){
+      const generation=++viewportRestoreGeneration,hash=location.hash;
+      viewportRestorePending=true;
+      requestAnimationFrame(()=>{
+        if(generation!==viewportRestoreGeneration||location.hash!==hash)return;
+        const opener=target?.isConnected?target:target?.id?$(target.id):null;
+        opener?.focus({preventScroll:true});
+        void document.scrollingElement.scrollHeight;
+        requestAnimationFrame(()=>{
+          if(generation!==viewportRestoreGeneration||location.hash!==hash)return;
+          void document.scrollingElement.scrollHeight;
+          // Use the saved coordinate, never a guessed offset or an early max-scroll clamp.
+          window.scrollTo({left,top,behavior:'instant'});
+          viewportRestorePending=false;
+          onSettled?.();
+        });
+      });
+    }
+    function openCalendarViewport(dialog){
+      if(calendarScrollLock)return;
+      captureSchedule();
+      const root=document.documentElement;
+      calendarScrollLock={dialog,top:window.scrollY,left:window.scrollX,
+        overflow:['overflow-x','overflow-y'].map(name=>({name,value:root.style.getPropertyValue(name),priority:root.style.getPropertyPriority(name)}))};
+      // Calendar-only: remove the root scrollbar while the modal owns scrolling.
+      root.style.setProperty('overflow-x','hidden');
+      root.style.setProperty('overflow-y','hidden');
+      try{dialog.showModal()}catch(error){closeCalendarViewport(dialog,null);throw error}
+    }
+    function closeCalendarViewport(dialog,opener){
+      const saved=calendarScrollLock;
+      if(!saved||saved.dialog!==dialog){opener?.focus({preventScroll:true});return}
+      saved.overflow.forEach(({name,value,priority})=>{
+        if(value)document.documentElement.style.setProperty(name,value,priority);
+        else document.documentElement.style.removeProperty(name);
+      });
+      calendarScrollLock=null;
+      restoreViewportAfterLayout(opener,saved.top,saved.left,()=>captureSchedule());
+    }
+    function scheduleState(state={}){
+      const token=history.state?.scheduleToken;
+      return token?{...state,scheduleToken:token}:state;
+    }
+    function storeSchedule(entry){
+      const token='schedule-'+(++scheduleSequence);
+      scheduleJourneys.set(token,Object.freeze(entry));
+      return token;
+    }
+    function captureSchedule(){
+      if(location.hash!=='#my-shifts'||viewportRestorePending||calendarScrollLock)return;
+      const entry=scheduleJourneys.get(history.state?.scheduleToken);
+      if(!entry)return;
+      const token=storeSchedule({...entry,
+        from:$('schedule-dateFrom').value,to:$('schedule-dateTo').value,
+        samplesHidden:$('schedule-samples').hidden,status:$('schedule-status').textContent,
+        fromError:!$('schedule-dateFrom-error').hidden,toError:!$('schedule-dateTo-error').hidden,
+        scroll:window.scrollY,openerId:returnMemory['my-shifts'].opener?.id||entry.openerId});
+      history.replaceState({...history.state,scheduleToken:token},'',location.hash);
+    }
+    function openSchedule(person,upstream,opener){
+      const fixture=scheduleFixtures[examples[person]?.[10]];
+      if(!fixture)return;
+      const upstreamMemory=Object.freeze({opener,scroll:window.scrollY});
+      const token=storeSchedule({person,employee:fixture.employee,upstream,sourceOrigin:upstream,
+        upstreamMemory,from:'18/10/2026',to:'31/10/2026',samplesHidden:false,
+        status:'נבחר הקשר עובד/ת סינתטי מפורש. אותן דוגמאות קבועות ל־18–31/10/2026; אין API או סינון.',
+        fromError:false,toError:false,scroll:0,openerId:null});
+      returnMemory[upstream]={...upstreamMemory};
+      history.pushState({scheduleToken:token},'','#my-shifts');route();
+    }
+    function restoreSchedule(){
+      const entry=scheduleJourneys.get(history.state?.scheduleToken);
+      schedulePerson=entry?.person||null;scheduleUpstream=entry?.upstream||'list';
+      if(!entry)return;
+      origin=entry.sourceOrigin;
+      returnMemory[entry.upstream]={...entry.upstreamMemory};
+      $('schedule-dateFrom').value=entry.from;$('schedule-dateTo').value=entry.to;
+      $('schedule-samples').hidden=entry.samplesHidden;$('schedule-status').textContent=entry.status;
+      [['dateFrom',entry.fromError],['dateTo',entry.toError]].forEach(([key,error])=>{
+        $('schedule-'+key+'-error').hidden=!error;
+        if(error)$('schedule-'+key).setAttribute('aria-invalid','true');else $('schedule-'+key).removeAttribute('aria-invalid');
+      });
+    }
     // Volatile prototype journeys only; history contains opaque tokens, never names/remarks.
     const itemsJourneys=new Map();
     let itemsSequence=0,activeItems=null,itemDetailReturn=false,renderedItemsToken=null;
-    const screenNames={list:'משמרות נוכחיות',search:'חיפוש משמרות','my-shifts':'משמרות העובד/ת',detail:'פרטי משמרת'};
+    const screenNames={list:'משמרות נוכחיות',search:'חיפוש משמרות','my-shifts':'משמרות העובד/ת',detail:'פרטי משמרת',attendance:'בירור נוכחות'};
     function addItemsLink(container,person,screen){
       const link=document.createElement('a');
-      link.href='#shift-items';link.className='items-link';
+      link.href='#shift-items';link.className='items-link';link.id='items-open-'+screen+'-'+person;
       link.textContent='הפסקות וחריגות חלקיות ←';
       link.setAttribute('aria-label','הפסקות וחריגות חלקיות במשמרת — '+examples[person][0]+', '+examples[person][3]+', דוגמה סינתטית');
       link.addEventListener('click',event=>{
@@ -575,11 +768,12 @@
     }
     function openItems(person,screen,opener){
       if(!examples[person])return;
+      if(screen==='my-shifts'){returnMemory['my-shifts']={opener,scroll:window.scrollY};captureSchedule()}
       const token='items-'+(++itemsSequence);
       const sample=examples[person].slice();
       itemsJourneys.set(token,{token,person,sample,screen,opener,scroll:window.scrollY,
         detailOrigin:origin,detailPerson:selected,itemScroll:0});
-      history.pushState({itemsToken:token},'','#shift-items');route();
+      history.pushState(scheduleState({itemsToken:token}),'','#shift-items');route();
     }
     function appendItemTime(cell,local){
       if(!local){cell.textContent='אין ערך רשום';return}
@@ -692,7 +886,8 @@
     }
     function openCard(person,screen,opener){
       const employeeId=examples[person]?.[10];
-      if(!cardProfiles[employeeId]||!['list','search','my-shifts','detail','shift-items'].includes(screen))return;
+      if(!cardProfiles[employeeId]||!['list','search','my-shifts','detail','shift-items','attendance'].includes(screen))return;
+      if(screen==='my-shifts'){returnMemory['my-shifts']={opener,scroll:window.scrollY};captureSchedule()}
       const token='card-'+(++cardSequence);
       // Snapshot independent of detail/items/schedule memories. No employee data in history.
       const entry={token,employeeId,screen,opener,scroll:window.scrollY,
@@ -704,7 +899,7 @@
         parent:screen==='detail'?origin:screen==='shift-items'?(activeItems?.screen==='detail'?activeItems.detailOrigin:activeItems?.screen):screen};
       cardJourneys.set(token,entry);
       history.replaceState({...history.state,cardOriginToken:token},'',location.hash||'#list');
-      history.pushState({cardToken:token},'','#employee-card');route();
+      history.pushState(scheduleState({cardToken:token}),'','#employee-card');route();
     }
     function cardName(container,person,screen){
       const employeeId=examples[person]?.[10];
@@ -713,7 +908,7 @@
       const cached=cardNameLinks.get(container);
       if(cached?.person===person){container.replaceChildren(cached.link);return}
       const link=document.createElement('a');
-      link.href='#employee-card';link.className='card-entry';link.dir='auto';
+      link.href='#employee-card';link.className='card-entry';link.dir='auto';link.id='card-open-'+screen+'-'+person;
       link.textContent=examples[person][0]+' · כרטיס עובד/ת';
       link.setAttribute('aria-label',link.textContent+' — הקשר נבחר, דוגמה סינתטית');
       link.addEventListener('click',event=>{event.preventDefault();openCard(person,screen,link)});
@@ -757,6 +952,31 @@
       history.pushState(null,'','#list');route();
     }));
     function route(focus=true){
+      ++viewportRestoreGeneration;viewportRestorePending=false;
+      if(location.hash==='#my-shifts'||scheduleJourneys.has(history.state?.scheduleToken))restoreSchedule();
+      $('attendance').hidden=location.hash!=='#attendance';
+      document.querySelectorAll('[data-attendance-nav]').forEach(link=>{
+        const active=location.hash==='#attendance'||(location.hash==='#detail'&&history.state?.origin==='attendance')||
+          (location.hash==='#employee-card'&&cardJourneys.get(history.state?.cardToken)?.parent==='attendance')||
+          (location.hash==='#shift-items'&&(itemsJourneys.get(history.state?.itemsToken)?.screen==='attendance'||(itemsJourneys.get(history.state?.itemsToken)?.screen==='detail'&&itemsJourneys.get(history.state?.itemsToken)?.detailOrigin==='attendance')));
+        link.classList.toggle('active',active);
+        if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
+      });
+      if(location.hash==='#attendance'){
+        const leavingCard=previousScreen==='employee-card'?activeCard:null;
+        const leavingItem=previousScreen==='shift-items'?activeItems:null;
+        const memory=leavingCard?.screen==='attendance'?leavingCard:leavingItem?.screen==='attendance'?leavingItem:returnMemory.attendance;
+        ['list','search','my-shifts','detail','shift-items','employee-card'].forEach(id=>$(id).hidden=true);
+        document.body.classList.remove('employee-card-view','shift-items-view');
+        ['list','search','my-shifts'].forEach(id=>document.querySelectorAll(`[data-${id}-nav]`).forEach(link=>{link.classList.remove('active');link.removeAttribute('aria-current')}));
+        if(focus){
+          const restore=['detail','my-shifts','shift-items','employee-card'].includes(previousScreen);
+          const opener=restore&&memory.opener?.isConnected&&!memory.opener.closest('[hidden]')?memory.opener:$('attendance-title');
+          if(restore)restoreViewportAfterLayout(opener,memory.scroll);
+          else{window.scrollTo(0,0);opener.focus({preventScroll:true})}
+        }
+        previousScreen='attendance';return;
+      }
       const leaving=previousScreen==='employee-card'?activeCard:null;
       const isCard=location.hash==='#employee-card';
       document.body.classList.toggle('employee-card-view',isCard);
@@ -783,9 +1003,8 @@
       }
       routeBase(restore?false:focus);wireCardNames();
       if(restore&&focus){
-        window.scrollTo(0,leaving.scroll);
         const opener=leaving.opener;
-        (opener?.isConnected&&!opener.closest('[hidden]')?opener:$(leaving.screen+'-title')).focus({preventScroll:true});
+        restoreViewportAfterLayout(opener?.isConnected&&!opener.closest('[hidden]')?opener:$(leaving.screen+'-title'),leaving.scroll);
       }
     }
     function routeBase(focus=true){
@@ -801,8 +1020,8 @@
         }));
         if(focus){
           const restore=itemDetailReturn&&activeItems;
-          window.scrollTo(0,restore?activeItems.itemScroll:0);
-          (restore?$('items-detail'):$('shift-items-title')).focus({preventScroll:true});
+          if(restore)restoreViewportAfterLayout($('items-detail'),activeItems.itemScroll);
+          else{window.scrollTo(0,0);$('shift-items-title').focus({preventScroll:true})}
         }
         itemDetailReturn=false;previousScreen='shift-items';return;
       }
@@ -831,13 +1050,23 @@
         $('detail-source').textContent='· הקשר מלוח עובד/ת סינתטי';
         $('return-note').textContent='הפרט שייך למזהי העובד ויום העבודה של שורת הלוח. החזרה משמרת טווח, עמוד, גלילה וקישור פתיחה; מקור הבחירה מהרשימה או מהחיפוש נשמר בנפרד. נתוני נוכחות, אם יוצגו בפרט העתידי, עצמאיים ואינם נתוני לוח המשמרות.';
       }
-      if(screen==='my-shifts')renderSchedule();
+      if(detail&&origin==='attendance'){
+        $('detail-origin').textContent='בירור נוכחות';$('back').textContent='→ חזרה לבירור נוכחות';
+        $('detail-source').textContent='· הקשר משורת בירור נוכחות סינתטית';
+        $('return-note').textContent='מזהי העובד ויום המשמרת הם של השורה שנבחרה, לא תאריך, יום קרוב או מקור החלפה. החזרה משמרת את מסנני הבירור ועמוד הדוגמה; אין כאן קריאת שרת.';
+      }
+      if(screen==='my-shifts'){
+        renderSchedule();
+        const entry=scheduleJourneys.get(history.state?.scheduleToken);
+        if(entry)returnMemory['my-shifts']={opener:entry.openerId?$(entry.openerId):null,scroll:entry.scroll};
+      }
       detailItems.hidden=!detail||!history.state?.designDetail||!examples[history.state.person]||!!history.state?.fromItemsDetail;
       if(detail){renderDetail();if(focus){$('detail-title').focus({preventScroll:true});window.scrollTo(0,0)}}
       else if(focus){
-        const restore=(previousScreen==='detail'&&screen===origin)||(previousScreen==='my-shifts'&&screen===scheduleUpstream), memory=returnMemory[screen];
-        window.scrollTo(0,restore?memory.scroll:0);
-        (restore&&memory.opener&&!memory.opener.closest('[hidden]')?memory.opener:$(screen+'-title')).focus({preventScroll:true});
+        const restore=(screen==='my-shifts'&&!!history.state?.scheduleToken)||(previousScreen==='detail'&&screen===origin)||(previousScreen==='my-shifts'&&screen===scheduleUpstream), memory=returnMemory[screen];
+        const opener=restore&&memory.opener?.isConnected&&!memory.opener.closest('[hidden]')?memory.opener:$(screen+'-title');
+        if(restore)restoreViewportAfterLayout(opener,memory.scroll);
+        else{window.scrollTo(0,0);opener.focus({preventScroll:true})}
       }
       if(detail&&history.state?.fromItemsDetail&&itemsJourneys.has(history.state.fromItemsDetail)){
         const entry=itemsJourneys.get(history.state.fromItemsDetail);
@@ -853,8 +1082,7 @@
         delete $('back').dataset.itemsReturn;delete $('detail-origin').dataset.itemsReturn;
       }
       if(focus&&leavingItems&&screen===leavingItems.screen&&!history.state?.fromItemsDetail){
-        window.scrollTo(0,leavingItems.scroll);
-        (leavingItems.opener?.isConnected&&!leavingItems.opener.closest('[hidden]')?leavingItems.opener:$(screen+'-title')).focus({preventScroll:true});
+        restoreViewportAfterLayout(leavingItems.opener?.isConnected&&!leavingItems.opener.closest('[hidden]')?leavingItems.opener:$(screen+'-title'),leavingItems.scroll);
       }
       previousScreen=screen;
     }
@@ -867,38 +1095,33 @@
       link.setAttribute('aria-label','משמרות העובד/ת '+examples[person][0]+' — בחירת הקשר סינתטי');
       cell.append(document.createElement('br'),link);
       addItemsLink(cell,person,row.closest('section').id);
-      link.addEventListener('click',()=>{
-        schedulePerson=person;scheduleUpstream=row.closest('section').id;
-        returnMemory[scheduleUpstream]={opener:link,scroll:window.scrollY};
-        $('schedule-dateFrom').value='18/10/2026';$('schedule-dateTo').value='31/10/2026';
-        ['dateFrom','dateTo'].forEach(key=>{$('schedule-'+key).removeAttribute('aria-invalid');$('schedule-'+key+'-error').hidden=true});
-        $('schedule-samples').hidden=false;
-        $('schedule-status').textContent='נבחר הקשר עובד/ת סינתטי מפורש. הדוגמאות קבועות ל־18–31/10/2026; אין תוצאות שרת או סינון.';
+      link.addEventListener('click',event=>{
+        event.preventDefault();
         document.querySelectorAll('tr.selected').forEach(item=>item.classList.remove('selected'));row.classList.add('selected');
+        openSchedule(person,row.closest('section').id,link);
       });
     });
     function renderSchedule(){
       $('schedule-no-selection').hidden=!!schedulePerson;$('schedule-selected').hidden=!schedulePerson;
       if(!schedulePerson)return;
-      const employee=examples[schedulePerson];
+      const entry=scheduleJourneys.get(history.state?.scheduleToken);
+      const employee=entry.employee,fixture=scheduleFixtures[employee[10]];
       $('schedule-employee').textContent=employee[0];
       $('schedule-context').textContent=employee[7]+' · מוקד שירות מרכז';
       $('schedule-source').textContent='מקור בחירה: '+(scheduleUpstream==='search'?'תוצאת חיפוש סינתטית':'שורת משמרות נוכחיות סינתטית')+' · ההקשר לקריאה בלבד';
+      if(scheduleUpstream==='attendance')$('schedule-source').textContent='מקור בחירה: בירור נוכחות סינתטי · עובד/ת נבחר/ת במפורש, לא המנהל המחובר';
       $('schedule-employee-id').textContent=employee[10];
       $('schedule-upstream').href='#'+scheduleUpstream;
       $('schedule-upstream').textContent=scheduleUpstream==='search'?'→ חזרה לחיפוש ולשורת הבחירה':'→ חזרה לרשימה ולשורת הבחירה';
+      if(scheduleUpstream==='attendance')$('schedule-upstream').textContent='→ חזרה לבירור ולשורת הבחירה';
       // Do not replace DOM on a detail return: retain exact opener and disclosures.
       if($('schedule-rows').dataset.person===schedulePerson)return;
       $('schedule-rows').dataset.person=schedulePerson;$('schedule-rows').replaceChildren();
-      const night=schedulePerson==='noam';
-      [
-        ['יום ראשון','18/10/2026',night?'23:30':'08:00',night?'07:00':'16:00',night?'19/10/2026':'18/10/2026','שירות לקוחות','4101'],
-        ['יום שני','19/10/2026','09:00','לא זמין','לא זמין','פעילות לא מוכרת (קוד ACT-DEMO)','4102']
-      ].forEach((sample,index)=>{
+      fixture.rows.forEach((sample,index)=>{
         const key='schedule-'+schedulePerson+'-'+index;
         examples[key]=[employee[0],employee[1],sample[0],sample[1],sample[2],sample[3],sample[4],employee[7],'לא הודגם בפרט סינתטי זה','לא הודגם בפרט סינתטי זה',employee[10],sample[6]];
         const row=document.createElement('tr');
-        const values=[employee[0],sample[0]+' · '+sample[1],sample[2]+' · '+sample[1],sample[3]==='לא זמין'?'לא זמין':sample[3]+' · '+sample[4]+(night?' · למחרת':''),employee[7],sample[5]];
+        const values=[employee[0],sample[0]+' · '+sample[1],sample[2]+' · '+sample[1],sample[3]==='לא זמין'?'לא זמין':sample[3]+' · '+sample[4]+(sample[4]!==sample[1]?' · למחרת':''),employee[7],sample[5]];
         const labels=['עובד/ת','יום ותאריך התחלה','התחלה','סיום','צוות','פעילות'];
         values.forEach((value,i)=>{
           const cell=document.createElement(i===0?'th':'td');if(i===0)cell.scope='row';
@@ -915,8 +1138,9 @@
         link.addEventListener('click',event=>{
           event.preventDefault();origin='my-shifts';selected=key;
           returnMemory['my-shifts']={opener:link,scroll:window.scrollY};
+          captureSchedule();
           $('schedule-rows').querySelectorAll('.selected').forEach(item=>item.classList.remove('selected'));row.classList.add('selected');
-          history.pushState({designDetail:true,origin,person:selected},'','#detail');route();
+          history.pushState(scheduleState({designDetail:true,origin,person:selected}),'','#detail');route();
         });
         cell.append(link);addItemsLink(cell,key,'my-shifts');row.append(cell);$('schedule-rows').append(row);
       });
@@ -927,18 +1151,106 @@
     }));
     window.addEventListener('hashchange',()=>route());
     document.querySelectorAll('a[href="#list"],a[href="#detail"],a[href="#search"],a[href="#my-shifts"]').forEach(link=>link.addEventListener('click',event=>{
+      if(event.defaultPrevented)return;
       if(['items-detail','card-back','card-origin'].includes(link.id))return;
       event.preventDefault();
       if(menu.open)menu.close();
+      captureSchedule();
       if(link.dataset.itemsReturn){
-        history.pushState({itemsToken:link.dataset.itemsReturn},'','#shift-items');route();return;
+        history.pushState(scheduleState({itemsToken:link.dataset.itemsReturn}),'','#shift-items');route();return;
       }
       if((link.id==='items-back'||link.id==='items-origin')&&activeItems){
         selected=activeItems.detailPerson;origin=activeItems.detailOrigin;
       }
-      if(location.hash!==link.hash)history.pushState(link.hash==='#detail'?{designDetail:true,origin,person:selected}:null,'',link.hash);
+      if(location.hash!==link.hash){
+        const state=link.hash==='#detail'?{designDetail:true,origin,person:selected}:{};
+        const relatedReturn=['#detail','#my-shifts','#shift-items'].includes(link.hash)&&!link.hasAttribute('data-my-shifts-nav');
+        history.pushState(relatedReturn?scheduleState(state):state,'',link.hash);
+      }
       route();
     }));
+      // §36: fixed, wholly synthetic employee-day rows. No API/Oracle or live clock.
+      examples.attendanceDana=['דנה לוי','דל','יום שני','19/10/2026','10:00','18:00','19/10/2026','צוות אופק','לא נרשם / לא ידוע','לא ידוע','1001','5201'];
+      examples.attendanceNoam=['נועם כהן','נכ','יום שני','19/10/2026','08:00','02:00','20/10/2026','צוות לילה','כניסה לעמדה: 20/10/2026 00:07:13','באתר','1002','5202'];
+      const attendanceDemo=[
+        {person:'attendanceDana',team:'צוות אופק',teamCode:'0021',start:'2026-10-19T10:00:00',end:'2026-10-19T18:00:00',site:'לא ידוע',activity:{code:'ACT-DEMO-UNRESOLVED-00000000000000001',label:null},inner:{code:'101',label:'נציג/ת שירות'},stage:null,station:null,exit:null,reason:null,briefing:null},
+        {person:'attendanceNoam',team:'צוות לילה',teamCode:'0023',start:'2026-10-19T08:00:00',end:'2026-10-20T02:00:00',site:'אתר',activity:{code:'ACT-DEMO',label:'שירות לקוחות'},inner:null,stage:null,station:'2026-10-20T00:07:13',exit:'2026-10-20T02:03:41',reason:'0',briefing:false}
+      ];
+      attendanceDemo.forEach((sample,index)=>{
+        const row=document.createElement('tr'),name=document.createElement('th');
+        name.scope='row';name.dataset.label='עובד/ת';row.append(name);
+        cardName(name,sample.person,'attendance');
+        const labels=['צוות ומוקד','תכנון: התחלה','תכנון: סיום','תכנון: מיקום','פעילות ותפקיד פנימי','דיווח: הגעה לשלב','דיווח: כניסה לעמדה','דיווח: יציאה מעמדה','קוד סיבה רשום','תדריך רשום'];
+        const values=[sample.team,sample.start,sample.end,sample.site,null,sample.stage,sample.station,sample.exit,sample.reason,sample.briefing===null?'לא ידוע':sample.briefing?'כן':'לא'];
+        values.forEach((value,i)=>{
+          const cell=document.createElement('td');cell.dataset.label=labels[i];
+          if([1,2,5,6,7].includes(i)){
+            if(value)appendItemTime(cell,value);
+            else{cell.textContent='—';const hint=document.createElement('span');hint.className='cell-note';hint.textContent='לא נרשם / לא ידוע';cell.append(hint)}
+          }else if(i===0){
+            const teamCode=document.createElement('bdi'),parentCode=document.createElement('bdi');
+            teamCode.textContent=sample.teamCode;parentCode.textContent='0012';
+            cell.append(sample.team+' · ',teamCode,document.createElement('br'),'מוקד שירות מרכז · ',parentCode);
+          }else if(i===4){
+            const activity=document.createElement('div'),inner=document.createElement('div');
+            cardValue(activity,sample.activity);cardValue(inner,sample.inner);
+            cell.append('פעילות: ',activity,'תפקיד פנימי: ',inner);
+          }else if(i===8){const code=document.createElement('bdi');code.textContent=value===null?'—':value;cell.append(code)}
+          else cell.textContent=value;
+          row.append(cell);
+        });
+        const cell=document.createElement('td');cell.dataset.label='צפייה בלבד';
+        const detail=document.createElement('a');detail.href='#detail';detail.id='attendance-detail-'+index;detail.className='row-link';detail.textContent='פרטי משמרת ←';
+        detail.setAttribute('aria-label','פרטי המשמרת של '+examples[sample.person][0]+' — 19 באוקטובר 2026, דוגמה סינתטית');
+        detail.addEventListener('click',event=>{
+          event.preventDefault();selected=sample.person;origin='attendance';returnMemory.attendance={opener:detail,scroll:window.scrollY};
+          history.pushState({designDetail:true,origin,person:selected},'','#detail');route();
+        });
+        cell.append(detail);addItemsLink(cell,sample.person,'attendance');
+        const schedule=document.createElement('a');schedule.href='#my-shifts';schedule.id='attendance-schedule-'+index;schedule.className='row-link';schedule.textContent='משמרות העובד/ת ←';
+        schedule.setAttribute('aria-label','משמרות העובד/ת '+examples[sample.person][0]+' — בחירת הקשר סינתטי מבירור נוכחות');
+        schedule.addEventListener('click',event=>{
+          event.preventDefault();openSchedule(sample.person,'attendance',schedule);
+        });
+        cell.append(document.createElement('br'),schedule);row.append(cell);$('attendance-rows').append(row);
+      });
+      function attendanceDirty(){
+        $('attendance-samples').hidden=true;
+        $('attendance-status').textContent='המסננים שונו; הרשומות הוסתרו. שליחה תקינה תציג את אותן דוגמאות, ללא סינון או בקשת שרת.';
+      }
+      $('attendance-form').addEventListener('input',attendanceDirty);
+      $('attendance-form').addEventListener('change',event=>{
+        attendanceDirty();
+        if(event.target.id==='attendance-moked'){
+          $('attendance-teams').querySelectorAll('input').forEach(input=>{
+            const excluded=$('attendance-moked').value!==''&&input.dataset.parent!==$('attendance-moked').value;
+            if(excluded)input.checked=false;
+            input.disabled=excluded;input.closest('label').hidden=excluded;
+          });
+        }
+      });
+      $('attendance-form').addEventListener('submit',event=>{
+        event.preventDefault();
+        const dateOK=!!parseScheduleDate($('attendance-date').value);
+        $('attendance-date-error').hidden=dateOK;
+        if(dateOK)$('attendance-date').removeAttribute('aria-invalid');else $('attendance-date').setAttribute('aria-invalid','true');
+        const fromOK=checkManualTime(false,'attendance-from'),toOK=checkManualTime(false,'attendance-to');
+        const reverse=fromOK&&toOK&&$('attendance-from').value>$('attendance-to').value;
+        $('attendance-range-error').hidden=!reverse;
+        if(reverse)$('attendance-to').setAttribute('aria-invalid','true');
+        if(!dateOK||!fromOK||!toOK||reverse){
+          $('attendance-samples').hidden=true;$('attendance-status').textContent='יש לתקן את השדות המסומנים. הקלט נשמר; לא נשלחה בקשה.';
+          $('attendance-form').querySelector('[aria-invalid=true]').focus();return;
+        }
+        $('attendance-samples').hidden=false;
+        $('attendance-status').textContent='קלט תקין להדגמה בלבד. מוצגות אותן שתי רשומות קבועות לתרחיש המפורש מתחת לכותרת, ללא קשר למסננים שנשלחו; אין סינון, סך כולל או קריאת שרת.';
+        $('attendance-results-title').focus();
+      });
+      document.querySelectorAll('a[href="#attendance"]').forEach(link=>link.addEventListener('click',event=>{
+        event.preventDefault();if(menu.open)menu.close();
+        if(location.hash!=='#attendance')history.pushState(null,'','#attendance');
+        route();
+      }));
     // Explicit selected detail action; never manufactures an item-detail endpoint.
     const detailItems=document.createElement('a');
     detailItems.href='#shift-items';detailItems.className='items-link';detailItems.textContent='הפסקות וחריגות חלקיות במשמרת ←';
@@ -948,7 +1260,7 @@
       event.preventDefault();if(!activeItems)return;
       activeItems.itemScroll=window.scrollY;selected=activeItems.person;
       origin=activeItems.screen==='detail'?activeItems.detailOrigin:activeItems.screen;
-      history.pushState({designDetail:true,person:selected,origin,fromItemsDetail:activeItems.token},'','#detail');route();
+      history.pushState(scheduleState({designDetail:true,person:selected,origin,fromItemsDetail:activeItems.token}),'','#detail');route();
     });
     $('items-reload').addEventListener('click',()=>{
       if(!activeItems)return;
@@ -983,18 +1295,28 @@
       function scheduleDirty(){
         $('schedule-samples').hidden=true;
         $('schedule-status').textContent='הטווח שונה. הדוגמאות הוסתרו; יש להחיל את הטווח. אין בקשה או סינון שרת.';
+        captureSchedule();
       }
       $('schedule-form').addEventListener('input',scheduleDirty);
       $('schedule-form').addEventListener('change',scheduleDirty);
+      // Keep the entry's scroll even when the browser, rather than an on-page link, leaves it.
+      let scheduleScrollFrame=false;
+      window.addEventListener('scroll',()=>{
+        if(location.hash!=='#my-shifts'||scheduleScrollFrame)return;
+        scheduleScrollFrame=true;
+        requestAnimationFrame(()=>{scheduleScrollFrame=false;captureSchedule()});
+      },{passive:true});
       $('schedule-form').addEventListener('submit',event=>{
         event.preventDefault();
         if(!validateScheduleRange()){
           $('schedule-samples').hidden=true;$('schedule-status').textContent='יש לתקן את שדות התאריך המסומנים; לא נשלחה בקשה.';
+          captureSchedule();
           $('schedule-form').querySelector('[aria-invalid=true]').focus();return;
         }
         $('schedule-samples').hidden=false;
         $('schedule-status').textContent='טווח הקלט תקין להדגמה בלבד. מוצגות אותן דוגמאות קבועות ל־18–31/10/2026, ללא קשר לטווח שהוזן; לא נשלחה בקשה.';
         $('schedule-results-title').focus();
+        captureSchedule();
       });
       const rangeCalendar=$('schedule-calendar');
       let rangeTarget=null,rangeOpener=null;
@@ -1005,9 +1327,9 @@
         const body=$('schedule-calendar-days');body.replaceChildren();
         const offset=civilOrdinal(year,month,1)%7; // Gregorian 0001-01-01 is Monday.
         let row;
-        for(let slot=0;slot<offset+monthLength(year,month);slot++){
+        for(let slot=0;slot<42;slot++){
           if(slot%7===0){row=document.createElement('tr');body.append(row)}
-          const cell=document.createElement('td');row.append(cell);if(slot<offset)continue;
+          const cell=document.createElement('td');row.append(cell);if(slot<offset||slot>=offset+monthLength(year,month))continue;
           const day=slot-offset+1,button=document.createElement('button');
           const value=String(day).padStart(2,'0')+'/'+String(month).padStart(2,'0')+'/'+String(year).padStart(4,'0');
           button.type='button';button.textContent=String(day);
@@ -1022,12 +1344,12 @@
         const parsed=parseScheduleDate(rangeTarget.value);
         $('schedule-calendar-year').value=String(parsed&&parsed.year>=2024&&parsed.year<=2028?parsed.year:2026);
         $('schedule-calendar-month').value=String(parsed?parsed.month:10);
-        drawRangeCalendar();rangeCalendar.showModal();
+        drawRangeCalendar();openCalendarViewport(rangeCalendar);
         (rangeCalendar.querySelector('[aria-pressed=true]')||$('schedule-calendar-year')).focus({preventScroll:true});
       }));
       ['schedule-calendar-month','schedule-calendar-year'].forEach(id=>$(id).addEventListener('change',drawRangeCalendar));
       $('schedule-calendar-close').addEventListener('click',()=>rangeCalendar.close());
-      rangeCalendar.addEventListener('close',()=>rangeOpener?.focus({preventScroll:true}));
+      rangeCalendar.addEventListener('close',()=>closeCalendarViewport(rangeCalendar,rangeOpener));
     const calendar=$('calendar-dialog');
     let calendarTarget=$('date'), calendarOpener=$('calendar-open');
     $('calendar-host').append($('calendar-preview'));
@@ -1046,11 +1368,11 @@
       calendarTarget=$(input);calendarOpener=$(button);
       const value=calendarTarget.value;
       calendar.querySelectorAll('td button').forEach(button=>button.setAttribute('aria-pressed',value===button.textContent.padStart(2,'0')+'/10/2026'?'true':'false'));
-      calendar.showModal();
+      openCalendarViewport(calendar);
       (calendar.querySelector('[aria-pressed=true]')||$('calendar-close')).focus({preventScroll:true});
     }));
     $('calendar-close').addEventListener('click',()=>calendar.close());
-    calendar.addEventListener('close',()=>calendarOpener.focus({preventScroll:true}));
+    calendar.addEventListener('close',()=>closeCalendarViewport(calendar,calendarOpener));
     const timePicker=$('time-dialog'), validTime=value=>/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(value);
     let timeTarget=$('time'), timeOpener=$('time-open');
     function checkManualTime(focus=false,input='time'){
@@ -1063,7 +1385,7 @@
     [['picker-hour',24],['picker-minute',60]].forEach(([id,count])=>{
       for(let i=0;i<count;i++){const option=document.createElement('option');option.value=option.textContent=String(i).padStart(2,'0');$(id).append(option)}
     });
-    [['time-open','time'],['search-from-open','search-from'],['search-to-open','search-to']].forEach(([button,input])=>$(button).addEventListener('click',()=>{
+    [['time-open','time'],['search-from-open','search-from'],['search-to-open','search-to'],['attendance-from-open','attendance-from'],['attendance-to-open','attendance-to']].forEach(([button,input])=>$(button).addEventListener('click',()=>{
       if((input==='time'&&$('current').checked)||timePicker.open)return;
       if(!checkManualTime(true,input))return;
       timeTarget=$(input);timeOpener=$(button);
@@ -1078,6 +1400,7 @@
       if(!validTime(value)){$('picker-error').hidden=false;$('picker-hour').focus();return}
       if(timeTarget.id==='time'&&$('current').checked)return;
       timeTarget.value=value;checkManualTime(false,timeTarget.id);timeTarget.dispatchEvent(new Event('change'));timePicker.close();
+      if(timeTarget.id.startsWith('attendance-'))attendanceDirty();
     });
     $('time').addEventListener('change',()=>checkManualTime());
     const menu=$('menu');
