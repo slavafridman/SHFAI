@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-20, SHF-NATIVE-PILOT-FINAL-20 publication verification.
+Last updated: 2026-10-20, SHF-NATIVE-PILOT-FINAL-20 published / pilot identity-blocked.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -27,7 +27,7 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-NATIVE-PILOT-FINAL-20 — current execution checkpoint
 
-**State: OFFLINE READY; publication running; native arrival NOT YET LIVE.**
+**State: OFFLINE READY / feature PUBLISHED; live pilot BLOCKED before business reads.**
 This checkpoint supersedes the older implementation/QA-in-progress statements
 below; those statements are retained as historical evidence.
 
@@ -52,7 +52,9 @@ below; those statements are retained as historical evidence.
 - Initial index empty; main and fetched approved origin/main both
   `0b9c550f1cf696a185526b647bda423c21b96086`, ahead/behind 0/0.
   Twenty-three unrelated paths were identified and a bytewise/deletion
-  baseline captured without reading any protected environment file.
+  baseline captured without reading any protected environment file. After
+  publication/preflight, all 23 match that baseline and remain unstaged;
+  application/design/verifier working copies match the published feature.
 - Candidate bounded private-key, literal-password, DDL and brief/protected-file
   parser scans found zero matches. Existing/new synthetic fixtures and the
   three-field SQL/UoW path were reviewed. This is a bounded publication
@@ -65,20 +67,63 @@ below; those statements are retained as historical evidence.
   (no intentional Markdown hard-break exception was required).
   Staged link closure, normal commit/push and final synchronization are
   checked at publication; no pilot connection precedes those gates.
-- Actual native UPDATE, setup refresh, UI command, COMMIT and readback:
-  **NOT RUN in this checkpoint**. The old four-minute eligibility is historical.
-  One operator must establish fresh independent TEST identity, metadata,
-  exact-marker ownership and real-clock eligibility before enabling anything.
+- Feature publication verified: normal commit
+  `8d2c7d6a488a9bd8bfaef2fe6b513ddc1992f4c3`, exactly 50 authorized files;
+  pushed origin/main, remote SHA equals local, ahead/behind 0/0, index empty.
+  All 395 staged-or-HEAD design/status links resolve; 20 capture hashes match
+  the prior published checkpoint. No application or contract correction was
+  made by the publication operator.
+- One fresh operator READ ONLY preflight connected using the independently
+  approved reference in process memory, the existing Client 19.3, local
+  CTIDBT_WFMT TNS entry and endpoint DNS. No protected environment file was
+  read, reconstructed, compared or used by an application parser.
+- **STOP: INDEPENDENT_TEST_IDENTITY_REFERENCE_MISMATCH.** Before any business
+  or dictionary query, the exact independently constructed expected DB_NAME,
+  SERVER_HOST and SERVICE_NAME did not match; SESSION_USER/CURRENT_SCHEMA
+  matched. The sanitized assertion is `ERR_ASSERTION`, not an Oracle write/
+  COMMIT failure. No returned database identity was copied into expectations.
+  This establishes an operator-reference mismatch, not that the approved TEST
+  database is unavailable or that its actual identity has been certified.
+- Preflight executed one READ ONLY transaction and one identity SELECT only.
+  ROLLBACK acknowledged, connection released and preflight pool closed.
+  **Business reads, fresh metadata/constraints/triggers/VPD/grants,
+  exact-marker rediscovery and current temporal eligibility NOT RUN.**
+  Earlier 84-column/22-constraint/zero-trigger facts remain historical.
+- Separate synthetic planning refresh: **NOT RUN**; zero setup UPDATEs,
+  zero setup COMMITs, no setup pool created. No original plans were changed.
+  Native arrival: **NOT RUN**, zero commands, FOR UPDATE, UPDATEs and COMMITs;
+  no allowance created/consumed and no readback/recorded-stage assertion.
+  Context/PURE/command HTTP statuses, real Angular review/final confirmation,
+  list return and exact opener focus: **NOT RUN**.
+- Safe aggregate phase journal: `.git/shf-native-pilot20/result.json`,
+  under 8KB, excluding credentials, private employee/day keys, planned times,
+  bindings, token/fingerprint or before-images. No retry or reconciliation
+  write occurred. The known earlier NJS-500 remains historical/unexplained.
+- No new backend, proxy, headed Chrome or native pools were started. There
+  are no new user-view PIDs/URLs/logs to claim; existing user applications
+  were neither killed nor reconfigured. There are no pilot app pools left open.
+  The operator launcher is stopped and its only leased connection/pool closed.
 - Required dev/test/production environment-profile work remains **pending
   next task**. No production deployment, real authentication, whole-project
   completion, WCAG conformance or SLA claim is made.
 
-Next safe action: finish and verify the scoped feature publication, then one
-separately journaled operator-only synthetic planning refresh if required and
-one real Angular controlled native TEST command, or record the exact blocker.
+Blocker owner / next safe action: operator/DBA supplies or verifies the exact
+independent TEST database/host/service expectation, including required case
+and service spelling, against the approved environment reference/DNS rather
+than a copied connection answer. Resume only after that prerequisite changes;
+do not reconnect automatically or patch application business code. Then fresh
+metadata/ownership/window checks must precede any separately authorized
+synthetic setup refresh and the one real Angular command. This is not a new
+general TEST-access or contract-approval request.
 Keep credentials, private keys, plan timestamps, bindings and tokens out of
 Git, logs and this checkpoint. Retain any consumed allowance; never retry an
 unknown command.
+
+This second publication is status-only and records the actual blocked live
+outcome. It does not change sections 43/45, canonical contracts, application
+code or the standard verifier JSON, and does not claim native PASS. The final
+normal commit/push and remote/index/23-path bytewise checks are verified after
+this pre-commit checkpoint without a self-SHA edit loop.
 
 The user asked when real Oracle records could be updated. On 20 October at
 14:25, the next priority changed from more fixture features to native write
@@ -86,13 +131,13 @@ readiness and a controlled first-arrival plan.
 
 | Work item | State | Owner / next action |
 |---|---|---|
-| Native first-arrival plan, design section 43 v0.1 | approved; contracts ready | Section 45 records approval and canonical native handoff; backend/UI consumers running |
-| Current TEST metadata and fixture preflight | done within scope | Three fixture tables, 84 columns and 22 enabled/validated constraints; required columns/FKs/current literal defaults checked, enabled triggers/visible VPD zero; not native UPDATE grant or safety certification |
+| Native first-arrival plan, design section 43 v0.1 | approved; feature published | Section 45 approved; backend/UI and all six offline QA corrections published in `8d2c7d6` |
+| Current TEST metadata and fixture preflight | blocked; historical evidence only | Fresh final pilot stopped at independent identity comparison before metadata/business reads; earlier 84 columns/22 constraints are not a fresh assertion |
 | Eligible TEST record | time-sensitive, revalidate | New synthetic dataset verified eligible at read-back, with approximately four minutes left in its allowed window; do not assume eligibility now |
 | Synthetic TEST data preparation | done: PREPARED_VERIFIED | Three acknowledged INSERTs, one successful COMMIT and separate read-only read-back; first arrival still NULL |
 | Preflight connection health | review | Earlier NJS-500/failed rollback remains unexplained; a later single read-only connection completed six SELECTs and cleanup successfully |
-| Native readiness checkpoint | done: documentation / review: proposal | Plan and partial preflight recorded; publication is included in this scoped checkpoint; verify synchronization before resuming |
-| Actual Oracle arrival UPDATE | not yet executed | Implement and verify adapter first; runtime must bind the prepared synthetic marker, current grants/values/window and three-field scope before one controlled TEST commit/read-back |
+| Native readiness checkpoint | offline ready / live blocked | Feature publication verified; exact independent TEST identity reference is the remaining first operator blocker |
+| Actual Oracle arrival UPDATE | not executed: identity-blocked | Zero native commands/UPDATE/COMMIT; do not auto-retry or infer eligibility, update or recorded stage |
 
 ### Latest approval and requested environments
 
@@ -123,7 +168,7 @@ Environment support is a required later delivery item:
 Environment support is not production deployment authorization. Do not
 automatically provision containers, change the schema or contact production.
 
-### Active implementation: SHF-NATIVE-ARRIVAL-API/UI-20
+### Historical implementation progression: SHF-NATIVE-ARRIVAL-API/UI-20
 
 - Read-only Oracle remains seven-capability, isolated F1 remains nine-capability;
   the new controlled TEST mode has ten, including the explicit native write cap.
@@ -156,7 +201,7 @@ automatically provision containers, change the schema or contact production.
 - Environment profiles remain a subsequent required delivery item; no
   production mode is being activated by these tasks.
 
-### Native offline QA findings: SHF-NATIVE-QA-API-20
+### Historical native offline QA findings: SHF-NATIVE-QA-API-20
 
 Independent 420-test/typecheck run passed, but 60 additional synthetic scenarios
 found four confirmed failures:
