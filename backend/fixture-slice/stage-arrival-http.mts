@@ -8,8 +8,10 @@ import { StageArrivalError, stageFail, stageProblem } from "./stage-arrival-erro
 import { currentRequestBudget, withRequestBudget } from "./request-budget-context.mts";
 import { nativeCommand, validNativeReceipt } from "./native-stage-arrival-validation.mts";
 import { linkBackendShutdown } from "./backend-lifecycle.mts";
+import { stationCommand, validStationReceipt } from "./station-arrival-validation.mts";
+import { stationProblem } from "./station-arrival-errors.mts";
 
-const pattern = /^\/api\/v1\/employees\/([^/]*)\/shift-days\/([^/]*)\/stage-arrival\/(context|validations|commands)$/;
+const pattern = /^\/api\/v1\/employees\/([^/]*)\/shift-days\/([^/]*)\/(?:stage-arrival|station-arrival)\/(context|validations|commands)$/;
 export const isStageArrivalRoute = (target: string) => pattern.test(target.split("?")[0]);
 // Some framing failures happen BEFORE IncomingMessage/our body validator.
 // If Node supplies a complete known F1 request-line, return the same sanitized
@@ -30,16 +32,18 @@ export function stageArrivalParserProblem(error: Error, socket: Duplex): boolean
   else socket.destroy();
   return true;
 }
-export interface StageArrivalHttpOptions { stageArrivalOrigins?: readonly string[] }
+export interface StageArrivalHttpOptions { stageArrivalOrigins?: readonly string[]; stationArrivalOrigins?: readonly string[] }
 export function validateStageArrivalHttpOptions(options: StageArrivalHttpOptions) {
-  if (options.stageArrivalOrigins && (options.stageArrivalOrigins.length > 10 ||
-      options.stageArrivalOrigins.some(origin => {
+  for (const origins of [options.stageArrivalOrigins, options.stationArrivalOrigins]) {
+  if (origins && (origins.length > 10 || new Set(origins).size !== origins.length ||
+      origins.some(origin => {
         try {
           const u = new URL(origin);
-          return u.origin !== origin || !["http:", "https:"].includes(u.protocol) ||
+          return origin.length > 128 || u.origin !== origin || !["http:", "https:"].includes(u.protocol) ||
             !["127.0.0.1", "[::1]", "localhost"].includes(u.hostname);
         } catch { return true; }
       }))) throw Error("Exact isolated loopback origins required");
+  }
 }
 function headers(request: IncomingMessage, post: boolean, origins: readonly string[]) {
   const allowed = new Set(["host", "connection", "content-length", "transfer-encoding", "content-type",
@@ -56,7 +60,7 @@ function headers(request: IncomingMessage, post: boolean, origins: readonly stri
     if (seen.has(key) || !allowed.has(key)) stageFail("INVALID_REQUEST");
     seen.add(key);
   }
-  if (request.headers.origin && !origins.includes(request.headers.origin)) stageFail("FORBIDDEN");
+  if (request.headers.origin !== undefined && !origins.includes(request.headers.origin)) stageFail("FORBIDDEN");
   if (post && (typeof request.headers["content-type"] !== "string" ||
       !/^application\/json(?:\s*;\s*charset=(?:utf-8|"utf-8"))?$/i.test(request.headers["content-type"])))
     stageFail("UNSUPPORTED_MEDIA_TYPE");
@@ -95,6 +99,7 @@ export async function handleStageArrival(request: IncomingMessage, response: Ser
   request.once("aborted", close); response.once("close", close);
   let timer: ReturnType<typeof setTimeout> | undefined;
   const match = pattern.exec((request.url ?? "").split("?")[0])!;
+  const station = (request.url ?? "").split("?")[0].includes("/station-arrival/");
   const post = match[3] !== "context", allow = post ? "POST" : "GET";
   try {
     const timeout = new Promise<never>((_, reject) => {
@@ -105,7 +110,7 @@ export async function handleStageArrival(request: IncomingMessage, response: Ser
     });
     const payload = await Promise.race([withRequestBudget(abort.signal, 5000, async () => {
       if (request.method !== allow) throw new StageArrivalError("INVALID_REQUEST", "none", true);
-      headers(request, post, options.stageArrivalOrigins ?? []);
+      headers(request, post, (station ? options.stationArrivalOrigins : options.stageArrivalOrigins) ?? []);
       const p = await runtime.authenticate({ authorization: request.headers.authorization ?? null });
       if ((request.url ?? "").includes("?")) stageFail("INVALID_REQUEST");
       let target: ReturnType<typeof selection>;
@@ -114,16 +119,23 @@ export async function handleStageArrival(request: IncomingMessage, response: Ser
       const input = await body(request, post, abort.signal);
       if (abort.signal.aborted || performance.now() >= currentRequestBudget()!.deadline) stageFail("DEPENDENCY_TIMEOUT");
       let value: unknown;
-      if (match[3] === "context") value = await runtime.stageArrivalContext(p, target, abort.signal);
-      else if (match[3] === "validations") value = await runtime.stageArrivalValidate(p, target, input, abort.signal);
+      if (match[3] === "context") value = await (station ? runtime.stationArrivalContext : runtime.stageArrivalContext)(p, target, abort.signal);
+      else if (match[3] === "validations") value = await (station ? runtime.stationArrivalValidate : runtime.stageArrivalValidate)(p, target, input, abort.signal);
       else {
-        const cmd = runtime.attendanceStageArrivalMode === "test-oracle-controlled" ? nativeCommand(input) : command(input);
-        commandId = cmd.commandId;
-        commandAttempted = true;
-        value = await runtime.stageArrivalCommit(p, target, cmd, abort.signal);
-        if (!(runtime.attendanceStageArrivalMode === "test-oracle-controlled"
-          ? validNativeReceipt(value, nativeCommand(cmd), target) : validReceipt(value, cmd, target)))
-          stageFail("COMMAND_OUTCOME_UNKNOWN");
+        if (station) {
+          const cmd = stationCommand(input);
+          commandId = cmd.commandId; commandAttempted = true;
+          value = await runtime.stationArrivalCommit(p, target, cmd, abort.signal);
+          if (!validStationReceipt(value, cmd, target)) stageFail("COMMAND_OUTCOME_UNKNOWN");
+        } else {
+          const cmd = runtime.attendanceStageArrivalMode === "test-oracle-controlled" ? nativeCommand(input) : command(input);
+          commandId = cmd.commandId;
+          commandAttempted = true;
+          value = await runtime.stageArrivalCommit(p, target, cmd, abort.signal);
+          if (!(runtime.attendanceStageArrivalMode === "test-oracle-controlled"
+            ? validNativeReceipt(value, nativeCommand(cmd), target) : validReceipt(value, cmd, target)))
+            stageFail("COMMAND_OUTCOME_UNKNOWN");
+        }
       }
       const json = JSON.stringify(value);
       if (typeof json !== "string" || Buffer.byteLength(json) > (post ? 16384 : 65536))
@@ -145,7 +157,7 @@ export async function handleStageArrival(request: IncomingMessage, response: Ser
         error.code === "FORBIDDEN" ? "FORBIDDEN" : error.code === "DEPENDENCY_TIMEOUT" ? "DEPENDENCY_TIMEOUT" : "DEPENDENCY_UNAVAILABLE")
       : error instanceof StageArrivalError ? error :
         new StageArrivalError(commandAttempted ? "COMMAND_OUTCOME_UNKNOWN" : "INTERNAL_ERROR");
-    const problem = stageProblem(mapped, requestId, commandId);
+    const problem = (station ? stationProblem : stageProblem)(mapped, requestId, commandId);
     if (!response.destroyed && !response.headersSent) {
       if (mapped.methodNotAllowed) response.setHeader("Allow", allow);
       response.setHeader("Connection", "close"); send(response, problem.status, problem, true);

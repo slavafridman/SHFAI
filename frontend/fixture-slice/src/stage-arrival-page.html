@@ -13,6 +13,9 @@
       שותף חיצוני לא הופעל — <bdi dir="ltr">partnerCompletion: not-invoked</bdi>.</p>
   </aside>
   <p id="arrival-status" role="status" aria-live="polite">{{ message() }}</p>
+  @if (canOpenStation()) {
+    <button id="arrival-to-station" mat-stroked-button type="button" (click)="openStation()">הגעה לעמדה — הקשר חדש, גם ללא הגעה לבמה</button>
+  }
   @if (state() === 'recovery' || state() === 'unknown' || (session.uncertain() && !receipt())) {
     <section class="recovery" aria-labelledby="recovery-title">
       <h2 id="recovery-title">תוצאה לא ידועה — אין לשלוח שוב</h2>

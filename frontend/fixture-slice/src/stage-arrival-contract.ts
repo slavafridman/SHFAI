@@ -4,7 +4,7 @@ import type { StageArrivalContextDraftV1, StageArrivalValidationDraftV1,
 } from '../../../backend/fixture-slice/stage-arrival-contracts.mts';
 import type { NativeStageArrivalContextV1, NativeStageArrivalValidationV1, NativeStageArrivalReceiptV1,
   NativeStageArrivalCommitV1, NativeStageArrivalProblemV1 } from '../../../backend/fixture-slice/oracle-stage-arrival-contracts.mts';
-import { id, localTime, identity, f1Capabilities, nativeArrivalCapabilities, type IdentityResponseV1 } from './contract';
+import { id, localTime, identity, f1Capabilities, jointArrivalCapabilities, nativeArrivalCapabilities, type IdentityResponseV1 } from './contract';
 import { obj, clean, zone, unitCode } from './current-shifts-contract';
 export type { StageArrivalContextDraftV1, StageArrivalValidationDraftV1,
   StageArrivalReceiptDraftV1, StageArrivalCommitDraftV1, StageArrivalDraftV1
@@ -32,7 +32,7 @@ export function arrivalIdentity(v: unknown): v is IdentityResponseV1 {
     keys(v.principal.resourceScope, 'orgUnitIds') &&
     v.principal.synthetic &&
     v.principal.provider === 'synthetic' && v.principal.employeeId === null &&
-    ((v.dataSource === 'isolated-fixture' && v.principal.capabilities.join(',') === f1Capabilities.join(',')) ||
+    ((v.dataSource === 'isolated-fixture' && [f1Capabilities.join(','), jointArrivalCapabilities.join(',')].includes(v.principal.capabilities.join(','))) ||
       (v.dataSource === 'oracle' && v.principal.capabilities.join(',') === nativeArrivalCapabilities.join(',')));
 }
 export const arrivalSource = (p: unknown): ArrivalSource | null =>
@@ -44,7 +44,7 @@ export interface ArrivalSelection {
 }
 export const actorBinding = (p: IdentityResponseV1) => JSON.stringify(p);
 // Native clock strings must describe the SAME instant in the declared zone.
-function sameLocal(utc: string, local: string, timeZone: string) {
+export function sameLocal(utc: string, local: string, timeZone: string) {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit',
     day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(utc));
   const p = Object.fromEntries(parts.map(p => [p.type, p.value]));

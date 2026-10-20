@@ -15,8 +15,18 @@ export class StageArrivalSession {
   private readonly attemptBindings = new Map<string, string>();
   private readonly terminal = new Set<string>();
   private readonly nativeSlot = 'shfNativeArrivalSafety';
+  private readonly fixtureSlot = 'shfStageArrivalSafety';
+  private readonly settled = new Set<string>();
   constructor() {
     this.merge(history.state);
+    try {
+      const raw = sessionStorage.getItem(this.fixtureSlot);
+      if (raw !== null) {
+        const list: unknown = JSON.parse(raw);
+        if (!Array.isArray(list) || !list.length || !list.every(uuid)) throw Error('Invalid F1 safety');
+        this.merge({ shfF1Safety: list });
+      }
+    } catch { this.unresolved.add(crypto.randomUUID()); }
     try {
       const raw = sessionStorage.getItem(this.nativeSlot);
       if (raw !== null) {
@@ -34,7 +44,7 @@ export class StageArrivalSession {
   merge(state: unknown) {
     if (state && typeof state === 'object' && 'shfF1Safety' in state) {
       const list = state.shfF1Safety;
-      if (Array.isArray(list)) for (const item of list) if (uuid(item)) this.unresolved.add(item);
+      if (Array.isArray(list)) for (const item of list) if (uuid(item) && !this.settled.has(item)) this.unresolved.add(item);
     }
     if (state && typeof state === 'object' && 'shfNativeSafety' in state) {
       const list = state.shfNativeSafety;
@@ -46,6 +56,8 @@ export class StageArrivalSession {
     }
   }
   persist() {
+    const fixture = [...this.unresolved].filter(id => !this.native.has(id));
+    if (fixture.length) sessionStorage.setItem(this.fixtureSlot, JSON.stringify(fixture));
     if (this.native.size) sessionStorage.setItem(this.nativeSlot, JSON.stringify(this.marker().shfNativeSafety));
     if (this.unresolved.size) history.replaceState({ ...history.state, ...this.marker() }, '');
   }
@@ -57,6 +69,14 @@ export class StageArrivalSession {
   }
   uncertain() { return this.unresolved.size > 0; }
   nativeUncertain() { return this.native.size > 0; }
+  affects(s: ArrivalSelection | null) {
+    return !!s && s.dataSource === 'isolated-fixture' && [...this.unresolved].some(attempt =>
+      !this.attemptBindings.has(attempt) || (() => {
+        const binding: string[] = JSON.parse(this.attemptBindings.get(attempt)!);
+        return binding[0] === s.dataSource && binding[2] === s.employeeId &&
+          binding[3] === s.shiftDayId && binding[4] === s.orgUnitId;
+      })());
+  }
   recorded(s: ArrivalSelection) { return this.terminal.has(this.key(s)); }
   blocked(s?: ArrivalSelection | null) { return this.unresolved.size > 0 || !!s && this.terminal.has(this.key(s)); }
   begin(s: ArrivalSelection, attempt: string) {
@@ -80,11 +100,15 @@ export class StageArrivalSession {
       // Update current entry only. Older unresolved entries remain conservative.
       const { shfF1Safety: ignored, shfNativeSafety: ignoredNative, ...state } = history.state ?? {};
       history.replaceState({ ...state, ...this.marker() }, '');
+      const fixture = [...this.unresolved].filter(id => !this.native.has(id));
+      if (fixture.length) sessionStorage.setItem(this.fixtureSlot, JSON.stringify(fixture));
+      else sessionStorage.removeItem(this.fixtureSlot);
       if (s.dataSource === 'oracle-test') {
         if (this.native.size) sessionStorage.setItem(this.nativeSlot, JSON.stringify(this.marker().shfNativeSafety));
         else sessionStorage.removeItem(this.nativeSlot);
       }
       if (committed) this.terminal.add(this.key(s));
+      this.settled.add(attempt);
       this.attemptBindings.delete(attempt);
       return true;
     } catch {

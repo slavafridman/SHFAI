@@ -23,7 +23,7 @@ export function validateStageArrivalMode(value: unknown): StageArrivalModeVNext 
       value.authenticationMode !== "synthetic" || value.syntheticAdministratorEnabled !== true)
     throw Error("Isolated stage-arrival configuration required");
   if (Object.keys(value).some(key => !["attendanceStageArrivalMode", "dataSource", "deploymentClass",
-    "authenticationMode", "syntheticAdministratorEnabled", "syntheticOrgUnitIds", "businessTimeZone"].includes(key)))
+    "authenticationMode", "syntheticAdministratorEnabled", "syntheticOrgUnitIds", "businessTimeZone", "attendanceStationArrivalMode"].includes(key)))
     throw Error("Unsupported isolated stage-arrival configuration");
   return mode;
 }

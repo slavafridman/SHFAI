@@ -23,6 +23,8 @@ import { nativeEnvironment } from "./native-stage-arrival-config.mts";
 import type { NativePool } from "./oracle-stage-arrival-uow.mts";
 import type { OracleEnvironment } from "./runtime-config.mts";
 import { backendLifecycle, waitForBackendDrain, BackendDrainPendingError } from "./backend-lifecycle.mts";
+import { stationMode } from "./station-arrival-validation.mts";
+import { createStationArrivalFixture } from "./station-arrival-fixture.mts";
 
 const resources = new WeakMap<Server, Array<OraclePool | NativePool>>();
 const shutdowns = new WeakMap<Server, Promise<void>>();
@@ -68,6 +70,25 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
   if (config.deploymentClass === "production" || config.authenticationMode !== "synthetic")
     throw new Error("Executable backend requires explicit isolated synthetic mode");
   const stageMode = validateStageArrivalMode(config);
+  const station = stationMode(config);
+  if (station !== "isolated-fixture" && (environment.SHF_STATION_ARRIVAL_FIXTURE !== undefined ||
+      environment.SHF_STATION_ARRIVAL_ORIGINS !== undefined))
+    throw Error("Station inputs require explicit joint fixture mode");
+  let stationArrivalOrigins: readonly string[] | undefined;
+  if (environment.SHF_STATION_ARRIVAL_ORIGINS !== undefined) {
+    const raw = environment.SHF_STATION_ARRIVAL_ORIGINS;
+    if (Buffer.byteLength(raw) > 4096) throw Error("Invalid station origin allowlist");
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.some(o => typeof o !== "string"))
+      throw Error("Invalid station origin allowlist");
+    const origins: string[] = [];
+    for (const origin of parsed) {
+      if (typeof origin !== "string") throw Error("Invalid station origin");
+      origins.push(origin);
+    }
+    validateStageArrivalHttpOptions({ stationArrivalOrigins: origins });
+    stationArrivalOrigins = Object.freeze(origins);
+  }
   const native = nativeEnvironment(environment, stageMode === "test-oracle-controlled");
   let stageArrivalOrigins: readonly string[] | undefined;
   const originsText = environment.SHF_STAGE_ARRIVAL_ORIGINS;
@@ -144,7 +165,11 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
         "SHF_MY_SHIFTS_FIXTURE", "SHF_SHIFT_ITEMS_FIXTURE", "SHF_EMPLOYEE_CARD_FIXTURE",
         "SHF_ATTENDANCE_FIXTURE"].some(key => environment[key] !== undefined))
         throw new Error("F1 requires a single coherent fixture snapshot");
-      const f1 = createStageArrivalFixture(JSON.parse(environment.SHF_STAGE_ARRIVAL_FIXTURE ?? "null"), fixtureClock);
+      if (station === "isolated-fixture" && environment.SHF_STAGE_ARRIVAL_FIXTURE !== undefined)
+        throw Error("Combined station envelope replaces F1 input");
+      const f1 = station === "isolated-fixture"
+        ? createStationArrivalFixture(JSON.parse(environment.SHF_STATION_ARRIVAL_FIXTURE ?? "null"), fixtureClock, config.businessTimeZone)
+        : createStageArrivalFixture(JSON.parse(environment.SHF_STAGE_ARRIVAL_FIXTURE ?? "null"), fixtureClock);
       runtime = await createRuntime(config, f1.detail, undefined, { reader: f1.current,
         attendanceReader: f1.attendance, stageArrivalStore: f1.store, clock: fixtureClock });
     } else {
@@ -183,7 +208,7 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
     await closePools([...(pool ? [pool] : []), ...(writePool ? [writePool] : [])]).catch(() => {});
     throw error;
   }
-  const server = createLoopbackServer(runtime, { stageArrivalOrigins });
+  const server = createLoopbackServer(runtime, { stageArrivalOrigins, stationArrivalOrigins });
   try {
     await new Promise<void>((resolve, reject) => {
       server.once("error", reject);

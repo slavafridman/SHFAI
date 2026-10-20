@@ -1,0 +1,103 @@
+<shf-workspace-shell active="attendance" [principal]="principal()" [identityState]="identityState()"
+  [persistentIdentity]="true" [pinned]="true" [simulationNotice]="allowed()" (recheck)="recheck()">
+  <div class="station-page" dir="rtl">
+    <div class="breadcrumb"><a routerLink="/attendance" (click)="$event.preventDefault(); cancel()">חזרה לבירור נוכחות / למקור</a></div>
+    <h1 tabindex="-1">הגעה לעמדה — סימולציה</h1>
+    <aside class="isolation surface" role="note">
+      <strong><bdi dir="ltr">FIXTURE LOCAL ONLY</bdi> · סימולציה מבודדת בלבד · לא כניסה אמיתית לעמדה</strong>
+      <p>ללא Oracle, ללא CTI, ללא הפעלת שותף חיצוני וללא אימות סיסמה אמיתי.
+        מנהל מערכת סינתטי אינו העובד/ת שנבחר/ה. הנתונים והקבלה בזיכרון המופע בלבד.</p>
+    </aside>
+    <p id="station-status" role="status" aria-live="polite">{{ message() }}</p>
+    @if (state() === 'loading') { <p>טוענים זהות והקשר חדש מהשרת…</p> }
+    @if (state() === 'chooser') {
+      <section class="surface"><h2>לא נבחרה רשומה</h2><p>יש לבחור במפורש רשומה סינתטית בבירור נוכחות. טעינה מחדש אינה משחזרת פקודה או קבלה.</p>
+        <a mat-stroked-button routerLink="/attendance">בחירת רשומה בבירור נוכחות</a></section>
+    }
+    @if (state() === 'unknown' || state() === 'recovery') {
+      <section class="uncertain surface" role="alert"><h2>UNKNOWN — אין לשלוח שוב</h2>
+        <p>אין להסיק הצלחה או אפס השפעות מקריאה חוזרת. אין ניסיון חוזר, שחזור פקודה או איפוס תוצאה במסך זה.</p></section>
+    }
+    @if (selection(); as s) {
+      <section class="surface"><h2>{{ s.name }} — הקשר עובד/ת נבחר/ת, לא זהות מפעיל</h2>
+        <p>מזהה עובד/ת <bdi dir="ltr">{{ s.employeeId }}</bdi> · יום <bdi dir="ltr">{{ s.shiftDayId }}</bdi>
+          · צוות <bdi dir="ltr">{{ s.orgUnitId }}</bdi> · מקור <bdi dir="ltr">isolated-fixture</bdi></p>
+      </section>
+    }
+    @if (context(); as c) {
+      <section class="surface">
+        <h2>נוכחות לפני הפעולה — לקריאה בלבד</h2>
+        <div class="facts">
+          <div><h3>הגעה לבמה / שלב — אינה תנאי להגעה לעמדה</h3><bdi dir="ltr">{{ c.recorded.stageArrivalLocal === null ? 'NULL — לא נרשמה' : time(c.recorded.stageArrivalLocal) }}</bdi></div>
+          <div><h3>הגעה לעמדה</h3><bdi dir="ltr">{{ c.recorded.stationArrivalLocal === null ? 'NULL — לא נרשמה' : time(c.recorded.stationArrivalLocal) }}</bdi></div>
+        </div>
+        <dl>
+          <dt>תחילה מתוכננת</dt><dd><bdi dir="ltr">{{ time(c.planned.startLocal) }}</bdi></dd>
+          <dt>סיום מתוכנן</dt><dd><bdi dir="ltr">{{ time(c.planned.endLocal) }}</bdi></dd>
+          <dt>זמן שרת בהקשר</dt><dd><bdi dir="ltr">{{ time(c.serverTime.local) }}</bdi> · <bdi>{{ c.serverTime.businessTimeZone }}</bdi></dd>
+          <dt>תחילת חלון הגעה</dt><dd><bdi dir="ltr">{{ time(c.arrivalWindow.earliestLocal) }}</bdi></dd>
+          <dt>סוף חלון הגעה</dt><dd><bdi dir="ltr">{{ time(c.arrivalWindow.latestLocal) }}</bdi></dd>
+          <dt>יציאה מעמדה</dt><dd><bdi dir="ltr">{{ c.recorded.stationExitLocal === null ? 'NULL — לא נרשמה' : time(c.recorded.stationExitLocal) }}</bdi></dd>
+          <dt>תדריך רשום — לא ישתנה</dt><dd>{{ c.recorded.briefing === null ? 'NULL — לא ידוע' : c.recorded.briefing ? 'כן' : 'לא' }}</dd>
+        </dl>
+        @if (c.blockers.length) {
+          <p>נדרשת בדיקת תנאי נוכחות מחוץ לסימולציה. לא תתווסף רשומה ולא יוסרו חסמים.</p>
+          <ul>@for (blocker of c.blockers; track blocker) { <li><bdi dir="ltr">{{ blocker }}</bdi></li> }</ul>
+        }
+        @if (!c.withinArrivalWindow) { <p role="alert">מחוץ לחלון הגעה המותר. אין שינוי שעה או תיקון תאריך אוטומטי.</p> }
+      </section>
+      @if (late() && c.eligibility === 'eligible') {
+        <section class="surface">
+          <mat-form-field appearance="outline"><mat-label>סיבת איחור לעמדה</mat-label>
+            <mat-select id="station-reason" [formControl]="reason">
+              <mat-option [value]="null">יש לבחור סיבה — ללא ברירת מחדל</mat-option>
+              @for (r of c.lateReasonOptions; track r.code) { <mat-option [value]="r.code">{{ r.label ?? 'תיאור לא זמין' }} · {{ r.code }}</mat-option> }
+            </mat-select>
+            <mat-hint>הדקות נקבעות בשרת בלבד. ללא הערה חופשית.</mat-hint>
+            @if (reason.invalid) { <mat-error>יש לבחור סיבה תקפה ולבדוק מחדש. הטיוטה נשמרה.</mat-error> }
+          </mat-form-field>
+          @if (!c.lateReasonOptions.length) { <p role="alert">אין סיבות זמינות מהשרת. לא ניתן להשלים רישום איחור.</p> }
+        </section>
+      }
+      <div class="actions">
+        <button id="station-validate" mat-stroked-button type="button" [disabled]="!canValidate()" [disabledInteractive]="true"
+          (click)="validate()">בדיקת רישום — ללא שינוי</button>
+      </div>
+    }
+    @if (validation(); as v) {
+      @if (state() === 'review') {
+        <section class="surface review" aria-labelledby="station-review-title">
+          <h2 id="station-review-title">סקירת כל הפעולה — טרם נרשמה הגעה</h2>
+          <p>רישום הגעה לעמדה בלבד ברשומת הנוכחות הקיימת שנבחרה. אין ביצוע F1, הוספה, שינוי יציאה או תדריך.</p>
+          <p>ההגעה לבמה תישמר: <bdi dir="ltr">{{ context()!.recorded.stageArrivalLocal === null ? 'NULL' : time(context()!.recorded.stageArrivalLocal) }}</bdi>.</p>
+          <p>זמן שנבדק: <bdi dir="ltr">{{ time(v.evaluatedLocal) }}</bdi> · <bdi>{{ v.businessTimeZone }}</bdi>.
+            הזמן הסופי ייקבע מחדש בשרת; שינוי בתנאים יחייב בדיקה חדשה.</p>
+          @if (v.confirmationRequired) { <p>אזהרת האיחור לעמדה נקראה: {{ v.warnings[0].minutes }} דקות · סיבה {{ reasonLabel() }}.</p> }
+          @else { <p>ללא איחור בבדיקה. סיבה: NULL. עדיין נדרש אישור מפורש של כל הפעולה.</p> }
+          <p>קבלת F2 וביקורת בזיכרון בלבד. שותף חיצוני לא יופעל.</p>
+        </section>
+      }
+    }
+    @if (reviewOffered()) {
+      <button id="station-confirm" mat-flat-button type="button" [disabled]="state() !== 'review'" [disabledInteractive]="true" (click)="confirm()">
+        {{ state() === 'committing' ? 'ממתינים לתוצאה — אין לשלוח שוב' : 'אישור סימולציה — הגעה לעמדה בלבד' }}</button>
+    }
+    @if (receipt(); as r) {
+      <section class="surface receipt"><h2>קבלת F2 — סימולציה מקומית בלבד</h2>
+        <p>הגעה לעמדה: <bdi dir="ltr">{{ time(r.recorded.stationArrivalLocal) }}</bdi></p>
+        <p>הגעה לבמה נשמרה: <bdi dir="ltr">{{ r.recorded.stageArrivalLocal === null ? 'NULL' : time(r.recorded.stageArrivalLocal) }}</bdi></p>
+        <p>מזהה פקודה <bdi dir="ltr">{{ r.commandId }}</bdi> · <bdi dir="ltr">{{ r.outcome }}</bdi></p>
+        <p>ביקורת בזיכרון המופע בלבד · שותף חיצוני: לא הופעל · אין קבלה מתמשכת או הגעה אמיתית.</p>
+      </section>
+    }
+    <div class="actions">
+      @if (state() === 'error' || state() === 'expired' || state() === 'denied') {
+        <button id="station-refresh" mat-stroked-button type="button" [disabled]="blocked()" (click)="recheck()">טעינת זהות והקשר חדשים — ללא רישום</button>
+      }
+      @if (selection() && allowed() && !session.affects(selection()) && !stage.affects(selection()) && state() !== 'committing') {
+        <button id="station-to-stage" mat-button type="button" (click)="openStage()">הגעה לבמה — הקשר חדש בלבד</button>
+      }
+      <button id="station-back" mat-button type="button" [disabled]="state() === 'committing'" (click)="cancel()">חזרה ללא רישום נוסף</button>
+    </div>
+  </div>
+</shf-workspace-shell>

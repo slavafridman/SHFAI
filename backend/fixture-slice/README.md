@@ -1666,3 +1666,145 @@ VPD/grant review, production, legacy execution, writes, EMS/batch or browser/
 RTL/a11y checks. DB/platform owners retain deployed-policy/query-cost/native
 failure risks; frontend/QA own UI integration. No release/deployment approval
 is inferred from these checks.
+
+## F2 station arrival — approved isolated fixture v0.1 (20 October)
+
+SHF-F2-API-20 implements the approved §§41–42 station flow against the
+architect-owned `station-arrival-contracts.mts` v0.1. It is **disabled by
+default**, is not a native Oracle feature, and does not establish CTI/device
+readiness or real partner completion. Historical native F1/read-only results
+above are separate evidence, not F2 live authorization.
+
+### Explicit combined startup and integration
+
+Use the existing `SHF_FIXTURE_CONFIG` and `SHF_FIXTURE_PORT`. Configuration must
+explicitly contain **both**
+`attendanceStageArrivalMode:"isolated-fixture"` and
+`attendanceStationArrivalMode:"isolated-fixture"`, fixture source, synthetic
+authentication with explicit Administrator opt-in, and local-development or
+isolated-test-demo deployment. Existing `SHF_APP_ENV`/`NODE_ENV=production`
+fail-closed guards remain in force. No dependencies or framework versions changed.
+
+In combined mode, supply **only** `SHF_STATION_ARRIVAL_FIXTURE`, a JSON object
+with exactly `stageRows` and `stationFacts`. `stageRows` uses the existing
+`StageArrivalFactsV1[]` shape (see `stage-arrival-sample.mts` for synthetic
+values). Each corresponding `stationFacts` entry has exactly:
+
+```json
+{
+  "employeeId": "9001",
+  "shiftDayId": "6201",
+  "revision": "station-original-1",
+  "stationArrivalUser": null,
+  "stationExitUser": null,
+  "stationLate": null,
+  "flagPresent": false,
+  "locked": false,
+  "fullDayExceptionPresent": false,
+  "overlappingShiftPresent": false,
+  "policyRevision": "station-policy-1"
+}
+```
+
+Both arrays must cover the same unique tuples (1–1000 entries). Explicit
+booleans are fixture evidence, not facts discovered from a real database.
+Unknown, duplicate, missing, unmatched or contradictory facts are rejected.
+Combined mode rejects `SHF_STAGE_ARRIVAL_FIXTURE` and independent read fixtures;
+F1-only mode still uses its original input. Oracle/native/disabled modes reject
+F2 fixture input or origins before opening pools/listeners. No driver is loaded
+on the combined fixture path and there is no live-to-fixture fallback.
+
+Optional `SHF_STATION_ARRIVAL_ORIGINS` is its own JSON array of at most ten
+distinct normalized loopback HTTP(S) origins (JSON ≤4096 bytes, each origin
+≤128 characters). It is wired through actual startup to the HTTP handler.
+Missing means `[]`; direct local calls without Origin remain supported.
+For browser F1 and F2 use, configure **each** feature's own allowlist;
+`SHF_STAGE_ARRIVAL_ORIGINS` does not authorize F2. No wildcard or Host inference.
+
+Identity remains unchanged except for the approved ordered capability pair:
+read-only **7**, F1 fixture **9**, native TEST F1 **10**, combined fixture **11**.
+Combined mode adds `attendance-station-arrival:prepare` and
+`attendance-station-arrival:commit` after the F1 pair, never the native-write
+capability. Synthetic employeeId stays null. Both new rights are required for
+commit; Administrator does not bypass scope or business validation.
+
+### Consumer API and replacement seams
+
+For `B=/api/v1/employees/{employeeId}/shift-days/{shiftDayId}/station-arrival`:
+
+* `GET B/context` → `StationArrivalContextV1`.
+* `POST B/validations` with exactly `{lateReasonCode:null|DecimalId}` →
+  `StationArrivalValidationV1`.
+* Explicit whole-command confirmation submits `POST B/commands` with
+  `StationArrivalCommitV1` → `StationArrivalReceiptV1`.
+* All successes are 200. There is no reset/status/retry endpoint, native station
+  adapter, editable arrival time, late-minute override or remark field.
+
+`createStationArrivalFixture(value, clock, zone)` returns one shared
+`MemoryStageArrivalStore` and its existing detail/current/attendance read
+projections. `store.station` implements the canonical
+`StationArrivalContextPort & StationArrivalUnitOfWorkPort` over that same
+owner. `StationArrivalApplication` exposes `context/validate/commit`;
+`createRuntime` exposes `stationArrivalContext`, `stationArrivalValidate`,
+`stationArrivalCommit` and `attendanceStationArrivalMode`. The existing bounded
+HTTP handler/parser now recognizes both operation paths; no parallel server.
+Canonical contracts and canonical tests are unchanged.
+
+F2 allows **stage=NULL** and never auto-registers stage/briefing. Commit changes
+station arrival/user/late fields and the shared row revision, preserving stage,
+stage lateness, briefing, exit, missing/report facts and retained F1 receipts.
+Window is inclusive `[plannedStart−60min, plannedEnd]`; lateness uses offset
+zero, strict `now>start`, floor minutes (including late `"0"`). DST ambiguity,
+invalid originals/Clock and unsupported dependencies fail safely.
+
+Context, validation and human ACK/cancel have zero business/receipt/audit
+effects. Token allocation is ephemeral. Fresh Clock, full original base+extra
+facts, identity/grants, source/session, expiry, draft and warning minutes are
+checked under the **same F1/F2 tuple reservation**. Tokens and receipt keys are
+operation-separated. Combined preparation/receipt capacities are bounded;
+receipts and memory audits expire together after 15 minutes. No durable or
+cross-restart exactly-once claim.
+
+Explicit AbortSignal **and** ambient ALS deadline/cancellation are checked at
+the final synchronous pre-install guard. Station write, terminal receipt and
+memory audit install as one snapshot. Pre-install cancellation is zero effects;
+post-install response/cancellation uncertainty is
+`COMMAND_OUTCOME_UNKNOWN/effect:unknown`, not a false rollback. UI must preserve
+its approved volatile F1/F2 safety namespaces and must not automatically retry
+or infer command completion from attendance. `partnerCompletion` is always
+`"not-invoked"`.
+
+### Evidence and isolated checks
+
+Read-only controlling evidence:
+`old/SHF/src/bzq/shf/model/AttendanceDataModel.java:1054–1115`,
+`registerStation`: strict start-time lateness and station-only target fields.
+The legacy UPDATE-before-warning and INSERT fallback are **not** reproduced;
+the approved fixture flow requires warning/ACK before effects and an existing
+attendance row.
+
+From `backend/fixture-slice`:
+
+```powershell
+node --test test/station-arrival-contracts.test.mts
+node --test test/station-arrival.test.mts test/station-arrival-http.test.mts
+npm run test:stage-arrival
+npm run typecheck
+npm test
+```
+
+Focused F2 coverage includes station with null/pre-existing stage, preserved
+F1 lateness/briefing, all blockers, strict DTO/transport/framing/origins,
+actual bootstrap and coherent reads, capability modes, disabled/invalid/
+production rejection before pools, no authentication error fallback,
+cross-operation invalidation/reservation and token/receipt isolation, expiry,
+minute boundaries, full-original comparison, restart/grant changes, shared
+preparation saturation, DST/leap/overnight cases, atomic injected failures,
+explicit/ALS cancellation and owned backend shutdown, and malformed/lost
+command results remaining UNKNOWN. All fixtures/doubles are isolated and
+synthetic; tests do not connect to Oracle or external partners.
+
+Not run/claimed here: actual UI/backend integration, browser/RTL/a11y QA,
+native TEST F1 or F2, database/DNS probes, load certification, production,
+EMS/CTI, legacy execution or batch. Parent coordinates independent QA and
+publication; this backend task is not whole-project/M1 completion.

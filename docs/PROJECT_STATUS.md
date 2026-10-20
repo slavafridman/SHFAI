@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-20, TEST pilot externally blocked; approved independent F2 work resumed.
+Last updated: 2026-10-20, approved fixture F2 implementation and QA complete; publication pending.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -106,7 +106,7 @@ stop with the operational input still owned by TEST operator/DBA.
 
 ### SHF-F2-CONTRACTS-20 — independent approved implementation
 
-**State: canonical checks PASS / dependent implementation RUNNING.** The user expressly requested autonomous implementation
+**State: canonical PUBLISHED / fixture implementation and QA PASS / publication READY.** The user expressly requested autonomous implementation
 after the host-reference blocker was reported. Native TEST F1 remains the
 priority and remains externally blocked; no further DNS/Oracle attempts are
 planned without the missing authoritative input.
@@ -133,6 +133,144 @@ The UI owner has exclusive frontend component/API/guard/history/style/tests
 and directly related documentation ownership. No infrastructure/live access,
 new framework versions or dependencies are implied. Parent retains status
 ownership; canonical-step publication precedes completed consumer publication.
+
+#### SHF-F2-API-20 implementation handoff
+
+Backend owner completed the noncanonical fixture F2 implementation and stopped
+writing. Owner-reported current checks: canonical 1/1, station rules/HTTP
+71/71, existing F1 117/117, strict typecheck and full backend 629/629 PASS.
+Intermediate sample-export, problem-type, URL/test-instance and nested-test
+registration failures were corrected before these final runs; they are not
+additional product findings or passing runs.
+
+Implemented: three station-arrival operations, explicit joint fixture11 mode,
+one shared snapshot/Clock/tuple reservation, nullable stage, pure preparation,
+warning/ACK before effect, atomic station-only effect/receipt/audit, shared
+revision and separate operation namespaces. Startup wires an independent F2
+Origin list; Oracle/native/production F2 configuration rejects before pools.
+Changed scope: station application/domain/errors/fixture/validation, shared
+stage memory/application/validation/HTTP, policy/config/identity/server,
+two station test files and backend README. Canonical types remain unchanged.
+
+Independent SHF-F2-QA-20 Phase A passed canonical/F2 tests 72/72, existing
+F1 tests 117/117 and strict typecheck. Its session-only 29-case suite has
+26 PASS / 3 FAIL, all reproducing F2-QA-01: the shared Origin truthiness guard
+treats an explicitly empty Origin as absent, allowing fixture command effects.
+Expected is 403/effect none for every Origin-bearing request not exactly
+allowlisted; genuinely absent Origin remains permitted for direct API use.
+No browser exploit or production exposure was demonstrated.
+Backend owner reproduced 0/8 regression passes before the fix, then corrected
+only the shared Origin presence guard and F2/native HTTP tests. Empty and
+whitespace headers now deny rather than count as absent. Owner retest:
+10/10 new Origin regressions, F2 79/79, F1 117/117, native affected 186/186,
+strict typecheck and full backend 639/639 PASS. Actual HTTP assertions cover
+403/effect none, zero state/receipt/audit/reservation delta and no native
+SQL/port/allowance use. This is owner evidence; independent defect closure
+still awaits the QA retest.
+Both backend and UI are now SOURCE-STABLE. Independent QA is authorized to
+rerun its 29-case suite and execute actual post-fix loopback fixture/browser
+integration and final frontend acceptance.
+
+Independent passing cases include shared-tuple exclusion, disjoint-row
+concurrency, stage-null station-only effects, pure preparation, explicit/ALS
+abort boundaries, genuine 1,000 combined receipts/audits and retention,
+privacy and seven fail-before-pool/listen configuration negatives.
+These are synthetic Node/HTTP fixtures; Oracle factory calls were zero.
+Parent retains checkpoint ownership; no release, native write, browser
+accessibility acceptance or full-project completion is claimed.
+
+#### SHF-F2-UI-20 implementation handoff
+
+UI owner declared SOURCE-STABLE. Owner-reported checks: F2 focused tests
+36/36, full frontend 469/469 in 35 files, strict typecheck, all three profile
+builds/artifact checks PASS. Chrome with synthetic HTTP doubles passed at
+1440/390/320 widths, keyboard/Escape, reduced motion, history, UNKNOWN/reload
+and visible unobscured exact-opener focus; measured ring contrast 12.6179:1.
+Actual loopback fixture-proxy F1-to-F2 integration passed before QA-01's
+backend correction, preserving stage/user/briefing, shared revision and one
+receipt/audit per operation. That run is explicitly NOT post-fix evidence.
+All UI-owned servers/browser processes were closed.
+
+Changed frontend scope: station page/contracts/session/fixtures and four
+station spec files; API/identity/routes/attendance actions; F1 page/contracts/
+session/view history and three related isolation tests; station browser
+checker/server/focus proof; README and existing verification report.
+Joint fixture11 gates F2; independent F1/F2/native safety namespaces and null
+stage remain explicit. No backend/canonical/dependency changes by UI.
+Independent QA may execute stable frontend unit/type/build checks and actual
+post-fix backend/proxy/browser integration. Manual assistive-technology testing
+and full WCAG/UAT sign-off remain not run.
+
+#### Independent Phase B and remaining F2-QA-02
+
+F2-QA-01 is independently CLOSED: 29/29 API/store cases and all 10 changed
+Origin regressions PASS; original empty-Origin command reproductions now
+return 403 with zero station/receipt/audit effects.
+Independent frontend focused tests 170/170, strict typecheck, three profile
+builds/artifact checks and both real Chrome browser modes PASS. Actual
+post-backend-fix F1-to-F2 integration preserves shared facts/revision and
+separate receipt/audit pairs. Independently dropping each real response after
+installation proves UNKNOWN, no retries through history/reload/reselection,
+and blocking of the opposite operation on the same uncertain tuple.
+Separate operation namespaces do not authorize commands against an uncertain
+shared record. Checked widths 1440/390/320 have no page overflow; rendered
+focus is 3px, visible/unobscured, measured contrast 12.6179:1.
+
+F2-QA-02 is independently CLOSED: the UI owner corrected the guard from
+start >= end to start > end and added eight guard/page boundary cases.
+Owner RED 28 PASS / 2 FAIL became GREEN 30/30; focused related frontend
+152/152, full frontend 477/477, strict typecheck and all three profile builds/
+artifact checks PASS. Both browser modes were freshly rerun successfully
+after the correction, using ordinary intervals, not zero-duration browser data.
+The zero-duration page test proves review without a command, receipt or
+safety marker before explicit confirmation; end-before-start still rejects.
+Both consumers are source-stable. QA's previously failing boundary matrix is
+now 6/6 PASS, including strengthened actual-backend zero-effect assertions.
+The two affected frontend test files independently pass 30/30 and strict
+typecheck passes. Ordinary, equal and overnight intervals are accepted;
+reversed endpoints reject without validation/command. Actual zero-duration
+context/validation preserve business/receipt/audit state 0/0/0 with no active
+reservation. A zero-duration real-browser journey was not run; page evidence
+is Angular/jsdom. QA recommends the bounded offline implementation checkpoint
+for publication with no open product finding in its assigned scope.
+Current owner full-suite results are backend 639/639 and frontend 477/477;
+focused and independent counts overlap these suites and are not added to them.
+Backend remains stable. QA changed no repository files
+and closed all its listeners/browser processes. Full WCAG/manual AT/calendar
+target coverage and UAT remain unverified.
+
+Next safe action: publish the scoped F2 consumer implementation and this
+checkpoint, verify remote synchronization, then resume the real TEST pilot
+only after the unchanged independent SERVER_HOST input is supplied and its
+remaining current-runtime gates pass. Fixture F2 completion does not authorize
+native F2, new write contracts, schema changes, production release or EMS/CTI.
+
+#### SHF-F2-CONSUMER-PUBLISH-20 — publication review
+
+Publication review PASS; commit/push verification is still pending. The frozen
+checkout scope is exactly 47 paths: 18 backend, 28 frontend and this checkpoint
+(28 tracked modifications and 19 new files). The three canonical contract/test
+files remain unchanged from `08fc75adaa2d71c49929c84b491f2e5aa5ad7bd4`.
+The staged backend scope adds/removes 1,509/37 lines; the frontend scope
+adds/removes 1,823/15 lines, including their assigned tests and documentation.
+No dependency manifest/lockfile, generated artifact, private fixture, independent
+QA harness, verification JSON, legacy file or unrelated customization is included.
+The 23 pre-existing noncandidate paths are preserved by exclusion; this is a
+names-only scope assertion, not a bytewise comparison or content review.
+
+Static publication checks resolved 324 relative module references, 12 local
+Markdown links and six template/style references against HEAD plus the candidate
+files. Scoped whitespace and added-content private-key, credential, person-ID,
+private-row, DDL and live-data scans passed review. The numeric scan hit is part
+of a synthetic UUID; non-loopback URL literals are invalid-Origin test inputs,
+not live connections. No application command, test, browser, DNS lookup, Oracle
+connection, dependency installation or independent verifier was rerun here.
+The owner and independent QA results above remain the runtime evidence:
+backend 639/639, frontend 477/477, typechecks, three profile build/artifact checks,
+both independently closed findings and the stated browser/boundary limitations.
+Native M1 remains externally blocked with zero actual arrivals. After the normal
+push, verify the actual remote SHA, 0/0 synchronization, empty index and unchanged
+published source checkout before recording the published feature checkpoint.
 
 ### Environment/SID implementation and QA evidence
 

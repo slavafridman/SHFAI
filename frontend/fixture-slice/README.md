@@ -1,3 +1,76 @@
+# SHF-F2-UI-20 — station arrival, isolated joint fixture only
+
+Implements the approved §§41–42/F2 visual baseline v0.1 and the architect-owned
+`backend/fixture-slice/station-arrival-contracts.mts` v0.1 (20 October approval).
+No framework, dependency, lockfile or public-environment changes. Existing F1
+fixture/native behavior remains separate; this is **not native F2**, M1,
+deployment or completion of the externally blocked TEST F1 pilot.
+
+The attendance row action appears only for the exact joint fixture identity
+(11 ordered capabilities, synthetic actor/employeeId=null, exact team grant,
+coherent fixture read source). Read7/F1 fixture9/native10 never expose F2.
+Both explicit server modes and the joint fixture envelope are required; see
+[backend F2 startup](../../backend/fixture-slice/README.md#f2-station-arrival--approved-isolated-fixture-v01-20-october).
+There is no browser authorization toggle or live-to-fixture fallback.
+
+Routes: `/station-arrival` is a chooser; the canonical selected route is
+`/employees/:employeeId/shift-days/:shiftDayId/station-arrival`.
+Direct entry/reload does not manufacture a selection/command. An attendance
+selection or optional F1 review/success carries volatile context; F2 always
+reads its **own fresh context**, never F1 preparation. Stage may be NULL.
+Existing stage, briefing and other non-station facts are not edited.
+Time/zone/window/minutes come from the server; no date, time, remark, device,
+password, CTI or employee-ID input is added to the command page.
+
+Pure validation → late warning/explicit ACK if required → whole-operation
+review → explicit simulation confirmation. No automatic command or retry.
+Pending, abort/navigation, transport loss, invalid receipt/source and stale
+generation cannot produce fake success or zero-effect claims. A proven
+`STALE_PREPARATION` requires explicit **fresh context** before another review.
+The station-only receipt labels isolated memory receipt/audit and
+`partnerCompletion=not-invoked`; it is not durable recovery/audit certification.
+
+F1 fixture, F2 and native safety are separate:
+`shfStageArrivalSafety`, `shfStationArrivalSafety`, `shfNativeArrivalSafety`.
+History uses opaque `shfF1Safety`/`shfF2Safety`/existing native markers.
+No actor/tuple, reason, token, fingerprint or receipt is serialized there.
+Within a document only the dependent fixture tuple is cross-blocked; after
+reload opaque unresolved markers conservatively block fixture work.
+Known settlement is not resurrected by an older F2 entry in the same document.
+There is **no browser reset/reconciliation/replay control**: an owner-started
+fresh fixture process is a new demo, never resolution of an old outcome.
+The prior native guard is not weakened.
+
+### Focused and browser checks
+
+Run from this directory after backend and frontend owners are source-stable:
+
+```powershell
+npm test -- --include='src/station-arrival*.spec.ts'
+npm test
+npm run typecheck
+npm run build:production
+npm run check:profile -- production
+node checks/station-arrival-browser-check.mjs
+node checks/station-arrival-browser-check.mjs --fixture-proxy
+```
+
+The browser checker owns **ephemeral port0 UI/backend listeners and an ephemeral
+Chrome debugging port/profile**, and closes only those resources. Chrome must
+already exist at `C:/Program Files/Google/Chrome/Application/chrome.exe`.
+No installation, private environment, Oracle, DNS lookup or shared listener is
+used. Without the flag it intercepts synthetic HTTP (including lost response);
+with `--fixture-proxy` it uses the actual stable backend joint memory store,
+runtime and HTTP adapter, **without interception**. Both use the production
+Angular artifact, synthetic facts only. Generated screenshots remain under
+ignored `.angular/browser-evidence/F2-*-SYNTHETIC.png`.
+
+Browser checks cover desktop/mobile RTL, dialog keyboard trap/Escape, exact
+opener and nearest visible focus, screenshot-pixel ring contrast, reduced
+motion, origin filters/vertical/RTL scroll/Back/Forward and UNKNOWN/reload.
+They are not full WCAG 2.2 AA conformance, manual AT or real-native proof.
+See [verification and limitations](VERIFICATION.md).
+
 # SHF-NATIVE-ARRIVAL-UI-20 — existing Angular F1 + controlled TEST mode
 
 ## SHF-ENV-PROFILES-20 — public build profiles

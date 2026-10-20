@@ -10,6 +10,18 @@ import type { AttendanceAccessPolicy } from "./attendance-contracts.mts";
 import type { StageArrivalAccessPolicy } from "./stage-arrival-contracts.mts";
 import { stageFail } from "./stage-arrival-errors.mts";
 import { unitCode } from "./current-shifts-validation.mts";
+import type { StationArrivalAccessPolicy } from "./station-arrival-contracts.mts";
+
+export const stationArrivalAccessPolicy: StationArrivalAccessPolicy = {
+  requirePrepare(p) {
+    if (!p.capabilities.includes("attendance-station-arrival:prepare")) stageFail("FORBIDDEN");
+  },
+  requireCommit(p) {
+    this.requirePrepare(p);
+    if (!p.capabilities.includes("attendance-station-arrival:commit")) stageFail("FORBIDDEN");
+  },
+  authorizedTeamIds(p) { return stageArrivalAccessPolicy.authorizedTeamIds(p); },
+};
 
 export const stageArrivalAccessPolicy: StageArrivalAccessPolicy = {
   requirePrepare(p) {

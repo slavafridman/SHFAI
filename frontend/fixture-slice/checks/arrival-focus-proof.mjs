@@ -43,7 +43,7 @@ export async function proveArrivalFocus({ send, evaluate }, selector, label) {
   const m = await evaluate(`(() => {
     const n=document.querySelector(${JSON.stringify(selector)}), s=getComputedStyle(n), r=n.getBoundingClientRect();
     let opacity=1;for(let p=n;p;p=p.parentElement)opacity*=Number(getComputedStyle(p).opacity);
-    const header=Math.max(0,...[...document.querySelectorAll('shf-stage-arrival .topbar,shf-stage-arrival .mockbar')]
+    const header=Math.max(0,...[...document.querySelectorAll('shf-stage-arrival .topbar,shf-stage-arrival .mockbar,shf-station-arrival .topbar,shf-station-arrival .mockbar')]
       .filter(p=>['sticky','fixed'].includes(getComputedStyle(p).position)).map(p=>p.getBoundingClientRect().bottom));
     const modal=!!n.closest('mat-dialog-container'), top=modal?0:header;
     const hit=document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2);

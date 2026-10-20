@@ -4,8 +4,8 @@ import { nativeSelectionFixture } from './native-arrival-fixtures';
 import { arrivalSelectionFixture } from './stage-arrival-fixtures';
 const slot = 'shfNativeArrivalSafety', attempt = '12345678-1234-4123-8123-123456789abc';
 describe('Native minimal safety markers, no personal cache or authority', () => {
-  beforeEach(() => { history.replaceState({}, ''); sessionStorage.removeItem(slot); });
-  afterEach(() => { vi.restoreAllMocks(); history.replaceState({}, ''); sessionStorage.removeItem(slot); });
+  beforeEach(() => { history.replaceState({}, ''); sessionStorage.removeItem(slot); sessionStorage.removeItem('shfStageArrivalSafety'); });
+  afterEach(() => { vi.restoreAllMocks(); history.replaceState({}, ''); sessionStorage.removeItem(slot); sessionStorage.removeItem('shfStageArrivalSafety'); });
   it('survives a new document/source even when current history entry has no prior marker', () => {
     const first = new StageArrivalSession(); expect(first.begin(nativeSelectionFixture(), attempt)).toBe(true);
     history.replaceState({}, '');

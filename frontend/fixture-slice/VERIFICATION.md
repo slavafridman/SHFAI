@@ -1,4 +1,216 @@
-# SHF-NATIVE-ARRIVAL-UI-20 — frontend verification (20 October 2026)
+# SHF-F2-UI-20 — frontend verification (20 October 2026)
+
+## Latest follow-up — F2-QA-02 equal endpoints (Medium/P2)
+
+**State: developer fix/retest complete, SOURCE-STABLE for parent focused
+independent retest.** This is not independent defect closure or whole-project
+completion. Approval remains §§41–42/F2 mockup and station canonical v0.1.
+§41.2, baseline line4314, expressly permits `end>=start`; zero-duration
+intervals are empty for overlap. No new policy, public DTO or backend change.
+
+Only four paths changed in this follow-up, relative to this directory:
+
+```text
+src/station-arrival-contract.ts
+src/station-arrival-contract.spec.ts
+src/station-arrival-page.spec.ts
+VERIFICATION.md
+```
+
+Production correction is one comparison: reject `startLocal > endLocal`,
+not `>=`. Existing F1 context guard already uses the equivalent `end < start`;
+no new helper/business-rule abstraction was needed.
+Eight added regression cases cover ordinary, equal, overnight and reversed
+endpoints at both guard and Angular-page boundaries. The page test selection
+now binds both supplied planned endpoints, avoiding a fixture mismatch that
+could mask this defect.
+
+### RED → GREEN and exact checks
+
+All commands ran from `frontend/fixture-slice`, on the latest corrected UI
+source. No dependencies or tooling changed.
+
+| Command | Actual result |
+|---|---|
+| `npm test -- --include='src/station-arrival-contract.spec.ts' --include='src/station-arrival-page.spec.ts'` before correction | **RED: 28 PASS, 2 FAIL**. Only zero-duration contract admission and page ready/review path failed, reproducing QA-02. |
+| Same command after the one-comparison correction | **GREEN: 30/30 PASS**, 2 files. |
+| `npm test -- --include='src/station-arrival*.spec.ts' --include='src/stage-arrival*.spec.ts' --include='src/native-arrival*.spec.ts'` | **152/152 PASS**, 10 files; F2 + existing F1/native. |
+| `npm run typecheck` | PASS strict application TSC. |
+| `npm test` | **477/477 PASS**, 35 files; focused counts overlap this suite. |
+| `npm run build:dev` then `npm run check:profile -- dev` | PASS fresh build and emitted two-key public profile `/api`. |
+| `npm run build:test` then `npm run check:profile -- test` | PASS fresh build and emitted two-key public profile `/api`. |
+| `npm run build:production` then `npm run check:profile -- production` | PASS fresh production build/budgets and emitted two-key public profile `/api`. Production is the final artifact. |
+| `node checks/station-arrival-browser-check.mjs` | PASS **fresh post-UI-fix** Chrome + intercepted synthetic HTTP regression. |
+| `node checks/station-arrival-browser-check.mjs --fixture-proxy` | PASS **fresh post-UI-fix** Chrome → actual owned joint-fixture runtime/HTTP/store, without interception. Parent had relayed backend SOURCE-STABLE639 and QA-01 closure before this run. |
+
+Boundary proof is specifically **Angular HttpTestingController**, not an
+equal-endpoint browser claim: context with null stage, on-time server capture
+10:22:06 and `start=end=2026-10-20T10:30:00` reaches ready and review.
+Validation issues no command; receipt remains null, no F2 safety marker is
+created, and source fixture facts remain unchanged. Only explicit confirmation
+sends one command. Ordinary/overnight paths also pass; `end<start` remains
+blocked with no validation/command. These frontend tests prove zero command
+delivery before confirmation, not independently measured backend audit counts.
+
+The reused browser scenarios use their existing ordinary endpoints, **not**
+the new equal-endpoint boundary. Fresh intercepted aggregate:1440/390/320,
+keyboard/dialog/Escape/focus/reduced-motion/history/UNKNOWN checks PASS,
+commands2, runtime exceptions0, unexpected requests0. Pixel focus contrast
+12.6179:1 in pending/SUCCESS/Escape/UNKNOWN. Fresh actual fixture aggregate:
+F1 command1 → new F2 context → F2 command1, F1 receipt/audit1/1 and F2
+receipt/audit1/1, active0, preserved stage/user/briefing, advanced shared revision
+and matching independent detail readback; runtime exceptions0, unexpected
+requests0. These are local synthetic fixture results, never native/Oracle.
+
+Owned ephemeral listeners, Chrome process/profile are closed by the existing
+checkers. No user/shared listener touched. No Git, backend, canonical, legacy,
+root/status, dependency or lockfile writes; no DB/DNS/EMS or delegated work.
+Existing typeless-package warning and jsdom scrollTo notices are informational;
+real browser supplies the scroll/focus proof. No failed GREEN reruns.
+
+**Next action / owner:** parent independent QA retests the changed boundary
+against this SOURCE-STABLE frontend. No implementation blocker or shared
+contract request. Manual AT/full WCAG certification, native pilot and release
+remain unclaimed; no automatic full-QA loop was launched.
+
+## Earlier implementation verification — historical results
+
+**State: developer verification complete; SOURCE-STABLE for parent independent
+QA.** Authority: caller-confirmed 20 October14:21 approval of §§41–42 and
+`design/shifter-redesign-v0.1.html#station-arrival`, canonical station v0.1.
+Parent owns PROJECT_STATUS, independent QA and publication. No Git write,
+backend/canonical/root/design/legacy/dependency/lockfile change by this owner.
+
+**Integration freshness caveat:** after the last completed verification run,
+parent reported backend temporarily unstable for independent QA-01 (explicit
+empty Origin incorrectly treated as absent). The actual-fixture browser PASS
+below is **pre-fix evidence only**, NOT post-QA-01 integration proof.
+No further actual-backend run was launched after that notice.
+Frontend source and typed/mock browser checks remain source-stable.
+Backend owner + parent must relay renewed SOURCE-STABLE before repeating the
+`--fixture-proxy` command; parent owns independent acceptance of that retest.
+
+## Implemented scope and changed paths
+
+All paths relative to `frontend/fixture-slice/`:
+
+* F2 page/state/dialog/presentation: `src/station-arrival-page.{ts,html,scss}`.
+* Canonical type-only imports and closed runtime guards:
+  `src/station-arrival-contract.ts`; synthetic tests only:
+  `src/station-arrival-fixtures.ts`.
+* Independent uncertainty/terminal namespace: `src/station-arrival-session.ts`.
+* Shared integration: `src/api.ts`, `src/contract.ts`, `src/routes.ts`,
+  `src/attendance-page.{ts,html}`, `src/stage-arrival-contract.ts`,
+  `src/stage-arrival-page.{ts,html}`, `src/stage-arrival-session.ts`,
+  `src/view-history.ts`.
+* Tests: `src/station-arrival-{contract,page,session,generation}.spec.ts`;
+  persisted-safety isolation setup only in
+  `src/stage-arrival-{page,generation}.spec.ts` and
+  `src/native-arrival-session.spec.ts`.
+* Owned browser verification:
+  `checks/station-arrival-browser-check.mjs`,
+  `checks/station-arrival-browser-server.mts`;
+  `checks/arrival-focus-proof.mjs` adds station host to header geometry,
+  retaining the native proof unchanged otherwise.
+* `README.md`, `VERIFICATION.md`.
+
+Exact7/9/10/11 identity admission is preserved. F2 requires the joint fixture11
+identity/source and explicit row. No Administrator fallback, real credential
+claim, editable business timestamp or native F2 affordance.
+Pure context/validation; optional NULL stage; warning ACK then explicit full
+operation confirmation; strict station receipt and independent errors.
+Pending/doubleactivation/expiry/abort/stale generation/UNKNOWN stop safely.
+Opaque storage is namespaced; unrelated same-document tuples are not made
+uncertain merely by another F2 attempt. Dependent F1/F2 are cross-blocked,
+without treating an F2 marker as an F1/native outcome. No reset API or browser
+reset is invented. Old unresolved/new demo outcomes are never conflated.
+
+## Exact commands and results
+
+All npm/node commands below were run from `frontend/fixture-slice`.
+
+| Command | Result / evidence class |
+|---|---|
+| `npx vitest run src/station-arrival-contract.spec.ts --config vitest.config.ts` | First-edit cheapest check PASS2/2, pure static/runtime DTO tests. |
+| `npm test -- --include='src/station-arrival*.spec.ts'` | Final focused PASS36/36 in4 files; Angular + HttpTestingController/uncooperative callbacks, not live backend. |
+| `npm test -- --include='src/station-arrival*.spec.ts' --include='src/stage-arrival*.spec.ts' --include='src/native-arrival*.spec.ts' --include='src/attendance-page.spec.ts' --include='src/shift-items-navigation.spec.ts'` | Focused regression PASS153/153 before later additive F2 cases; final full suite below subsumes it. |
+| `npm test` | Final full PASS469/469 in35 files, including native/history/API/identity regressions. |
+| `npm run typecheck` | PASS strict application TSC. |
+| `npm run build:dev` then `npm run check:profile -- dev` | PASS build + emitted exact two-key profile `/api`. |
+| `npm run build:test` then `npm run check:profile -- test` | PASS build + emitted exact two-key profile `/api`. |
+| `npm run build:production` then `npm run check:profile -- production` | PASS budgets/build + emitted exact two-key profile `/api`; final output is production. |
+| `node checks/station-arrival-browser-check.mjs` | PASS actual Chrome/production artifact, **synthetic intercepted HTTP**. |
+| `node checks/station-arrival-browser-check.mjs --fixture-proxy` | PASS actual Chrome → owned loopback proxy → stable actual joint fixture runtime/HTTP/memory store, **no interception**. Not Oracle/native. |
+
+Browser aggregate (intercepted): widths1440/390/320, dialog Tab/Shift+Tab/Escape,
+reduced motion, exact opener focus, real origin filters + vertical/RTL scroll
+at matching viewport, Back/Forward without resubmit, known success not UNKNOWN,
+pending repeated Space1 command, late ACK0→explicit command1, transport UNKNOWN
+and reload barrier. Two commands total; runtime exceptions0; unexpected
+requests0. Screenshot pixel focus proof at320 for pending/SUCCESS/Escape/UNKNOWN:
+solid3px +3px offset, effective opacity1, full48px button and ring visible,
+hit-testable, contrast **12.6179:1** (ring0,47,101; adjacent250,250,250).
+No driver focus/scroll assistance after the final action for these proofs.
+Visual review of390 context and320 warning confirms Hebrew RTL, readable
+24h/full timestamps, bounded overlays and no page overflow.
+
+Actual fixture aggregate: browser F1 review0/commit1 → new F2 context sees that
+stage → F2 review0/commit1; store confirms F1 receipt/audit1/1 and independent
+F2 receipt/audit1/1, active0, changed shared revision, unchanged
+stage/user/briefing. Independent HTTP detail readback agrees with both facts.
+Two commands total; runtime exceptions0; unexpected requests0.
+The helper uses `createStationArrivalFixture`, `createRuntime`,
+`createLoopbackServer`, sample synthetic facts and fixed injected Clock.
+This is **actual isolated fixture runtime+HTTP integration**, not environment
+bootstrap verification or an independently deployed backend.
+
+## Failed attempts and retests (not hidden)
+
+* Initial expanded Angular run: Vitest worker startup timeout before any tests;
+  owned runner stopped. Narrow rerun passed; no tooling/dependency install.
+* First full compile after clock guard: TS2345 unknown zone; corrected explicit
+  string narrowing. Full rerun initially422 PASS/30 FAIL because new F1 fixture
+  safety survived between tests; isolated only the new opaque slots in related
+  setup/teardown. Native guard itself was not removed. Focused153 then
+  full464 and final469 passed.
+* Browser found Material focus specificity and initial disabled ARIA override.
+  Added F2-scoped high-contrast rule and supported `disabledInteractive` with
+  synchronous guards. A fractional CSS-pixel ring clip was corrected by
+  outward-rounded measured scroll clearance. Final screenshot pixel checks PASS.
+* Checker-only retries: await checkbox render, optional DOM node while route
+  loads, compare origin scroll at the **same viewport**. No app timeout/retry,
+  fake geometry or jsdom scroll proof was introduced.
+* Existing Node typeless-package warning from shared TS browser helpers and
+  jsdom `scrollTo` not-implemented messages remain informational. Browser,
+  not jsdom, supplies scroll/geometry evidence. No package metadata changed.
+
+## Source evidence and limitations
+
+Controlling read-only inspection: `old/SHF/src/bzq/shf/model/AttendanceDataModel.java`
+registerStation1054–1115, `actions/AttendanceDataAction.java`160–178;
+`old/SHFWeb/WebContent/js/attendance.js`491–544 and misnamed
+`jsp/employee_arrive_stage.jsp`1–10. Stage is not a station prerequisite.
+Legacy write-before-warning/INSERT behavior is intentionally **not** copied;
+approved §§41–42 before-write warning/existing-row-only contract controls.
+Source-contract catalog was absent; used baseline-linked controlling paths.
+Reuse evidence: existing F1/native page guards, SliceApi envelope/timeouts,
+ViewHistory/ListNavigation, WorkspaceShell and namespaced arrival focus proof.
+
+Not run/claimed: manual screen-reader/AT, complete zoom/reflow and full contrast
+audit, full WCAG2.2AA conformance, production authentication/deployment,
+live Oracle/native F2, DNS/DB/broker, real TEST F1 pilot or M1 completion.
+Native TEST pilot still externally blocked by independently authoritative
+SERVER_HOST input (operator/DBA + parent LIVE GO); no such attempts here.
+Backend owner handoff enabled only the actual isolated fixture integration;
+its later temporary QA-01 hold now blocks **post-fix** integration retest.
+Parent QA should independently exercise source-stable F2UI01–12, especially
+real combined runtime expiry/conflict/concurrent preparation and same-entry
+history across mobile viewport changes. No open frontend implementation blocker;
+the post-fix integration freshness blocker is backend/parent-owned.
+No shared-contract request. No browser RESET is provided: a new demo process
+does not resolve an old UNKNOWN and no approved reset endpoint exists.
+
+# SHF-NATIVE-ARRIVAL-UI-20 — earlier frontend verification (20 October 2026)
 
 ## Latest follow-up — UI-D01/UI-D02 fixed, ready for bounded independent QA retest
 

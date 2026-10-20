@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { ListNavigation } from './list-navigation';
 import { StageArrivalSession } from './stage-arrival-session';
+import { StationArrivalSession } from './station-arrival-session';
 
 type Slots = Pick<ListNavigation, 'origin' | 'searchOrigin' | 'attendanceOrigin' | 'schedule' | 'scheduleDetail' |
   'detailOrigin' | 'scheduleUpstream'>;
@@ -20,6 +21,7 @@ export class ViewHistory {
   private readonly router = inject(Router);
   private readonly nav = inject(ListNavigation);
   private readonly arrival = inject(StageArrivalSession);
+  private readonly station = inject(StationArrivalSession);
   private readonly entries = new Map<string, Entry>();
   private current: string | null = null;
   private target: string | null = null;
@@ -31,6 +33,7 @@ export class ViewHistory {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationStart) {
         this.arrival.merge(event.restoredState);
+        this.station.merge(event.restoredState);
         this.save();
         this.popping = event.navigationTrigger === 'popstate';
         const token: unknown = event.restoredState?.['shfView'];
@@ -62,7 +65,8 @@ export class ViewHistory {
         const origin: unknown = history.state?.origin;
         const provenance = typeof origin === 'string' &&
           ['current-shifts', 'shift-search', 'my-shifts', 'attendance', 'shift-day-diagnostic'].includes(origin) ? { origin } : {};
-        history.replaceState({ ...provenance, navigationId: event.id, shfView: token, ...this.arrival.marker() }, '');
+        history.replaceState({ ...provenance, navigationId: event.id, shfView: token,
+          ...this.arrival.marker(), ...this.station.marker() }, '');
       }
     });
   }

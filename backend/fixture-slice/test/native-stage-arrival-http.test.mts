@@ -6,6 +6,7 @@ import { record } from "../contract-validation.mts";
 import { nativeCommand } from "../native-stage-arrival-validation.mts";
 import { sampleStageArrivalConfig, sampleStageArrivalFacts } from "../stage-arrival-sample.mts";
 import { existsSync } from "node:fs";
+import { request } from "node:http";
 
 const origin = "http://localhost:4521";
 const route = "/api/v1/employees/9001/shift-days/6201/stage-arrival";
@@ -24,6 +25,52 @@ function post(url: string, value: unknown, requestOrigin = origin) {
   return fetch(url, { method: "POST", headers: { "Content-Type": "application/json", Origin: requestOrigin,
     "sec-ch-ua": '"Chromium";v="141"', "sec-ch-ua-mobile": "?0", "sec-ch-ua-platform": '"Windows"' },
   body: JSON.stringify(value) });
+}
+for (const malformedOrigin of ["", " \t "]) {
+  test(`F2-QA-01 native isolated double rejects present Origin ${JSON.stringify(malformedOrigin)} before ports`, async () => {
+    const d = new NativeOracleDouble(true);
+    let server;
+    try {
+      server = await startFromEnvironment(environment(d), undefined, factories(d));
+      const address = server.address(); assert.ok(address && typeof address !== "string");
+      const base = `http://127.0.0.1:${address.port}`;
+      assert.equal((await fetch(base + route + "/context")).status, 200); // absent remains legal
+      assert.equal((await fetch(base + route + "/context", { headers: { Origin: origin } })).status, 200);
+      const v = await json(await post(base + route + "/validations", cleanNative));
+      const command = nativeCommand({ commandId: "90000000-0000-4000-8000-000000000001", draft: cleanNative,
+        confirmation: null, operationConfirmation: { accepted: true }, validationToken: v.validationToken, fingerprint: v.fingerprint });
+      const before = { events: [...d.events], sqlCount: d.sql.length, rows: structuredClone(d.rows) };
+      const receivedOrigins: string[] = [];
+      server.prependListener("request", req => {
+        if (req.headers.origin !== undefined) receivedOrigins.push(req.headers.origin);
+      });
+      for (const [suffix, method, payload] of [
+        ["context", "GET", ""], ["validations", "POST", JSON.stringify(cleanNative)],
+        ["commands", "POST", JSON.stringify(command)],
+      ]) {
+        const result = await new Promise<{ status: number; body: unknown }>((resolve, reject) => {
+          const req = request(base + route + "/" + suffix, { method,
+            headers: { Origin: malformedOrigin, "Content-Type": "application/json" } }, res => {
+            const chunks: Buffer[] = [];
+            res.on("data", chunk => chunks.push(Buffer.from(chunk)));
+            res.on("end", () => {
+              try { resolve({ status: res.statusCode!, body: JSON.parse(Buffer.concat(chunks).toString()) }); }
+              catch (e) { reject(e); }
+            });
+          });
+          req.once("error", reject); req.end(payload);
+        });
+        assert.equal(receivedOrigins.at(-1), "");
+        assert.equal(result.status, 403, suffix); assert.ok(record(result.body));
+        assert.equal(result.body.code, "FORBIDDEN"); assert.equal(result.body.effect, "none");
+        assert.deepEqual({ events: d.events, sqlCount: d.sql.length, rows: d.rows }, before);
+        assert.ok(!existsSync(d.binding.allowanceFile)); // no new native admission/consumption
+      }
+    } finally {
+      if (server) await stopBackendServer(server);
+      d.dispose();
+    }
+  });
 }
 test("N07 actual startFromEnvironment native HTTP: source oracle/10, context+PURE0, confirmed commit+readback1", async () => {
   const d = new NativeOracleDouble(true);

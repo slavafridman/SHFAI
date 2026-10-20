@@ -1,7 +1,7 @@
 import { afterNextRender, Component, DestroyRef, ElementRef, Injector, effect, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -17,6 +17,8 @@ import { actorBinding, arrivalContext, arrivalValidation, arrivalReceipt, arriva
 import { StageArrivalSession } from './stage-arrival-session';
 import { WorkspaceShell } from './workspace-shell';
 import { ViewHistory } from './view-history';
+import { StationArrivalSession } from './station-arrival-session';
+import { stationIdentity } from './station-arrival-contract';
 
 @Component({
   selector: 'shf-arrival-warning',
@@ -105,6 +107,8 @@ export class NativeArrivalConfirmation {
   templateUrl: './stage-arrival-page.html', styleUrl: './stage-arrival-page.scss',
 })
 export class StageArrivalPage {
+  readonly station = inject(StationArrivalSession);
+  private readonly router = inject(Router);
   readonly session = inject(StageArrivalSession);
   readonly journey = inject(ViewHistory);
   private readonly route = inject(ActivatedRoute);
@@ -208,6 +212,7 @@ export class StageArrivalPage {
         if (!this.active(gen) || this.identityState() !== 'loading') return;
         if (!identity(v)) { this.identityState.set('error'); this.state.set('denied'); this.message.set('אין זהות תקפה. אין כניסה חלופית כמנהל מערכת.'); return; }
         this.principal.set(v); this.identityState.set('ready');
+        if (this.station.affects(this.selection())) { this.recovery(); return; }
         if (!this.allowed()) { this.state.set('denied'); this.message.set('קריאה בלבד או מקור/הרשאות לא תואמים: נדרשת תצורה מפורשת. אין מעבר אוטומטי לסימולציה.'); return; }
         if (this.session.uncertain()) { this.recovery(); return; }
         const s = this.selection();
@@ -239,6 +244,9 @@ export class StageArrivalPage {
         if (!this.active(gen) || this.state() !== 'loading') return;
         if (!arrivalContext(v, s) || !this.sameSelection(s)) { this.fail('הקשר לא עקבי או מקור לא מבודד. הפעולה חסומה.'); return; }
         this.context.set(v); this.state.set(v.eligibility === 'eligible' && !this.session.recorded(s) ? 'ready' : 'ineligible');
+        afterNextRender(() => {
+          if (this.active(gen)) this.journey.restore(this.host.nativeElement);
+        }, { injector: this.injector });
         if (this.session.recorded(s)) {
           this.message.set(this.nativeMode()
             ? 'הפעולה כבר אושרה במופע זה. אין רישום נוסף; הקשר השרת מוצג לקריאה בלבד.'
@@ -261,7 +269,8 @@ export class StageArrivalPage {
   }
   canValidate() {
     return this.allowed() && !this.halted() && !!this.context() && this.context()!.eligibility === 'eligible' &&
-      !this.session.blocked(this.selection()) && ['ready', 'error', 'expired'].includes(this.state());
+      !this.session.blocked(this.selection()) && !this.station.affects(this.selection()) &&
+      ['ready', 'error', 'expired'].includes(this.state());
   }
   validate() {
     if (!this.canValidate()) return;
@@ -351,7 +360,7 @@ export class StageArrivalPage {
   }
   confirm(nativeAccepted = false) {
     if (this.state() !== 'review') return;
-    if (!this.allowed() || this.session.blocked(this.selection())) {
+    if (!this.allowed() || this.session.blocked(this.selection()) || this.station.affects(this.selection())) {
       this.invalidate(); this.context.set(null); this.reason.reset(null, { emitEvent: false });
       if (this.session.uncertain()) this.recovery();
       else if (this.selection() && this.session.recorded(this.selection()!))
@@ -460,5 +469,15 @@ export class StageArrivalPage {
   cancel() {
     if (this.state() === 'committing') return;
     this.invalidate(); this.journey.back('/attendance');
+  }
+  canOpenStation() {
+    return stationIdentity(this.principal()) && !!this.selection() && !this.session.uncertain() &&
+      !this.station.affects(this.selection()) && ['ready', 'review', 'success', 'ineligible'].includes(this.state());
+  }
+  openStation() {
+    if (!this.canOpenStation()) return;
+    const s = this.selection()!;
+    this.invalidate(); this.station.selection = structuredClone(s);
+    void this.router.navigate(['/employees', s.employeeId, 'shift-days', s.shiftDayId, 'station-arrival']);
   }
 }

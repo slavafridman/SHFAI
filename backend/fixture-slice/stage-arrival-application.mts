@@ -19,7 +19,7 @@ export class StageArrivalApplication {
     if (!(store instanceof MemoryStageArrivalStore) || store.dataSource !== "isolated-fixture" || !store.ownsClock(clock))
       throw Error("Only process-owned fixture UoW supported");
     this.store = store; this.clock = clock; this.zone = zone;
-    this.tokens = new MemoryStageArrivalTokens(clock);
+    this.tokens = new MemoryStageArrivalTokens(clock, store);
   }
   private admit(principal: unknown, target: unknown, commit = false) {
     try { validatePrincipal(principal); } catch { stageFail("UNAUTHENTICATED"); }
