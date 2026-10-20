@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-20, recent-record selection and restoration decision.
+Last updated: 2026-10-20, synthetic Oracle TEST fixture prepared and verified.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -32,11 +32,12 @@ readiness and a controlled first-arrival plan.
 | Work item | State | Owner / next action |
 |---|---|---|
 | Native first-arrival plan, design section 43 v0.1 | review | Proposal and sanitized preflight evidence; not approved for adapter implementation or execution |
-| Current TEST metadata, triggers and privileges | done within scope | Five tables and eight enabled/validated constraints checked; visible attendance triggers/policies zero; not a DML safety certification |
-| Eligible TEST record | blocked | Latest changed-day candidate is historical/ended and has no attendance row; no eligible record or private handle retained |
+| Current TEST metadata and fixture preflight | done within scope | Three fixture tables, 84 columns and 22 enabled/validated constraints; required columns/FKs/current literal defaults checked, enabled triggers/visible VPD zero; not native UPDATE grant or safety certification |
+| Eligible TEST record | time-sensitive, revalidate | New synthetic dataset verified eligible at read-back, with approximately four minutes left in its allowed window; do not assume eligibility now |
+| Synthetic TEST data preparation | done: PREPARED_VERIFIED | Three acknowledged INSERTs, one successful COMMIT and separate read-only read-back; first arrival still NULL |
 | Preflight connection health | review | Earlier NJS-500/failed rollback remains unexplained; a later single read-only connection completed six SELECTs and cleanup successfully |
 | Native readiness checkpoint | done: documentation / review: proposal | Plan and partial preflight recorded; publication is included in this scoped checkpoint; verify synchronization before resuming |
-| Actual Oracle UPDATE | blocked | Needs resolved connection/data prerequisites, approved native contract and separate named-record execution/restoration authorization |
+| Actual Oracle UPDATE | blocked | Needs fresh grants/window/concurrency validation, approved APP43 contract and section 43.8 exact-record/three-field execution/read-back scope; successful TEST restoration is not mandatory |
 
 The user subsequently approved full access to the previously named TEST
 CTIDBT_WFMT database. General TEST access is therefore approved and must not be
@@ -78,9 +79,132 @@ The follow-up used an independently approved operator reference only in memory;
 it did connect and did not access the restricted environment file.
 No further connection or candidate-search attempt is scheduled automatically.
 
-Do not execute DML, `SELECT FOR UPDATE`, changing procedures, custom functions,
-schema changes or native write smoke tests during this preflight.
-Do not change the clock or planned dates to manufacture an eligible candidate.
+Do not execute a native arrival UPDATE, `SELECT FOR UPDATE`, changing procedures,
+custom functions, schema changes or native arrival smoke tests yet.
+The user's later conditional authorization permits only the test-fixture
+preparation below. Do not falsify the Clock or rewrite real employees' planned
+dates to manufacture an eligible existing candidate.
+
+### Conditional test-data preparation authorization
+
+After asking to find any suitable record, the user explicitly allowed changing
+an existing record or creating a new one if none was found. Prefer one new,
+clearly synthetic TEST dataset rather than overwriting real staff history.
+One assigned operator may create at most a new synthetic employee, planned day
+and attendance row using the existing schema after current metadata, constraints,
+references, key allocation and enabled-trigger checks.
+
+The following attempt chronology is historical; the final successful result
+below supersedes its preparation-blocked and next-action statements, not the
+native APP43 approval gate.
+
+Initial preparation stopped at identity verification with zero mutations and
+successful cleanup. Diagnosis identified a launcher expectation error:
+SERVER_HOST had been compared to an alias. Database, user and schema matched.
+Independent configured TNS SID and endpoint DNS checks then passed; expected
+identity was not copied from the database answer.
+
+The corrected preparation launcher subsequently ran, but its final output was
+truncated. Exit code 0 is not proof of success because the launcher caught
+errors. Original INSERT/sequence/COMMIT counts and its cleanup are unverified;
+this is reporting uncertainty, not an observed Oracle COMMIT failure.
+
+A new verified TEST read-only connection executed three SELECTs. The exact
+public synthetic marker `SHF_TEST_ARRIVAL_20261020` matched zero employee rows.
+At that reconciliation no complete committed fixture was available.
+Children/orphans were not queried
+separately, so their absence is not claimed. No creation retry or further
+mutation was performed. Reconciliation rollback, release and pool close all
+succeeded.
+
+Current metadata from this check covers three tables, 84 column records, three
+validated PKs and two validated FKs, no unvalidated constraints, and zero
+enabled triggers/visible VPD policies. These facts do not prove execution of
+the original INSERTs or resolve possible sequence gaps.
+The next diagnostic is offline recovery of the launcher's existing sanitized
+phase/error evidence; do not reconnect or repeat creation to obtain it.
+
+That offline recovery ended without the original terminal report. The original
+catch did not set a nonzero exit code; the precise phase/error and counters
+remain unknown. Do not classify it as an Oracle connection failure.
+
+One final preparation attempt was then assigned under the user's existing
+conditional authorization, only after repairing observability. Its generated
+aggregate journal contains phase, error code, acknowledged mutation/sequence
+counts, commit outcome and cleanup, never credentials or private record values.
+It must use a distinct explicit synthetic generation or safely reuse a fully
+verified one, not repeat the unknown original INSERTs. Maximum scope remains
+three synthetic business rows and one writer transaction; a new failure or
+unknown COMMIT stops the attempt without retry. No actual arrival is recorded.
+
+That observed attempt stopped before DML, with error
+`UNPLANNED_ATTENDANCE_DEFAULT` during metadata/default validation. The harness
+rejected a non-NULL default on an omitted attendance field. It is not an
+Oracle connection error. Metadata: 84 columns, 22 enabled/validated constraints,
+zero enabled triggers and visible VPD; all identity checks passed.
+INSERT attempts/rows and NEXTVAL attempts were zero, COMMIT was not attempted,
+and rollback/release/pool close succeeded. A sanitized aggregate journal was
+written and reread; it contains no private row keys or credentials.
+
+The next step at that time was an offline check of the retrieved default expression and all
+three planned INSERT mappings. A safe static default must be distinguished
+from a changing/function-backed default before any revised preparation plan.
+Do not repeat the failed creation or silently ignore the default check.
+
+Offline review established that the rejected expression was a SQL literal, not
+a clock/sequence/custom-function default. The prior harness wrongly required
+all omitted attendance fields to be NULL. Historical metadata identifies
+`TADREECH_P2=0`; its current value must still be confirmed. The revised plan
+explicitly allows briefing flags at zero while arrival timestamps/users remain
+NULL. It must collect all current defaults, required columns, constraints,
+reference validity and policy/window findings before allocating keys or writing.
+Unknown/function-backed defaults still stop the task. This is a correction to
+fixture preparation, not authorization to weaken arrival eligibility.
+
+### Final preparation result: PREPARED_VERIFIED
+
+The corrected full preflight and one controlled transaction completed:
+
+- Public synthetic marker: `SHF_TEST_ARRIVAL_20261020_B`. Use this exact marker
+  for controlled rediscovery; private primary keys are not stored here.
+- One acknowledged INSERT into each of `SHF_EMPLOYEES`,
+  `SHF_EMPLOYEE_DAY` and `SHF_ATTENDANCE`; **COMMIT acknowledged SUCCESS**.
+- One existing day-sequence NEXTVAL was acknowledged. Sequence allocation is
+  nontransactional; it is not a schema change or a reversible counter.
+- A separate read-only connection verified one matching employee, day and
+  attendance row and unique synthetic ownership; source `SYNTHETIC_DAYS=1`.
+  Both connection identities
+  matched the independently configured TEST expectations.
+- Full preflight: 84 columns, 22 enabled/validated constraints, all required
+  columns and FK values checked, zero enabled triggers/visible VPD policies.
+- Current literal defaults confirmed. Both briefing flags are explicitly zero;
+  `TADREECH=0` and `TADREECH_P2=0`; stage arrival/user and station/P2
+  arrival timestamps/users remain NULL.
+- Real server Clock was used; initial planned lead was 20 minutes.
+  Eligibility was true at verification, with approximately **four minutes
+  remaining**. This is historical evidence, not permission to bypass the
+  temporal policy after the window expires. Current eligibility is UNKNOWN:
+  freshly revalidate before admission, without fake Clock, planned-date changes
+  or automatic new INSERTs.
+- Writer and read-back rollback/release/pool closure succeeded. The sanitized
+  aggregate journal was written and reread; no private keys or credentials
+  were included.
+
+This is actual TEST data creation, not a native arrival registration.
+No stage-arrival UPDATE, station arrival, Oracle write-adapter implementation,
+CTI, EMS, DDL or production operation was performed. Successful TEST data may
+remain under the user's decision. Earlier failed/unknown attempts remain
+historical evidence and must not be mistaken for this verified transaction.
+
+Preparation must be atomic, with no stage arrival recorded: stage time remains
+NULL. Stop before INSERT if required rules or side effects are unknown; no DDL,
+catalog changes, native arrival UPDATE, CTI or EMS is authorized by this task.
+Real current-day planning for a new synthetic fixture is permitted; falsifying
+the server Clock or changing existing real business dates is not.
+
+The assigned operator completed data preparation, not implementation or approval
+of the section 43 native application contract. COMMIT outcome and independent
+read-back are recorded above; preparation is done, not running.
 
 ### Native plan boundary
 
@@ -244,17 +368,40 @@ performed the one bounded read-only selection:
   This does not diagnose the earlier NJS-500 or prove that it is resolved.
 - DML, DDL, PL/SQL and COMMIT: zero. No application source or fixtures changed.
 
-Native execution remains blocked on a suitable existing TEST record, not on
-general DB access or a mandatory post-success restore decision.
+At that selection checkpoint native execution was blocked on a suitable
+existing TEST record, not on general DB access or mandatory restoration.
+The later synthetic preparation supplied records; current eligibility remains
+time-sensitive and native contract/execution approval is still pending.
+
+### Broader selection: SHF-SUITABLE-CANDIDATE-20
+
+The user authorized finding any suitable record, broadening the read-only search
+across TEST J01 teams with valid G01 membership:
+
+- One connection succeeded after TEST identity verification. Of four SELECT
+  attempts, three succeeded, including one business aggregate.
+- The necessary TODAY set of existing attendance rows with stage NULL,
+  effective ownership, activity-day and no cancellation was empty.
+- A separate upcoming-candidate query failed with ORA-01785 because its ORDER BY
+  expression was directly over UNION ALL. This was a query error, not a second
+  zero-result assertion; upcoming/window/policy assessment was not completed.
+- No candidate keys or before-image were obtained. Rollback, release and pool
+  closure succeeded; DML/COMMIT were zero.
+
+Do not reinterpret the failed query as proof about all possible days.
+The successful empty necessary TODAY set triggered conditional synthetic-fixture
+preparation, not authorization to rewrite historical records or silently change
+native arrival eligibility.
 
 ## Open blockers
 
 | Blocker | Evidence and owner |
 |---|---|
 | Connection failure / failed rollback | DBA/platform must investigate NJS-500 and confirm the next safe connection attempt; no automatic reconnect/test UPDATE |
-| Eligible named TEST data | Earlier TODAY aggregate was zero; newest changed-day candidate is historical/ended and has no attendance. DBA/data owner must supply a suitable employee/day with existing attendance, stage NULL and a real on-time window |
+| Native update temporal eligibility | Synthetic fixture exists, but its short allowed window must be rechecked against real Clock before any future arrival write |
+| Preparation observability | Latest transaction and separate read-back verified; earlier unknown attempt and possible sequence allocation remain historical, not a completed fixture |
 | Native adapter/API approval | Section 43 is review-only; user + architect |
-| Named TEST mutation and restoration authorization | Not granted by fixture approval or generic prior read access; user + DBA/security |
+| Exact native three-field TEST mutation/read-back authorization | Section 43.8 scope is not granted by fixture INSERT approval; user + DBA/security. Successful TEST restoration is not mandatory; any later requested compensating write needs its own authorization |
 | Attendance live detail HTTP and exact row-opener focus | On 20 October current defaults and one diagnostic previous-day filter both returned 0 rows; QA/data owner needs one known permissible nonempty context |
 
 The live navigation gap is DATA-BLOCKED, not a demonstrated application defect.
@@ -365,16 +512,20 @@ from the earlier application tests.
    for a disabled-by-default native adapter and the desired pilot/full delivery
    boundary. General TEST database access has already been approved.
    Do not treat approval as permission to execute an UPDATE.
-2. Obtain DBA/platform resolution of NJS-500 and a named, eligible TEST fixture
-   from the data owner, including an explicit concurrency window.
+2. Rediscover the verified synthetic generation by exact public marker and
+   revalidate its current values, scope and real temporal eligibility before
+   any native arrival command. Do not INSERT another fixture automatically or
+   change its plan/Clock when the allowed window expires.
+   The earlier NJS-500 remains separately unexplained.
 3. Before native execution, fill the separate section 43.8 authorization for
    account/actor/record, three SET fields and before-images, proposed values,
    one COMMIT/read-back. Leaving a successful TEST change is already approved;
    any later compensating restoration requires its own precise conditions.
-4. Resume only after those prerequisites change; recheck current metadata and
-   the approved record under the authorized environment. Do not create test
-   records, alter dates/Clock, expand scope, retry an unknown write or silently
-   switch back to F2 fixture work.
+4. Resume only after prerequisites change; recheck the approved record and
+   environment. The one conditional synthetic preparation is completed, not
+   an automatic repeat authorization; no native arrival UPDATE is running. Do not falsify
+   Clock, rewrite real business dates, retry an unknown write or silently switch
+   back to F2 fixture work.
 
 ## Completion checkpoint: SHF-COMPLETION-PLAN-20
 
@@ -422,7 +573,81 @@ from the earlier application tests.
   The later post-success restoration decision is recorded above; eligible
   named TEST data and exact mutation instructions are still missing.
 
-## Latest selection checkpoint: SHF-RECENT-CANDIDATE-CHECKPOINT-20
+## Latest completed step: SHF-TEST-FIXTURE-PREPARE-20
+
+- State: PREPARED_VERIFIED. Actual three-row TEST INSERT transaction and
+  separate read-back completed as described above.
+- Exclusive writer: one assigned operator; no parallel native writers.
+- Expected scope: at most three new synthetic records in existing TEST tables,
+  stage arrival still NULL; no application changes or native arrival command.
+- Initial attempt: zero INSERT/UPDATE/sequence/COMMIT; rollback and cleanup
+  succeeded. Its SERVER_HOST comparison error was corrected using independent
+  configured TNS/DNS identity, which passed on the diagnostic connection.
+- Corrected launch: original INSERT/sequence/COMMIT and cleanup unverified.
+  Reconciliation: one connection, three successful SELECTs, zero exact-marker
+  employees; rollback/release/pool close succeeded, no further mutations.
+- Earlier observed attempt: zero INSERT/sequence attempts, COMMIT not attempted;
+  metadata/default validation rejected an omitted non-NULL default.
+  Rollback/release/pool close succeeded. No fixture or stage arrival was created
+  in that attempt; the subsequent corrected transaction succeeded.
+- Completed corrected transaction: INSERT counts 1/1/1, acknowledged NEXTVAL 1,
+  COMMIT SUCCESS; separate exact-marker read-back passed and stage time NULL.
+  No further mutation is scheduled.
+- Do not store private keys, before-images or credentials here. A public
+  non-personal synthetic marker may identify the fixture for controlled
+  rediscovery; the successfully prepared generation's marker is recorded above.
+- Checkpoint paths: this file, targeted section 43/44 evidence changes and the
+  standard verifier JSON refresh. No application code changed. Publication
+  validation is recorded in the checkpoint below; do not treat old suites as
+  rerun or data preparation as an implemented arrival feature.
+
+## Publication checkpoint: SHF-TEST-FIXTURE-CHECKPOINT-20
+
+- Completed documentation validation for the actual PREPARED_VERIFIED result:
+  three acknowledged synthetic INSERTs, one acknowledged existing-sequence
+  NEXTVAL, successful COMMIT and independent read-only read-back; stage arrival
+  remains NULL. Native UPDATE/application writer and UI read-back of this new
+  row were not implemented or verified in this step.
+- Initial index empty; `main` and fetched `origin/main` both at
+  `02252b828cbc63c4a70398bc6ac9c911dd24117c`, ahead/behind 0/0.
+  Exactly three publication paths: `docs/PROJECT_STATUS.md`,
+  `docs/SHF_REVERSE_ENGINEERING_DESIGN.md` and
+  `docs/reverse-engineering/verification.json`.
+- Root command `node docs\reverse-engineering\verify-evidence.mjs` passed with
+  the documented duplicate legacy route anomaly: 31 CSVs, 10,000 inventory
+  references, 454 source hashes, 391 local links, 250 source line anchors and
+  80 physical table/view rows. All 20 Oracle capture hashes match published
+  HEAD. Supplemental checks passed for published/scoped link targets, four status
+  relative links, unchanged pre-section-43 design evidence, bounded added-text
+  sensitive patterns. Default scoped whitespace check passed; staged whitespace
+  is checked again before the normal commit, without a whitespace override.
+- Normal three-path commit/push is included in this checkpoint, with mandatory
+  co-author trailer and final remote-HEAD/ahead-behind/index checks. This
+  pre-commit record is not a claim of completed push; locate its resulting
+  SHA by `git log --grep=verified -- docs/PROJECT_STATUS.md`, without a
+  self-SHA edit loop.
+- Twenty-three unrelated dirty paths remain unstaged. Their contents were not
+  read or bytewise fingerprinted in this publication; bytewise preservation
+  is NOT verified. Restricted environment files, private journals, primary
+  keys, personal before-images and raw business records are not published.
+  Public evidence contains only the synthetic marker and sanitized aggregates.
+- Not run here: application tests/builds, browsers/servers, new Oracle
+  connections/queries/mutations, dependencies, native smoke tests, EMS or
+  legacy execution. Reported data preparation is a prior executed transaction,
+  not a new publication-time DB action. Earlier uncertain-launch counters and
+  NJS-500/failed rollback remain historical unknowns, not root-caused.
+- Next priority remains M1 native arrival, not more F2 simulation. APP43/source
+  DTO and operation/three-SET-field permission controls remain REVIEW.
+  Section 43.8 exact native execution/read-back approval and fresh grants,
+  eligibility/window/concurrency checks are still required. General TEST
+  access and one-fixture creation were already approved and exercised;
+  successful TEST restoration is not mandatory. No automatic DB retry follows.
+
+## Previous selection checkpoint: SHF-RECENT-CANDIDATE-CHECKPOINT-20
+
+Historical selection/publication record below. Its missing-fixture and next-gate
+statements describe that earlier checkpoint; the verified synthetic preparation
+above supersedes them without approving the native application contract.
 
 - User input, 20 October: 15:11 select by the most recent actual modification;
   15:13 a successful committed TEST result may remain. General TEST CTIDBT_WFMT
