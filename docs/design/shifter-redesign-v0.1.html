@@ -618,7 +618,7 @@
             <table><caption class="sr-only">עובד ויום סינתטיים עם רשומת נוכחות קיימת וכשירה בדוגמה בלבד</caption><tbody><tr id="arrival-fixture-row" data-employee-id="9001" data-shift-day-id="6201" data-attendance-day-id="6201" data-org-unit-id="0021" data-context-revision="F1-capture-20Oct-v1" data-source="isolated-fixture" data-server-local="2026-10-20T10:22:00" data-business-time-zone="Asia/Jerusalem">
               <th scope="row">עובד/ת דוגמה א׳ — סינתטי בלבד</th>
               <td>צוות הדגמה <bdi>0021</bdi> · מוקד הדגמה <bdi>0012</bdi><br><bdi>20/10/2026 10:30:00–18:30:00 · Asia/Jerusalem</bdi></td>
-              <td>רשומת נוכחות קיימת; הגעה לבמה / עמדה / יציאה: לא נרשמו. תדריך: לא. ללא חוסר, דוח ממתין או פיצול — עובדות דוגמה בלבד.</td>
+              <td id="shared-attendance-facts">רשומת נוכחות קיימת; הגעה לבמה / עמדה / יציאה: לא נרשמו. תדריך: לא. ללא חוסר, דוח ממתין או פיצול — עובדות דוגמה בלבד.</td>
               <td><a class="btn secondary" id="arrival-open" href="#stage-arrival" aria-label="פתיחת סימולציית הגעה לבמה לעובד דוגמה א׳ ביום 20 באוקטובר 2026">הגעה לבמה — סימולציה מוצעת ←</a></td>
             </tr></tbody></table>
           </article>
@@ -652,7 +652,7 @@
               <div><dt>סיום המשמרת המתוכנן</dt><dd><bdi class="arrival-time" id="arrival-end"></bdi></dd></div>
               <div><dt>הצעת זמן השרת — לקריאה בלבד</dt><dd><bdi class="arrival-time">20/10/2026 10:22:00 · Asia/Jerusalem</bdi></dd></div>
               <div><dt>רשומת נוכחות / הגעה לבמה קיימת</dt><dd id="arrival-existing"></dd></div>
-              <div><dt>עמדה / יציאה / תדריך</dt><dd>לא נרשמו / לא נרשמו / לא</dd></div>
+              <div><dt>עמדה / יציאה / תדריך — תצפית באותה תמונת דוגמה</dt><dd id="arrival-station-observed">לא נרשמו / לא נרשמו / לא</dd></div>
               <div><dt>זמן אישור מדומה — לכידה קבועה, לא שעון חי</dt><dd><bdi class="arrival-time">20/10/2026 10:22:05 · Asia/Jerusalem</bdi></dd></div>
             </dl>
             <div id="arrival-late-fields" hidden class="field"><label for="arrival-reason">סיבת איחור — מקטלוג הדוגמה בלבד</label><select id="arrival-reason" aria-describedby="arrival-reason-help arrival-reason-error"><option value="">יש לבחור סיבה</option><option value="1">סיבת איחור סינתטית א׳</option></select><p class="hint" id="arrival-reason-help">22 דקות מחושבות בדוגמה, ללא עריכה. סף סינתטי: 0 דקות; זו אינה מדיניות חיה. הערה אופציונלית נשארת null במוקאפ; אין להזין מידע רפואי או פרטי HR.</p><p class="field-error" id="arrival-reason-error" hidden>יש לבחור סיבת איחור מתוך הקטלוג לפני בדיקת הרישום.</p></div>
@@ -660,7 +660,7 @@
           <div class="surface arrival-core" id="arrival-operation" aria-busy="false">
             <h2>בדיקה → סקירה → אישור סימולציה</h2>
             <p id="arrival-status" role="status" aria-live="polite" tabindex="-1"></p>
-            <div id="arrival-review" hidden><h3>סקירת כל הפעולה — עדיין ללא שינוי</h3><p id="arrival-review-text"></p><p>בזיכרון הדוגמה בלבד: הגעה לבמה וזיהוי מפעיל סינתטי, תדריך=false; באיחור גם סיבה 1, דקות 22 והערה=null. ללא שינוי בעמדה, יציאה, חוסר, דוחות, EMS או Oracle. הזמן בעת הפקודה נבדק מחדש ויכול להיות מאוחר מהתצוגה; כאן שתי הלכידות קבועות.</p></div>
+            <div id="arrival-review" hidden><h3 id="arrival-review-title">סקירת כל הפעולה — עדיין ללא שינוי</h3><p id="arrival-review-history-note" hidden>בדיקה קודמת בוטלה בניווט. זו סקירה קודמת לקריאה בלבד, לא אישור תקף; נדרשת בדיקה חדשה לפני פקודה, ובאיחור גם אישור אזהרה חדש.</p><p id="arrival-review-text"></p><p id="arrival-review-scope">בזיכרון הדוגמה בלבד: הגעה לבמה וזיהוי מפעיל סינתטי, תדריך=false; באיחור גם סיבה 1, דקות 22 והערה=null. ללא שינוי בעמדה, יציאה, חוסר, דוחות, EMS או Oracle. הזמן בעת הפקודה נבדק מחדש ויכול להיות מאוחר מהתצוגה; כאן שתי הלכידות קבועות.</p></div>
             <div class="arrival-actions">
               <button class="btn primary" type="button" id="arrival-prepare">בדיקת הרישום — ללא שינוי</button>
               <button class="btn primary" type="button" id="arrival-confirm" hidden>אישור סימולציה</button>
@@ -687,6 +687,50 @@
             <p>תחנה, יציאה, יציאה מוקדמת, ביטול חוסר, יצירת שורה, תיקון/ביטול הגעה, דיווח תדריך, self, EMS, audit וכתיבת Oracle נדחו. אין כפתורי דמה שלהם. audit/receipt ב־§38 הם seams עתידיים בזיכרון fixture, לא שירותים שמוקאפ זה מפעיל.</p>
           </div></details>
         </div>
+      </section>
+      <section id="station-arrival" hidden aria-labelledby="station-title">
+        <nav class="breadcrumbs" aria-label="מיקום בהצעת העיצוב"><a id="station-back" href="#attendance">חזרה למקור הבחירה — ללא שליחת פעולה</a><span>/</span><span>הגעה לעמדה</span></nav>
+        <div class="heading"><div><h1 id="station-title" tabindex="-1">הגעה לעמדה — סימולציה</h1><p>F2 · הצעת UI v0.1 · §41 + §42 — טרם אושרה</p></div></div>
+        <div class="arrival-notice"><strong>FIXTURE LOCAL ONLY · סימולציה מבודדת בלבד · לא כניסה אמיתית לעמדה</strong><p>אין בקשות, Oracle, CTI, טלפון או שותף. גם SUCCESS אינו דיווח אמיתי. מנהל מערכת סינתטי: <bdi>employeeId=null</bdi>, בנפרד מהעובד/ת שנבחרו. אין אימות סיסמה או חיבור. אסור לייצור.</p></div>
+        <p id="station-safety" class="arrival-notice" role="status" hidden></p>
+        <div id="station-chooser" class="surface arrival-core"><h2>נדרשת בחירה מפורשת</h2><p>אין הקשר עובד/יום תקף בכתובת זו. אין ברירת מחדל או שדה מזהה. חזרה לבירור ובחירת שורת דוגמה קיימת בלבד; טעינה מחדש אינה מוכיחה אפס השפעה.</p><a class="btn secondary" href="#attendance">לבחירת שורה סינתטית בבירור</a></div>
+        <div id="station-selected" hidden>
+          <article class="surface arrival-core">
+            <h2 id="station-person"></h2><p class="hint">צוות הדגמה 0021 · מוקד הדגמה 0012 · בחירת משאב בלבד, לא זהות המפעיל</p>
+            <dl class="arrival-grid">
+              <div><dt>F1 — הגעה לבמה / שלב</dt><dd><bdi class="arrival-time" id="station-stage"></bdi></dd></div>
+              <div><dt>F2 — הגעה לעמדה</dt><dd><bdi class="arrival-time" id="station-recorded"></bdi></dd></div>
+              <div><dt>תחילת משמרת מתוכננת</dt><dd><bdi class="arrival-time" id="station-start"></bdi></dd></div>
+              <div><dt>סיום מתוכנן / סוף חלון ההגעה</dt><dd><bdi class="arrival-time">20/10/2026 18:30:00 · Asia/Jerusalem</bdi></dd></div>
+              <div><dt>זמן שרת קבוע לבדיקה — קריאה בלבד</dt><dd><bdi class="arrival-time">20/10/2026 10:22:06 · Asia/Jerusalem</bdi></dd></div>
+              <div><dt>תחילת חלון הגעה מוצע</dt><dd><bdi class="arrival-time" id="station-window"></bdi></dd></div>
+              <div><dt>יציאה רשומה</dt><dd id="station-exit">לא נרשמה</dd></div>
+              <div><dt>תדריך רשום — לא משתנה ב־F2</dt><dd>לא · false בדוגמאות אלו</dd></div>
+            </dl>
+            <p><strong>הגעה לבמה אינה תנאי ל־F2.</strong> ערך stage=null מותר ונשאר null. אין הסקה של זמינות לעבודה או CTI.</p>
+            <div id="station-late" class="field" hidden><label for="station-reason">סיבת איחור לעמדה — מקטלוג סינתטי בלבד</label><select id="station-reason" aria-describedby="station-reason-help station-reason-error"><option value="">יש לבחור סיבה</option><option value="1">סיבת איחור סינתטית א׳</option></select><p id="station-reason-help" class="hint">22 דקות מחושבות, ללא עריכה; איחור לעמדה נבחן מול תחילת המשמרת, ללא סף F1. אין שדה הערה; remark=null.</p><p id="station-reason-error" class="field-error" hidden>יש לבחור סיבה מהקטלוג לפני הבדיקה. לא שונה דבר.</p></div>
+          </article>
+          <div class="surface arrival-core" id="station-operation" aria-busy="false">
+            <h2>בדיקה ללא שינוי → סקירת כל הפעולה → אישור סימולציה</h2>
+            <p id="station-status" role="status" aria-live="polite" tabindex="-1"></p>
+            <div id="station-review" hidden><h3>סקירת כל הפעולה — עדיין אפס השפעה</h3><p id="station-review-text"></p><p>רק זמן הגעה לעמדה וזיהוי מפעיל סינתטי, ובאיחור נתוני stationLate לפי §41; קבלה ורישום ביקורת מדומים בזיכרון בלבד. כל נתוני הבמה, איחור הבמה, תדריך, יציאה, חוסר ודוחות נשמרים. אין שותף: <bdi>partnerCompletion=not-invoked</bdi>.</p></div>
+            <div class="arrival-actions"><button id="station-validate" class="btn primary" type="button">בדיקת רישום — ללא שינוי</button><button id="station-confirm" class="btn primary" type="button" hidden>אישור סימולציה — הגעה לעמדה בלבד</button><button id="station-cancel" class="btn secondary" type="button">חזרה ללא שליחת פעולה</button></div>
+            <p id="station-count" class="hint"></p><p id="station-receipt" hidden></p>
+          </div>
+          <details class="surface design-tools"><summary>מעבדת עיצוב משנית — מצבים עתידיים, לא הרשאות שרת</summary><div class="design-content">
+            <div class="field"><label for="station-case">תרחיש מסירה / חסימה סינתטי</label><select id="station-case"><option value="ready">READY — הקשר תקין</option><option value="stale">שינוי עובדות / דקת אזהרה — אפס</option><option value="expired">תפוגה — אפס</option><option value="failed">שגיאה מוכחת לפני התקנה — אפס</option><option value="unknown">אובדן תשובה אחרי התקנה — UNKNOWN</option><option value="missing">אין רשומת נוכחות — NO INSERT</option><option value="already">עמדה כבר רשומה — אין overwrite</option><option value="deferred">חוסר / דוח / יציאה / מדיניות — deferred</option><option value="source">מקור לא תואם — חסום</option><option value="rights">מצב 7/9 זכויות או היעדר זכות — חסום</option><option value="loading">טעינת הקשר — מצב קפוא, לא בקשה</option><option value="error">שגיאת הקשר — אין נתונים ישנים</option></select></div>
+            <button id="station-deliver" class="btn secondary" type="button" hidden>מסירת תוצאת הדוגמה הממתינה — לא בקשת סטטוס</button>
+            <p>אין טיימר או שליחה אוטומטית. שינוי תרחיש או סיבה מבטל הכנה ו־ACK. אסימוני F1/F2, קבלות וסמני אי־ודאות נפרדים; גרסת השורה משותפת.</p>
+            <output id="station-checks" aria-label="בדיקות קישור סינתטיות בלבד"></output>
+          </div></details>
+        </div>
+        <details class="surface design-tools"><summary>היקף, זהות והתחלת הדגמה חדשה</summary><div class="design-content">
+          <p>מוצעות רק שתי זכויות חדשות: <bdi>attendance-station-arrival:prepare</bdi>, <bdi>attendance-station-arrival:commit</bdi>. מצב קריאה 7 / F1 בלבד 9 / F1+F2 11; אין הענקת הרשאה בדף. נדרש opt-in משותף ומפורש לפי §41, לא חיבור מקור חי לדוגמה.</p>
+          <p>אין שדות זמן, תאריך, מזהה, עמדה פיזית, מכשיר, סיסמה, שלוחה, מצב רוח, מנהל או טקסט HR. תוויות עבריות מוצעות, לא תעתיק מקור CP1255.</p>
+          <p>UNKNOWN אינו כישלון עם אפס השפעה: אין קבלה מאושרת, ספירה מאושרת, שליחה חוזרת, undo או שירות בירור. שינוי מקור/זהות/דור לאחר ניסיון אינו מתיר להציג הצלחה מאוחרת. יש לעצור ולפנות לבעל התהליך.</p>
+          <button id="station-reset" class="btn secondary" type="button">RESET מפעיל הדגמה — סשן סינתטי חדש בלבד, לא בירור או ביטול Oracle</button>
+          <p>RESET אינו מכריע ניסיון קודם. אין business cache, קבלות או tokens ב־history או Web Storage; רק סמני בטיחות מינימליים מותרים. Back/Forward אינם שולחים, משחזרים קבלה או מבטלים פעולה.</p>
+        </div></details>
       </section>
     </main>
   </div>
@@ -732,6 +776,21 @@
       <div class="arrival-actions"><button class="btn secondary" id="arrival-warning-cancel" type="button">ביטול האזהרה — ללא שינוי</button><button class="btn primary" id="arrival-warning-ack" type="button">הבנתי את האזהרה — מעבר לסקירה בלבד</button></div>
     </div>
   </dialog>
+  <dialog id="station-warning" aria-labelledby="station-warning-title" aria-describedby="station-warning-text">
+    <div class="design-content"><h2 id="station-warning-title">WARN — איחור בהגעה לעמדה, סימולציה בלבד</h2><p id="station-warning-text"></p><p>עדיין אפס שינוי, קבלות וביקורת. אישור האזהרה אינו פקודה: הוא פותח סקירה בלבד. ביטול או Escape מבטלים את כל ההכנה ללא שינוי.</p><div class="arrival-actions"><button id="station-warning-cancel" class="btn secondary" type="button">ביטול — ללא שינוי</button><button id="station-warning-ack" class="btn primary" type="button">הבנתי — לסקירה בלבד</button></div></div>
+  </dialog>
+  <style>
+    #station-arrival{max-inline-size:100%;overflow-wrap:anywhere}
+    #station-arrival .arrival-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    #station-arrival dd,#station-arrival output{min-inline-size:0;overflow-wrap:anywhere}
+    #station-arrival .arrival-time{display:block;white-space:normal;overflow-wrap:anywhere}
+    #station-arrival a,#station-arrival button,#station-warning button{min-block-size:48px;max-inline-size:100%;white-space:normal;overflow-wrap:anywhere}
+    #station-warning{width:620px;max-width:calc(100% - 24px);border-radius:12px;overflow:auto}
+    #station-arrival .arrival-notice{border-inline-start:4px solid var(--blue)}
+    #station-arrival [data-unknown="true"]{background:#fff3df;color:#65430e;border:2px solid #80531b;padding:16px;border-radius:12px}
+    #station-arrival output{display:block;direction:ltr;text-align:left;font-size:12px}
+    @media(max-width:760px){#station-arrival .arrival-grid{grid-template-columns:minmax(0,1fr)}#station-arrival h1{font-size:24px}#station-arrival .arrival-actions>*{width:100%}}
+  </style>
   <script>
     // Design-only navigation/interaction. No requests/business operations; safe history metadata only.
     const $ = id => document.getElementById(id);
@@ -757,12 +816,12 @@
     const nativeHistoryPush=history.pushState.bind(history),nativeHistoryReplace=history.replaceState.bind(history);
     // All old/new prototype routes keep their own entry token; replaceState never makes a new entry.
     history.pushState=(state,title,url)=>nativeHistoryPush({...state,
-      designEntryToken:documentToken+'-entry-'+(++historyEntrySequence),arrivalSafety:structuredClone(arrivalSafety)},title,url);
+      designEntryToken:documentToken+'-entry-'+(++historyEntrySequence),arrivalSafety:structuredClone(arrivalSafety),stationSafety:stationHistorySafety()},title,url);
     history.replaceState=(state,title,url)=>nativeHistoryReplace({...state,
       designEntryToken:history.state?.designEntryToken||documentToken+'-entry-'+(++historyEntrySequence),
-      arrivalSafety:structuredClone(arrivalSafety)},title,url);
-    function syncArrivalSafety(){
-      const incoming=readArrivalSafety(history.state?.arrivalSafety);
+      arrivalSafety:structuredClone(arrivalSafety),stationSafety:stationHistorySafety()},title,url);
+    function syncArrivalSafety(raw=history.state?.arrivalSafety){
+      const incoming=readArrivalSafety(raw);
       if(incoming?.unresolved&&!arrivalSafety.unresolved&&
           !supersededArrivalSessions.has(incoming.sessionToken)&&
           !settledArrivalAttempts.has(incoming.unresolved.attemptToken)){
@@ -795,15 +854,15 @@
     let viewportRestoreGeneration=0,viewportRestorePending=false,calendarScrollLock=null;
     // Restore only after synchronous render/name-link changes and focus have settled.
     function restoreViewportAfterLayout(target,top,left=0,onSettled=null){
-      const generation=++viewportRestoreGeneration,hash=location.hash;
+      const generation=++viewportRestoreGeneration,hash=location.hash,entryKey=navigationKey();
       viewportRestorePending=true;
       requestAnimationFrame(()=>{
-        if(generation!==viewportRestoreGeneration||location.hash!==hash)return;
+        if(generation!==viewportRestoreGeneration||location.hash!==hash||navigationKey()!==entryKey)return;
         const opener=target?.isConnected?target:target?.id?$(target.id):null;
         opener?.focus({preventScroll:true});
         void document.scrollingElement.scrollHeight;
         requestAnimationFrame(()=>{
-          if(generation!==viewportRestoreGeneration||location.hash!==hash)return;
+          if(generation!==viewportRestoreGeneration||location.hash!==hash||navigationKey()!==entryKey)return;
           void document.scrollingElement.scrollHeight;
           // Use the saved coordinate, never a guessed offset or an early max-scroll clamp.
           window.scrollTo({left,top,behavior:'instant'});
@@ -1078,9 +1137,25 @@
       history.pushState(null,'','#list');route();
     }));
     function route(focus=true){
-      syncArrivalSafety();
+      // Capture BOTH incoming namespaces before either replaceState wrapper writes this entry.
+      const incomingArrivalSafety=history.state?.arrivalSafety,incomingStationSafety=history.state?.stationSafety;
+      syncArrivalSafety(incomingArrivalSafety);
+      syncStationSafety(incomingStationSafety);
       lastRenderedNavigationKey=navigationKey();
       ++viewportRestoreGeneration;viewportRestorePending=false;
+      if(previousScreen==='station-arrival'&&(location.hash!=='#station-arrival'||stationCurrent()!==stationEntry))stationLeave();
+      $('station-arrival').hidden=location.hash!=='#station-arrival';
+      if(location.hash==='#station-arrival'){
+        if(previousScreen==='stage-arrival')invalidateArrivalOnNavigation();
+        ['list','search','detail','my-shifts','shift-items','employee-card','attendance','stage-arrival'].forEach(id=>$(id).hidden=true);
+        document.body.classList.remove('employee-card-view','shift-items-view');
+        document.querySelectorAll('[data-list-nav],[data-search-nav],[data-my-shifts-nav],[data-attendance-nav]').forEach(link=>{
+          const active=link.hasAttribute('data-attendance-nav');link.classList.toggle('active',active);
+          if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
+        });
+        stationRender();if(focus){window.scrollTo(0,0);$('station-title').focus({preventScroll:true})}
+        previousScreen='station-arrival';return;
+      }
       const enteringArrival=location.hash==='#stage-arrival';
       $('stage-arrival').hidden=!enteringArrival;
       if(previousScreen==='stage-arrival'&&(!enteringArrival||currentArrival()!==arrivalEntry)){
@@ -1091,8 +1166,14 @@
         document.body.classList.remove('employee-card-view','shift-items-view');
         document.querySelectorAll('[data-list-nav],[data-search-nav],[data-my-shifts-nav]').forEach(link=>{link.classList.remove('active');link.removeAttribute('aria-current')});
         document.querySelectorAll('[data-attendance-nav]').forEach(link=>{link.classList.add('active');link.setAttribute('aria-current','page')});
+        if(stationReturnsTo('stage-arrival'))stationRestoreOrigin(stationEntry);
         renderArrival();
-        if(focus){window.scrollTo(0,0);$('stage-arrival-title').focus({preventScroll:true})}
+        if(focus){
+          const restoring=stationReturnsTo('stage-arrival');
+          if(restoring)restoreViewportAfterLayout(stationEntry.originSnapshot.opener.hidden?$('stage-arrival-title'):stationEntry.originSnapshot.opener,
+            stationEntry.originSnapshot.scroll,stationEntry.originSnapshot.left);
+          else{window.scrollTo(0,0);$('stage-arrival-title').focus({preventScroll:true})}
+        }
         previousScreen='stage-arrival';return;
       }
       if(location.hash==='#my-shifts'||scheduleJourneys.has(history.state?.scheduleToken))restoreSchedule();
@@ -1105,6 +1186,8 @@
         if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
       });
       if(location.hash==='#attendance'){
+        if(stationReturnsTo('attendance'))stationRestoreOrigin(stationEntry);
+        stationRefreshInquiry();
         const leavingCard=previousScreen==='employee-card'?activeCard:null;
         const leavingItem=previousScreen==='shift-items'?activeItems:null;
         const memory=leavingCard?.screen==='attendance'?leavingCard:leavingItem?.screen==='attendance'?leavingItem:returnMemory.attendance;
@@ -1112,9 +1195,9 @@
         document.body.classList.remove('employee-card-view','shift-items-view');
         ['list','search','my-shifts'].forEach(id=>document.querySelectorAll(`[data-${id}-nav]`).forEach(link=>{link.classList.remove('active');link.removeAttribute('aria-current')}));
         if(focus){
-          const restore=['detail','my-shifts','shift-items','employee-card','stage-arrival'].includes(previousScreen);
+          const restore=['detail','my-shifts','shift-items','employee-card','stage-arrival','station-arrival'].includes(previousScreen);
           const opener=restore&&memory.opener?.isConnected&&!memory.opener.closest('[hidden]')?memory.opener:$('attendance-title');
-          if(restore)restoreViewportAfterLayout(opener,memory.scroll);
+          if(restore)restoreViewportAfterLayout(opener,memory.scroll,stationReturnsTo('attendance')?stationEntry.originSnapshot.left:0);
           else{window.scrollTo(0,0);opener.focus({preventScroll:true})}
         }
         previousScreen='attendance';return;
@@ -1394,7 +1477,9 @@
         $('attendance-status').textContent='קלט תקין להדגמה בלבד. מוצגות אותן שתי רשומות קבועות לתרחיש המפורש מתחת לכותרת, ללא קשר למסננים שנשלחו; אין סינון, סך כולל או קריאת שרת.';
         $('attendance-results-title').focus();
       });
-      document.querySelectorAll('a[href="#attendance"]').forEach(link=>link.addEventListener('click',event=>{
+      // Explicit return links have ONE owner, never this generic attendance router.
+      document.querySelectorAll('a[href="#attendance"]:not(#station-back)').forEach(link=>link.addEventListener('click',event=>{
+        if(event.defaultPrevented)return;
         if(link.id==='arrival-back'){event.preventDefault();returnArrival();return}
         event.preventDefault();if(menu.open)menu.close();
         if(location.hash!=='#attendance')history.pushState(null,'','#attendance');
@@ -1429,10 +1514,12 @@
             JSON.stringify(e.context)===JSON.stringify(expectedArrivalContext)&&
             e.actor===arrivalDemoActor&&e.actor.employeeId===null&&
             e.employeeId===e.context.employeeId&&e.shiftDayId===e.context.shiftDayId&&
-            e.attendanceKey.shiftDayId===e.shiftDayId&&e.orgUnitId===e.context.orgUnitId;
+            e.attendanceKey.shiftDayId===e.shiftDayId&&e.orgUnitId===e.context.orgUnitId&&
+            stationPhysicalTupleMatches(sharedStationRow(e.sessionToken,'shared'),stationProfiles.shared);
         }
         function arrivalBinding(e){
           return JSON.stringify([e.sessionToken,e.actor.provider,e.actor.synthetic,e.actor.employeeId,
+            'stage-arrival',stationOriginalFacts(sharedStationRow(e.sessionToken,'shared')),
             e.employeeId,e.shiftDayId,e.attendanceKey.shiftDayId,
             e.orgUnitId,e.context.contextRevision,e.context.dataSource,e.context.serverLocal,
             e.context.businessTimeZone,e.generation,e.scenario,e.reason,
@@ -1443,6 +1530,7 @@
           return arrivalContextMatches(e)&&!!e.preparation&&e.preparation.binding===arrivalBinding(e);
         }
         function arrivalUncertaintyBlocks(e){
+          if(e&&stationUnknownFor('shared',e.sessionToken))return true;
           const u=arrivalSafety.unresolved;
           if(!u)return false;
           if(!e||u.binding===null)return true; // Lost context must not become an eligible default.
@@ -1463,6 +1551,27 @@
           e.state='conflict';e.validated=false;e.ack=false;e.preparation=null;e.ackBinding=null;
         }
         function currentArrival(){return arrivalJourneys.get(history.state?.arrivalToken)||null}
+        function captureArrivalReviewDisplay(e){
+          if(e.state!=='review'||!arrivalContextMatches(e)||arrivalUncertaintyBlocks(e))return;
+          // Explicit display whitelist only: never copy preparation, binding/fingerprint, token or ACK.
+          e.retainedReviewDisplay=Object.freeze({
+            actor:e.actor,session:e.sessionToken,employeeId:e.employeeId,day:e.shiftDayId,
+            attendanceDay:e.attendanceKey.shiftDayId,source:e.context.dataSource,orgUnitId:e.orgUnitId,
+            contextRevision:e.context.contextRevision,generation:e.generation,scenario:e.scenario,reason:e.reason,
+            plan:$('arrival-plan').textContent,clock:'20/10/2026 10:22:00 · Asia/Jerusalem',
+            end:$('arrival-end').textContent,
+            summary:e.scenario==='late'?'איחור שהוצג קודם: 22 דקות · סיבה סינתטית 1.':'ללא אזהרה בתצוגה הקודמת; שדות איחור=null.',
+            scope:$('arrival-review-scope').textContent
+          });
+        }
+        function arrivalReviewDisplayMatches(e){
+          const v=e.retainedReviewDisplay;
+          return !!v&&e.state==='context-ready'&&!e.validated&&!e.preparation&&!e.ack&&!e.ackBinding&&
+            !arrivalUncertaintyBlocks(e)&&arrivalContextMatches(e)&&e.sessionToken===arrivalSafety.sessionToken&&
+            v.actor===e.actor&&v.session===e.sessionToken&&v.employeeId===e.employeeId&&v.day===e.shiftDayId&&
+            v.attendanceDay===e.attendanceKey.shiftDayId&&v.source===e.context.dataSource&&v.orgUnitId===e.orgUnitId&&
+            v.contextRevision===e.context.contextRevision&&v.generation===e.generation&&v.scenario===e.scenario&&v.reason===e.reason;
+        }
         function invalidateArrivalOnNavigation(){
           if(!arrivalEntry)return;
           arrivalWarningContext=null;
@@ -1495,9 +1604,12 @@
           if(outcome)Object.assign(entry,outcome);
           if(arrivalUncertaintyBlocks(entry)){
             entry.state='unknown';entry.effects=null;
-            entry.attemptToken=arrivalSafety.unresolved.attemptToken||null;
+            entry.attemptToken=arrivalSafety.unresolved?.attemptToken||null;
           }
           if(!arrivalContextMatches(entry))stopStaleArrival(entry);
+          const shared=sharedStationRow(entry.sessionToken,'shared');
+          const plan=entry.scenario==='late'?'2026-10-20T10:00:00':'2026-10-20T10:30:00';
+          if(!shared.stage&&!shared.station&&shared.start!==plan){shared.start=plan;shared.revision++}
           arrivalJourneys.set(token,entry);
           history.replaceState({...history.state,arrivalOriginToken:token},'','#attendance');
           history.pushState({arrivalToken:token},'','#stage-arrival');route();
@@ -1521,7 +1633,11 @@
             stopStaleArrival(arrivalEntry);
           }
           const e=arrivalEntry,late=e.scenario==='late',pending=e.state==='pending';
-          const blocked=['already','missing','loading'].includes(e.scenario)||!arrivalContextMatches(e)||arrivalUncertaintyBlocks(e);
+          const stationDependency=!!sharedStationRow(e.sessionToken,'shared').station;
+          const stationObserved=document.createElement('bdi');stationObserved.className='arrival-time';
+          stationObserved.textContent=stationTime(sharedStationRow(e.sessionToken,'shared').station);
+          $('arrival-station-observed').replaceChildren('עמדה: ',stationObserved,' · יציאה null · תדריך false. תצפית בלבד, לא קבלה או ייחוס פקודה.');
+          const blocked=stationDependency||['already','missing','loading'].includes(e.scenario)||!arrivalContextMatches(e)||arrivalUncertaintyBlocks(e);
           const locked=pending||arrivalTerminal.has(e.state);
           $('arrival-scenario').value=e.scenario;$('arrival-scenario').disabled=locked;
           $('arrival-reason').value=e.reason;$('arrival-reason').disabled=locked;
@@ -1557,7 +1673,14 @@
             'unknown':'תוצאת הרישום אינה ידועה — COMMAND_OUTCOME_UNKNOWN, effect=unknown. אין לשלוח שוב. יש לבדוק מצב בקריאה מורשית / לפנות לבעל התהליך. אין כאן שירות בירור תוצאה, קבלה מאושרת או ספירת שינויים מאושרת.'
           };
           $('arrival-status').textContent=messages[e.state]||messages['context-ready'];
-          $('arrival-review').hidden=e.state!=='review';
+          if(stationDependency&&!arrivalTerminal.has(e.state))$('arrival-status').textContent='COMMAND_SCOPE_DEFERRED — כבר קיימת הגעה לעמדה באותה תמונת דוגמה. F1 אינו חוזר או משנה אותה; אפס השפעה חדשה.';
+          $('arrival-to-station').hidden=(!['review','succeeded'].includes(e.state)&&!e.stationNavigationAvailable)||arrivalUncertaintyBlocks(e);
+          const retainedReview=arrivalReviewDisplayMatches(e);
+          if(e.retainedReviewDisplay&&!retainedReview)e.retainedReviewDisplay=null;
+          if(retainedReview&&!stationDependency)$('arrival-status').textContent='הבדיקה הקודמת בוטלה בניווט. הסקירה נשמרה לקריאה בלבד; אין אסימון או אישור אזהרה תקפים. יש לבדוק מחדש לפני פקודה.';
+          $('arrival-review').hidden=e.state!=='review'&&!retainedReview;
+          $('arrival-review-title').textContent=retainedReview?'סקירה קודמת — קריאה בלבד, נדרשת בדיקה מחדש':'סקירת כל הפעולה — עדיין ללא שינוי';
+          $('arrival-review-history-note').hidden=!retainedReview;
           const reviewPlan=document.createElement('bdi'),reviewClock=document.createElement('bdi');
           reviewPlan.className=reviewClock.className='arrival-time';
           reviewPlan.textContent='20/10/2026 '+(late?'10:00:00':'10:30:00')+' · Asia/Jerusalem';
@@ -1565,9 +1688,22 @@
           $('arrival-review-text').replaceChildren('עובד/ת דוגמה א׳ · רשומת נוכחות קיימת של אותו יום · התחלה ',reviewPlan,
             late?' · אזהרת איחור אושרה · 22 דקות · סיבה סינתטית 1.':' · ללא אזהרה; שדות איחור=null.',
             ' זמן שרת מוצע ',reviewClock);
+          if(retainedReview){
+            const v=e.retainedReviewDisplay,priorPlan=document.createElement('bdi'),priorClock=document.createElement('bdi'),
+              priorEnd=document.createElement('bdi'),priorSource=document.createElement('bdi');
+            priorPlan.className=priorClock.className=priorEnd.className=priorSource.className='arrival-time';
+            priorPlan.textContent=v.plan;priorClock.textContent=v.clock;priorEnd.textContent=v.end;priorSource.textContent=v.source;
+            $('arrival-review-text').replaceChildren('סקירה סינתטית קודמת של אותו עובד/יום · תחילה ',priorPlan,
+              ' · סיום ',priorEnd,' · זמן בדיקה קודם ',priorClock,' · מקור ',priorSource,' · ',v.summary);
+            $('arrival-review-scope').textContent=v.scope;
+          }
           $('arrival-prepare').setAttribute('aria-disabled',String(blocked||locked||e.state==='review'||e.state==='warning'));
-          $('arrival-confirm').hidden=!['review','pending'].includes(e.state);
-          $('arrival-confirm').setAttribute('aria-disabled',String(pending));
+          $('arrival-prepare').textContent=retainedReview?'בדיקת הרישום מחדש — ללא שינוי':'בדיקת הרישום — ללא שינוי';
+          $('arrival-confirm').hidden=!['review','pending'].includes(e.state)&&!retainedReview;
+          $('arrival-confirm').disabled=retainedReview;
+          $('arrival-confirm').setAttribute('aria-disabled',String(pending||retainedReview));
+          if(retainedReview)$('arrival-confirm').setAttribute('aria-describedby','arrival-review-history-note');
+          else $('arrival-confirm').removeAttribute('aria-describedby');
           $('arrival-cancel').hidden=pending;
           $('arrival-cancel').textContent=arrivalTerminal.has(e.state)?'חזרה לבירור — ללא ביטול הפעולה':'ביטול לפני אישור וחזרה לבירור';
           $('arrival-pending-help').hidden=!pending;
@@ -1591,6 +1727,7 @@
         }
         function clearArrivalPreparation(){
           if(!arrivalEntry)return;
+          arrivalEntry.retainedReviewDisplay=null; // A new check/scenario/reset never reuses display history as authority.
           arrivalEntry.validated=false;arrivalEntry.ack=false;arrivalEntry.preparation=null;arrivalEntry.ackBinding=null;
           $('arrival-reason-error').hidden=true;$('arrival-reason').removeAttribute('aria-invalid');
         }
@@ -1598,6 +1735,9 @@
           if(!arrivalEntry||arrivalTerminal.has(arrivalEntry.state)||arrivalEntry.state==='pending')return;
           clearArrivalPreparation();arrivalEntry.scenario=$('arrival-scenario').value;
           arrivalEntry.generation++;arrivalEntry.reason='';arrivalEntry.state='context-ready';renderArrival();
+          const shared=sharedStationRow(arrivalEntry.sessionToken,'shared');
+          const plan=arrivalEntry.scenario==='late'?'2026-10-20T10:00:00':'2026-10-20T10:30:00';
+          if(shared.start!==plan){shared.start=plan;shared.revision++}
         });
         $('arrival-reason').addEventListener('change',()=>{
           if(!arrivalEntry||arrivalTerminal.has(arrivalEntry.state)||arrivalEntry.state==='pending')return;
@@ -1688,7 +1828,10 @@
             e.effects=attempt.effects;e.state='succeeded'; // ONE tuple+attempt-bound volatile effect.
             arrivalRowOutcomes.set(arrivalResourceKey(e),{state:'succeeded',effects:1,attemptToken:e.attemptToken,
               scenario:e.scenario,reason:e.reason,generation:e.generation});
-            settleArrivalAttempt(e);
+              const shared=sharedStationRow(e.sessionToken,'shared');
+              shared.stage='2026-10-20T10:22:05';shared.stageLate=attempt.recorded.stageLate;
+              shared.revision++; // Same owned synthetic snapshot; never run F1 a second time.
+              settleArrivalAttempt(e);
           }
           clearArrivalPreparation();renderArrival();$('arrival-status').focus({preventScroll:true});
         });
@@ -1711,6 +1854,373 @@
         }
         $('arrival-reset').addEventListener('click',startNewArrivalDemonstration);
         $('arrival-new-session').addEventListener('click',startNewArrivalDemonstration);
+    // §42: additive local storyboard only. No transport, domain adapter or real grants.
+    // Profiles never reuse an existing inquiry/card employee with incompatible facts.
+    const stationProfiles=Object.freeze({
+      shared:Object.freeze({employeeId:'9001',day:'6201',name:'עובד/ת דוגמה א׳ — משותף ל־F1/F2',start:'2026-10-20T10:30:00',stage:null}),
+      nullStage:Object.freeze({employeeId:'9002',day:'6202',name:'עובד/ת דוגמה ב׳ — stage=null מותר',start:'2026-10-20T10:00:00',stage:null}),
+      recordedStage:Object.freeze({employeeId:'9003',day:'6203',name:'עובד/ת דוגמה ג׳ — במה רשומה מראש',start:'2026-10-20T10:00:00',stage:'2026-10-20T10:10:00'})
+    });
+    const stationRows=new Map(),stationJourneys=new Map(),stationAttempts=new Map();
+    // Only RECEIVED + validated F2 successes enter this volatile namespace.
+    // Internal installed receipts (including UNKNOWN) are never recovery/display authority.
+    const stationReceivedReceipts=new Map();
+    const stationInquiryFacts=new Map();
+    const stationSettled=new Set(),stationOldSessions=new Set();
+    let stationSafetyState=readStationSafety(history.state?.stationSafety);
+    let stationEntry=null,stationDialogContext=null;
+    const stationActor=Object.freeze({subject:'synthetic-design-administrator',provider:'synthetic',synthetic:true,employeeId:null,
+      grants:'0021',rights:'proposed-11',source:'isolated-fixture'});
+    function readStationSafety(raw){
+      if(!raw)return {session:crypto.randomUUID(),unresolved:[],prior:false};
+      if(typeof raw.session!=='string'||!Array.isArray(raw.unresolved))
+        return {session:crypto.randomUUID(),unresolved:[{key:'lost',session:'lost',attempt:'lost',kind:'station-arrival'}],prior:true};
+      return {session:raw.session,prior:raw.prior===true,unresolved:raw.unresolved.slice(0,10).map(m=>
+        m&&['shared','nullStage','recordedStage'].includes(m.key)&&typeof m.session==='string'&&typeof m.attempt==='string'&&m.kind==='station-arrival'
+          ?{key:m.key,session:m.session,attempt:m.attempt,kind:'station-arrival'}
+          :{key:'lost',session:'lost',attempt:'lost',kind:'station-arrival'})};
+    }
+    function stationHistorySafety(){return structuredClone(stationSafetyState)}
+    function syncStationSafety(raw){
+      const incoming=raw?readStationSafety(raw):null;
+      if(incoming&&!stationOldSessions.has(incoming.session))incoming.unresolved.forEach(m=>{
+        if(!stationSettled.has(m.attempt)&&!stationSafetyState.unresolved.some(x=>x.attempt===m.attempt))stationSafetyState.unresolved.push(m);
+      });
+      history.replaceState(history.state||{},'',location.href);
+    }
+    function sharedStationRow(session,key){
+      const stateKey=session+'|'+key;
+      if(!stationRows.has(stateKey)){
+        const p=stationProfiles[key];
+        stationRows.set(stateKey,{employeeId:p.employeeId,day:p.day,attendanceKey:p.day,source:'isolated-fixture',
+          orgUnitId:'0021',parentUnitId:'0012',start:p.start,end:'2026-10-20T18:30:00',stage:p.stage,
+          serverLocal:'2026-10-20T10:22:06',commitLocal:'2026-10-20T10:22:10',businessTimeZone:'Asia/Jerusalem',
+          policyRevision:'policy-fixed-v1',catalogRevision:'catalog-fixed-v1',
+          station:null,stageLate:null,stationLate:null,exit:null,briefing:false,revision:0,receipts:new Map(),audit:[]});
+      }
+      return stationRows.get(stateKey);
+    }
+    function stationUnknownFor(key,session){
+      return stationSafetyState.unresolved.some(m=>m.key==='lost'||(m.key===key&&m.session===session));
+    }
+    function stationBlockedByUnknown(e){
+      return stationUnknownFor(e.key,e.session)||(e.key==='shared'&&!!arrivalSafety.unresolved);
+    }
+    function stationCurrent(){return stationJourneys.get(history.state?.stationJourney)||null}
+    function stationCanonical(value){
+      if(value===undefined)return ['undefined'];
+      if(value===null||typeof value!=='object')return value;
+      if(Array.isArray(value))return value.map(stationCanonical);
+      return Object.keys(value).sort().map(key=>[key,stationCanonical(value[key])]);
+    }
+    function stationOriginalFacts(row){
+      // Include every owned original business fact, not just a revision or hand-picked subset.
+      // Any later missing/cancel/membership/blocker field is included automatically.
+      // Receipt/audit collections are outcomes, never original eligibility or acknowledgment proof.
+      const facts=Object.fromEntries(Object.entries(row).filter(([key])=>!['receipts','audit'].includes(key)));
+      return JSON.stringify(stationCanonical(facts));
+    }
+    function stationPhysicalTupleMatches(row,profile){
+      return row.employeeId===profile.employeeId&&row.day===profile.day&&row.attendanceKey===profile.day&&
+        row.source==='isolated-fixture'&&row.orgUnitId==='0021'&&row.parentUnitId==='0012';
+    }
+    function stationContextMatches(e){
+      const p=stationProfiles[e.key],r=sharedStationRow(e.session,e.key),s=e.selection;
+      return !!p&&!!s&&s.employeeId===p.employeeId&&s.day===p.day&&s.attendanceKey===p.day&&
+        s.source==='isolated-fixture'&&stationPhysicalTupleMatches(r,p)&&
+        e.actor===stationActor&&e.source===r.source&&e.source===s.source&&
+        e.actor.grants===r.orgUnitId&&e.session===arrivalSafety.sessionToken;
+    }
+    function stationBinding(e){
+      const row=sharedStationRow(e.session,e.key);
+      return JSON.stringify(['station-arrival',stationSafetyState.session,e.session,e.generation,e.actor,
+        e.source,e.key,e.selection,stationOriginalFacts(row),e.reason,e.example,
+        {late:stationLate(e),minutes:stationLate(e)?'22':null,warning:stationLate(e)?'STATION_ARRIVAL_LATE':null}]);
+    }
+    function stationPreparationValid(e){
+      return !!e?.prepared&&e.prepared.kind==='station-arrival'&&stationContextMatches(e)&&
+        e.prepared.binding===stationBinding(e)&&!stationBlockedByUnknown(e);
+    }
+    function stationClear(e){if(!e)return;e.prepared=null;e.ack=null}
+    function stationMark(e){
+      if(!stationSafetyState.unresolved.some(m=>m.attempt===e.attempt))stationSafetyState.unresolved.push({
+        kind:'station-arrival',key:e.key,session:e.session,attempt:e.attempt});
+      history.replaceState(history.state||{},'',location.href);
+    }
+    function stationSettle(e){
+      stationSettled.add(e.attempt);stationSafetyState.unresolved=stationSafetyState.unresolved.filter(m=>m.attempt!==e.attempt);
+      history.replaceState(history.state||{},'',location.href);
+    }
+    function stationLeave(){
+      const e=stationEntry;if(!e)return;
+      if(e.state==='pending'){e.state='unknown';stationMark(e)}
+      stationClear(e);
+      if(['review','warning'].includes(e.state))e.state='ready';
+      stationDialogContext=null;if($('station-warning').open)$('station-warning').close('navigation');
+      if(e.originSnapshot.origin==='attendance')returnMemory.attendance={opener:e.originSnapshot.opener,scroll:e.originSnapshot.scroll};
+    }
+    function stationReturnsTo(screen){
+      return previousScreen==='station-arrival'&&stationEntry?.originSnapshot.origin===screen&&
+        history.state?.designEntryToken===stationEntry.originSnapshot.entryToken;
+    }
+    function stationRestoreOrigin(e){
+      const s=e.originSnapshot;
+      s.controls.forEach(c=>{c.node.value=c.value;c.node.checked=c.checked;c.node.disabled=c.disabled});
+      if(s.origin==='attendance'){
+        $('attendance-samples').hidden=s.samplesHidden;$('attendance-status').textContent=s.status;
+        returnMemory.attendance={opener:s.opener,scroll:s.scroll};
+      }
+    }
+    function stationOpen(key,opener,from='attendance'){
+      if(!stationProfiles[key])return;
+      // Ensure an entry token exists BEFORE capturing the immutable return snapshot.
+      history.replaceState(history.state||{},'',location.href);
+      const originSnapshot=Object.freeze({origin:from,opener,entryToken:history.state.designEntryToken,scroll:window.scrollY,left:window.scrollX,
+        controls:Object.freeze(Array.from($(from).querySelectorAll('input,select')).map(node=>
+          Object.freeze({node,value:node.value,checked:node.checked,disabled:node.disabled}))),
+        samplesHidden:$('attendance-samples').hidden,status:$('attendance-status').textContent});
+      const p=stationProfiles[key];
+      const token=crypto.randomUUID(),e={key,opener,origin:from,scroll:window.scrollY,originState:Object.freeze(structuredClone(history.state)),
+        originSnapshot,selection:Object.freeze({employeeId:p.employeeId,day:p.day,attendanceKey:p.day,source:'isolated-fixture'}),
+        session:arrivalSafety.sessionToken,actor:stationActor,source:'isolated-fixture',generation:0,
+        state:'ready',example:'ready',reason:'',prepared:null,ack:null,attempt:null,effects:0};
+      stationJourneys.set(token,e);
+      history.pushState({stationJourney:token},'','#station-arrival');route();
+    }
+    const stationTime=value=>value?value.slice(8,10)+'/'+value.slice(5,7)+'/'+value.slice(0,4)+' '+value.slice(11)+' · Asia/Jerusalem':'לא נרשמה · null';
+    function stationRefreshInquiry(){
+      Object.entries(stationProfiles).forEach(([key,p])=>{
+        const r=sharedStationRow(arrivalSafety.sessionToken,key),target=stationInquiryFacts.get(key);
+        if(target)target.textContent='תחילה '+stationTime(r.start)+' · במה '+stationTime(r.stage)+' · עמדה '+stationTime(r.station)+
+          (stationUnknownFor(key,arrivalSafety.sessionToken)||(key==='shared'&&arrivalSafety.unresolved)?' · UNKNOWN: עובדות נצפות בלבד, אינן קבלה.':'');
+      });
+      const r=sharedStationRow(arrivalSafety.sessionToken,'shared');
+      $('shared-attendance-facts').textContent='רשומה קיימת · במה '+stationTime(r.stage)+' · עמדה '+stationTime(r.station)+
+        ' · יציאה null · תדריך false. עובדות בזיכרון בלבד, לא ייחוס פקודה.';
+      $('arrival-fixture-row').children[1].replaceChildren('צוות הדגמה 0021 · מוקד הדגמה 0012 · תחילה ');
+      const plan=document.createElement('bdi');plan.textContent=stationTime(r.start)+' — 20/10/2026 18:30:00 · Asia/Jerusalem';
+      $('arrival-fixture-row').children[1].append(plan);
+    }
+    const stationLate=e=>sharedStationRow(e.session,e.key).start==='2026-10-20T10:00:00';
+    function stationReceiptScopeKey(e){
+      return JSON.stringify(['station-arrival',stationSafetyState.session,e.session,e.source,e.key,e.selection,stationCanonical(e.actor)]);
+    }
+    function stationKnownReceipt(e){
+      if(!stationContextMatches(e)||stationBlockedByUnknown(e)||e.state==='unknown'||
+          ['source','rights','loading','error'].includes(e.example))return null;
+      const known=stationReceivedReceipts.get(stationReceiptScopeKey(e));
+      if(!known||known.kind!=='station-arrival'||known.received!==true||
+          known.facts!==stationOriginalFacts(sharedStationRow(e.session,e.key)))return null;
+      const receipt=known.receipt,s=e.selection;
+      return receipt.kind==='station-arrival'&&receipt.source===e.source&&receipt.session===e.session&&
+        receipt.employeeId===s.employeeId&&receipt.day===s.day&&receipt.attendanceKey===s.attendanceKey&&
+        receipt.attempt===known.attempt&&known.commandBinding&&known.preparationId?known:null;
+    }
+    function stationRender(){
+      stationEntry=stationCurrent();const e=stationEntry;
+      const unsafe=stationSafetyState.unresolved.length>0||!!arrivalSafety.unresolved;
+      $('station-safety').hidden=!unsafe&&!stationSafetyState.prior;
+      $('station-safety').textContent=unsafe?'UNKNOWN / ניסיון F1 או F2 לא מוכרע נשמר כסמן בטיחות בלבד. אותו משאב ופקודות תלויות חסומים; אין לשלוח שוב. אין בירור תוצאה בדף.':
+        'סשן הדגמה חדש נבחר במפורש. תוצאת הניסיון הישן עדיין לא הוכרעה; לא בוצע undo או בירור Oracle.';
+      $('station-chooser').hidden=!!e;$('station-selected').hidden=!e;
+      $('station-reset').disabled=e?.state==='pending'||arrivalEntry?.state==='pending';
+      if(!e)return;
+      if(e.session!==arrivalSafety.sessionToken){
+        stationClear(e);
+        if(!['success','unknown','failed'].includes(e.state))e.state='stale';
+        $('station-safety').hidden=false;
+        $('station-safety').textContent='תצוגת סשן הדגמה קודם — קריאה בלבד. אין העברת הכנה/קבלה לסשן החדש ואין הכרעת תוצאה ישנה באמצעות RESET.';
+      }
+      if(stationBlockedByUnknown(e)&&e.state!=='pending'){stationClear(e);e.state='unknown'}
+      else if(e.prepared&&!stationPreparationValid(e)&&e.state!=='pending'){stationClear(e);e.state='stale'}
+      const known=stationKnownReceipt(e);
+      if(!['pending','unknown'].includes(e.state)){
+        if(known){
+          if(e.state!=='success')e.state='retained-success';
+          e.effects=1;e.reason=known.reason;
+        }else if(['success','retained-success'].includes(e.state)){
+          // An old acknowledged result is NOT display authority for changed source/scope/facts.
+          e.state='ready';e.effects=0;
+        }
+      }
+      const r=sharedStationRow(e.session,e.key),p=stationProfiles[e.key],late=stationLate(e),pending=e.state==='pending';
+      const terminal=['success','retained-success','unknown','failed'].includes(e.state);
+      const block=['missing','already','deferred','source','rights','loading','error'].includes(e.example)||
+        !!r.station||!!r.exit||r.stationLate!==null||e.state==='unknown'||!stationContextMatches(e);
+      $('station-person').textContent=p.name+' · יום עבודה 20/10/2026';
+      $('station-stage').textContent=stationTime(r.stage);$('station-recorded').textContent=e.example==='already'?'20/10/2026 10:15:00 · Asia/Jerusalem — תרחיש קריאה בלבד':stationTime(r.station);
+      $('station-start').textContent=stationTime(r.start);
+      $('station-window').textContent=stationTime(late?'2026-10-20T09:00:00':'2026-10-20T09:30:00');
+      $('station-exit').textContent=e.example==='deferred'?'תלות לא נתמכת — עצירה, לא חזרה לעמדה':stationTime(r.exit);
+      const concealed=['loading','error','source','rights'].includes(e.example)||!stationContextMatches(e);
+      $('station-person').closest('article').hidden=concealed;
+      $('station-late').hidden=!late;
+      $('station-reason').value=e.reason;$('station-case').value=e.example;
+      $('station-reason').disabled=$('station-case').disabled=pending||terminal;
+      const states={ready:'READY — בדיקה וסקירה טרם בוצעו. אפס שינוי.',
+        warning:'WARN — נדרש אישור אזהרה בלבד, ללא פקודה או שינוי.',
+        review:'סקירת כל הפעולה — עדיין אפס שינוי. נדרש אישור SIMULATION מפורש.',
+        cancelled:'האזהרה בוטלה. אפס שינוי, קבלות וביקורת; נדרשת בדיקה מחדש.',
+        invalid:'יש לתקן את הסיבה המסומנת. אפס שינוי.',
+        stale:'STALE_PREPARATION — עובדות, זהות, מקור, תחום, דקה או תוקף השתנו. אפס התקנה בניסיון זה; בדיקה ו־ACK מחדש.',
+        pending:'הפקודה המדומה ממתינה למסירה ידנית. אין ביטול שמבטיח undo ואין ניסיון חוזר.',
+        success:'SUCCESS — סימולציה בלבד: הגעה אחת לעמדה בזיכרון, קבלה אחת וביקורת אחת. partnerCompletion=not-invoked.',
+        'retained-success':'RETAINED KNOWN SUCCESS — קבלת fixture-committed שכבר התקבלה ואומתה באותו הקשר. קריאה בלבד, אין רישום חדש. isolated-fixture · partnerCompletion=not-invoked.',
+        failed:'שגיאה מוכחת לפני התקנה — effect=none, אפס שינוי/קבלות/ביקורת בניסיון זה.',
+        unknown:'UNKNOWN — תוצאת הפקודה אינה ידועה. אין לשלוח שוב. אין קבלה או מספר שינויים מאושרים; נדרש בירור על ידי בעל התהליך.'};
+      const blocks={missing:'COMMAND_SCOPE_DEFERRED / ATTENDANCE_ROW_REQUIRED — אין רשומת נוכחות; NO INSERT. אפס.',
+        already:'ALREADY_REGISTERED — זמן קיים נשמר; אין overwrite, re-entry או הצלחת פקודה חדשה.',
+        deferred:'COMMAND_SCOPE_DEFERRED — תלות חסומה לפי §41. אין ביטול חוסר, דוחות או שינוי יציאה.',
+        source:'מקור אינו isolated-fixture — עצירה ללא fallback, ללא שינוי.',
+        rights:'LIVE_WRITES_DISABLED / FORBIDDEN — מצב 7/9 או היעדר זכויות F2. דוגמת מצב עתידית, לא בדיקת הרשאה אמיתית.',
+        loading:'טוענים הקשר… דוגמת מצב קפואה ללא בקשה או spinner.',
+        error:'לא ניתן להציג הקשר עקבי — אין נתונים ישנים או fallback.'};
+      $('station-status').textContent=states[e.state]||states.ready;
+      if(block&&!terminal&&!pending&&e.state!=='stale')$('station-status').textContent=blocks[e.example]||
+        (r.station?blocks.already:r.exit||r.stationLate!==null?blocks.deferred:states.stale);
+      $('station-status').dataset.unknown=String(e.state==='unknown');
+      $('station-operation').setAttribute('aria-busy',String(pending));
+      $('station-review').hidden=e.state!=='review';
+      $('station-review-text').textContent=p.name+' · 20/10/2026 · תחילה '+stationTime(r.start)+
+        ' · זמן שרת לבדיקה 20/10/2026 10:22:06 · Asia/Jerusalem · זמן התקנה מדומה קבוע 20/10/2026 10:22:10 · Asia/Jerusalem · '+
+        (late?'WARN אושר: 22 דקות, סיבה סינתטית א׳.':'ללא אזהרה; lateReasonCode=null.')+
+        ' במה לפני ואחרי: '+stationTime(r.stage)+'; אינה נכתבת שוב.';
+      $('station-validate').hidden=['review','pending','success','retained-success','unknown','failed'].includes(e.state);
+      $('station-validate').disabled=block||pending||terminal;
+      $('station-confirm').hidden=!['review','pending'].includes(e.state);$('station-confirm').disabled=pending||block;
+      $('station-cancel').hidden=pending;$('station-deliver').hidden=!pending;
+      const showKnown=!!known&&['success','retained-success'].includes(e.state);
+      $('station-count').textContent=['pending','unknown'].includes(e.state)?'השפעה מאושרת: לא ידועה. אין הוכחת אפס.':
+        e.state==='retained-success'?'קבלה ידועה קודמת: 1 / ביקורת 1. רישום חדש בתצוגה זו: 0.':
+        'השפעה מאושרת בניסיון זה: '+(e.state==='success'?'1 / קבלה 1 / ביקורת 1':'0 / קבלה 0 / ביקורת 0');
+      $('station-receipt').hidden=!showKnown;
+      $('station-receipt').textContent=showKnown?'קבלה סינתטית שכבר התקבלה ואומתה ל־F2 בלבד · fixture-committed · isolated-fixture · partnerCompletion=not-invoked · במה נשמרה: '+stationTime(known.receipt.stage)+
+        ' · עמדה: '+stationTime(known.receipt.station)+' · זיכרון מקומי בלבד; לא הוכחה עמידה, שאילתת שרת או חיבור אמיתי.':'';
+      $('station-checks').textContent=JSON.stringify({kind:'station-arrival',sameAttendanceKey:r.attendanceKey===p.day,
+        syntheticEmployeeNull:e.actor.employeeId===null,sourceExact:e.source==='isolated-fixture',
+        revision:r.revision,preparationBound:stationPreparationValid(e),ackBound:!!e.ack&&e.ack===e.prepared,
+        unknown:stationBlockedByUnknown(e),receivedReceiptBound:showKnown,physicalTupleBound:stationContextMatches(e),
+        confirmedEffects:e.state==='unknown'||pending?'UNKNOWN':e.effects});
+    }
+    function stationBack(event){
+      event.preventDefault();const e=stationCurrent();
+      if(e?.state==='pending')return;
+      if(e){history.back();return}
+      history.pushState(null,'','#attendance');route();
+    }
+    $('station-back').addEventListener('click',stationBack);$('station-cancel').addEventListener('click',stationBack);
+    ['station-case','station-reason'].forEach(id=>$(id).addEventListener('change',()=>{
+      const e=stationEntry;if(!e||['pending','success','retained-success','unknown','failed'].includes(e.state))return;
+      stationClear(e);e.generation++;e.example=$('station-case').value;e.reason=$('station-reason').value;e.state='ready';
+      $('station-reason-error').hidden=true;$('station-reason').removeAttribute('aria-invalid');stationRender();
+    }));
+    $('station-validate').addEventListener('click',()=>{
+      const e=stationEntry;if(!e||$('station-validate').disabled)return;
+      stationClear(e);
+      if(stationLate(e)&&e.reason!=='1'){
+        e.state='invalid';stationRender();$('station-reason-error').hidden=false;
+        $('station-reason').setAttribute('aria-invalid','true');$('station-reason').focus();return;
+      }
+      // Pure preview: no row/receipt/audit/attempt mutation.
+      e.prepared=Object.freeze({kind:'station-arrival',binding:stationBinding(e),id:crypto.randomUUID()});
+      e.state=stationLate(e)?'warning':'review';stationRender();
+      if(e.state==='warning'){
+        stationDialogContext={entry:e,prepared:e.prepared,accepted:false};
+        $('station-warning-text').textContent=stationProfiles[e.key].name+' · 20/10/2026 · התחלה '+stationTime(sharedStationRow(e.session,e.key).start)+
+          ' · שרת 20/10/2026 10:22:06 · Asia/Jerusalem · איחור 22 דקות · סיבת איחור סינתטית א׳.';
+        $('station-warning').showModal();$('station-warning-cancel').focus({preventScroll:true});
+      }else $('station-confirm').focus();
+    });
+    $('station-warning-cancel').addEventListener('click',()=>$('station-warning').close('cancel'));
+    $('station-warning-ack').addEventListener('click',()=>{
+      const d=stationDialogContext;
+      if(d&&d.entry===stationCurrent()&&d.prepared===d.entry.prepared&&stationPreparationValid(d.entry))d.accepted=true;
+      $('station-warning').close(d?.accepted?'ack':'stale');
+    });
+    $('station-warning').addEventListener('close',()=>{
+      const d=stationDialogContext;stationDialogContext=null;
+      if(!d||d.entry!==stationCurrent()||location.hash!=='#station-arrival')return;
+      const e=d.entry;
+      if(!stationPreparationValid(e)||d.prepared!==e.prepared){stationClear(e);e.state='stale'}
+      else if(d.accepted){e.ack=e.prepared;e.state='review'}
+      else{stationClear(e);e.state='cancelled'}
+      stationRender();(e.state==='review'?$('station-confirm'):$('station-validate')).focus({preventScroll:true});
+    });
+    $('station-confirm').addEventListener('click',()=>{
+      const e=stationEntry;if(!e||e.state!=='review'||$('station-confirm').disabled)return;
+      if(!stationPreparationValid(e)||(stationLate(e)&&e.ack!==e.prepared)){stationClear(e);e.state='stale';stationRender();return}
+      e.attempt=crypto.randomUUID();
+      stationAttempts.set('station-arrival|'+e.session+'|'+e.key+'|'+e.attempt,{kind:'station-arrival',prepared:e.prepared,state:'pending'});
+      e.state='pending';stationMark(e);stationRender();
+    });
+    $('station-deliver').addEventListener('click',()=>{
+      const e=stationEntry;if(!e||e.state!=='pending')return;
+      const a=stationAttempts.get('station-arrival|'+e.session+'|'+e.key+'|'+e.attempt),r=sharedStationRow(e.session,e.key);
+      if(!a||a.state!=='pending'||a.kind!=='station-arrival')return;
+      // Own pending marker is not an external UNKNOWN blocker during this manual delivery.
+      const own=stationSafetyState.unresolved.filter(m=>m.attempt===e.attempt);
+      stationSafetyState.unresolved=stationSafetyState.unresolved.filter(m=>m.attempt!==e.attempt);
+      const valid=stationPreparationValid(e)&&a.prepared===e.prepared&&(!stationLate(e)||e.ack===e.prepared);
+      stationSafetyState.unresolved.push(...own);
+      if(!valid||['stale','expired'].includes(e.example)||r.station){
+        e.state='stale';e.effects=0;stationSettle(e);
+      }else if(e.example==='failed'){e.state='failed';e.effects=0;stationSettle(e)}
+      else{
+        // Synchronous design counter example only; not a backend mutex/idempotency implementation.
+        const receipt=Object.freeze({kind:'station-arrival',source:e.source,session:e.session,
+          employeeId:r.employeeId,day:r.day,attendanceKey:r.attendanceKey,
+          attempt:e.attempt,stage:r.stage,station:r.commitLocal});
+        r.station=receipt.station;r.stationLate=stationLate(e)?Object.freeze({reasonCode:'1',minutes:'22',remark:null}):null;
+        r.receipts.set('station-arrival|'+e.attempt,receipt);r.audit.push({kind:'station-arrival',attempt:e.attempt});r.revision++;
+        if(e.example==='unknown'){e.state='unknown';e.effects=null;stationMark(e)}
+        else{
+          // A successful manual delivery represents RECEIVING and validating this exact receipt.
+          // This branch alone promotes a result; UNKNOWN's internal row receipt never enters here.
+          const received=receipt.kind===a.kind&&receipt.kind===e.prepared.kind&&
+            receipt.attempt===e.attempt&&receipt.source===e.source&&receipt.session===e.session&&
+            receipt.employeeId===e.selection.employeeId&&receipt.day===e.selection.day&&
+            receipt.attendanceKey===e.selection.attendanceKey&&receipt.stage===r.stage&&receipt.station===r.station;
+          if(received){
+            stationReceivedReceipts.set(stationReceiptScopeKey(e),Object.freeze({kind:'station-arrival',received:true,
+              receipt,attempt:e.attempt,commandBinding:a.prepared.binding,preparationId:a.prepared.id,
+              facts:stationOriginalFacts(r),reason:e.reason}));
+            e.state='success';e.effects=1;stationSettle(e);
+          }else{e.state='unknown';e.effects=null;stationMark(e)}
+        }
+      }
+      a.state=e.state;stationClear(e);stationRender();$('station-status').focus({preventScroll:true});
+    });
+    $('station-reset').addEventListener('click',()=>{
+      if(stationEntry?.state==='pending'||arrivalEntry?.state==='pending')return;
+      const prior=stationSafetyState.prior||stationSafetyState.unresolved.length>0;
+      stationOldSessions.add(stationSafetyState.session);
+      stationSafetyState={session:crypto.randomUUID(),unresolved:[],prior};
+      startNewArrivalDemonstration(); // Explicit new shared fixture session, never original-outcome reconciliation.
+      history.replaceState({},'','#station-arrival');route();
+    });
+    const toStation=document.createElement('button');toStation.id='arrival-to-station';toStation.type='button';
+    toStation.className='btn secondary';toStation.hidden=true;toStation.textContent='F2 — הגעה לעמדה באותו הקשר (שלב אופציונלי)';
+    toStation.addEventListener('click',()=>{
+      const e=currentArrival();if(!e||(!['review','succeeded'].includes(e.state)&&!e.stationNavigationAvailable)||arrivalUncertaintyBlocks(e))return;
+      captureArrivalReviewDisplay(e);
+      e.stationNavigationAvailable=true; // Read-only context navigation, NOT retained preparation/ACK.
+      stationOpen('shared',toStation,'stage-arrival');
+    });
+    $('arrival-operation').append(toStation);
+    const f2Inquiry=document.createElement('article');f2Inquiry.className='surface arrival-core';
+    const f2Heading=document.createElement('h2');f2Heading.textContent='שורות F2 סינתטיות נוספות — לא תוצאות המסננים ולא נתונים חיים';f2Inquiry.append(f2Heading);
+    const f2Explain=document.createElement('p');f2Explain.textContent='שלושה פרופילים נפרדים וקבועים; רשומת נוכחות קיימת בכל אחד. א׳ חולק בדיוק את העובד/היום/מפתח הנוכחות והגרסה של F1. ב׳ מוכיח stage=null מותר; ג׳ מוכיח במה קיימת בלי לחייב מעבר ב־F1. אין פעולות על שתי שורות הבירור המקוריות.';f2Inquiry.append(f2Explain);
+    Object.entries(stationProfiles).forEach(([key,p])=>{
+      const block=document.createElement('div'),label=document.createElement('p'),link=document.createElement('a');
+      block.className='arrival-core';label.textContent=p.name+' · 20/10/2026 · צוות הדגמה 0021 · רשומת נוכחות קיימת';
+      link.href='#station-arrival';link.className='btn secondary';link.id='station-open-'+key;
+      link.textContent='F2 — בחירת הגעה לעמדה בסימולציה בלבד';
+      link.setAttribute('aria-label',link.textContent+' — '+p.name+', 20 באוקטובר 2026');
+      link.addEventListener('click',event=>{event.preventDefault();stationOpen(key,link)});
+      const facts=document.createElement('bdi');facts.className='arrival-time';stationInquiryFacts.set(key,facts);
+      block.append(label,facts,document.createElement('br'),link);f2Inquiry.append(block);
+    });
+    $('attendance-samples').append(f2Inquiry);
     // Explicit selected detail action; never manufactures an item-detail endpoint.
     const detailItems=document.createElement('a');
     detailItems.href='#shift-items';detailItems.className='items-link';detailItems.textContent='הפסקות וחריגות חלקיות במשמרת ←';
