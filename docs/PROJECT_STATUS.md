@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-20, approved fixture F2 implementation and QA complete; publication pending.
+Last updated: 2026-10-20, approved fixture F2 implementation and QA published; native TEST still blocked.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -106,7 +106,7 @@ stop with the operational input still owned by TEST operator/DBA.
 
 ### SHF-F2-CONTRACTS-20 — independent approved implementation
 
-**State: canonical PUBLISHED / fixture implementation and QA PASS / publication READY.** The user expressly requested autonomous implementation
+**State: canonical PUBLISHED / fixture implementation and QA PASS / feature PUBLISHED.** The user expressly requested autonomous implementation
 after the host-reference blocker was reported. Native TEST F1 remains the
 priority and remains externally blocked; no further DNS/Oracle attempts are
 planned without the missing authoritative input.
@@ -239,15 +239,17 @@ Backend remains stable. QA changed no repository files
 and closed all its listeners/browser processes. Full WCAG/manual AT/calendar
 target coverage and UAT remain unverified.
 
-Next safe action: publish the scoped F2 consumer implementation and this
-checkpoint, verify remote synchronization, then resume the real TEST pilot
-only after the unchanged independent SERVER_HOST input is supplied and its
-remaining current-runtime gates pass. Fixture F2 completion does not authorize
-native F2, new write contracts, schema changes, production release or EMS/CTI.
+Next safe action: obtain the unchanged independent SERVER_HOST input from the
+TEST operator/DBA. Resume the real TEST pilot only after that input is supplied
+and its remaining current-runtime gates pass within the approved scope.
+Fixture F2 is complete and published; this does not authorize native F2, new
+write contracts, schema changes, production release or EMS/CTI.
 
 #### SHF-F2-CONSUMER-PUBLISH-20 — publication review
 
-Publication review PASS; commit/push verification is still pending. The frozen
+Publication review PASS. Feature commit
+`04c081ab6ccff7a0e35cd84543c45c8df5ca2f43` was normally pushed to `origin/main`
+and independently read back from the remote Git ref. The frozen
 checkout scope is exactly 47 paths: 18 backend, 28 frontend and this checkpoint
 (28 tracked modifications and 19 new files). The three canonical contract/test
 files remain unchanged from `08fc75adaa2d71c49929c84b491f2e5aa5ad7bd4`.
@@ -269,8 +271,12 @@ The owner and independent QA results above remain the runtime evidence:
 backend 639/639, frontend 477/477, typechecks, three profile build/artifact checks,
 both independently closed findings and the stated browser/boundary limitations.
 Native M1 remains externally blocked with zero actual arrivals. After the normal
-push, verify the actual remote SHA, 0/0 synchronization, empty index and unchanged
-published source checkout before recording the published feature checkpoint.
+feature push, actual remote SHA equaled local HEAD, synchronization was 0/0,
+the index was empty, all 47 published paths matched the source checkout and the
+three canonical files still matched their prerequisite commit. Only the same
+23 noncandidate names remained dirty; none were read, hashed or staged.
+This status-only follow-up records those observed publication results; its own
+commit identity is discoverable from Git history rather than a self-SHA field.
 
 ### Environment/SID implementation and QA evidence
 
