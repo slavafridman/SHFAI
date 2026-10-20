@@ -3720,3 +3720,445 @@ Baseline has no ANY change; changed uses OWN employee/dayType4/start-or-split an
 **Genuine contract ambiguities:** none identified. **Remaining owners/unknowns:** backend owns seven-right runtime alignment, same-session admission-context plumbing and session error preservation; UI/QA owns RTL/origins/races/visual/browser/a11y regression; database/platform/backend+QA owns actual TEST scheduling/grants/VPD/synonyms/source purity, encoding, query cost and native cancellation/cleanup. Exact original Hebrew decoding/business copy remains business/UI verification, not a reason to reopen the accepted shape. No new approval requested for §§35–36, intentional fixes, capability or minimal future TEST scope. No release/deployment/live-operation approval inferred.
 
 **Next action / stop:** return these canonical **v0.1** types and approval record to caller; parent assigns disjoint backend/UI consumers against them. This task stops after types + approval/handoff: no consumer/application/frontend/DB/Git/install/legacy execution, agent delegation, publication or deployment.
+
+## 38. Attendance registration safety and first-command proposal v0.1
+
+**Task:** SHF-ATTENDANCE-COMMAND-DESIGN-20. **Date:** 20 October 2026. **Status:** review — source analysis and proposed contracts only; **NOT APPROVED**, no canonical types or implementation. User20Oct10:13 “Ok do it” authorizes analysis/design and showing contracts + mock **before** implementation, not database writes. Caller reports approved read-only main `81bc2c...`; this is caller-supplied evidence, not a Git verification. §§1–37, the seven existing capabilities, read-only DTOs, Oracle configuration and all other user changes remain outside this edit.
+
+**Recommendation:** first approve a **pure preparation/validation flow plus an isolated, synthetic, in-memory stage-arrival command**, with no native Oracle writer. Do not expose all five commands as a feature. Native stage arrival is blocked on transaction/audit/coexistence and per-environment write authorization, not on selecting a newer platform. Read-only live gaps remain a separate QA task through the caller; this document neither closes nor reassigns them.
+
+### 38.1 Evidence boundary and controlling first-arrival path
+
+Evidence labels are §1.2's S/C/D/T/I/P/U. Here **T means historical dictionary evidence already in the repository**, not a query performed today. The source-contract catalog is absent from the docs listing; existing §2 inventories locate paths, then the following controlling code was read. Source reachability is configured/source-observed, **not deployed/runtime-verified**. Paths below are repository-relative; `M` means `old/SHF/src/bzq/shf/model/AttendanceDataModel.java`, `A` means `old/SHF/src/bzq/shf/actions/AttendanceDataAction.java`, `W` means `old/SHFWeb/WebContent`.
+
+| Step | Evidence and actual effect (S/C unless stated) |
+|---|---|
+| Select a management attendance row | `W/jsp/attendance.jsp:62–91` loads attendance JS and late validator; `W/jsp/attendance_table.jsp:118–165,208–238` derives activities, exact row day/employee, attendance facts and `attend_reg_stage` gate, then calls `attendCol`/`tadrechCol`. This is the active stage-arrival entry, **not** `employee_arrive_stage.jsp`. |
+| Checkbox / briefing coupling | `W/js/attendance.js:10–35,40–119,122–203`: missing disables stage/briefing in UI; checking briefing on an unarrived row calls stageArrive with tadreech=1; ordinary stage checkbox sends tadreech=0. Unchecking asks browser confirmation, can restore checkbox state, otherwise invokes undo. Client updates grid state before server outcome and recognizes HTML TITLE strings rather than a typed result. Do not preserve that optimistic-success defect. |
+| Transport/form | JS `stageArrive` sends **GET** `/shf/attendance/setAttendance.do?employeeId=...&agentDayId=...&attendanceValue=...&tadreech=...`. `W/WEB-INF/struts-config.xml:280–285` maps `param=stage`, activity `attend_reg_stage`, `EmployeeArriveForm`; `old/SHF/src/bzq/shf/forms/EmployeeArriveForm.java:18–78` carries attendanceValue/tadreech/lateSource. No submitted timestamp. |
+| Actor admission | `old/SHF/src/bzq/shf/actions/BaseAction.java:86–145,170–179`: session profile required, configured activity checked, profile user/name/units copied into form. This is **not proof** that the selected employee/day belongs to an allowed unit; stage SQL below binds day only. Missing-activity rejection is commented out (§4). |
+| Action decision, not router | `A:317–339`: attendanceValue>0 calls `checkReports()`, optionally chooses report popup, **then still calls registerStage()**. Otherwise undoRegisterStage. ShiftLateException changes forward to late popup. `A:469–479` catches ShfException into legacy ActionErrors/fail and attaches form. Normal no-warning stage branch has no explicit success forward; HTML/empty response is not a durable receipt. |
+| Reports before stage mutation | `M:1156–1235 checkReports`: plain query of unapproved `SHF_EMPLOYEE_REPORTS` by submitted form employeeId, joined day/change/employee/attendance/org, returning report vector. It does **not** approve, clear or cancel missing. EmployeeId is not checked against the independently loaded day here. Report approval/cancel is a separate later mutation (`M:2330–2397`, `A:341–351`, config780–783). |
+| Resolve day | `M:131–193 populateAgentDay`: reads D left C and E using `substr(E.EMP_ID_NUMBER,1,8)=NVL(C.NEW_EMPLOYEE_ID,D.EMP_ID_NUMBER)`, day bind; first row only. No unique-cardinality, cancellation, active/locked, day-type, attendance-existing or resource-scope guard in registerStage. `old/SHF/src/bzq/shf/bean/AgentDayBean.java:1017–1029` uses NEW_SHIFT_START/END when nonnull, otherwise baseline. This differs from §37 inquiry's branch-own selection. |
+| Controlling lateness and write | `M:1237–1304 registerStage`: resolves parent moked from loaded employee org; reads getMinutesBeforeLateParam; JVM new Date/Calendar, **late iff now + parameter minutes > effective shift start** (strict). lateMinutes uses SHFUtils.getMinutesBetween(start, adjusted now). UPDATE attendance by day sets **STAGE_ARRIVAL_TIME=now, STAGE_ARRIVAL_USER=profile first+last, TADREECH=submitted value**; zero-row exception causes INSERT of those four fields including day. **Only after UPDATE/INSERT does it throw ShiftLateException.** Existing arrival can be overwritten. No cancellation/missing clear, stage-late fields or explicit commit/rollback in this method. |
+| Warning, supplement, cancel | `W/jsp/late_popup.jsp:40–48,91–175` uses late reason catalog, editable lateMinutes/lateRemark, hidden lateSource/eventType/day; closing only clears HTML. `W/jsp/attendance.jsp:69–83`, `W/WEB-INF/validation.xml:43–47` client-check required/integer/notzero minutes and selected radio. `W/js/attendance.js:206–239` sends a second GET addEvent. `A:130–150` → `M:240–250 addEvent` dispatches lateSource stage→`addStageLate` (`M:1013–1050`), updating **STAGE_LATE_REASON_ID/MINUTES/REMARK** by day, silently ignoring zero rows. Closing popup does **not** undo stage arrival. No demonstrated server equivalent of all client constraints in this path. |
+| Commit / failure return | Each stage/report/late helper opens/closes its own `new DBAccess()`; neither action nor stage model owns an encompassing transaction. Proprietary DBAccess source/default auto-commit/close behavior is unavailable (§3.4); no decompilation/execution. Therefore “write was issued before warning” is S; **exact default-constructor commit point is U**. ShfException is not proof of rollback. A close failure can replace the warning/error after a write; response loss cannot prove no effect. |
+
+**Full first-stage-arrival path:** attendance results JSP → stage checkbox → stageArrive GET/form → BaseAction profile/activity → stage action checkReports → populateAgentDay + org parameter/JVM clock → registerStage UPDATE or INSERT → possible checked warning → popup → separate stage-late UPDATE. There is **no direct EMS sender, session EJB or MDB invocation in this examined path**. `W/jsp/employee_arrive_stage.jsp:1–10` is instead the **station-registration success fragment**, displaying stationArrivalTime (config274–279); its name is misleading. Database triggers, deployed interceptors and external observers remain U, so absence of a Java sender is not proof of absence of all integration effects.
+
+### 38.2 Five-event field/control migration and adjacent dependencies
+
+This matrix bounds dependencies; it does not approve station/exit/exception implementation. Hebrew labels in the eventual UI are proposed copy, not translations of undecoded CP1255 text.
+
+| Event / actor and legacy entry | Fields, controlling decisions and writes | Include / defer in first proposal |
+|---|---|---|
+| **Stage arrival — supervisor/authorized attendance operator**; path above, activity attend_reg_stage | Row employee/day; stage checkbox, coupled briefing checkbox; server arrival time/profile name; parent-unit late parameter; outstanding reports; stage late reason/minutes/remark follow-up. Undo (`M:1117–1153`) clears stage time/user/late triplet and sets TADREECH=0, without station-state guard. | Include pure context/validation and **fixture-only first registration of an existing attendance row**. Include fixture late warning + explicit confirmation/reason; no missing/report resolution, undo, briefing registration, split/P2, correction or overwrite. Existing briefing null/0 only, proposed command sets0. This narrowing and pure-before-write warning are intentional changes requiring approval. |
+| **Station arrival — supervisor or employee agent**; config274–279/290–293, A160–178/263–273 | Management `attendance.js:414–453 stationRegister` → employeeArrive → registerStation; self `employee_arrive.jsp:223–240` form employeeArriveStation → station_agent. `M:1054–1115`: populate day, late iff now>shiftStart, UPDATE/zero-row INSERT station time/user **before checked late exception**. Management opens late popup; self catches, recalculates minutes and calls addLate, then mood when>0. `M:947–1011 addLate` updates late triplet; zero-row fallback INSERT **also creates station arrival time/user**. Mood `M:2622–2665` upserts SHF_EMPLOYEE_ENTRANCE_MOOD by day/entryCode; catches/logs many failures. | Defer command, mood and self-service. Do not infer station arrival from stage. Frontend missing/locked/no-station gating is not a backend invariant. Separate future actor-to-employee binding needed; synthetic employeeId=null cannot enter self route. |
+| **Station exit — agent or supervisor**; config294–297/338–343; A181–223/286–291 | Management JS `attendance.js:576–611` direct employeeExit; self `agentAttendance.js:35–45` browser confirmation → employeeStationExit. Self action reruns currentAgentDay and compares `(shiftEnd-now)/60000 > unit maxExitBeforeEnd`; manager list then earlyExit JSP if true, otherwise optional mood **before** exit. `M:1883–1979 exitStation`: pre-read existing exit; UPDATE where exit NULL **and station arrival NOT NULL**; zero rows returns dayExitNotRegistered; existing exit dayExitAlreadyRegistered. Success itself is a **ShfException(shf.success.dayExitSucceeded)**. No stage-based guard. | Defer. Preserve distinction success-shaped exception vs business failure in characterization; do not map all ShfException to HTTP failure or assume browser confirm is server authorization. |
+| **Late reporting/cancel — attendance operator; agent auto-late**; late popup/addEvent/viewLate | Editable reason, **integer minutes**, remark; stage vs station source changes columns. Client “required/notzero” is not proven positivity/range server validation. addStageLate zero rows ignored; station addLate fallback can write arrival. cancelLate/cancelStageLate (`M:1984–2050` vicinity) clear respective triplets; no rollback of original arrival. ViewLate uses populateAttendance, does not choose stage-specific displayed fields in inspected popup. | Fixture stage-late reason/remark only, **minutes derived, not editable** in bounded draft. Manual minute override, late corrections/cancellation and general event API deferred pending business decision. Do not silently treat stage popup station-prefilled fields as intended stage semantics. |
+| **Early exit — agent + named approving manager**; config784–787, A225–261, employee_earlyExit.jsp | JSP78–117: hidden day/date/time/employee/mood, **editable reason, manager selection and remark**; planned date/end time displayed, not user time editors. `agentAttendance.js:47–60` prepends manager text into remark and browser-confirms. `EmployeeDataModel.java:1098–1161` rejects future date, combines date+getHour (conversion failure substitutes current time), INSERTs SHF_EMPLOYEE_EVENTS with **SHF_EMPLOYEE_EVENT_ID.NEXTVAL**; action catches event failure **and still tries mood/exitStation**, catches exit error and forwards success. No verified manager-identity approval check or encompassing transaction. JSP sends `time`; model uses getHour: exact bean binding compatibility not established. | Entire command deferred, including manager authorization, separate event/mood/exit partial outcomes. No calendar/timepicker for these hidden planned fields merely because they are named date/time. Never copy fallback-to-now as validation. |
+
+**Missing/report/cancel dependencies (S):** `A:151–158` calls `cancelMissing(day)` independently; JS attendance.jsp84–91 asks confirmation, attendance.js334–363 sends GET. `M:2036–2087` (cancelMissing symbol) explicitly uses **DBAccess(false)**, clears MISSING_TIME/MISSING_REMARK/MISS_REASON_ID, DELETEs **SHF_EMPLOYEE_REPORTS for the day**, commits internally; on DB failure attempts rollback, ignores rollback failure, close can still fail **after commit**. This does not clear STAGE_ARRIVAL_USER written by updateMissing. `M:255–340 addMissing/updateMissing` can then lock the employee through EmployeeDataModel after a separate missing update. Neither missing cancellation nor report approval is a pure prerequisite, nor an automatically authorized consequence of arrival. Reports approval writes APPROVED/BY/TIME (`M:2363–2397`); cancelReport DELETE SQL contains a suspect alias (`M:2330–2360`), not a reason to run it to test.
+
+### 38.3 Transaction sequence, internal commits, audit and uncertain windows
+
+```mermaid
+sequenceDiagram
+  participant U as Browser
+  participant A as Attendance action/model
+  participant D as Default DBAccess sessions (commit policy unknown)
+  participant C as cancelMissing local transaction (separate)
+  U->>A: stage checkbox (legacy GET)
+  A->>D: checkReports + populateAgentDay reads (separate helpers)
+  A->>A: JVM clock + parent-unit threshold
+  A->>D: UPDATE stage time/user/TADREECH or INSERT on zero rows
+  Note over A,D: W1: write issued; default commit/close ownership U
+  alt late
+    A->>A: throw checked ShiftLateException AFTER DML
+    A->>D: close helper session (can fail)
+    A-->>U: late popup (NOT a no-write preview)
+    alt user submits reason
+      U->>A: second GET addEvent, lateSource=stage
+      A->>D: separate UPDATE stage-late fields + close
+    else closes popup
+      Note over U,D: No stage undo/rollback invoked
+    end
+  else normal
+    A->>D: close helper session
+    A-->>U: optional report HTML or empty response
+  end
+  Note over U,D: W2: close/response loss may follow persisted effect; do not retry
+  opt separate missing cancellation (NOT called by registerStage)
+    U->>C: confirmed cancelMissing
+    C->>C: clear missing + delete reports
+    C->>C: explicit COMMIT
+    Note over C: W3: subsequent close/error cannot undo committed work
+  end
+```
+
+There is no discovered normal request-wide commit/rollback owner for the stage/station/late/early-exit chain. Default DBAccess behavior, application-server enlistment/isolation and deployed middleware are **unknown**, not assumed auto-commit. Explicit DBAccess(false)/commit/rollback in cancelMissing proves local intent and an internal commit boundary, not distributed atomicity.
+
+**Ledger and login audit are separate paths, not invented stage effects.** Historical `docs/reverse-engineering/oracle-transaction-function.csv`, function source lines4–10: SHF_INS_AND_RETURN_LASTID has PRAGMA AUTONOMOUS_TRANSACTION; INSERT SHF_TRANSACTIONS with SHF_TRANSACTIONS_ID.NEXTVAL/CURRVAL; COMMIT; return ID. `BreakDataModel.java:3260–3306` invokes it through **SELECT ... FROM dual**. It survives caller rollback; sequence allocation is not a durable command receipt. §9's managed-break sender/MDB have separate transactions and uncertain partner outcome. Never invoke this function, any custom function under SELECT, sequence or mutating validator for preparation.
+
+`LoginAction.java:90–139` performs authorization/profile/session initialization and conditionally calls `PlatformModel.insertMobileAudit` after mobile-login flags; `PlatformModel.java:31–65` INSERTs SHF_MOBILE_AUDIT `(EMP_ID_NUMBER,ACTION_ID,ACTION_DATE)` using default DBAccess, catching/logging insertion errors and possibly throwing on close. No explicit sequence or commit in that INSERT. Login audit can fail independently of established session and is not attendance-command audit. Do not use real login initialization to create a synthetic principal or call it as a preview helper.
+
+| Failure window | Required interpretation |
+|---|---|
+| Known rejection **before any DML/side-effect call** | no command effect; safe to correct draft and explicitly validate again. |
+| DML attempted, helper throws warning/error or closes | legacy outcome may include writes; no automatic replay/compensating undo. A warning is not a rollback. |
+| Missing cancel committed, later error/response loss | deletion/clearing may persist despite failed HTTP outcome; outer rollback cannot restore it. |
+| Autonomous ledger committed; later business rollback | ledger persists; partner may independently act. No atomic Oracle/EMS or global exactly-once claim. |
+| COMMIT sent, connection lost or acknowledgment lost | **outcome unknown** until approved authoritative reconciliation; not “failed, retry.” |
+| Successful business commit, serialization/browser loss | same ambiguity to client; transport timeout is not evidence of rollback. |
+
+### 38.4 First bounded scenario, identities, clock and architecture (P)
+
+**Fixture scenario F1:** an explicitly selected employee + planned shift-day from existing read-only navigation, exactly one effective employee/day/org match in an isolated synthetic fixture; exactly one **existing** attendance row; no stage/station arrival or station exit, no missing record, no outstanding unapproved reports, briefing null/0, stage-late triplet null, no split/P2 or cancelled/non-activity day. Valid planned start/end and synthetic parent-unit late policy required. Existing arrival is **not** a duplicate success for a new command; block overwrite. Absent attendance row/unsupported dependencies are deferred, not silently INSERTed. These stricter guards are proposed first-scenario constraints, **not newly discovered legacy validation**.
+
+Fixture F1 writes only its in-memory analogue of source-backed SHF_ATTENDANCE day/stage-time/stage-user/TADREECH, plus stage-late triplet iff confirmed late. It is not a shared database adapter, native simulation or partner result. Fixture audit/command receipts live only in isolated process memory. Production/native command availability is always false in this proposal.
+
+**Draft capability/identity API — submit exactly for approval; do not edit canonical union yet:**
+
+* Keep existing PrincipalV1, IdentityResponseV1, AuthenticationRequest/Provider and existing seven capability meanings/DTOs unchanged. Proposed additive rights are exactly **`attendance-stage-arrival:prepare`** (context + pure validate) and **`attendance-stage-arrival:commit`** (F1 commit). Commit requires **both**. Neither `attendance:read`, Administrator label nor UI display grants them implicitly.
+* Future approved mock provider returns its existing synthetic subject/displayName, provider=`synthetic`, synthetic=true, roles=[Administrator], **employeeId=null**, existing seven rights plus these two in that order; exact orgUnitIds remain configured exact teams. No national/personal reference or selected employee in principal, no `actAs`, self inference or impersonation parameter. An employee ID selected for the resource is not actor authentication.
+* Backend central policy admits capabilities **before source access**, copies exact J01 grants (<=100, leading zeroes intact), resolves unique day/effective employee and org, and checks exact team membership at context/validate/commit. Parent G01 is policy lookup only, not authorization expansion. Same generic404 for absent/mismatched/out-of-scope resource; malformed principal401, missing capability403. Empty scope authorizes no command. Employee/agent “self” and manager approval actions are deferred; first actor is an authorized operator selecting a resource, not a synthetic employee.
+* Draft configuration value `attendanceStageArrivalMode` is exactly `disabled | isolated-fixture`; default/omitted=`disabled`. `isolated-fixture` requires configured fixture source, explicit synthetic mock opt-in and local-development/isolated-test-demo; reject production, Oracle source, mixed/unknown values **before listen**. No environment value enables live DML. Deny HTTP command before writer/connection acquisition when disabled. Existing read-only Oracle configuration is **not changed**. Outside mock require configured installed real provider or fail; real-provider implementation deferred. Authentication error never falls back to Administrator. New local synthetic rights grant no DB/broker permission.
+
+**Layer contract:** HTTP parses/version-validates/serializes and obtains authenticated context; application `PrepareStageArrival`, `ValidateStageArrival`, `CommitStageArrival` owns authorization, clock, confirmation and outcome; pure domain policy accepts immutable facts; separate `StageArrivalContextPort` supplies bounded facts, `StageArrivalUnitOfWorkPort` owns fixture mutex/snapshot+conditional effect, `CommandReceiptPort`/`CommandAuditPort` are fixture-memory seams only. Domain never imports HTTP, Oracle or messaging. No stage command calls legacy methods, existing detail HTTP or nested independent transactions.
+
+```text
+Angular/Material form -> HTTP -> centralized identity/resource policy
+                                   -> stage-arrival application -> pure rules
+                                        | Clock / context / fixture UoW / receipt / audit ports
+                                        X Oracle writer / EMS transport (not supplied)
+```
+
+**Clock/time:** legacy uses JVM Date/Calendar, not browser time and not a verified database zone. Proposed backend Clock supplies one instant per validation and a fresh instant **under commit ownership**, converted using configured business IANA zone (reuse approved zone; do not infer it from credentials or machine locale). Arrival is server-fixed; no request date/time/timezone/UTC offset, retrospective edit or browser clock. Store/render local Gregorian `YYYY-MM-DDTHH:mm:ss`, seconds precision consistent with historical Oracle DATE; truncate subsecond, not round. Oracle DATE has no zone/offset, so repeated DST local seconds cannot identify an instant; first fixture rejects unresolved/ambiguous local policy boundaries rather than guessing. Validation returns separate UTC instant for expiry provenance, not a claim existing Oracle values are UTC.
+
+Late predicate preserves strict `now + configuredMinutes > shiftStart`; fixture minutes are proposed integer floor of positive civil-minute difference after zone-safe calculation, minimum0. **Exact SHFUtils rounding/DST behavior has not been characterized**; derived-only minutes, allowing0 at subminute threshold instead of client notzero, require approval and later characterization before native use. No editable arrival calendar/timepicker. Original late minutes can be edited; that override is deferred, not secretly supported. Planned-day selection is explicit, not “today,” nearest shift or synthetic self. `currentAgentDay*` (`M:1338–1830`) matches full user personal reference and time windows, takes first row, and contains a changed attendance join `C.NEW_EMPLOYEE_ID=A.SHF_EMPLOYEE_DAY_ID`; **do not reuse** its selection/defaults for commands.
+
+### 38.5 Exact draft REST/DTO, warning and failure contract (P, not canonical)
+
+Only F1/fixture is eligible for later implementation after approval. Paths name business resources, not Struts dispatches. Let **B** = `/api/v1/employees/{employeeId}/shift-days/{shiftDayId}/stage-arrival`.
+
+| Method/path | Exact request | Success |
+|---|---|---|
+| **GET B/context** | Path IDs only; no query/body |200 `StageArrivalContextDraftV1` |
+| **POST B/validations** | JSON `StageArrivalDraftV1` |200 `StageArrivalValidationDraftV1`; **pure**, no attendance/audit/ledger writes, no token-consumption side effect to business state |
+| **POST B/commands** | JSON `StageArrivalCommitDraftV1` |200 `StageArrivalReceiptDraftV1` only after fixture UoW completion, or typed problem; never fake202/operation URI |
+
+All shown properties required, null only where explicit; unknown/duplicate JSON keys/duplicate headers and coercions rejected. This fenced block is **documentation**, no .mts/OpenAPI/canonical files are created:
+
+```typescript
+type StageArrivalDraftV1 = {
+  lateReasonCode: string | null; // positive canonical decimal <=38 digits; selected fixture LATE_REASON catalog
+  lateRemark: string | null;     // plain text <=500 code points, no control chars; null if no remark
+};
+type StageArrivalContextDraftV1 = {
+  employeeId: string; shiftDayId: string; orgUnitId: string;
+  planned: { startLocal: string; endLocal: string };
+  recorded: { stageArrivalLocal: string | null; stationArrivalLocal: string | null;
+    stationExitLocal: string | null; briefing: boolean | null };
+  serverTime: { instant: string; local: string; businessTimeZone: string };
+  eligibility: "eligible" | "already-recorded" | "deferred";
+  blockers: Array<"ATTENDANCE_ROW_REQUIRED" | "MISSING_PRESENT" | "REPORT_REVIEW_REQUIRED"
+    | "UNSUPPORTED_DAY" | "DEPENDENT_ATTENDANCE_PRESENT" | "EXISTING_STAGE_LATE"
+    | "BRIEFING_PRESENT">;
+  lateReasonOptions: Array<{ code: string; label: string | null }>;
+  dataSource: "isolated-fixture";
+};
+type StageArrivalWarningDraftV1 = {
+  code: "STAGE_ARRIVAL_LATE"; minutes: string; // canonical nonnegative integer <=10 digits
+};
+type StageArrivalValidationDraftV1 = {
+  employeeId: string; shiftDayId: string;
+  state: "ready" | "warning-requires-confirmation";
+  evaluatedAt: string; evaluatedLocal: string; expiresAt: string; businessTimeZone: string;
+  fingerprint: string; validationToken: string;
+  warnings: StageArrivalWarningDraftV1[];
+  confirmationRequired: boolean;
+  dataSource: "isolated-fixture";
+};
+type StageArrivalCommitDraftV1 = {
+  commandId: string; // lower-case UUID v4, client-generated ONCE per intended command
+  draft: StageArrivalDraftV1;
+  validationToken: string; fingerprint: string;
+  confirmation: null | { accepted: true; warningCodes: ["STAGE_ARRIVAL_LATE"] };
+};
+type StageArrivalReceiptDraftV1 = {
+  commandId: string; employeeId: string; shiftDayId: string;
+  outcome: "fixture-committed";
+  recorded: { stageArrivalLocal: string; briefing: false;
+    stageLate: null | { reasonCode: string; minutes: string; remark: string | null } };
+  committedAt: string; businessTimeZone: string;
+  replayed: boolean;
+  partnerCompletion: "not-invoked";
+  dataSource: "isolated-fixture";
+};
+type StageArrivalProblemDraftV1 = {
+  type: string; title: string; status: number; code: string; requestId: string;
+  commandId: string | null;
+  effect: "none" | "rolled-back" | "unknown";
+  nextAction: "correct-and-validate" | "prepare-again" | "stop" | "reconcile";
+  invalidParameters?: Array<{ name: "employeeId" | "shiftDayId" | "lateReasonCode"
+    | "lateRemark" | "commandId" | "draft" | "validationToken" | "fingerprint"
+    | "confirmation" | "query" | "body"; reason: "required" | "invalid-format" | "unsupported" }>;
+};
+```
+
+ID grammar: employee positive canonical decimal1–38 digits, day positive1–10; never JS Number/personal reference. Civil timestamps Gregorian years0001–9999 including seconds, no Z/offset; instant/evaluatedAt/expiresAt/committedAt are RFC3339 UTC with Z. org ID exact source text under existing team validation. Catalog max100 options + overflow check; duplicate/malformed/missing required policy facts fail500, not first-wins. Context exposes no missing reason/remark, report body, manager/name/photo/nationalID/medical information or arbitrary employee directory; generic blockers suffice. Fingerprint is exactly64 lower-case hex; token opaque base64url43 characters (256 random bits); client must not parse/alter it. Validation option labels escaped plain text.
+
+**Validation and warnings:** eligible on-time draft must have both late fields null; otherwise422 BUSINESS_VALIDATION_FAILED. Late with missing/invalid reason is422 (reason required and currently selectable), remark optional; with reason returns exactly one STAGE_ARRIVAL_LATE warning and `confirmationRequired=true`. On-time returns []/false/ready. Validating never writes business/audit tables, login audit, receipts or custom functions, and never calls legacy registerStage/addLate/cancelMissing; only ephemeral validation-context memory is allowed. This is an intentional repair of legacy write-before-warning.
+
+Each validation token lives **120 seconds**, server-memory only, bound to authenticated subject/provider/synthetic flag/exact authorization scope, environment/source, employee/day, normalized draft, policy revision, planned/attendance/report/missing/briefing facts and evaluated warning/minutes. Fingerprint hashes canonical relevant facts/draft/policy/time classification, not a fabricated DB version. Token record holds evaluated instant/zone, expiry and the earliest warning/minute transition; expiry is the earlier of120s or that transition. GET does not issue commit permission. A token is neither a durable operation ID nor idempotency record.
+
+At commands: central policy again, then check existing scoped command receipt/reservation as38.6 specifies **before enforcing token expiry for a new effect**; otherwise validate token/path/draft/fingerprint binding and lifetime. Require null confirmation on no warnings, or **accepted:true plus exact displayed warningCodes** on warning. No client-supplied confirmation timestamp, generic boolean bypass or “accept all future warnings.” Under the fixture mutex/UoW, reread original facts, sample clock, rerun rules and compare fingerprint/warning set/minutes; changed facts/scope/threshold/expiry→409 STALE_PREPARATION **before mutation**, prepare/validate again. Commit timestamp is **fresh backend time**, not frozen preview time; a still-valid classification does not imply identical seconds. Cancel/back from warning sends no commit, consumes no business effect. If warning changes between showing and commit, require new explicit confirmation, never silently accept. GET may display already-recorded/deferred eligibility; validate/commands reject it with ALREADY_REGISTERED/COMMAND_SCOPE_DEFERRED, respectively, rather than issuing a usable token.
+
+**Problem allowlist and effect semantics:** envelope above is independent draft, **does not widen existing ProblemV1**. `type=urn:shf:problem:<code>`, sanitized stable title, requestId; only defined invalidParameters, no offending input/token/SQL. 400 INVALID_REQUEST (also405 + Allow at known routes); 413 REQUEST_TOO_LARGE; 415 UNSUPPORTED_MEDIA_TYPE; 401 UNAUTHENTICATED; 403 FORBIDDEN or LIVE_WRITES_DISABLED; 404 SHIFT_DAY_NOT_FOUND; 422 BUSINESS_VALIDATION_FAILED; 409 ALREADY_REGISTERED, COMMAND_SCOPE_DEFERRED, STALE_PREPARATION, CONFIRMATION_REQUIRED, COMMAND_ID_CONFLICT or COMMAND_IN_PROGRESS; 503 DEPENDENCY_UNAVAILABLE/DEPENDENCY_TIMEOUT; 500 AMBIGUOUS_ATTENDANCE/INVALID_SOURCE_DATA/INTERNAL_ERROR. Those are `effect=none` when rejection precedes effect, nextAction correct-and-validate for400/413/415/422, prepare-again for stale/confirmation, otherwise stop. Known aborted UoW may report `rolled-back` **only when proven no internally committed/external effect**. Any attempted write/commit whose durable outcome cannot be proved returns503 **COMMAND_OUTCOME_UNKNOWN**, `effect=unknown,nextAction=reconcile`; never downgrade to ordinary dependency timeout/rolled-back. This unknown code can be fault-injected in fixture tests, but does not certify native recovery.
+
+Requests: query forbidden including bare `?`; GET body forbidden; POST application/json UTF-8 only, no compression, max8192 body bytes, reject unknown fields/duplicate keys and unsupported headers, token never URL. Header budget16KiB. Responses JSON/problem+json, Cache-Control:no-store and nosniff, context64KiB, validation/receipt16KiB, problem16KiB; bound before fixture effect where possible. Total request budget5000ms, no automatic retry/polling/cache/late success. Abort before UoW→none; after entering attempted effect do not claim cancellation undid it. Limit local command concurrency to one per employee/day and bound receipt/token memory (proposed <=1000 tokens, <=1000 receipts, reject saturation503 before effects). Do not evict in-flight receipts. Origin allowlist/no wildcard credential CORS; loopback isolated prototype only; cookie auth would require CSRF protection before use. No plaintext tokens/secrets/business payloads in logs, URL, local/sessionStorage, service-worker or screenshots; minimal requestId/commandId/outcome diagnostics only.
+
+### 38.6 Idempotency, native conditional-write design and coexistence gate
+
+**Fixture-only guarantee (P):** reserve `(environment,subject,employeeId,shiftDayId,commandId)` under mutex; payload identity includes normalized draft/confirmation and token/fingerprint. Identical in-flight request→409 COMMAND_IN_PROGRESS, no second application; completed identical request→same recorded receipt, replayed=true **without another write**, even if token subsequently expires, provided identity/scope still authorized. Different payload under same identity→409 COMMAND_ID_CONFLICT. Retain terminal receipt15 minutes after completion, tokens at most120s; bounded local process memory, no cross-instance/restart durability. New commandId on an already-arrived day→409 ALREADY_REGISTERED, **not** attributable replay. State equality alone cannot identify actor/command or distinguish a legacy writer.
+
+The proposed fixture UoW installs business state, terminal receipt and fixture audit together under the same process mutex after prevalidation/capacity checks; a pre-install exception leaves all unchanged. Injected lost acknowledgment after installation produces unknown to the client while retaining the receipt. No independent delayed callback may fabricate a receipt or success. This process-local test mechanism is **not** evidence Oracle business/audit/receipt storage can participate in the same transaction.
+
+After timeout/network loss **no automatic retry even with commandId**. Keep the ID in volatile client state and show unknown until an explicitly approved read-back/reconciliation action. User-triggered retry/reconciliation API is **not approved or added here**; after process restart/receipt expiry, do not manufacture an original receipt from current attendance. Existing read-only detail may show an arrival, but cannot prove which command created it. No status resource/202, durable deduplication or global exactly-once implied.
+
+**Future Oracle sketch ONLY, not implementable authorization:** source backs existing SHF_ATTENDANCE fields above. Historical `oracle-columns.csv:17–38` gives day NUMBER(10,0), nullable DATE arrival columns, user VARCHAR2(100 BYTE), stage-late remarks VARCHAR2(2000 BYTE), integer minutes/reason/TADREECH; `schema-usage-map.csv:5,29–32` records attendance/day_changes/day PKs and attendance FK. This is not current physical metadata or grants proof. `oracle-triggers.csv` is empty in the evidence package; it does **not** prove absence of present triggers. Current constraints/status, defaults, VPD/synonyms/grants, function/interceptor effects, encoding bytes and audit compatibility remain U.
+
+If separately designed/approved for a named TEST environment, one application-owned **non-autocommit connection** would lock the **existing employee-day original row** plus relevant existing change/attendance rows in deterministic order, uniquely resolve employee+scope+policy, reread dependencies and clock **inside that transaction**, then conditionally UPDATE existing SHF_ATTENDANCE where day matches, stage/station/exit remain NULL and expected prerequisite columns match. Original field predicates/NULL-safe comparisons and row locks, **not a fabricated VERSION column**, provide a bounded compare-and-set proposal. Changed employee/org/policy/report inserts can still race unless every relevant writer follows a compatible lock/ownership protocol; locking an absent change/report/attendance row is not a gap lock. Source legacy stage UPDATE does not respect expected-current-value predicates and may overwrite new arrival after release.
+
+Row count **0**→no INSERT/upsert/retry; rollback and classify stale/deferred only after safe scoped reread. **1**→only then potential commit, after all required audit compatibility checks. **>1**→rollback, ambiguity fault; no partial-success/last-wins. Missing attendance row→defer (future insertion/unique-conflict design is a separate decision). Do not use existing SHF_TRANSACTIONS or audit tables as an idempotency/outbox store absent source-backed compatibility/grants approval. Current stage fields contain no commandId or durable receipt; native stable duplicate-command attribution is **unavailable** in this baseline. No schema/new-column-later promise.
+
+No live native command until there is a **named writer-ownership/coexistence plan** (legacy writer disabled/routed for approved test actors/time or verified shared original-row protocol), proven source predicates/current metadata and audit outcome. Existing PK does not serialize application intent, and same-second DATE values cannot distinguish repeats. DDL, new index/table/sequence/outbox, autonomous routine or broker worker cannot be introduced to “fix” this gate. App-owned rollback cannot undo cancelMissing's internal commit, autonomous ledger, a separately committed login audit/event/mood or partner effect. F1 excludes all these paths.
+
+**Audit:** legacy arrival user is display-name provenance, not verified immutable actor/command audit. Fixture `CommandAuditPort` records synthetic subject, commandId, scoped employee/day and outcome in memory only; validate/cancel creates no persistent audit. Required native audit storage, encoding/byte limits, retention, grants, failure policy and atomic relationship to business update are **unknown and blocking**; do not smuggle subject/commandId into existing name/remark columns. Infrastructure/native DB audit behavior is outside app guarantees.
+
+**EMS abstract boundary:** no sender required by examined registerStage Java flow. No new broker/client/bridge/worker/batch. If environment owners establish attendance requires partner completion, affected native command remains deferred. Future abstract `AttendancePartnerPort` request would be `{commandId,employeeId,shiftDayId,event:"stage-arrival",occurredLocal,businessTimeZone}`; result discriminant `not-submitted | submitted | partner-confirmed | partner-rejected | unknown`, with nullable partnerReference. `submitted` means handoff only; `partner-confirmed` requires actual authoritative partner evidence. DTO/wire compatibility is not yet established or approved. Fixture receipt **always** says not-invoked, never partner-confirmed; no simulated delay/success can stand in for completion.
+
+### 38.7 Minimal fixture acceptance and separately gated native TEST plan
+
+All cases below are **planned, not run**. No existing read-only QA result is upgraded by this proposal.
+
+| Case | Required acceptance |
+|---|---|
+| F01 identity/policy | Existing seven-right principal unchanged; absent new prepare/commit right403 before ports; synthetic employeeId null, selected pair mandatory; exact-team mismatch404, no org expansion. Mock disabled/production/Oracle-source combinations fail closed; no fallback. |
+| F02 pure warning preview | GET/validate, invalid late draft, repeat validate, cancel/back perform **zero** fixture business writes/audit/receipt and zero DB/function/ledger/login/messaging calls. Return ready or exact late warning, not success. |
+| F03 first arrival | Unique existing attendance row satisfies all F1 guards; one fixture effect with fresh server second, correct synthetic provenance, briefing0; unrelated fields unchanged; fixture marker/not-invoked persistent. |
+| F04 warning confirmation | Strict equality at threshold on-time, +subsecond late/minutes0, minute transition, reason scope and remark limits; missing/extra confirmation blocks before effect; cancel changes nothing; explicit confirmation writes stage-late triplet once. Characterize derived-minute deviation separately. |
+| F05 scope/dependency/ambiguity | Missing row, outstanding report, missing, briefing1, station actual, preexisting late, cancelled/split/P2/nonactivity→deferred; already stage-recorded409; duplicate context/attendance/catalog500 even equal projected values; no insert/overwrite/cancelMissing. |
+| F06 race | Two tokens/IDs for same original row, planned owner/scope/policy/report/missing changes, clock crosses warning/minute→only one effect or both reject; stale prepare returns409 and requires renewed confirmation. |
+| F07 duplicates | Same-ID in-flight, identical completed, mismatched payload, new ID on arrived state, receipt expiry/restart: bounded **process-local** guarantees only; no false durable idempotency. |
+| F08 outcome windows | Deadline before effect none; known fixture rollback no mutation; injected post-effect/commit-ack loss unknown, no automatic retry/success; late async completion cannot change screen to succeeded. Read-back cannot attribute current state to lost receipt. |
+| F09 boundaries/privacy | Strict IDs/duplicate JSON/unknown keys/media/bytes/overflow, clock Gregorian/DST/day rollover/seconds, no browser-zone conversion or arrival editing; no PII/token logs/persistent browser storage; no unauthorized port calls. |
+| F10 UI/back/reads | All form states in38.8, repeated clicks one command, Back/Forward restores origin filter/date/time/location/page/focus without resubmit; separate live-read QA remains external; all existing seven read contracts immutable. |
+
+**Future native TEST is NOT authorized.** Before even planning execution, user + DBA/security must name **all**: environment/service/account (no secret here); approved synthetic **DB actor identifier and selected synthetic employee/day identifiers**; exact table/column SELECT and allowed **UPDATE** scope; required audit target/grants and allowed DML; allowed time window; writer exclusion mechanism; before-image capture/data scope; approved restoration method and responsible operator; post-restore verification and failure/unknown-outcome escalation owner. These names/method are presently **unprovided, blocked**. A privileged account/full-access discussion or prior read-column scope is not write permission. No credentials, connection or protected environment file needed for this design.
+
+Once separately approved, native plan would first verify dictionary/grants/trigger/VPD/encoding/policy facts using specifically authorized nonmutating metadata/plain-table reads (no custom functions); establish rollback ownership and fault windows; then, only under separately approved DML, characterize known rowcount1/0/multiple guard, concurrent legacy ownership, commit acknowledgment loss, cleanup and audit failure; record exact before/after and apply the **named approved** restoration method. Rollback is not a restoration plan for internal/autonomous commits; sequence numbers cannot be “unconsumed.” If audit/integration/recovery would require extra unapproved DML or cannot be restored, stop rather than widen scope. No proposed native test needs to run legacy JSPs/batch/broker.
+
+### 38.8 Caller-routed UI designer handoff for §39, checks and approval gate
+
+**UI design/mock only next, through caller, not delegated here.** Use existing approved Bezeq visual language, modern Angular21/Material/CDK/Material3 baseline, Hebrew/RTL and WCAG2.2AA. Keep Node24 and approved Oracle11.2/driver26 Thick/Client19.3 combination **unchanged as caller-approved**; do not reinterpret the driver shorthand, install/upgrade or use historical metadata as new support certification. No new platform/tooling/version gate. This task made no fresh external compatibility check; current approval is reused, not asserted independently vendor-verified today.
+
+Proposed route `/employees/:employeeId/shift-days/:shiftDayId/stage-arrival`, opened from explicit existing day context, never new standalone self/menu. Proposed labels: `רישום הגעה לבמה`, `בדיקת הרישום`, `אישור ורישום`, `ביטול`, `חזרה להקשר הקודם`; late warning `נדרש אישור מפורש לרישום הגעה באיחור`; unknown `תוצאת הרישום אינה ידועה. אין לשלוח שוב את הפעולה.` Business owner to review term במה. Source CP1255 labels were not decoded by tools; these are proposals, not exact recovered text.
+
+§39 must show **before implementation** a reviewable mock of:
+
+* ready with exact employee/day/unit and planned date/start/end, server-time/zone **read-only**, no nationalID/photo/private report data; persistent isolated-fixture/synthetic notice;
+* validation-error with Hebrew field association/summary; warning-requires-confirmation with exact minutes, reason/remark, separate explicit confirm and cancel (no prechecked confirmation or auto-submit);
+* committing with duplicate-submit guard; succeeded **only from actual fixture receipt**, visibly demo-only, recorded second and partner not invoked; failed with proven-none/rollback distinct from **unknown outcome** and conditional read-back/reconciliation unavailable notice, never timer-derived success;
+* back navigation preserving independent volatile origin filters (including workLocations), pagination, selected employee/day, scroll/opener/focus and downstream return chain; changing context invalidates token/confirmation and late responses; Back never replays commit. Abort of browser request after commit begins does not promise cancellation.
+
+Use calendar/timepicker controls **only for genuinely editable legacy temporal fields in their later approved workflows**: existing inquiry date/time filters stay as approved; stage/station arrival and exit timestamps are fixed server values, no fake picker. Original lateMinutes is numeric, reason radio/select and remark text, not timepicker; derived minutes readonly in F1. Early-exit JSP date/time are hidden planned values and display labels, not editable controls; defer command rather than invent a date editor. F1 no briefing checkbox, mood, manager/medical fields or undo. Hebrew accessible labels, RTL DOM order, LTR-isolated IDs/time, keyboard/focus-trapped warning dialog, Escape→cancel-with-no-effect and focus restoration, visible focus, live-region committing/error/unknown feedback and320px layout must be specified/tested by UI designer/QA.
+
+**Checks actually done:** read project instructions, brief, information-system-engineer skill (all ranges), latest §37 and relevant §§3/9/35–36 evidence; catalog absence established by docs listing; followed existing routes/schema inventories to the JSP/JS/form/action/model code cited here; manually distinguished stage vs misleading station fragment, strict threshold and DML-before-warning, separate late supplement, current-agent selection defect, success-shaped exit exception, independent early-event/mood/exit, internal cancelMissing commit, autonomous ledger and login audit. Only this append is targeted. Static design review of request/response/null/error/capability/clock/confirmation/fixture/live-denial and rowcount/failure boundaries; no execution PASS claimed.
+
+**Not run / reasons:** tools used only for permitted file views and targeted patch. No Git/diff/hash/status/publication, shell/build/run/typecheck/lint/test/parser/browser/mock rendering, legacy/JAR/decompilation, DB/SQL (including custom-function SELECT), network/EMS/batch/agents/install or process access. Native metadata, grants, actual default DBAccess commit behavior, runtime race/cancellation/encoding/performance and restored-state proof remain unverified. The organization-restricted Oracle environment file was **never opened, searched, decoded or used to infer contents**. No credentials or real personal records sought. Preservation is targeted append scope, not an automated byte-level proof concerning the caller's23 dirty files.
+
+| Blocker / risk | Owner / required next evidence |
+|---|---|
+| First write design and exact capability/DTO/config/intentional behavior changes not approved | User via caller: approve or amend **§38 v0.1 F1 fixture-only**; approval must explicitly exclude native DML/release. |
+| Read-only live gaps | Separate QA owner assigned by caller; no execution/delegation here and no claimed closure. |
+| UI/mock not shown yet | UI designer through caller: propose **§39 + mock**, mapped states/fields above; user reviews before implementation. |
+| Default commit semantics, current metadata, native audit/grants/encoding and restoration unknown | DBA/security/backend owners; native blocked pending named TEST scope + separate access/write approvals, no DDL workaround. |
+| Legacy writers, policy/time/minute rules and report/absence business choices | Business owner + legacy/backend owners: agree narrowed behavior/fixture characterization and explicit writer ownership before any native design promotion. |
+| EMS/partner requirement outside visible Java path | Integration owner: confirm/defer requirement; abstract ports only, no simulated real completion. |
+
+**Approval request / next action:** review §38 v0.1 now, including two additive draft rights and exact three endpoint shapes, fixed server timestamp, fixture-only existing-row first arrival, pure warning/explicit confirmation, derived-minute restriction, no overwrite/missing/report/briefing/P2/self commands and no durable replay guarantee. Then caller requests §39/UI mock; **only after exact user approval of contracts + mock** may a separately assigned phase materialize canonical types and implement isolated fixture behavior/tests. No Oracle writer, existing read-only config change, transport, DDL or release follows from that approval. Stop here after grounded proposal.
+
+---
+
+## 39. Stage-arrival UI proposal v0.1
+
+**Task:** SHF-STAGE-ARRIVAL-DESIGN-20. **Date/capture:** 20 October 2026. **Status: review — DESIGN ONLY, NOT APPROVED.** User20Oct10:13 “Ok do it” is design authorization, not implementation or live DML authorization. Controlling prerequisite is **§38 v0.1**, not a new interpretation of registration. Changed artifacts are only this appended §39 and additive [existing HTML#stage-arrival](design/shifter-redesign-v0.1.html#stage-arrival), both proposal v0.1. Existing seven screens and their approval remain in force; the additional command affordance is explicitly a new proposal.
+
+### 39.1 Evidence, bounded F1 and decisions
+
+Read project instructions, agent brief, ui-design-engineer skill, exact §38 including DTOs/warnings/receipts/expiry/native gate, existing approved Bezeq HTML shell and seven screen/navigation/state patterns. Source-contract catalog is absent at its instructed path; used baseline inventories/references instead. Direct controlling-source rereads:
+
+* `old/SHF/src/bzq/shf/model/AttendanceDataModel.java:1237–1304`: parent-unit policy, JVM clock, strict lateness; UPDATE, zero-row INSERT and **then** ShiftLateException. No normal encompassing commit owner demonstrated.
+* `old/SHF/src/bzq/shf/actions/AttendanceDataAction.java:317–339`: checkReports before registerStage, but report presence does not stop registration; warning selects popup after model call.
+* `old/SHFWeb/WebContent/js/attendance.js:140–203`: checkbox/grid changes before response; mutating GET; TITLE-based popup recognition. §38.1 supplies JSP, form and separate late supplement references.
+
+These are **source-observed**, not executed or deployed evidence. §38's default DBAccess commit uncertainty remains unknown; do not convert “write issued” into proof of exact commit time. New narrow eligibility, before-write warning, fixed derived minutes and no INSERT/overwrite are **proposed intentional changes**, requiring approval, not automatic preservation of defects.
+
+**F1 exactly:** authorized operator selects explicit synthetic employee + planned day + exact team, one unique effective match and **one existing eligible attendance row**; no stage/station/exit, missing, outstanding report, briefing1, existing stage-late fields, split/P2, cancelled/non-activity day; planned bounds and parent policy valid. Existing briefing null/0 becomes false. Pure context/validation, then one explicit in-memory fixture command only. No self workflow: Administrator employeeId=null is never the selected employee. No claim that resource selection authenticates the actor. No arbitrary person directory, technical-ID entry, national ID, photo, medical/report/private HR data.
+
+| Legacy control / source-observed | Proposed UI / intentional migration decision |
+|---|---|
+| Stage checkbox immediately invokes mutating GET; optimistic grid update | Separate **הגעה לבמה — סימולציה מוצעת** action, pure prepare/validate, complete review and explicit **אישור סימולציה**. No optimistic registration mark. |
+| Server Date/Calendar chooses timestamp; no submitted date/time | Read-only planned start/end, proposed server local timestamp, zone and existing recorded context. **No date/time input or picker** for arrival. Existing inquiry pickers stay unchanged. |
+| ShiftLateException after issued UPDATE/INSERT; closing popup skips only late supplement | Warning **before any simulated business change**; Cancel/Escape cancels entire operation, zero effects. Acknowledge leads to review, not commit. |
+| Editable late minutes, reason and remark in later popup | §38 derived minutes read-only, reason from bounded fixture LATE_REASON catalog; optional lateRemark is null in this minimal mock (no free HR text field). Manual minutes, correction/cancel and generic event API deferred. |
+| Zero-row fallback INSERT / overwrite possible | Missing attendance row blocks F1 (`ATTENDANCE_ROW_REQUIRED`); already recorded is informational on GET, new command409 `ALREADY_REGISTERED`, never insert/overwrite. |
+| Briefing checkbox coupled to arrival | No briefing control; F1 installs false only with approved narrow preconditions. Briefing registration deferred. |
+| Profile name used by source write without demonstrated selected-resource binding | Explicit selected employee/day/team; UI repeats synthetic/no real authentication notice. Future centralized actor/scope binding remains backend responsibility, not a mock claim. |
+
+Station login/arrival, station exit, early exit, mood, manager authorization, cancelMissing, missing/report resolution, new attendance row, undo/correction, general late override, EMS, real audit and all native Oracle writes are **DEFERRED** in a secondary scope note, with no fake command buttons. §38 fixture audit/receipt ports remain future fixture dependencies, not functionality implemented in the HTML.
+
+### 39.2 Entry, compact layout and navigation
+
+Reuse approved navy/blue Bezeq surfaces, rounded Material3 action hierarchy, Hebrew RTL and supported Angular21/Material/CDK target; HTML is a static storyboard, not Angular or a new version choice. Header retains synthetic identity. Prominent amber panel above context and operation persists on success: **“עיצוב / סימולציה מבודדת — ללא כתיבות Oracle, ללא הגעה אמיתית.”** Do not rely on the mobile shell's hidden secondary scope text.
+
+Entry is a separately labeled **additional synthetic result row within #attendance**, after a valid demo inquiry submission. Its fixed20Oct scenario is explicitly **not** a result of the19Oct filter or of live data. Existing Dana sample lacks an attendance row and Noam has station/exit/split dependencies: neither gets a command. New sample has synthetic label “עובד/ת דוגמה א׳”, employee9001/day6201/team0021/parent0012, and known existing attendance day relation. This is resource context, not actor identity or a DTO extension. No write added to card/items/schedule or old rows.
+
+Default sample plan **20/10/2026 10:30:00–18:30:00**, server proposal/capture **20/10/2026 10:22:00**, simulated commit capture **20/10/2026 10:22:05**, configured synthetic zone label **Asia/Jerusalem**. Late scenario explicitly changes its **synthetic plan snapshot** to10:00:00, parent threshold0, derived22 minutes; it is not an editable real shift. All times are full local dates/HH:mm:ss and isolated LTR, no browser-clock JS, UTC conversion or guessed DST offset. Production contract uses fresh backend time under commit ownership, not frozen preview seconds; a still-valid validation never promises identical seconds.
+
+Direct/reload **#stage-arrival without volatile selected-context token** shows safe chooser and actual local **#attendance** link; no default employee, manual IDs, request, fake empty success or hidden arbitrary-person form. Submit inquiry to reveal the separate F1 sample. The new target application route remains §38 `/employees/:employeeId/shift-days/:shiftDayId/stage-arrival`, a proposal, not an implemented API or route.
+
+Desktop core: heading/notice → exact selected context/planned/existing/server values → reason only when late → status/review → prepare/confirm/cancel; scenario lab/technical details secondary. Three-column context at1440, single-column390/320; actions wrap and remain>=48px. Compact core above fold1440 is a **browser acceptance target**, not a measured result. At390 core actions must remain easy to reach; at320/30px use natural height/no clipping, not fixed-height cards or nowrap navigation. Existing inquiry seven-column44px calendar viewport/scroll treatment is untouched.
+
+**Navigation ownership:** new opaque volatile arrival journey owns employee/day sample, scenario/draft, opener and scroll; source DOM keeps exact inquiry filter date/from/to, dirty/applied visibility, parent/team/roles/locations, page and disclosures. It does not rewrite existing card/items/schedule per-entry snapshots or returnMemory of unrelated origins. Before explicit departure, invalidate validation/acknowledgment. Cancel before command returns with zero simulated effect to **same opener**, source values and scroll. Back/Forward never invokes confirm, repeats effects, undoes recorded state or resurrects a validation token: prepared journeys require new validation; terminal success/unknown remains information. After pending, cancellation is unavailable; leaving by browser/menu means unknown, not rollback or success. Optional effective-detail link is intentionally omitted: no approved real IDs or attributable command readback exist for this new synthetic row. No invented status endpoint.
+
+### 39.3 State machine and bounded storyboard
+
+```text
+no-context -> local attendance chooser -> explicit row selection
+context-loading -> context-ready | ineligible | context-error
+context-ready -> prepare/validate (PURE; zero effects)
+  -> validation-error -> correct -> explicit validate
+  -> ready -> review whole operation
+  -> warning-requires-confirmation -> modal
+       Cancel/Escape -> no preparation; ZERO effects; restore prepare opener
+       acknowledge exact warning -> review whole operation (still ZERO effects)
+review -> explicit Confirm simulation -> committing (one guarded intended command)
+  -> fixture receipt -> succeeded (ONE volatile simulated effect only)
+  -> proven-none/proven-rollback failure -> failed (no retry automatically)
+  -> stale/context/token/policy conflict -> STOP -> new explicit validation/review
+  -> attempted effect + unproved response/commit outcome -> UNKNOWN -> STOP/reconcile
+route/context/draft/scope/source change -> invalidate preparation/ack/late generation
+```
+
+**Executable storyboard boundary:** small local JS maintains only volatile journey/state and one local effect counter; no network/localStorage/sessionStorage/real tokens, native writer, server rules, durable receipt store, audit, fake timer/progress or timer-success. Explicit lab “display pending result” button delivers one frozen scenario outcome; it is **not** polling or an operation lookup. Unknown is a fault storyboard, not a claim an actual durable write happened or was rolled back. Its screen shows no confirmed effect count or success receipt. Reset is explicitly **SIMULATION reset to sample data**, not database undo. Production implementation must obtain an actual validated fixture receipt, never infer success from time, DOM or HTTP status alone.
+
+| State / scenario | Screen, effects and safe next action |
+|---|---|
+| No context / loading | No previous employee body/actions; Hebrew guidance or “טוענים הקשר…”. Loading sample is frozen and explicitly labeled; changing lab scenario is not successful network completion. |
+| Context ready | Exact selected sample, attendance existing, null actuals, planned dates, fixed server proposal/zone; no assumed actor binding. Prepare enabled; no business changes. |
+| Ineligible | Existing arrival: show full local timestamp and read-only already-recorded outcome; no overwrite. Missing row: F1 blocked, no INSERT. Other §38 blockers defer; no warning bypass. |
+| Validation error / preview error | Hebrew associated reason error/aria-invalid and first-invalid focus; invalid selected reason yields422 BUSINESS_VALIDATION_FAILED in target. Pure dependency error has effect=none; draft/source retained, no command. |
+| Warning | Exactly `STAGE_ARRIVAL_LATE`,22 derived minutes, selected synthetic reason1, optional remark=null, exact employee/day/planned/proposed time and zone. No prechecked acceptance, no generic “accept all”, no mutation. Cancel/Escape returns focus to same prepare button and clears validation. |
+| Ready/review | Show entire operation's exact employee/day/existing row/time/expected fields, warning acknowledgment if late. **אישור סימולציה** explicit even without warnings. No command on prepare/ack. |
+| Committing | Focus stays on same confirm button using aria-disabled + guarded handler (native disabled could lose focus). Double click/Enter cannot send another intended command. Lab manual outcome control separate. No cancel/undo promise, no auto retry. |
+| Clean / late confirmed success | One local fixture state change; full recorded local timestamp; briefing=false; late triplet only if confirmed late; partner not invoked. Prominent no-Oracle/no-real-arrival notice remains. New command on arrived row is409, not replay success. |
+| Stale / expired |409 STALE_PREPARATION, effect=none, stop. No autosubmit; explicit prepare/review again. A lab reset is not authoritative revalidation of real facts. |
+| Command failure with proven none | Separate from preview error and unknown; sanitized code/effect, no arrival marked, zero effect; no automatic retry. Rolled-back text only when backend proves whole UoW unchanged. |
+| Unknown | **“תוצאת הרישום אינה ידועה… אין לשלוח שוב”**,503 COMMAND_OUTCOME_UNKNOWN/effect=unknown/nextAction=reconcile. No success/count, repeat button, polling or working status service. Keep commandId volatile in future client; contact owner for approved readback/reconciliation. Existing read detail can show current arrival but not attribute it to this command. |
+
+**Target semantics stay exactly §38:** on-time draft `{lateReasonCode:null,lateRemark:null}`; late selected positive catalog reason, optional <=500-codepoint plain remark (mock chooses null), derived minutes not input. `StageArrivalContextDraftV1` eligibility `eligible | already-recorded | deferred`; blocker allowlist is `ATTENDANCE_ROW_REQUIRED, MISSING_PRESENT, REPORT_REVIEW_REQUIRED, UNSUPPORTED_DAY, DEPENDENT_ATTENDANCE_PRESENT, EXISTING_STAGE_LATE, BRIEFING_PRESENT`. Display generic blockers, no report/private text or replacement employee.
+
+Validation response `StageArrivalValidationDraftV1` uses `ready | warning-requires-confirmation`, warnings/confirmationRequired, evaluated local/instant, expiry, business zone, opaque validationToken and fingerprint. Do not display/store/log secrets. Token binds exact authenticated subject/provider/synthetic flag/scope/source/environment/employee/day/draft/policy/prerequisite facts/warning-minutes; lifetime **earlier of120 seconds or warning/minute transition**, not always120s. Context GET alone grants no commit. Server checks and rechecks facts/time under UoW. Fingerprint is not a DB VERSION column.
+
+Commit `StageArrivalCommitDraftV1` has one client-generated lower-case UUIDv4 commandId per intended command, exact draft/token/fingerprint and null confirmation if clean, otherwise `{accepted:true,warningCodes:["STAGE_ARRIVAL_LATE"]}`. Changed shift/reassignment/scope/policy/clock threshold/minutes/token or draft invalidates preparation; STOP rather than apply changed warning silently. Known earlier scoped receipt/reservation is checked before token expiry for **new** effects as §38.6; do not falsely reject an attributable receipt replay solely because its old token expired.
+
+Same in-flight ID→COMMAND_IN_PROGRESS; different payload under same ID→COMMAND_ID_CONFLICT; identical retained completed receipt→replayed=true, zero additional effect. New ID on recorded stage→ALREADY_REGISTERED, not attributable replay. Tokens<=120s, terminal receipt15min, bounded process-local memory; no cross-process/restart/global exactly-once or durable idempotency claim. The HTML only guards its own buttons and one volatile sample; it does not implement these backend guarantees.
+
+### 39.4 Proposed API dependencies and error admission
+
+No canonical/provider/contract file changed. Existing seven approved read capabilities, read-only approvals/config and source markers remain unchanged. Exact new draft rights: **attendance-stage-arrival:prepare** for context/validate and **attendance-stage-arrival:commit** plus prepare for command; missing functionality routed through caller to **system_architect**, not self-granted by HTML. Existing Administrator/attendance:read alone is insufficient. Target `attendanceStageArrivalMode=disabled | isolated-fixture`, default disabled; production/Oracle/mixed sources rejected before listen, denied command before writer acquisition. Synthetic employeeId stays null; exact J01 grants apply independently at all three operations.
+
+Let B be §38 `/api/v1/employees/{employeeId}/shift-days/{shiftDayId}/stage-arrival`. Depend only on proposed **GET B/context**, **POST B/validations** (pure) and **POST B/commands** (fixture only); exact §38 draft DTOs, not extensions of existing ProblemV1. No added lookup/retry/202/operation store. No API called by prototype.
+
+Target error mapping:400 INVALID_REQUEST;413 REQUEST_TOO_LARGE;415 UNSUPPORTED_MEDIA_TYPE;401 UNAUTHENTICATED;403 FORBIDDEN/LIVE_WRITES_DISABLED;404 SHIFT_DAY_NOT_FOUND (same absent/mismatch/out-of-scope outcome);422 BUSINESS_VALIDATION_FAILED;409 ALREADY_REGISTERED/COMMAND_SCOPE_DEFERRED/STALE_PREPARATION/CONFIRMATION_REQUIRED/COMMAND_ID_CONFLICT/COMMAND_IN_PROGRESS;503 DEPENDENCY_UNAVAILABLE/DEPENDENCY_TIMEOUT;500 AMBIGUOUS_ATTENDANCE/INVALID_SOURCE_DATA/INTERNAL_ERROR. Rejections before effect use none; proven complete fixture rollback only uses rolled-back. Attempted effect with unproved outcome uses503 COMMAND_OUTCOME_UNKNOWN/reconcile, **not** ordinary timeout-none. Network loss, wrong/unexpected HTTP/body/source **after attempted command** is unknown unless authoritative evidence proves none; malformed successful HTTP is not a receipt. Preview failure remains pure.
+
+Resource change clears old names/body/actions atomically and invalidates request generation; stale late success/error cannot change current context/focus. Duplicate source rows, even equal, fail safely, never choose first. Wrong principal/scope never falls back to Administrator or another employee. Sanitize requestId/commandId diagnostics; no tokens, private fields, IDs/names in logs, raw SQL, real screenshots or private assets. Hebrew business term במה and exact late rounding/DST/source characterization remain business/backend review, not guessed facts.
+
+### 39.5 Accessibility / measurable acceptance
+
+Target **WCAG2.2 AA**, not a compliance claim. Future Angular implementation uses semantic main/nav/headings/dl, Material controls and CDK dialog/focus management with Hebrew names/help/error associations. Native modal in storyboard contains Tab/Shift+Tab; Escape cancels with zero change, explicit cancel first focus, then acknowledgment, with exact opener restoration. Acknowledgment focuses explicit confirm; no automatic commit. Route entry focuses h1 with preventScroll after top positioning; back restores same visible opener/scroll or results heading if removed. Status/error/unknown announced once, no focus theft on stale response; unknown/terminal outcome moves focus to status when the manual lab delivery button disappears.
+
+| ID | Required browser / later fixture acceptance |
+|---|---|
+| ARR-UI01 scope/privacy | Direct hash/reload safe chooser; no default/manual IDs/actor-self inference. New row only exact9001/6201 existing fixture, no writes on seven old screens; no real names/data/assets/API/storage. Production command blocked separately. |
+| ARR-UI02 zero before commit | Prepare, valid-ready, reason error, warning opening and acknowledgment each leave business fixture unchanged. Cancel/Escape warning=ZERO effects, same prepare focus. Cancel/back before commit=ZERO effects and exact source values/scroll/opener. |
+| ARR-UI03 clean success | Select clean→prepare→review→Confirm simulation→pending; repeated click/Enter yields one intended command. Explicit lab delivery gives ONE volatile simulated state change, not Oracle. Notice remains visible on success. |
+| ARR-UI04 late paths | Late blank reason→associated error/no mutation; choose synthetic reason1→prepare→warning. Cancel zero; reopen/ack→review (zero)→explicit confirm/delivery→one simulated effect including stage-late triplet. Derived minutes not editable, no medical/free HR input. |
+| ARR-UI05 stale/expiry | Fixture stale/expired→409 conflict/zero; prepare again required, no auto confirm. Future backend cases cover shift/scope/reassignment/policy/report/missing/briefing/threshold/draft changes, token expiry earlier than120s and changed warnings requiring new ack. |
+| ARR-UI06 ineligible/ambiguity | Missing row blocks/no insert; already recorded info/new command409, not success; station/exit/deferred blockers no mutation. Duplicate source facts/catalog fail500, not first-wins. |
+| ARR-UI07 unknown/failure | Preview error none, command proven-none failure and unknown distinct. Fault storyboard stays UNKNOWN, no automatic success/write count/retry. No status endpoint or undo claim. Late callback/malformed HTTP does not produce success. |
+| ARR-UI08 receipt limits | Later backend test in-flight/mismatched ID/retained receipt replay/new ID/expiry/restart; only process-local15min receipt guarantees, no durable/global promise; identical replay doesn't count another effect. |
+| ARR-UI09 navigation | Inquiry apply/draft/date/from/to/parent/team/role/location/page/scroll/opener restored. Browser Back/Forward invalidates preparation, no resubmit/undo; pending navigation→unknown. Multiple entry journeys and old card/items/schedule nested multi-actor snapshots remain stable. |
+| ARR-UI10 keyboard/dialog | Tab/Shift+Tab/Space/Enter/Escape warning/menu/inquiry calendar/timepicker; no background modal focus, opener restored, pending confirm aria-disabled guarded, visible/unobscured focus (2.1.1/2,2.4.3/7/11). Hebrew name includes visible action and simulation. |
+| ARR-UI11 responsive/bidi |1440×900,390,320,320+30px text;200% text/400% zoom/text spacing. No body overflow/clipped action; nav wraps, actions>=48px/disclosures>=44px; full local datetime/zone and long mixed IDs isolated/copy unchanged. Retain existing seven-column calendar44px viewport fixes. |
+| ARR-UI12 semantics/contrast/AT | Hebrew SR reading order and once-only loading/error/warning/unknown; error associated to reason, no nonexistent date field. Text>=4.5:1/large>=3:1, controls/focus>=3:1, non-color meaning, name-in-label/target tests (1.3.1/2,1.4.1/3/4/10/12,2.5.3/8,3.1.1,3.3.1/2,4.1.2/3). Measure, do not declare AA. |
+| ARR-UI13 regression | All seven old screens, calendar/date arithmetic/equal/inverted minute filters/current-mode locks, attendance locations, card/items/schedule multi-actor snapshots, history/focus restored. New row explicitly separate20Oct sample, not claimed filter result. No network/Oracle/prod/private assets. |
+
+### 39.6 Checks, live gap, blockers and three independent gates
+
+**Performed:** permitted manual source/document reads and targeted two-file patches only; static readback of notice/context/readonly time/late reason/warning dialog, state guards, cancellation, volatile routing, explicit result delivery and unknown copy; mapped §38 DTO/state/capability/expiry semantics without changing them. Scope is targeted additions, not automated byte-level preservation proof. No SQL included or executed by this design.
+
+**Not run:** no shell/Git/parser/JS execution/browser/Angular tests/build/lint/application suite/HTTP/Oracle/legacy/dependency/agents/PNG/publication. Tools here are view/patch and user assigns browser executor to parent after readiness. No runtime/viewport/focus/contrast/AT/WCAG PASS claimed. Exact browser handoff: open local HTML#attendance, submit fixed demo inquiry, open F1 row; check1440/390/320 and320+30px; clean one, late cancel zero, late ack+confirm one, stale/expired zero, unknown no retry/count, preparation vs command failures, direct hash/reload, Back/Forward/source restoration; regress seven existing screens and dialogs. Inspect console/network (no new requests), keyboard/contrast/AT before PNG publication by caller; no PNG generated here.
+
+**Today's live-read gap — caller evidence, not this task's execution:** existing4350 read-only QA has TODAY defaults and one previous-day filter returned0 rows. Exact detail HTTP/opener remains **LIVE GAP — BLOCKED DATA**: no eligible result available in current read-only UI filter. This is not characterized as a bug, not closed by a synthetic sample, and does not authorize broader filters/data/SQL. Separate live-read QA owner through caller; leave existing read-only seven-capability approval/config untouched.
+
+| Gate | Explicit approval / owner / next action |
+|---|---|
+| **1. Design baseline** | User through caller reviews/approves **§38 + §39 + HTML#stage-arrival v0.1**, exact API/capability draft and visual/state/intentional behavior changes. Browser visual/accessibility findings belong to caller/QA; API canonicalization only system_architect after explicit approval. This proposal is not approval. |
+| **2. Isolated F1 implementation** | Only after Gate1, separately assigned backend/UI/QA implement fixture-only context/pure validation/explicit existing-row command and tests, production/native denied. No live DML, real authentication, DB audit/EMS or release authorization. Architect owns approved canonical contracts; UI designer does not edit them. |
+| **3. Future native TEST DML** | Still BLOCKED. User + DBA/security must name actor/employee/day/environment/account (no secrets here), allowed tables/columns/DML/grants/audit target, window, before-images, restore method/operator/verification/escalation, compatible concurrent-writer ownership, transaction/encoding/policy/idempotency/recovery decisions. Prior full-access/read approval is NOT write permission. No Oracle writer or assumed rollback/restore/schema workaround. |
+
+No critical §38 ambiguity prevents this bounded storyboard; native commit semantics, exact SHFUtils minute/DST behavior, writer coexistence, real actor binding and audit/recovery stay unverified/deferred with business/backend/DBA owners, not invented. Protected environment publication19 was not accessed, inferred or worked around; no credentials needed.
+
+**Exact approval request:** “Approve or amend §38 + §39 and HTML#stage-arrival v0.1, including the two draft capabilities/three draft operations, existing-row-only F1, fixed server time, derived late minutes/reason, warning-before-any-change and explicit full-operation confirmation, zero effects on precommit cancel, unknown/no retry and process-local receipt limitations, for subsequent isolated fixture-only implementation. This does not approve native Oracle DML, changes to seven read contracts, real authentication, EMS or release.”
+
+**Next action / stop:** caller browser executor verifies the bounded scenarios and responsive/keyboard/history regression before any screenshot publication; caller then obtains the exact combined approval above. Designer stops after these two proposal artifacts.
+
+### 39.7 Phase-1 browser defects D01–D03 — bounded correction, pending retest
+
+**Task continuation:** SHF-STAGE-ARRIVAL-DESIGN-20;20Oct2026. **Revision:** proposal v0.1, phase-1 correction. **Status: review / RETEST REQUIRED; approval still pending.** Caller reports Native Chrome phase-1 executor **e730...** found three concrete defects. That is caller-supplied runtime evidence, not a browser run performed by this designer. Only existing HTML and these §39 notes changed; no application/backend/provider/canonical/API or §38 edits, no publication/PNGs.
+
+| Defect / reported reproduction | Corrected prototype logic |
+|---|---|
+| **D01 same-hash frozen schedule restoration** — Dana01–02Oct → attendance/arrival → Noam25–26Oct → older `#my-shifts` history entry changed token without restoring employee/dates | Both **popstate and hashchange** use one navigation-event handler. Each history entry has an opaque `designEntryToken`; replaceState retains that entry identity while schedule snapshot tokens remain per-entry/immutable. Route records last rendered URL+entry token, so the hashchange following the same traversal does not render twice. Same-hash traversal to a different entry does render and runs existing `restoreSchedule` before schedule DOM/focus/scroll restoration. No navigation event calls prepare/confirm/delivery. Arrival same-hash journey change also invalidates old preparation/ack; pending departure remains unknown. Existing actor-specific frozen schedule fixtures and snapshots were not replaced with a global “last person” cache. |
+| **D02 UNKNOWN → reload → chooser → same F1 appeared ready/zero** | Before entering pending, store a **minimal unresolved synthetic-attempt safety marker** in the existing `history.state` seam; retain it on UNKNOWN and pending navigation. Marker contains opaque session/journey/attempt references plus synthetic employee/day/attendance-day key only. History pushes/replacements propagate it, and traversal merges unresolved markers conservatively. Reload does **not** rebuild a receipt, context or effect counter: missing journey shows **UNKNOWN / RECOVERY REQUIRED**, safe chooser and explicit new-demonstration-session action. Selecting same tuple remains unknown, preparation/confirmation blocked; confirmed-zero/confirmed-one booleans are both false. No retry/readback endpoint added. |
+| **D03 generic journey not bound to selected identifiers** | F1 row now carries explicit synthetic employee9001/day6201/**attendance day6201**/team0021/source/revision/server-local/zone attributes. Journey copies that selected context and canonical string IDs. `attendanceKey.shiftDayId` is the existing attendance-row relation; **§38 has no separate attendanceId**, and none is invented or added to DTOs. Before prepare/ack/confirm/delivery, compare exact selected source snapshot and employee/day/attendance day/team with fixed known F1 context. Bind preparation to all three resource keys, source, context revision, zone/fixed proposal+commit time, scenario/planned snapshot, draft and generation; acknowledgment also binds the exact preparation instance. Attempts/results are keyed by isolated session + exact tuple + intended attempt, not generic global row state. |
+
+**History safety seam, not business persistence:** this correction narrows earlier “no storage” shorthand in39.3/39.5. There is still **no localStorage/sessionStorage/IndexedDB/cookie/service-worker/business cache**, no real token/name/private payload, no network/SMS/EMS/Oracle/audit. Only the already-used browser history seam additionally retains bounded synthetic uncertainty metadata and opaque entry IDs. A history marker is **not authoritative outcome evidence, authentication, durable idempotency or a recovery API**. Clearing browser history, a new tab or loss of the entire history context is outside this bounded prototype; no cross-tab/global/durable protection is promised. The future real client still needs §38's approved reconciliation decisions, not history-based business guarantees.
+
+**Explicit reset semantics:** both reset affordances now say **“new isolated demonstration session only — does not determine the previous outcome or undo Oracle.”** They are disabled during pending. Explicit activation starts a new synthetic session; old attempt/outcome records are not changed into rollback or success, and a persistent notice says the previous outcome remains unresolved. Old-session markers are not allowed to silently overwrite the explicitly chosen new session during that document's traversal; reopening/reloading an old unresolved history entry may conservatively require recovery again. This is a demonstration-session boundary only, not permission to repeat a real command. Reload, chooser, Back/Forward, scenario change and ordinary navigation never perform this reset.
+
+**Binding guard details:** no employee input, arbitrary-employee chooser, worker authentication or Administrator→employee binding was introduced. A separate frozen demo actor remains synthetic employeeId=null; its synthetic descriptor participates in preparation comparison but proves no real authentication. Read-only selected resource IDs are canonical strings, never converted to Number. A context/source/time/tuple change fails the exact comparison and blocks or returns stale conflict before a simulated effect; scenario/draft changes invalidate preparation and advance generation. A stale dialog close cannot acknowledge a new preparation/journey. A pending result must match stored attempt tuple, full binding, preparation instance and pending state; otherwise no effect. One retained successful tuple cannot create a second ready journey in the same fixture session. Pending and UNKNOWN have no confirmed count. The technical disclosure exposes only **boolean checks** (`selectedTupleMatches`, `actorEmployeeIsNull`, `attendanceDayMatches`, `preparationBound`, `acknowledgementBound`, `attemptBound`, `uncertaintyBlocksSameTuple`, `outcomeUnknown`, `zeroConfirmedEffects`, `oneConfirmedEffect`), not secret tokens or invented server assurances.
+
+**Manual static checks actually performed:** reread §38.4–6 key/DTO/token/unknown semantics and current schedule capture/restore/history routing; inspected caller's D01–D03 locations and all10 scenario branches. Read back HTML history wrappers/event handler, row-bound context, preparation/ack/attempt comparison, marker propagation, no-context recovery, explicit session reset and terminal counters. Trace shows zero simulated effect increments in preview/warning/cancel/conflict/error paths; only matched successful delivery installs one local attempt result. UNKNOWN uses null/unconfirmed effect count, never a zero-success interpretation. These are static reasoning checks, **not executable PASS** or byte-level preservation proof.
+
+**Smoke/retest handoff — SAME Native Chrome executor e730... via caller (not delegated here):**
+
+| Case | Expected measurable result; NOT RUN by designer |
+|---|---|
+| clean | Prepare/review0 → confirm pending → manual result1; repeat click/Enter/delivery no second effect. Reopen same selected tuple in same session does not offer a new ready command. |
+| late | Missing reason preview0; select reason then warning cancel/Escape0 and same opener; prepare again, ack/review0, explicit confirm/manual result1. Boolean ack matches only current preparation. |
+| stale | Confirm/delivery409 conflict0; no automatic new validation/ack/command. |
+| expired | Confirm/delivery409 stale0; explicit prepare/review again, no effect from old preparation. |
+| unknown | Pending/manual resultUNKNOWN; no success, retry or confirmed0/1. Reload → missing-context recovery, chooser → apply inquiry → same F1 blocked; Back/Forward and fresh same-row entry do not clear uncertainty. |
+| command-error | Proven-before-effect failure0, distinct from unknown; no automatic retry. |
+| already | Recorded information only; prepare/confirm unavailable; no new effect/replay success. |
+| missing | F1 blocked; no insert, no effect. |
+| loading | No previous employee body or command; frozen state, no fake progress/automatic completion. |
+| preview-error | Preparation dependency failure0; no command or receipt. |
+
+Additional mandatory retests: reload **while pending** must also recover conservatively; UNKNOWN→chooser/new route→reload→same tuple remains blocked. Explicit new isolated-demo-session reset is the only unlock and must retain “previous outcome unresolved/no Oracle undo” copy. Recheck D01 exactly with Dana01–02Oct and Noam25–26Oct, older/newer same-hash schedule entries, selected person/date/dirty state/page/scroll/focus; duplicate popstate/hashchange must not repeat rendering effects or command actions. Change source/time/revision/tuple through bounded test instrumentation before ack/confirm/delivery: booleans fail, zero change, no substitution of another employee; restoring facts does not revive an old acknowledgment. Run1440/390/320/320+30px and original seven-screen/calendar/dialog/nested-history regression. Inspect console and request/storage instrumentation: no new network/Web Storage/IndexedDB/cookies/SMS/Oracle; permitted history safety metadata only.
+
+**Not run / owners / stop:** designer has view/patch tools only; no JS/parser/browser/smoke/app suites, HTTP/DB/legacy execution, Git/dependency/agents, screenshots or publishing performed. Executor **e730... through caller** owns runtime smoke/retest and evidence; user owns combined design approval; architect owns unchanged proposed contracts; DBA/user retain separate future native gate. D01–D03 are **statically corrected, not runtime-closed**. Existing LIVE GAP—BLOCKED DATA and three gates in39.6 are unchanged. Return to same executor before publication; no new approval gate or inferred approval.

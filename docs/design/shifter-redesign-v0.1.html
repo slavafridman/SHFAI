@@ -277,6 +277,24 @@
       #schedule-calendar select{height:auto;min-height:48px}
       #calendar-dialog .calendar-title{padding-inline:12px}
     }
+    /* §39: bounded design simulation, scoped independently of seven inquiry screens. */
+    #stage-arrival{overflow-wrap:anywhere}
+    #stage-arrival .heading{flex-wrap:wrap}
+    .arrival-notice{padding:12px 16px;border:2px solid #80531b;background:#fff3df;border-radius:12px;margin-block:12px}
+    .arrival-core{padding:16px;margin-block:12px}
+    .arrival-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-block:12px}
+    .arrival-grid dd{font-size:14px}.arrival-notice p{font-size:13px}
+    .arrival-actions{display:flex;gap:8px;flex-wrap:wrap;margin-block:12px}
+    #stage-arrival a,#stage-arrival button,#arrival-warning button{min-block-size:48px;white-space:normal;max-inline-size:100%;overflow-wrap:anywhere}
+    #stage-arrival .arrival-time{display:inline-block;direction:ltr;unicode-bidi:isolate;white-space:normal}
+    #stage-arrival select{max-inline-size:100%;min-block-size:48px}
+    #stage-arrival [aria-disabled=true]{opacity:.65;cursor:not-allowed}
+    #arrival-warning{width:560px;max-width:calc(100% - 24px);border-radius:12px;overflow-y:auto}
+    #arrival-warning .design-content{display:block}
+    #arrival-warning p{margin-block:12px}
+    .arrival-fixture{padding:16px;margin-block:16px;overflow-wrap:anywhere}
+    .arrival-fixture .btn{white-space:normal}
+    @media(max-width:760px){.arrival-grid{grid-template-columns:minmax(0,1fr)}.arrival-actions .btn{flex:1 1 100%}#stage-arrival .heading .subtle{position:static;width:auto;height:auto;clip-path:none}.arrival-fixture table,.arrival-fixture tbody,.arrival-fixture tr,.arrival-fixture td,.arrival-fixture th{display:block;width:100%}.arrival-fixture td,.arrival-fixture th{white-space:normal;padding:8px 0}}
   </style>
 </head>
 <body>
@@ -594,6 +612,16 @@
             </table>
           </div><div class="pager"><span>עמוד דוגמה יחיד · ללא סך כולל או דפדוף אמיתי · ביעד 25 רשומות לעמוד</span><div class="pager-controls"><button class="btn secondary" type="button" disabled>הקודם</button><button class="btn secondary" type="button" disabled>הבא</button></div></div></div>
           <p class="hint">קוד סיבה הוא ערך רשום בלבד, לא קביעת היעדרות; 0, ערך שלילי וחסר שונים. תדריך: כן / לא / לא ידוע. אין סיווג איחור, היעדרות או ״עובד עכשיו״. ללא שינוי, ייצוא או פעולות נוכחות.</p>
+          <article class="surface arrival-fixture" aria-labelledby="arrival-sample-title">
+            <h2 id="arrival-sample-title">שורת תוצאה נוספת להצעת F1 — סימולציה נפרדת בלבד</h2>
+            <p>לא תוצאת המסננים לעיל ולא נתון חי: לכידת דוגמה קבועה ל־20 באוקטובר 2026. שתי דוגמאות הבירור המקוריות אינן משתנות ואינן מקבלות פעולת כתיבה.</p>
+            <table><caption class="sr-only">עובד ויום סינתטיים עם רשומת נוכחות קיימת וכשירה בדוגמה בלבד</caption><tbody><tr id="arrival-fixture-row" data-employee-id="9001" data-shift-day-id="6201" data-attendance-day-id="6201" data-org-unit-id="0021" data-context-revision="F1-capture-20Oct-v1" data-source="isolated-fixture" data-server-local="2026-10-20T10:22:00" data-business-time-zone="Asia/Jerusalem">
+              <th scope="row">עובד/ת דוגמה א׳ — סינתטי בלבד</th>
+              <td>צוות הדגמה <bdi>0021</bdi> · מוקד הדגמה <bdi>0012</bdi><br><bdi>20/10/2026 10:30:00–18:30:00 · Asia/Jerusalem</bdi></td>
+              <td>רשומת נוכחות קיימת; הגעה לבמה / עמדה / יציאה: לא נרשמו. תדריך: לא. ללא חוסר, דוח ממתין או פיצול — עובדות דוגמה בלבד.</td>
+              <td><a class="btn secondary" id="arrival-open" href="#stage-arrival" aria-label="פתיחת סימולציית הגעה לבמה לעובד דוגמה א׳ ביום 20 באוקטובר 2026">הגעה לבמה — סימולציה מוצעת ←</a></td>
+            </tr></tbody></table>
+          </article>
         </div>
         <details class="surface design-tools"><summary>מצבי יעד והיקף — לסקירת העיצוב</summary><div class="design-content">
           <p><strong>טעינה:</strong> ״טוען הקשר לבירור נוכחות…״ / ״טוען רשומות…״. שליחה מושבתת בבקשה תואמת; אין נתונים וקישורים ישנים. שינוי מסנן מבטל את הדור הקודם. כאן אין בקשות.</p>
@@ -604,6 +632,61 @@
           <p>כרטיס עובד/ת, פרטי משמרת, פריטי משמרת ולוח משמרות הם ניווט נפרד לפי המזהים וההרשאות שלהם; זוהי הצעת מודרניזציה ממתינה, לא תפריט ישן משוחזר. פרטי HR, הערות וסיבות חופשיות, CTI ופקודות לא נכללים בבירור.</p>
           <p><a href="../SHF_REVERSE_ENGINEERING_DESIGN.md#35-attendance-inquiry-target-proposal-v01">§35 — מקור וחוזה מוצע</a> · <a href="../SHF_REVERSE_ENGINEERING_DESIGN.md#36-attendance-inquiry-ui-proposal-v01">§36 — הצעת UI וקבלה</a></p>
         </div></details>
+      </section>
+      <section id="stage-arrival" hidden aria-labelledby="stage-arrival-title">
+        <nav class="breadcrumbs" aria-label="מיקום בהצעת העיצוב"><a href="#attendance" id="arrival-back">חזרה לבירור נוכחות — ללא שליחת פעולה</a><span aria-hidden="true">/</span><span>הגעה לבמה — סימולציה</span></nav>
+        <div class="heading"><div><h1 id="stage-arrival-title" tabindex="-1">הגעה לבמה — סימולציה בלבד</h1><p class="subtle">הצעת UI v0.1 · F1 · בדיקה ואישור לפני כל שינוי מדומה</p></div><span class="version">§38 / §39 · לא אושר</span></div>
+        <div class="arrival-notice"><strong>עיצוב / סימולציה מבודדת — ללא כתיבות Oracle, ללא הגעה אמיתית.</strong><p>גם הודעת הצלחה כאן היא שינוי בזיכרון הדוגמה בלבד. אין API, רשת, אימות אמיתי או שיוך מפעיל לעובד. מנהל סינתטי: <bdi>employeeId=null</bdi>. אסור לייצור.</p></div>
+        <div class="arrival-notice" id="arrival-recovery" hidden>
+          <h2>UNKNOWN / נדרש בירור — אין לשלוח שוב את אותו ניסיון</h2>
+          <p id="arrival-recovery-text" role="status"></p>
+          <button class="btn secondary" type="button" id="arrival-new-session">התחלת סשן הדגמה מבודד חדש בלבד — לא בירור התוצאה הקודמת ולא ביטול Oracle</button>
+        </div>
+        <div id="arrival-no-context" class="surface arrival-core"><h2>לא נבחרו עובד/ת ויום עבודה</h2><p>יש לבחור במפורש את שורת F1 הסינתטית מתוך הבירור המקומי. אין עובד ברירת מחדל, טופס מזהים או בקשה.</p><a class="btn secondary" href="#attendance" id="arrival-choose">לבירור הנוכחות המקומי ולבחירת שורה</a></div>
+        <div id="arrival-selected" hidden>
+          <article class="surface arrival-core" aria-labelledby="arrival-context-title">
+            <h2 id="arrival-context-title">עובד/ת דוגמה א׳ · יום עבודה <bdi>20/10/2026</bdi></h2>
+            <p class="hint">תוויות משורת המקור הסינתטית בלבד, לא שדות שם חדשים ב־DTO: צוות הדגמה <bdi>0021</bdi> / מוקד הדגמה <bdi>0012</bdi>. ההקשר לא אומת בשרת.</p>
+            <dl class="arrival-grid">
+              <div><dt>תחילת המשמרת המתוכננת</dt><dd><bdi class="arrival-time" id="arrival-plan"></bdi></dd></div>
+              <div><dt>סיום המשמרת המתוכנן</dt><dd><bdi class="arrival-time" id="arrival-end"></bdi></dd></div>
+              <div><dt>הצעת זמן השרת — לקריאה בלבד</dt><dd><bdi class="arrival-time">20/10/2026 10:22:00 · Asia/Jerusalem</bdi></dd></div>
+              <div><dt>רשומת נוכחות / הגעה לבמה קיימת</dt><dd id="arrival-existing"></dd></div>
+              <div><dt>עמדה / יציאה / תדריך</dt><dd>לא נרשמו / לא נרשמו / לא</dd></div>
+              <div><dt>זמן אישור מדומה — לכידה קבועה, לא שעון חי</dt><dd><bdi class="arrival-time">20/10/2026 10:22:05 · Asia/Jerusalem</bdi></dd></div>
+            </dl>
+            <div id="arrival-late-fields" hidden class="field"><label for="arrival-reason">סיבת איחור — מקטלוג הדוגמה בלבד</label><select id="arrival-reason" aria-describedby="arrival-reason-help arrival-reason-error"><option value="">יש לבחור סיבה</option><option value="1">סיבת איחור סינתטית א׳</option></select><p class="hint" id="arrival-reason-help">22 דקות מחושבות בדוגמה, ללא עריכה. סף סינתטי: 0 דקות; זו אינה מדיניות חיה. הערה אופציונלית נשארת null במוקאפ; אין להזין מידע רפואי או פרטי HR.</p><p class="field-error" id="arrival-reason-error" hidden>יש לבחור סיבת איחור מתוך הקטלוג לפני בדיקת הרישום.</p></div>
+          </article>
+          <div class="surface arrival-core" id="arrival-operation" aria-busy="false">
+            <h2>בדיקה → סקירה → אישור סימולציה</h2>
+            <p id="arrival-status" role="status" aria-live="polite" tabindex="-1"></p>
+            <div id="arrival-review" hidden><h3>סקירת כל הפעולה — עדיין ללא שינוי</h3><p id="arrival-review-text"></p><p>בזיכרון הדוגמה בלבד: הגעה לבמה וזיהוי מפעיל סינתטי, תדריך=false; באיחור גם סיבה 1, דקות 22 והערה=null. ללא שינוי בעמדה, יציאה, חוסר, דוחות, EMS או Oracle. הזמן בעת הפקודה נבדק מחדש ויכול להיות מאוחר מהתצוגה; כאן שתי הלכידות קבועות.</p></div>
+            <div class="arrival-actions">
+              <button class="btn primary" type="button" id="arrival-prepare">בדיקת הרישום — ללא שינוי</button>
+              <button class="btn primary" type="button" id="arrival-confirm" hidden>אישור סימולציה</button>
+              <button class="btn secondary" type="button" id="arrival-cancel">ביטול לפני אישור וחזרה לבירור</button>
+            </div>
+            <p class="hint" id="arrival-pending-help" hidden>הפקודה המדומה ממתינה. אי אפשר לבטל שינוי שאולי כבר בוצע. אין שליחה כפולה או ניסיון אוטומטי.</p>
+          </div>
+          <details class="surface design-tools" open><summary>מעבדת תרחישים סינתטיים — לא שירות או בדיקה עסקית</summary><div class="design-content">
+            <div class="field"><label for="arrival-scenario">תרחיש דוגמה קבוע — החלפה מאפסת הכנה בלבד</label><select id="arrival-scenario">
+              <option value="clean">הגעה בזמן — שינוי מדומה אחד</option><option value="late">איחור — ביטול אפס / אישור שינוי אחד</option><option value="stale">הקשר השתנה לפני אישור — אפס שינוי</option><option value="expired">תוקף ההכנה פג לפני אישור — אפס שינוי</option><option value="unknown">אובדן תשובה אחרי ניסיון פקודה — תוצאה לא ידועה</option><option value="command-error">שגיאת פקודה לפני השפעה — אפס שינוי</option><option value="already">הגעה כבר קיימת — עצירה, לא הצלחת פקודה חדשה</option><option value="missing">רשומת נוכחות חסרה — F1 חסום, ללא הוספה</option><option value="loading">טעינת הקשר — תצוגת מצב בלבד</option><option value="preview-error">שגיאת הכנה — ללא שינוי</option>
+            </select></div>
+            <button class="btn secondary" id="arrival-deliver" type="button" hidden>הצגת תוצאת פקודת הדוגמה הממתינה</button>
+            <button class="btn secondary" id="arrival-reset" type="button">התחלת סשן SIMULATION מבודד חדש — לא בירור תוצאה קודמת ולא ביטול Oracle</button>
+            <p>אין טיימרים, התקדמות מזויפת, fetch או Web Storage. ב־history.state נשמר רק סמן בטיחות מינימלי של ניסיון סינתטי לא מוכרע, לא קבלה או מידע עסקי. הכפתור ״הצגת תוצאה״ מדגים מסירה ידנית בלבד, לא קריאת סטטוס. לא ניתן להחליף תרחיש אחרי פקודה ללא התחלת סשן הדגמה חדש במפורש.</p>
+          </div></details>
+          <details class="surface technical"><summary>הכנה, הרשאות ופרטיות — הצעה בלבד</summary><div class="design-content">
+            <p>משאב דוגמה: <bdi>employeeId=9001 · shiftDayId=6201 · orgUnitId=0021</bdi>; רשומת נוכחות קיימת לפי אותו יום, לא מזהה חדש מומצא לטופס. אין טענה לקישור מפעיל מאומת.</p>
+            <p>מפתח רשומת הנוכחות הוא יום המשמרת <bdi>attendanceKey.shiftDayId=6201</bdi>, לא attendanceId נוסף. מודל ההדגמה קושר עובד/יום/מפתח נוכחות, מקור, גרסת הקשר, זמן קבוע ודור הכנה; הבדיקות להלן הן בוליאניות בלבד, לא הרשאה או אימות שרת.</p>
+            <output id="arrival-binding-checks" aria-label="בדיקות קישור הקשר סינתטי — בוליאניות בלבד"></output>
+            <p>§38 מציע <bdi>attendance-stage-arrival:prepare</bdi> ו־<bdi>attendance-stage-arrival:commit</bdi>; אין הענקת הרשאה כאן. <bdi>GET B/context → POST B/validations → POST B/commands</bdi> הם חוזים מוצעים בלבד, לא API פעיל.</p>
+            <p>אסימון הכנה ו־fingerprint קשורים לזהות/תחום/מקור/עובד/יום/טיוטה/מדיניות/עובדות/אזהרות; אינם מוצגים או נשמרים. תוקף מוקדם מבין 120 שניות ומעבר סף/דקת איחור. שינוי או תפוגה מחייבים עצירה, בדיקה ואישור חדשים. אין ספירה לאחור בדוגמה הקפואה.</p>
+            <p>הגעה קיימת: מידע קריאה בלבד; פקודה חדשה נדחית <bdi>ALREADY_REGISTERED</bdi>. רק אותו commandId ואותה בקשה עם קבלה שמורה עשויים להיות replay לפי §38 — זיכרון תהליך מוגבל, לא exactly-once גלובלי או עמיד.</p>
+            <p>תוצאה לא ידועה: אין שליחה חוזרת אוטומטית או ידנית כאן. אין endpoint סטטוס/שחזור מאושר. בירור קריאה בלבד עשוי להראות הגעה אך לא להוכיח מי יצר אותה; יש לפנות לבעל התהליך לבירור מורשה.</p>
+            <p>תחנה, יציאה, יציאה מוקדמת, ביטול חוסר, יצירת שורה, תיקון/ביטול הגעה, דיווח תדריך, self, EMS, audit וכתיבת Oracle נדחו. אין כפתורי דמה שלהם. audit/receipt ב־§38 הם seams עתידיים בזיכרון fixture, לא שירותים שמוקאפ זה מפעיל.</p>
+          </div></details>
+        </div>
       </section>
     </main>
   </div>
@@ -642,9 +725,52 @@
     </div>
     <p id="schedule-calendar-help" class="hint calendar-help">לוח אב־טיפוס מוגבל לשנים 2024–2028, לא רכיב ייצור. אפשר להקליד שנים 0001–9999 בשדות. Tab בין הימים, Enter לבחירה, Escape לסגירה ללא שינוי; המיקוד חוזר לכפתור הפתיחה. לוחות החיפוש והרשימה לא השתנו.</p>
   </dialog>
+  <dialog id="arrival-warning" aria-labelledby="arrival-warning-title" aria-describedby="arrival-warning-description">
+    <div class="design-content"><h2 id="arrival-warning-title" tabindex="-1">נדרש אישור מפורש לרישום הגעה באיחור — סימולציה</h2>
+      <p id="arrival-warning-description">עובד/ת דוגמה א׳ · יום <bdi>20/10/2026</bdi> · התחלה מתוכננת <bdi>20/10/2026 10:00:00 · Asia/Jerusalem</bdi> · הצעת שרת <bdi>20/10/2026 10:22:00 · Asia/Jerusalem</bdi>. איחור מחושב: 22 דקות, סיבה: סיבת איחור סינתטית א׳. עדיין לא שונה דבר.</p>
+      <p><strong>אישור האזהרה מעביר לסקירת כל הפעולה בלבד. רק ״אישור סימולציה״ שולח פקודה מדומה. ביטול או Escape = אפס שינוי מדומה, בניגוד למקור שכתב לפני האזהרה.</strong></p>
+      <div class="arrival-actions"><button class="btn secondary" id="arrival-warning-cancel" type="button">ביטול האזהרה — ללא שינוי</button><button class="btn primary" id="arrival-warning-ack" type="button">הבנתי את האזהרה — מעבר לסקירה בלבד</button></div>
+    </div>
+  </dialog>
   <script>
-    // Design-only navigation/interaction. No requests, persistence or business operations.
+    // Design-only navigation/interaction. No requests/business operations; safe history metadata only.
     const $ = id => document.getElementById(id);
+    // Local storyboard history seam. Only safe synthetic uncertainty metadata survives reload.
+    // No payload/token/name/receipt cache; this is NOT a durable outcome or authorization store.
+    const documentToken=crypto.randomUUID();
+    let historyEntrySequence=0,lastRenderedNavigationKey=null;
+    const settledArrivalAttempts=new Set(),supersededArrivalSessions=new Set();
+    function readArrivalSafety(value){
+      if(value==null)return null;
+      if(typeof value!=='object'||typeof value.sessionToken!=='string'){
+        return {sessionToken:documentToken,unresolved:{binding:null},priorUnresolved:true};
+      }
+      const u=value.unresolved;
+      const valid=u&&u.employeeId==='9001'&&u.shiftDayId==='6201'&&u.attendanceDayId==='6201'&&
+        typeof u.attemptToken==='string'&&typeof u.journeyToken==='string';
+      return {sessionToken:value.sessionToken,priorUnresolved:value.priorUnresolved===true,
+        unresolved:u?(valid?{employeeId:'9001',shiftDayId:'6201',attendanceDayId:'6201',
+          attemptToken:u.attemptToken,journeyToken:u.journeyToken}: {binding:null}):null};
+    }
+    let arrivalSafety=readArrivalSafety(history.state?.arrivalSafety)||
+      {sessionToken:documentToken,unresolved:null,priorUnresolved:false};
+    const nativeHistoryPush=history.pushState.bind(history),nativeHistoryReplace=history.replaceState.bind(history);
+    // All old/new prototype routes keep their own entry token; replaceState never makes a new entry.
+    history.pushState=(state,title,url)=>nativeHistoryPush({...state,
+      designEntryToken:documentToken+'-entry-'+(++historyEntrySequence),arrivalSafety:structuredClone(arrivalSafety)},title,url);
+    history.replaceState=(state,title,url)=>nativeHistoryReplace({...state,
+      designEntryToken:history.state?.designEntryToken||documentToken+'-entry-'+(++historyEntrySequence),
+      arrivalSafety:structuredClone(arrivalSafety)},title,url);
+    function syncArrivalSafety(){
+      const incoming=readArrivalSafety(history.state?.arrivalSafety);
+      if(incoming?.unresolved&&!arrivalSafety.unresolved&&
+          !supersededArrivalSessions.has(incoming.sessionToken)&&
+          !settledArrivalAttempts.has(incoming.unresolved.attemptToken)){
+        arrivalSafety=incoming; // Conservative: an older unresolved attempt is never silently cleared.
+      }
+      history.replaceState(history.state||{},'',location.href);
+    }
+    const navigationKey=()=>location.href+'|'+(history.state?.designEntryToken||'unmarked');
     history.scrollRestoration='manual';
     let selected = 'dana', origin = 'list', previousScreen = null;
     const returnMemory={list:{opener:null,scroll:0},search:{opener:null,scroll:0},'my-shifts':{opener:null,scroll:0},attendance:{opener:null,scroll:0}};
@@ -952,7 +1078,23 @@
       history.pushState(null,'','#list');route();
     }));
     function route(focus=true){
+      syncArrivalSafety();
+      lastRenderedNavigationKey=navigationKey();
       ++viewportRestoreGeneration;viewportRestorePending=false;
+      const enteringArrival=location.hash==='#stage-arrival';
+      $('stage-arrival').hidden=!enteringArrival;
+      if(previousScreen==='stage-arrival'&&(!enteringArrival||currentArrival()!==arrivalEntry)){
+        invalidateArrivalOnNavigation();
+      }
+      if(enteringArrival){
+        ['list','search','detail','my-shifts','shift-items','employee-card','attendance'].forEach(id=>$(id).hidden=true);
+        document.body.classList.remove('employee-card-view','shift-items-view');
+        document.querySelectorAll('[data-list-nav],[data-search-nav],[data-my-shifts-nav]').forEach(link=>{link.classList.remove('active');link.removeAttribute('aria-current')});
+        document.querySelectorAll('[data-attendance-nav]').forEach(link=>{link.classList.add('active');link.setAttribute('aria-current','page')});
+        renderArrival();
+        if(focus){window.scrollTo(0,0);$('stage-arrival-title').focus({preventScroll:true})}
+        previousScreen='stage-arrival';return;
+      }
       if(location.hash==='#my-shifts'||scheduleJourneys.has(history.state?.scheduleToken))restoreSchedule();
       $('attendance').hidden=location.hash!=='#attendance';
       document.querySelectorAll('[data-attendance-nav]').forEach(link=>{
@@ -970,7 +1112,7 @@
         document.body.classList.remove('employee-card-view','shift-items-view');
         ['list','search','my-shifts'].forEach(id=>document.querySelectorAll(`[data-${id}-nav]`).forEach(link=>{link.classList.remove('active');link.removeAttribute('aria-current')}));
         if(focus){
-          const restore=['detail','my-shifts','shift-items','employee-card'].includes(previousScreen);
+          const restore=['detail','my-shifts','shift-items','employee-card','stage-arrival'].includes(previousScreen);
           const opener=restore&&memory.opener?.isConnected&&!memory.opener.closest('[hidden]')?memory.opener:$('attendance-title');
           if(restore)restoreViewportAfterLayout(opener,memory.scroll);
           else{window.scrollTo(0,0);opener.focus({preventScroll:true})}
@@ -1149,7 +1291,13 @@
       origin=link.closest('section').id;selected=link.dataset.person;returnMemory[origin]={opener:link,scroll:window.scrollY};
       document.querySelectorAll('tr.selected').forEach(row=>row.classList.remove('selected'));link.closest('tr').classList.add('selected');
     }));
-    window.addEventListener('hashchange',()=>route());
+    // popstate is essential when two frozen schedule entries have the SAME hash.
+    // A subsequent hashchange for the same entry is ignored; neither event submits a command.
+    function onHistoryNavigation(){
+      if(navigationKey()!==lastRenderedNavigationKey)route();
+    }
+    window.addEventListener('popstate',onHistoryNavigation);
+    window.addEventListener('hashchange',onHistoryNavigation);
     document.querySelectorAll('a[href="#list"],a[href="#detail"],a[href="#search"],a[href="#my-shifts"]').forEach(link=>link.addEventListener('click',event=>{
       if(event.defaultPrevented)return;
       if(['items-detail','card-back','card-origin'].includes(link.id))return;
@@ -1247,10 +1395,322 @@
         $('attendance-results-title').focus();
       });
       document.querySelectorAll('a[href="#attendance"]').forEach(link=>link.addEventListener('click',event=>{
+        if(link.id==='arrival-back'){event.preventDefault();returnArrival();return}
         event.preventDefault();if(menu.open)menu.close();
         if(location.hash!=='#attendance')history.pushState(null,'','#attendance');
         route();
       }));
+        // §39: small volatile storyboard, NOT a domain implementation or an API adapter.
+        // No clock/timers/network/Web Storage/real tokens/audit; history safety marker only.
+        const arrivalJourneys=new Map();
+        const arrivalAttemptRecords=new Map(),arrivalRowOutcomes=new Map();
+        let arrivalSequence=0,arrivalPreparationSequence=0,arrivalEntry=null;
+        let arrivalWarningAccepted=false,arrivalWarningContext=null;
+        const arrivalDialog=$('arrival-warning');
+        const arrivalTerminal=new Set(['succeeded','unknown','failed']);
+        const arrivalDemoActor=Object.freeze({provider:'synthetic',synthetic:true,employeeId:null});
+        // §38 has NO attendanceId. Attendance identity is its existing day-key relationship.
+        const expectedArrivalContext=Object.freeze({employeeId:'9001',shiftDayId:'6201',
+          attendanceKey:Object.freeze({shiftDayId:'6201'}),orgUnitId:'0021',
+          contextRevision:'F1-capture-20Oct-v1',dataSource:'isolated-fixture',
+          serverLocal:'2026-10-20T10:22:00',businessTimeZone:'Asia/Jerusalem'});
+        function readArrivalRowContext(){
+          const d=$('arrival-fixture-row').dataset;
+          return {employeeId:d.employeeId,shiftDayId:d.shiftDayId,
+            attendanceKey:{shiftDayId:d.attendanceDayId},orgUnitId:d.orgUnitId,
+            contextRevision:d.contextRevision,dataSource:d.source,
+            serverLocal:d.serverLocal,businessTimeZone:d.businessTimeZone};
+        }
+        const arrivalTuple=e=>JSON.stringify([e.employeeId,e.shiftDayId,e.attendanceKey.shiftDayId]);
+        const arrivalResourceKey=e=>e.sessionToken+'|'+arrivalTuple(e);
+        const arrivalAttemptKey=e=>arrivalResourceKey(e)+'|'+e.attemptToken;
+        function arrivalContextMatches(e){
+          return !!e&&JSON.stringify(readArrivalRowContext())===JSON.stringify(e.context)&&
+            JSON.stringify(e.context)===JSON.stringify(expectedArrivalContext)&&
+            e.actor===arrivalDemoActor&&e.actor.employeeId===null&&
+            e.employeeId===e.context.employeeId&&e.shiftDayId===e.context.shiftDayId&&
+            e.attendanceKey.shiftDayId===e.shiftDayId&&e.orgUnitId===e.context.orgUnitId;
+        }
+        function arrivalBinding(e){
+          return JSON.stringify([e.sessionToken,e.actor.provider,e.actor.synthetic,e.actor.employeeId,
+            e.employeeId,e.shiftDayId,e.attendanceKey.shiftDayId,
+            e.orgUnitId,e.context.contextRevision,e.context.dataSource,e.context.serverLocal,
+            e.context.businessTimeZone,e.generation,e.scenario,e.reason,
+            e.scenario==='late'?'2026-10-20T10:00:00':'2026-10-20T10:30:00',
+            '2026-10-20T18:30:00','2026-10-20T10:22:05']);
+        }
+        function arrivalPreparationMatches(e){
+          return arrivalContextMatches(e)&&!!e.preparation&&e.preparation.binding===arrivalBinding(e);
+        }
+        function arrivalUncertaintyBlocks(e){
+          const u=arrivalSafety.unresolved;
+          if(!u)return false;
+          if(!e||u.binding===null)return true; // Lost context must not become an eligible default.
+          return e.employeeId===u.employeeId&&e.shiftDayId===u.shiftDayId&&
+            e.attendanceKey.shiftDayId===u.attendanceDayId;
+        }
+        function rememberArrivalUncertainty(e){
+          arrivalSafety.unresolved={employeeId:e.employeeId,shiftDayId:e.shiftDayId,
+            attendanceDayId:e.attendanceKey.shiftDayId,journeyToken:e.token,attemptToken:e.attemptToken};
+          history.replaceState(history.state||{},'',location.href);
+        }
+        function settleArrivalAttempt(e){
+          settledArrivalAttempts.add(e.attemptToken);
+          if(arrivalSafety.unresolved?.attemptToken===e.attemptToken)arrivalSafety.unresolved=null;
+          history.replaceState(history.state||{},'',location.href);
+        }
+        function stopStaleArrival(e){
+          e.state='conflict';e.validated=false;e.ack=false;e.preparation=null;e.ackBinding=null;
+        }
+        function currentArrival(){return arrivalJourneys.get(history.state?.arrivalToken)||null}
+        function invalidateArrivalOnNavigation(){
+          if(!arrivalEntry)return;
+          arrivalWarningContext=null;
+          if(arrivalDialog.open)arrivalDialog.close('navigation');
+          arrivalWarningAccepted=false;
+          if(arrivalEntry.state==='pending'){
+            arrivalEntry.state='unknown';arrivalEntry.effects=null;
+            arrivalRowOutcomes.set(arrivalResourceKey(arrivalEntry),{state:'unknown',effects:null,attemptToken:arrivalEntry.attemptToken});
+            rememberArrivalUncertainty(arrivalEntry);
+          }
+          else if(!arrivalTerminal.has(arrivalEntry.state))arrivalEntry.state='context-ready';
+          arrivalEntry.validated=false;arrivalEntry.ack=false;arrivalEntry.preparation=null;arrivalEntry.ackBinding=null;
+          returnMemory.attendance={opener:arrivalEntry.opener,scroll:arrivalEntry.scroll};
+        }
+        function returnArrival(){
+          const entry=currentArrival();
+          if(entry?.state==='pending')return; // Leaving elsewhere still becomes unknown; never an undo.
+          if(entry){history.back();return}
+          history.pushState(null,'','#attendance');route();
+        }
+        $('arrival-open').addEventListener('click',event=>{
+          event.preventDefault();
+          const token=documentToken+'-arrival-'+(++arrivalSequence),context=readArrivalRowContext();
+          const entry={token,opener:event.currentTarget,scroll:window.scrollY,context,actor:arrivalDemoActor,
+            employeeId:context.employeeId,shiftDayId:context.shiftDayId,
+            attendanceKey:{...context.attendanceKey},orgUnitId:context.orgUnitId,
+            sessionToken:arrivalSafety.sessionToken,generation:0,preparation:null,ackBinding:null,attemptToken:null,
+            scenario:'clean',state:'context-ready',reason:'',validated:false,ack:false,effects:0};
+          const outcome=arrivalRowOutcomes.get(arrivalResourceKey(entry));
+          if(outcome)Object.assign(entry,outcome);
+          if(arrivalUncertaintyBlocks(entry)){
+            entry.state='unknown';entry.effects=null;
+            entry.attemptToken=arrivalSafety.unresolved.attemptToken||null;
+          }
+          if(!arrivalContextMatches(entry))stopStaleArrival(entry);
+          arrivalJourneys.set(token,entry);
+          history.replaceState({...history.state,arrivalOriginToken:token},'','#attendance');
+          history.pushState({arrivalToken:token},'','#stage-arrival');route();
+        });
+        function renderArrival(){
+          arrivalEntry=currentArrival();
+          const u=arrivalSafety.unresolved;
+          $('arrival-recovery').hidden=!u&&!arrivalSafety.priorUnresolved;
+          $('arrival-recovery-text').textContent=u?
+            'נשמר רק סמן בטיחות ב־history.state: ניסיון קודם עשוי היה להשפיע. טעינה מחדש או בחירת אותה שורה אינן מוכיחות אפס שינוי. אין הקשר/קבלה מאומתים לשחזור; הכנה ושליחה חוזרת לאותו משאב חסומות. אין API בירור. יש לפנות לבעל התהליך.':
+            'זהו סשן הדגמה מבודד חדש שנבחר במפורש. תוצאת הניסיון הקודם עדיין לא הוכרעה; לא בוצע בירור או undo של Oracle.';
+          $('arrival-new-session').disabled=arrivalEntry?.state==='pending';
+          $('arrival-no-context').hidden=!!arrivalEntry;$('arrival-selected').hidden=!arrivalEntry;
+          $('arrival-no-context').querySelector('p').textContent=u?
+            'UNKNOWN / נדרש בירור: הקשר ההדגמה אבד, אך אי־הוודאות לא בוטלה. אין בחירת עובד אוטומטית או טענה לאפס שינוי. ניתן לחזור לבירור; אותה שורה נשארת חסומה עד התחלת סשן הדגמה חדש במפורש.':
+            'יש לבחור במפורש את שורת F1 הסינתטית מתוך הבירור המקומי. אין עובד ברירת מחדל, טופס מזהים או בקשה.';
+          if(!arrivalEntry)return;
+          if(arrivalUncertaintyBlocks(arrivalEntry)&&arrivalEntry.state!=='pending'){
+            arrivalEntry.state='unknown';arrivalEntry.effects=null;
+          }else if(arrivalEntry.preparation&&!arrivalPreparationMatches(arrivalEntry)&&arrivalEntry.state!=='pending'){
+            stopStaleArrival(arrivalEntry);
+          }
+          const e=arrivalEntry,late=e.scenario==='late',pending=e.state==='pending';
+          const blocked=['already','missing','loading'].includes(e.scenario)||!arrivalContextMatches(e)||arrivalUncertaintyBlocks(e);
+          const locked=pending||arrivalTerminal.has(e.state);
+          $('arrival-scenario').value=e.scenario;$('arrival-scenario').disabled=locked;
+          $('arrival-reason').value=e.reason;$('arrival-reason').disabled=locked;
+          $('arrival-late-fields').hidden=!late;
+          $('arrival-plan').textContent='20/10/2026 '+(late?'10:00:00':'10:30:00')+' · Asia/Jerusalem';
+          $('arrival-end').textContent='20/10/2026 18:30:00 · Asia/Jerusalem';
+          $('arrival-existing').textContent=e.scenario==='missing'?'רשומה חסרה — ATTENDANCE_ROW_REQUIRED; אין הוספה':
+            e.scenario==='already'?'קיימת הגעה: 20/10/2026 10:10:00 · Asia/Jerusalem; קריאה בלבד':
+            e.state==='succeeded'?'רשומה קיימת; הגעה מדומה: 20/10/2026 10:22:05 · Asia/Jerusalem':
+            e.state==='unknown'?'רשומה בדוגמה; מצב ההגעה לאחר הניסיון אינו מאושר':
+            e.scenario==='loading'?'טעינת הקשר מדומה — לא מוצגים נתוני עובד קודמים':'רשומה קיימת; הגעה לבמה: לא נרשמה';
+          if(e.scenario==='already'||e.state==='succeeded'){
+            const recordedTime=document.createElement('bdi');recordedTime.className='arrival-time';
+            recordedTime.textContent='20/10/2026 '+(e.scenario==='already'?'10:10:00':'10:22:05')+' · Asia/Jerusalem';
+            $('arrival-existing').replaceChildren(e.scenario==='already'?'קיימת הגעה — קריאה בלבד: ':'הגעה מדומה בזיכרון בלבד: ',recordedTime);
+          }
+          $('arrival-context-title').parentElement.hidden=e.scenario==='loading';
+          const messages={
+            'context-ready':blocked?({already:'כבר נרשמה הגעה. אין overwrite או הצלחת פקודה חדשה; ALREADY_REGISTERED.',
+              missing:'F1 חסום: רשומת נוכחות נדרשת. אין הצעה ליצור שורה.',
+              loading:'טוענים הקשר… מצב קפוא לבדיקה; אין בקשה, המתנה מלאכותית או הצלחה אוטומטית.'})[e.scenario]:
+              'הקשר דוגמה מוכן. טרם בוצעו בדיקה, אישור או שינוי מדומה.',
+            'validation-error':'שגיאת הכנה: יש לתקן את הסיבה המסומנת. אפס שינוי מדומה.',
+            'preview-error':'שגיאת הכנה מדומה — DEPENDENCY_UNAVAILABLE, effect=none. אין פקודה או שינוי. ניתן לבדוק שוב במפורש.',
+            'warning':'נדרש אישור אזהרת איחור לפני סקירת הפעולה. אפס שינוי מדומה.',
+            'review':'בדיקה מדומה תקינה; יש לסקור את כל הפעולה ולאשר במפורש. עדיין אפס שינוי.',
+            'cancelled':'האזהרה בוטלה. אפס שינוי מדומה; נדרשת בדיקה מחדש לפני אישור.',
+            'pending':'פקודת הסימולציה ממתינה. אין שליחה נוספת, ניסיון חוזר או ביטול שמבטיח undo.',
+            'succeeded':'הסימולציה בלבד הושלמה — שינוי אחד בזיכרון הדוגמה. ללא כתיבות Oracle, ללא הגעה אמיתית; partnerCompletion=not-invoked.',
+            'conflict':e.scenario==='expired'?'STALE_PREPARATION: תוקף ההכנה פג. אפס שינוי מדומה. יש לעצור, לבדוק שוב ולסקור מחדש.':
+              'STALE_PREPARATION: עובדות המשמרת השתנו. אפס שינוי מדומה. אין עדכון אוטומטי או שליחה חוזרת; נדרשת בדיקה חדשה.',
+            'failed':'שגיאת פקודה מדומה לפני השפעה — DEPENDENCY_UNAVAILABLE, effect=none. אפס שינוי מדומה; עצירה ללא ניסיון אוטומטי.',
+            'unknown':'תוצאת הרישום אינה ידועה — COMMAND_OUTCOME_UNKNOWN, effect=unknown. אין לשלוח שוב. יש לבדוק מצב בקריאה מורשית / לפנות לבעל התהליך. אין כאן שירות בירור תוצאה, קבלה מאושרת או ספירת שינויים מאושרת.'
+          };
+          $('arrival-status').textContent=messages[e.state]||messages['context-ready'];
+          $('arrival-review').hidden=e.state!=='review';
+          const reviewPlan=document.createElement('bdi'),reviewClock=document.createElement('bdi');
+          reviewPlan.className=reviewClock.className='arrival-time';
+          reviewPlan.textContent='20/10/2026 '+(late?'10:00:00':'10:30:00')+' · Asia/Jerusalem';
+          reviewClock.textContent='20/10/2026 10:22:00 · Asia/Jerusalem';
+          $('arrival-review-text').replaceChildren('עובד/ת דוגמה א׳ · רשומת נוכחות קיימת של אותו יום · התחלה ',reviewPlan,
+            late?' · אזהרת איחור אושרה · 22 דקות · סיבה סינתטית 1.':' · ללא אזהרה; שדות איחור=null.',
+            ' זמן שרת מוצע ',reviewClock);
+          $('arrival-prepare').setAttribute('aria-disabled',String(blocked||locked||e.state==='review'||e.state==='warning'));
+          $('arrival-confirm').hidden=!['review','pending'].includes(e.state);
+          $('arrival-confirm').setAttribute('aria-disabled',String(pending));
+          $('arrival-cancel').hidden=pending;
+          $('arrival-cancel').textContent=arrivalTerminal.has(e.state)?'חזרה לבירור — ללא ביטול הפעולה':'ביטול לפני אישור וחזרה לבירור';
+          $('arrival-pending-help').hidden=!pending;
+          $('arrival-back').setAttribute('aria-disabled',String(pending));
+          $('arrival-operation').setAttribute('aria-busy',String(pending));
+          $('arrival-deliver').hidden=!pending;
+          $('arrival-reset').disabled=pending;
+          const attempt=arrivalAttemptRecords.get(arrivalAttemptKey(e));
+          $('arrival-binding-checks').textContent=JSON.stringify({
+            selectedTupleMatches:arrivalContextMatches(e),
+            actorEmployeeIsNull:e.actor.employeeId===null,
+            attendanceDayMatches:e.attendanceKey.shiftDayId===e.shiftDayId,
+            preparationBound:arrivalPreparationMatches(e),
+            acknowledgementBound:!!e.ackBinding&&e.ackBinding===arrivalBinding(e),
+            attemptBound:!!attempt&&attempt.binding===arrivalBinding(e)&&attempt.tuple===arrivalTuple(e),
+            uncertaintyBlocksSameTuple:arrivalUncertaintyBlocks(e),
+            outcomeUnknown:e.state==='unknown',
+            zeroConfirmedEffects:!['pending','unknown'].includes(e.state)&&e.effects===0,
+            oneConfirmedEffect:e.state==='succeeded'&&e.effects===1
+          });
+        }
+        function clearArrivalPreparation(){
+          if(!arrivalEntry)return;
+          arrivalEntry.validated=false;arrivalEntry.ack=false;arrivalEntry.preparation=null;arrivalEntry.ackBinding=null;
+          $('arrival-reason-error').hidden=true;$('arrival-reason').removeAttribute('aria-invalid');
+        }
+        $('arrival-scenario').addEventListener('change',()=>{
+          if(!arrivalEntry||arrivalTerminal.has(arrivalEntry.state)||arrivalEntry.state==='pending')return;
+          clearArrivalPreparation();arrivalEntry.scenario=$('arrival-scenario').value;
+          arrivalEntry.generation++;arrivalEntry.reason='';arrivalEntry.state='context-ready';renderArrival();
+        });
+        $('arrival-reason').addEventListener('change',()=>{
+          if(!arrivalEntry||arrivalTerminal.has(arrivalEntry.state)||arrivalEntry.state==='pending')return;
+          clearArrivalPreparation();arrivalEntry.reason=$('arrival-reason').value;
+          arrivalEntry.generation++;arrivalEntry.state='context-ready';renderArrival();
+        });
+        $('arrival-prepare').addEventListener('click',()=>{
+          if(!arrivalEntry||$('arrival-prepare').getAttribute('aria-disabled')==='true')return;
+          if(arrivalUncertaintyBlocks(arrivalEntry)||!arrivalContextMatches(arrivalEntry)){
+            renderArrival();return;
+          }
+          clearArrivalPreparation();
+          if(arrivalEntry.scenario==='preview-error'){arrivalEntry.state='preview-error';renderArrival();$('arrival-status').focus();return}
+          if(arrivalEntry.scenario==='late'&&arrivalEntry.reason!=='1'){
+            arrivalEntry.state='validation-error';renderArrival();
+            $('arrival-reason-error').hidden=false;$('arrival-reason').setAttribute('aria-invalid','true');$('arrival-reason').focus();return;
+          }
+          arrivalEntry.preparation={binding:arrivalBinding(arrivalEntry),storyboardToken:++arrivalPreparationSequence};
+          arrivalEntry.validated=true;arrivalEntry.state=arrivalEntry.scenario==='late'?'warning':'review';
+          renderArrival();
+          if(arrivalEntry.state==='warning'){
+            arrivalWarningAccepted=false;
+            arrivalWarningContext={entry:arrivalEntry,binding:arrivalBinding(arrivalEntry),
+              preparation:arrivalEntry.preparation};
+            arrivalDialog.showModal();$('arrival-warning-cancel').focus();
+          }else $('arrival-confirm').focus();
+        });
+        $('arrival-warning-cancel').addEventListener('click',()=>arrivalDialog.close('cancel'));
+        $('arrival-warning-ack').addEventListener('click',()=>{
+          const review=arrivalWarningContext;
+          arrivalWarningAccepted=!!review&&review.entry===currentArrival()&&
+            review.preparation===review.entry.preparation&&
+            arrivalPreparationMatches(review.entry)&&review.binding===arrivalBinding(review.entry)&&
+            !arrivalUncertaintyBlocks(review.entry);
+          if(!arrivalWarningAccepted&&review)stopStaleArrival(review.entry);
+          arrivalDialog.close(arrivalWarningAccepted?'ack':'stale');
+        });
+        arrivalDialog.addEventListener('close',()=>{
+          const review=arrivalWarningContext;arrivalWarningContext=null;
+          if(!review||location.hash!=='#stage-arrival'||review.entry!==currentArrival()){
+            arrivalWarningAccepted=false;return;
+          }
+          const e=review.entry;
+          if(!arrivalPreparationMatches(e)||review.preparation!==e.preparation||
+              review.binding!==arrivalBinding(e)||arrivalUncertaintyBlocks(e)){
+            stopStaleArrival(e);
+          }else if(arrivalWarningAccepted){
+            e.ack=true;e.ackBinding=review.binding;e.state='review';
+          }else{
+            e.ack=false;e.ackBinding=null;e.validated=false;e.preparation=null;e.state='cancelled';
+          }
+          arrivalWarningAccepted=false;renderArrival();
+          // Escape is a native dialog cancel: no effect; exact prepare opener restored.
+          (arrivalEntry.ack?$('arrival-confirm'):$('arrival-prepare')).focus({preventScroll:true});
+        });
+        $('arrival-confirm').addEventListener('click',()=>{
+          const e=arrivalEntry;
+          if(!e||e.state!=='review'||!e.validated||(e.scenario==='late'&&!e.ack))return;
+          if(arrivalUncertaintyBlocks(e)||!arrivalPreparationMatches(e)||
+              (e.scenario==='late'&&e.ackBinding!==arrivalBinding(e))){
+            stopStaleArrival(e);renderArrival();$('arrival-status').focus();return;
+          }
+          e.attemptToken=crypto.randomUUID();
+          arrivalAttemptRecords.set(arrivalAttemptKey(e),{tuple:arrivalTuple(e),binding:arrivalBinding(e),
+            preparationToken:e.preparation.storyboardToken,state:'pending',effects:0,recorded:null});
+          rememberArrivalUncertainty(e); // A reload while pending is uncertain, never "ready / zero".
+          e.state='pending';renderArrival(); // same focusable button, aria-disabled + state guard.
+        });
+        $('arrival-deliver').addEventListener('click',()=>{
+          const e=arrivalEntry;if(!e||e.state!=='pending')return;
+          const attempt=arrivalAttemptRecords.get(arrivalAttemptKey(e));
+          if(!attempt||attempt.state!=='pending')return;
+          if(!arrivalPreparationMatches(e)||attempt.preparationToken!==e.preparation?.storyboardToken||
+              attempt.binding!==arrivalBinding(e)||attempt.tuple!==arrivalTuple(e)||
+              ['stale','expired'].includes(e.scenario)){
+            stopStaleArrival(e);attempt.state='conflict';settleArrivalAttempt(e);
+          }else if(e.scenario==='command-error'){
+            e.state='failed';attempt.state='failed';settleArrivalAttempt(e);
+          }else if(e.scenario==='unknown'){
+            // Fault storyboard: effect attempted, acknowledgment lost. Never show a receipt/count.
+            e.state='unknown';e.effects=null;attempt.state='unknown';attempt.effects=null;
+            arrivalRowOutcomes.set(arrivalResourceKey(e),{state:'unknown',effects:null,attemptToken:e.attemptToken});
+            rememberArrivalUncertainty(e);
+          }else{
+            attempt.effects=1;attempt.state='succeeded';
+            attempt.recorded={stageArrivalLocal:'2026-10-20T10:22:05',briefing:false,
+              stageLate:e.scenario==='late'?{reasonCode:e.reason,minutes:'22',remark:null}:null};
+            e.effects=attempt.effects;e.state='succeeded'; // ONE tuple+attempt-bound volatile effect.
+            arrivalRowOutcomes.set(arrivalResourceKey(e),{state:'succeeded',effects:1,attemptToken:e.attemptToken,
+              scenario:e.scenario,reason:e.reason,generation:e.generation});
+            settleArrivalAttempt(e);
+          }
+          clearArrivalPreparation();renderArrival();$('arrival-status').focus({preventScroll:true});
+        });
+        $('arrival-cancel').addEventListener('click',returnArrival);
+        function startNewArrivalDemonstration(){
+          if(arrivalEntry?.state==='pending')return;
+          const previousSession=arrivalSafety.sessionToken;
+          const priorUnresolved=arrivalSafety.priorUnresolved||!!arrivalSafety.unresolved;
+          supersededArrivalSessions.add(previousSession);
+          arrivalSafety={sessionToken:crypto.randomUUID(),unresolved:null,priorUnresolved};
+          // Old attempts remain old/unknown. This is a NEW synthetic session, not outcome recovery.
+          if(arrivalEntry){
+            clearArrivalPreparation();
+            Object.assign(arrivalEntry,{sessionToken:arrivalSafety.sessionToken,scenario:'clean',
+              state:'context-ready',reason:'',effects:0,attemptToken:null,generation:arrivalEntry.generation+1});
+          }
+          history.replaceState(history.state||{},'',location.href);
+          renderArrival();
+          (arrivalEntry?$('arrival-prepare'):$('arrival-choose')).focus({preventScroll:true});
+        }
+        $('arrival-reset').addEventListener('click',startNewArrivalDemonstration);
+        $('arrival-new-session').addEventListener('click',startNewArrivalDemonstration);
     // Explicit selected detail action; never manufactures an item-detail endpoint.
     const detailItems=document.createElement('a');
     detailItems.href='#shift-items';detailItems.className='items-link';detailItems.textContent='הפסקות וחריגות חלקיות במשמרת ←';
