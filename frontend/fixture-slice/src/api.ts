@@ -7,6 +7,7 @@ import type { MyShiftsContextRequestV1, MyShiftsRequestV1 } from '../../../backe
 import type { SelectedShiftItemsRequestV1 } from './shift-items-contract';
 import type { AttendanceRequestV1 } from '../../../backend/fixture-slice/attendance-contracts.mts';
 import type { StageArrivalDraftV1, StageArrivalCommitDraftV1 } from '../../../backend/fixture-slice/stage-arrival-contracts.mts';
+import type { NativeStageArrivalCommitV1 } from '../../../backend/fixture-slice/oracle-stage-arrival-contracts.mts';
 
 @Injectable({ providedIn: 'root' })
 export class SliceApi {
@@ -20,7 +21,7 @@ export class SliceApi {
       { cache: 'no-store', timeout: 5000, observe: 'response', headers: { 'Content-Type': 'application/json' } })
       .pipe(map(r => this.arrivalBody(r, 16384)));
   }
-  stageArrivalCommand(employeeId: string, shiftDayId: string, command: StageArrivalCommitDraftV1) {
+  stageArrivalCommand(employeeId: string, shiftDayId: string, command: StageArrivalCommitDraftV1 | NativeStageArrivalCommitV1) {
     return this.http.post<unknown>(this.arrivalBase(employeeId, shiftDayId) + '/commands', command,
       { cache: 'no-store', timeout: 5000, observe: 'response', headers: { 'Content-Type': 'application/json' } })
       .pipe(map(r => this.arrivalBody(r, 16384)));
@@ -33,7 +34,7 @@ export class SliceApi {
       !response.headers.get('Cache-Control')?.split(',').some(v => v.trim().toLowerCase() === 'no-store') ||
       response.headers.get('X-Content-Type-Options')?.toLowerCase() !== 'nosniff' ||
       new TextEncoder().encode(JSON.stringify(response.body)).length > maxBytes)
-      throw Error('Invalid isolated-fixture response envelope');
+      throw Error('Invalid stage-arrival response envelope');
     return response.body;
   }
   attendanceContext() {

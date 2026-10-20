@@ -1,5 +1,6 @@
 @use '@angular/material' as mat;
 @use './attendance-calendar';
+@use './arrival-focus';
 html {
   @include mat.theme((
     color: (primary: mat.$blue-palette, tertiary: mat.$cyan-palette, theme-type: light),

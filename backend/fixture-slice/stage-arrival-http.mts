@@ -6,6 +6,8 @@ import { SliceError } from "./errors.mts";
 import { command, parseStageJson, selection, validReceipt } from "./stage-arrival-validation.mts";
 import { StageArrivalError, stageFail, stageProblem } from "./stage-arrival-errors.mts";
 import { currentRequestBudget, withRequestBudget } from "./request-budget-context.mts";
+import { nativeCommand, validNativeReceipt } from "./native-stage-arrival-validation.mts";
+import { linkBackendShutdown } from "./backend-lifecycle.mts";
 
 const pattern = /^\/api\/v1\/employees\/([^/]*)\/shift-days\/([^/]*)\/stage-arrival\/(context|validations|commands)$/;
 export const isStageArrivalRoute = (target: string) => pattern.test(target.split("?")[0]);
@@ -87,6 +89,7 @@ function send(response: ServerResponse, status: number, value: unknown, problem 
 export async function handleStageArrival(request: IncomingMessage, response: ServerResponse,
   runtime: SliceRuntime, options: StageArrivalHttpOptions) {
   const requestId = randomUUID(), abort = new AbortController();
+  const unlinkShutdown = linkBackendShutdown(abort);
   let commandId: string | null = null, commandAttempted = false, terminalKnown = false;
   const close = () => { if (!response.writableEnded) abort.abort(); };
   request.once("aborted", close); response.once("close", close);
@@ -114,10 +117,12 @@ export async function handleStageArrival(request: IncomingMessage, response: Ser
       if (match[3] === "context") value = await runtime.stageArrivalContext(p, target, abort.signal);
       else if (match[3] === "validations") value = await runtime.stageArrivalValidate(p, target, input, abort.signal);
       else {
-        const cmd = command(input); commandId = cmd.commandId;
+        const cmd = runtime.attendanceStageArrivalMode === "test-oracle-controlled" ? nativeCommand(input) : command(input);
+        commandId = cmd.commandId;
         commandAttempted = true;
         value = await runtime.stageArrivalCommit(p, target, cmd, abort.signal);
-        if (!validReceipt(value, cmd, target))
+        if (!(runtime.attendanceStageArrivalMode === "test-oracle-controlled"
+          ? validNativeReceipt(value, nativeCommand(cmd), target) : validReceipt(value, cmd, target)))
           stageFail("COMMAND_OUTCOME_UNKNOWN");
       }
       const json = JSON.stringify(value);
@@ -147,6 +152,7 @@ export async function handleStageArrival(request: IncomingMessage, response: Ser
       request.resume();
     }
   } finally {
+    unlinkShutdown();
     if (timer) clearTimeout(timer);
     request.removeListener("aborted", close); response.removeListener("close", close);
   }

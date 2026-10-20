@@ -24,7 +24,7 @@ import { ListNavigation } from './list-navigation';
 import { ViewHistory } from './view-history';
 import { EmployeeName } from './employee-name';
 import { StageArrivalSession } from './stage-arrival-session';
-import { f1Identity, actorBinding } from './stage-arrival-contract';
+import { arrivalSource, actorBinding } from './stage-arrival-contract';
 
 const timeControl = () => new FormControl('', { nonNullable: true,
   validators: [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/)] });
@@ -282,7 +282,8 @@ export class AttendancePage {
   canReadItems() { const caps = this.principal()?.principal.capabilities;
     return !!caps?.includes('shift-items:read') && caps.includes('shift-day:read'); }
   canOpenArrival(row: AttendanceRowV1) {
-    return f1Identity(this.principal()) && this.result()?.dataSource === 'isolated-fixture' &&
+    const source = arrivalSource(this.principal());
+    return source !== null && this.result()?.dataSource === (source === 'oracle-test' ? 'oracle-read-only' : 'isolated-fixture') &&
       !!row.shiftDayId && row.planned.startLocal !== null && row.planned.endLocal !== null &&
       this.principal()!.principal.resourceScope.orgUnitIds.includes(row.employee.unit.code);
   }
@@ -293,7 +294,7 @@ export class AttendancePage {
     this.arrival.selection = { employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId!,
       attendanceKey: { shiftDayId: row.shiftDayId! }, orgUnitId: row.employee.unit.code,
       name: `${row.employee.firstName} ${row.employee.lastName}`, startLocal: row.planned.startLocal!,
-      endLocal: row.planned.endLocal!, dataSource: 'isolated-fixture', actor: actorBinding(this.principal()!) };
+      endLocal: row.planned.endLocal!, dataSource: arrivalSource(this.principal())!, actor: actorBinding(this.principal()!) };
     void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'stage-arrival'],
       { state: { origin: 'attendance' } });
   }

@@ -1,6 +1,9 @@
 // Canonical TYPE-ONLY v0.1: approved sections 38/39, recorded in section 40.
 // Draft names intentionally match section 38 exactly. No runtime consumer,
 // HTTP parser, token implementation, Oracle adapter or messaging implementation.
+// Approved native §43/§45 companion: ./oracle-stage-arrival-contracts.mts.
+// Fixture types/ports/mode below stay unchanged; native is a separate branch,
+// never a widening of fixture source/receipt or a memory-UoW subtype.
 import type {
   DecimalId, LocalDateTime, PrincipalV1, ShiftDayId,
 } from "./contracts.mts";

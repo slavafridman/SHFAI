@@ -2,12 +2,22 @@ import { decimalId, localDateTime, record, text } from "./contract-validation.mt
 import { unitCode, plainLabel } from "./current-shifts-validation.mts";
 import { stageFail } from "./stage-arrival-errors.mts";
 import type { StageArrivalCommitDraftV1, StageArrivalDraftV1, StageArrivalFactsV1,
-  StageArrivalModeV1, StageArrivalSelectionV1, StageArrivalSourceBindingV1 } from "./stage-arrival-contracts.mts";
+  StageArrivalSelectionV1, StageArrivalSourceBindingV1 } from "./stage-arrival-contracts.mts";
+import type { StageArrivalModeVNext } from "./oracle-stage-arrival-contracts.mts";
 
-export function validateStageArrivalMode(value: unknown): StageArrivalModeV1 {
+export function validateStageArrivalMode(value: unknown): StageArrivalModeVNext {
   if (!record(value)) throw Error("Invalid stage-arrival configuration");
   const mode = value.attendanceStageArrivalMode;
   if (mode === undefined || mode === "disabled") return "disabled";
+  if (mode === "test-oracle-controlled") {
+    if (value.dataSource !== "oracle-read-only" || value.deploymentClass !== "isolated-test-demo" ||
+        value.oracleTestScopeConfirmed !== true || value.authenticationMode !== "synthetic" ||
+        value.syntheticAdministratorEnabled !== true || Object.keys(value).some(k => ![
+          "attendanceStageArrivalMode", "dataSource", "deploymentClass", "oracleTestScopeConfirmed",
+          "authenticationMode", "syntheticAdministratorEnabled", "syntheticOrgUnitIds", "businessTimeZone",
+        ].includes(k))) throw Error("Explicit controlled native TEST configuration required");
+    return mode;
+  }
   if (mode !== "isolated-fixture" || value.dataSource !== "isolated-fixture" ||
       !["local-development", "isolated-test-demo"].includes(String(value.deploymentClass)) ||
       value.authenticationMode !== "synthetic" || value.syntheticAdministratorEnabled !== true)

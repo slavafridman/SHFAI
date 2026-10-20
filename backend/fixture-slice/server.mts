@@ -18,19 +18,50 @@ import { validateStageArrivalMode } from "./stage-arrival-validation.mts";
 import { createStageArrivalFixture } from "./stage-arrival-fixture.mts";
 import { systemClock } from "./read-current-shifts.mts";
 import { validateStageArrivalHttpOptions } from "./stage-arrival-http.mts";
+import { nativeEnvironment } from "./native-stage-arrival-config.mts";
+import type { NativePool } from "./oracle-stage-arrival-uow.mts";
+import type { OracleEnvironment } from "./runtime-config.mts";
+import { backendLifecycle, waitForBackendDrain, BackendDrainPendingError } from "./backend-lifecycle.mts";
 
-const resources = new WeakMap<Server, OraclePool>();
+const resources = new WeakMap<Server, Array<OraclePool | NativePool>>();
+const shutdowns = new WeakMap<Server, Promise<void>>();
+async function closePools(pools: Array<OraclePool | NativePool>) {
+  const results = await Promise.allSettled(pools.map(p => p.close()));
+  if (results.some(r => r.status === "rejected")) throw Error("Backend pool cleanup failed");
+}
 export async function stopBackendServer(server: Server) {
-  const closed = once(server, "close");
-  server.close(); server.closeAllConnections();
-  await closed;
-  const pool = resources.get(server);
-  if (pool) { resources.delete(server); await pool.close(); }
+  let completion = shutdowns.get(server);
+  if (!completion) {
+    const lifecycle = backendLifecycle(server);
+    lifecycle?.beginShutdown(); // Reject admission and abort pre-COMMIT work.
+    const closed = once(server, "close");
+    void closed.catch(() => {}); // Owned below; avoid a late unhandled close-error during native drain.
+    server.close(); server.closeAllConnections(); // HTTP sockets, NOT Oracle leases.
+    completion = (async () => {
+      // Request handlers can finish on a race/transport loss while their native
+      // promises still run. The lifecycle also owns the underlying budget work.
+      await lifecycle?.drain();
+      await closed;
+      const pools = resources.get(server);
+      if (pools) { resources.delete(server); await closePools(pools); }
+    })();
+    shutdowns.set(server, completion);
+  }
+  // Bounded caller wait, not a forced native cancellation/release. On timeout
+  // the owned completion remains registered, pools stay open until safe drain,
+  // and another stop call awaits that same completion.
+  await waitForBackendDrain(completion);
+}
+// Internal typed injection seam for isolated entrypoint tests, never ENV/HTTP.
+export interface BackendPoolFactories {
+  read(env: OracleEnvironment): Promise<OraclePool>;
+  native(env: OracleEnvironment): Promise<NativePool>;
 }
 
 // No defaults: executable requires explicit source, isolated synthetic identity and port.
 // Oracle credentials are environment-only database configuration, not login passwords.
-export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtureClock = systemClock) {
+export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtureClock = systemClock,
+  factories?: BackendPoolFactories) {
   if (environment.SHF_ORACLE_CONFIG !== undefined && environment.SHF_FIXTURE_CONFIG !== undefined)
     throw new Error("Choose exactly one backend source configuration");
   const oracleMode = environment.SHF_ORACLE_CONFIG !== undefined;
@@ -41,12 +72,13 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
   if (config.deploymentClass === "production" || config.authenticationMode !== "synthetic")
     throw new Error("Executable backend requires explicit isolated synthetic mode");
   const stageMode = validateStageArrivalMode(config);
+  const native = nativeEnvironment(environment, stageMode === "test-oracle-controlled");
   let stageArrivalOrigins: readonly string[] | undefined;
   const originsText = environment.SHF_STAGE_ARRIVAL_ORIGINS;
   if (originsText !== undefined) {
     // Deployment-only input. Never infer an allowed frontend Origin from Host,
     // a request, credentials or an Oracle/read-only configuration.
-    if (stageMode !== "isolated-fixture" || typeof originsText !== "string" ||
+    if (!["isolated-fixture", "test-oracle-controlled"].includes(stageMode) || typeof originsText !== "string" ||
         Buffer.byteLength(originsText, "utf8") > 4096)
       throw new Error("Explicit isolated F1 origin configuration required");
     let parsed: unknown;
@@ -62,10 +94,12 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
     validateStageArrivalHttpOptions({ stageArrivalOrigins: origins });
     stageArrivalOrigins = Object.freeze(origins);
   }
+  if (native && !stageArrivalOrigins?.length) throw Error("Explicit native frontend Origin allowlist required");
   const portText = oracleMode ? environment.SHF_ORACLE_PORT : environment.SHF_FIXTURE_PORT;
   if (typeof portText !== "string" || !/^(0|[1-9][0-9]{0,4})$/.test(portText) || Number(portText) > 65535)
     throw new Error("Explicit loopback port required");
   let pool: OraclePool | undefined;
+  let writePool: NativePool | undefined;
   let runtime;
   try {
     if (config.dataSource === "oracle-read-only") {
@@ -83,16 +117,32 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
         import("./oracle-my-shifts-reader.mts"), import("./oracle-shift-items-reader.mts"),
         import("./oracle-employee-card-reader.mts"), import("./oracle-attendance-reader.mts"),
       ]);
-      pool = await createOraclePool(oracleEnvironment(environment));
+      pool = await (factories?.read ?? createOraclePool)(oracleEnvironment(environment));
       const session = new OracleReadSession(pool);
       await session.read(async query => {
         const result = await query("SELECT 1 AS \"probe\" FROM dual", {}, 1);
         if (result.length !== 1) throw new Error("Oracle readiness failed");
       });
+      let nativeStageArrival;
+      if (native) {
+        // Separate account/UoW, never the read pool or injected fixture Clock.
+        const [{ createNativePool, OracleStageArrivalUow }, { OracleStageArrivalApplication }] = await Promise.all([
+          import("./oracle-stage-arrival-uow.mts"), import("./oracle-stage-arrival-application.mts"),
+        ]);
+        writePool = await (factories?.native ?? createNativePool)(native.writer);
+        const uow = new OracleStageArrivalUow(writePool, session, native.binding);
+        await uow.initialize();
+        nativeStageArrival = new OracleStageArrivalApplication(uow, native.binding, systemClock,
+          config.businessTimeZone, config.syntheticOrgUnitIds);
+        // Exact marker/keys/source/window/real Clock checked with a plain-table
+        // READ ONLY snapshot BEFORE native capabilities become reachable.
+        await nativeStageArrival.assertReady();
+      }
       runtime = await createRuntime(config, new OracleDetailReader(session), undefined,
         { reader: new OracleCurrentReader(session), searchReader: new OracleSearchReader(session),
           myShiftsReader: new OracleMyShiftsReader(session), shiftItemsReader: new OracleShiftItemsReader(session),
-          employeeCardReader: new OracleEmployeeCardReader(session), attendanceReader: new OracleAttendanceReader(session) });
+          employeeCardReader: new OracleEmployeeCardReader(session), attendanceReader: new OracleAttendanceReader(session),
+          nativeStageArrival });
     } else if (stageMode === "isolated-fixture") {
       if (["SHF_FIXTURE_ROWS", "SHF_CURRENT_SHIFTS_FIXTURE", "SHF_SHIFT_SEARCH_FIXTURE",
         "SHF_MY_SHIFTS_FIXTURE", "SHF_SHIFT_ITEMS_FIXTURE", "SHF_EMPLOYEE_CARD_FIXTURE",
@@ -134,7 +184,7 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
       runtime = await createRuntime(config, new FixtureReader(validatedRows), undefined, currentOptions);
     }
   } catch (error) {
-    if (pool) await pool.close();
+    await closePools([...(pool ? [pool] : []), ...(writePool ? [writePool] : [])]).catch(() => {});
     throw error;
   }
   const server = createLoopbackServer(runtime, { stageArrivalOrigins });
@@ -146,16 +196,21 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
         resolve();
       });
     });
-  } catch (error) { if (pool) await pool.close(); throw error; }
-  if (pool) resources.set(server, pool);
+  } catch (error) {
+    await closePools([...(pool ? [pool] : []), ...(writePool ? [writePool] : [])]).catch(() => {});
+    throw error;
+  }
+  if (pool || writePool) resources.set(server, [...(pool ? [pool] : []), ...(writePool ? [writePool] : [])]);
   return server;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const server = await startFromEnvironment(process.env);
     const stop = () => {
-      stopBackendServer(server).catch(() => {
-        process.stderr.write("Backend cleanup failed\n"); process.exitCode = 1;
+      stopBackendServer(server).catch(error => {
+        process.stderr.write(error instanceof BackendDrainPendingError
+          ? "Backend shutdown pending; native work remains owned\n" : "Backend cleanup failed\n");
+        process.exitCode = 1;
       });
     };
     process.once("SIGINT", stop);

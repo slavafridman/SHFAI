@@ -1,4 +1,244 @@
-# SHF-F1-UI-20 — frontend F1 verification (20 October 2026)
+# SHF-NATIVE-ARRIVAL-UI-20 — frontend verification (20 October 2026)
+
+## Latest follow-up — UI-D01/UI-D02 fixed, ready for bounded independent QA retest
+
+**Scope:** the two confirmed focus defects from independent QA35a1, report
+lines80–120, not new UI/API behavior. Approved §43/§45 v0.1 unchanged. Developer
+fix/retest complete; caller/independent QA owns confirmation before publication.
+No backend/canonical/root/project-status/legacy/Git/dependency changes.
+
+### Exact changed paths for this follow-up only
+
+Relative to `frontend/fixture-slice/`:
+
+```text
+src/arrival-focus.scss
+src/styles.scss
+src/stage-arrival-page.scss
+src/stage-arrival-page.ts
+src/native-arrival-page.spec.ts
+checks/arrival-focus-proof.mjs
+checks/native-arrival-browser-check.mjs
+README.md
+VERIFICATION.md
+```
+
+**UI-D01:** component keyboard ring specificity now beats Material's
+outline:none. Global overlay rule is restricted to
+`.cdk-overlay-pane.shf-arrival-dialog`, explicitly opted into by native/F1
+arrival dialogs; no generic global Material override or `!important`. Both
+`:focus-visible` and focused `.cdk-keyboard-focused` are handled. Whole-button
+opacity removed; disabled foreground/background stays separate from full-opacity
+ring. Aria-disabled + synchronous command guard and the same button DOM remain.
+
+**UI-D02:** native `restoreFocus:false` prevents the early Material restore.
+After dialog close/pending/cancel render, `afterNextRender` restores the exact
+opener with `preventScroll`, then checks actual usable viewport geometry.
+Sticky-header height and outline/offset margins are measured, not hardcoded Y.
+Only an out-of-view opener scrolls with nearest/instant. Success/UNKNOWN/error
+callbacks check focus ownership; they never focus a different heading/body or
+take focus back from user navigation. Alive/generation/connected checks ignore
+stale queued work. No timer, arbitrary delay or application polling.
+
+### Actual rendered Chrome measurements — synthetic only
+
+Measured with three-frame observation barrier after the pending render, **no
+driver focus/scroll assistance after final Enter**. Exact focused node, solid3px
+outline/3px offset, effective ancestor opacity1 and hit-test checked. The helper
+decodes actual Chrome PNG pixels (Node built-ins, no dependency) and compares a
+flat ring sample against its adjacent rendered background; this is not a
+computed-outline-width-only or body-text assertion.
+
+| Viewport | Cancel / enabled final-confirm contrast | Review/pending/SUCCESS/UNKNOWN opener contrast | Pending bounds / visible height |
+|---|---|---|---|
+| 1440×900 |12.5332:1 /12.5332:1 |12.6179:1 in all four states |top845.94, bottom893.94, visible48px |
+| 390×900 |12.5332:1 /12.5332:1 |12.6179:1 in all four states |top647.94, bottom695.94, visible48px |
+| 320×900, font30 |12.5332:1 /12.5332:1 |12.6179:1 in all four states |top429.88, bottom528.63, visible98.75px |
+
+All entries: exact opener remains focused, full ring inside usable viewport,
+`hit=true`, contrast≥3. Pending success/unknown branches each POST exactly1 even
+after three additional native Space activations. Native HTTP double independently
+measures1440 pending845.94–893.94/48px and success744–792/48px, both hit=true and
+12.6179:1. This is UI evidence, **not Oracle/native-adapter evidence or full WCAG**.
+
+Synthetic screenshots:
+`.angular/browser-evidence/NATIVE-focus-retest-{Cancel,final-confirm}-<width>-SYNTHETIC.png`,
+`NATIVE-focus-retest-pending-<width>-{clean,unknown}-SYNTHETIC.png`,
+and `NATIVE-focus-retest-{clean,unknown}-<width>[-font30]-SYNTHETIC.png`.
+Visually inspected Cancel320-font30 and pending1440; no personal/live data.
+
+### Commands and results for this follow-up
+
+Working directory `frontend/fixture-slice`:
+
+| Exact command | Result |
+|---|---|
+| `npm test -- --include=src/native-arrival-page.spec.ts --include=src/stage-arrival-page.spec.ts --include=src/stage-arrival-generation.spec.ts` | **PASS87/87**,3 files. New cases assert scoped component ring/overlay opt-in; scroll after pending DOM render with same opener; no scroll in view, no stealing focus on result/user navigation/recheck |
+| `npm test` | **PASS430/430**,30 files, original427+3 new focus regressions |
+| `npm run typecheck` | PASS exit0 |
+| `npm run build` | PASS exit0, actual templates/global+component styles compiled |
+| `node --check checks/arrival-focus-proof.mjs`; `node --check checks/native-arrival-browser-check.mjs` | PASS |
+| `node checks/serve-stage-arrival.mjs --port=4406` + `node checks/native-arrival-browser-check.mjs --focus-retest` | PASS bounded two-defect pixel/geometry/contrast matrix,30 measurements at three viewports and both outcomes |
+| `node checks/native-arrival-browser-check.mjs` against same static helper | PASS complete native interception/guard/reload/source-switch/keyboard matrix |
+| `node checks/serve-native-arrival-double.mts --synthetic-native-http-double` + `node checks/serve-stage-arrival.mjs --port=4406 --native-http-double-proxy` + `node checks/native-arrival-browser-check.mjs --http-double` | PASS normal same-origin HTTP to typed synthetic stub; context1/PURE2/command1, added actual pending+success pixel/geometry assertions |
+| Existing strict standalone TypeScript command for `checks/serve-native-arrival-double.mts` below | PASS again, no installs |
+| `node checks/serve-stage-arrival.mjs` + `node checks/stage-arrival-browser-check.mjs` | PASS unchanged F1 clean/pending Space/late-warning Escape/UNKNOWN/reload/7-read-only scenarios |
+| `node checks/stage-arrival-legacy-check.mjs` | PASS unchanged current/detail/search/schedule browser navigation, reload focus and pickers |
+
+Initial focused style test correctly failed when it tried to inspect the external
+global stylesheet through jsdom (the unit runner does not attach it). The test
+now asserts real component CSS and dialog namespace opt-in; actual overlay CSS
+is independently measured in Chrome PNG pixels rather than injected into the
+test to create a false pass. jsdom's scrollTo notices are not geometry evidence.
+
+**Remaining/not run:** independent QA35a1's same bounded two-defect retest and
+publication decision belong to caller/QA; full WCAG/screen-reader certification
+not claimed. Native live integration, real attendance tuple reachability,
+Oracle/credentials/environment files and DML remain **NOT RUN**. Backend's
+parallel four-defect fix was not touched. Prepared window remains expired and
+operator revalidation remains required. Own synthetic helpers/profiles are
+closed/cleaned after checks; user application ports untouched.
+
+---
+
+## Current result — UI implemented; independent QA / live backend handoff
+
+Approved contracts: §43.5 / §43.7 and §45 **v0.1**, user20Oct16:07 approval
+relayed by caller; canonical
+`backend/fixture-slice/oracle-stage-arrival-contracts.mts` type-only imports.
+Fixture §38–40 v0.1 / §40.5 remains intact. No canonical/backend/docs/root/
+legacy/Git modifications; this owner writes only `frontend/fixture-slice/`.
+Project checkpoint publication belongs to caller, not this owner.
+
+Read-first evidence: `docs/PROJECT_STATUS.md`, project instructions, agent brief,
+existing ui-developer skill, relevant design baseline and actual Angular F1.
+Source contract catalog absent. Controlling read-only source inspected:
+`old/SHF/src/bzq/shf/model/AttendanceDataModel.java:1237–1304`,
+`old/SHF/src/bzq/shf/actions/AttendanceDataAction.java:317–339`,
+`old/SHFWeb/WebContent/js/attendance.js:140–203`. The approved native branch
+does not reproduce legacy INSERT fallback, optimistic checkbox or mutating GET.
+Source inspection is not proof of deployed Oracle behavior.
+
+Node24.21.0/npm11.19.0 actually reported. Existing Angular21.2.25,
+Material/CDK21.2.14, TypeScript5.9.3, RxJS7.8.2, Vitest4.0.8 retained;
+no manifest change, dependency install, tooling upgrade or scaffold.
+
+### Changed paths (all relative to `frontend/fixture-slice/`)
+
+* `src/contract.ts`, `src/api.ts`, `src/attendance-page.ts`
+* `src/stage-arrival-contract.ts`, `src/stage-arrival-session.ts`
+* `src/stage-arrival-page.ts`, `src/stage-arrival-page.html`
+* `src/workspace-shell.html`, `src/stage-arrival-generation.spec.ts`
+* `src/native-arrival-fixtures.ts`, `src/native-arrival-contract.spec.ts`
+* `src/native-arrival-page.spec.ts`, `src/native-arrival-session.spec.ts`
+* `src/native-read-views.spec.ts`
+* `checks/native-arrival-browser-check.mjs`, `checks/serve-stage-arrival.mjs`
+* `checks/serve-native-arrival-double.mts`
+* `README.md`, `VERIFICATION.md`
+
+Native10 is separate from read7/F1 fixture9; no future F2 admission or role
+promotion. Coherent source-aware context/validation/receipt and private-field
+allowlists fail atomically. Native request adds explicit whole-operation consent;
+no late path/time controls. Existing API paths and fixture wire shape unchanged.
+Review describes all three write fields without exposing/inventing a private
+operator stamp. Actual final time is freshly determined by backend.
+
+Pending native safety marker is persisted before POST in history and tab
+sessionStorage; only random UUID + command-kind + mode, no personal cache,
+tokens, payloads or receipts. This additional opaque tab marker is necessary
+because a full-document10→9→7→10 source/config switch loses an Angular service
+and current history entry. It is a blocker, never a capability or reset-proof
+authorization mechanism. Known outcome resolution is source/attempt-bound;
+UNKNOWN remains global across modes and reload, with no new-demo/reset advice.
+Exact fixture UUID history behavior remains. Neither client markers nor
+backend memory are advertised as durable/global exactly-once.
+
+### Exact checks and evidence classes
+
+Working directory: `D:\AIProjects\SHFAI\frontend\fixture-slice`.
+
+| Command | Measured result / class |
+|---|---|
+| `npm run typecheck` | PASS, exit0; supported installed stack unchanged |
+| `npm test -- --include=src/stage-arrival-contract.spec.ts --include=src/stage-arrival-page.spec.ts --include=src/native-arrival-contract.spec.ts` | PASS49/49 after initial worker startup timeout; fixture regression + native guard tests, Angular/jsdom only |
+| `npm test -- --include=src/native-arrival-page.spec.ts --include=src/native-arrival-contract.spec.ts` | PASS33/33 at that checkpoint; additional adversarial cases included in final suite |
+| `npm test -- --include=src/native-read-views.spec.ts` | PASS14/14; all seven read views accept native10 with proper Oracle source pairs and reject fixture DTOs without fallback |
+| `npm test` | FINAL PASS **427/427**,30 files: original357 +70 native cases (six generation, six contract,35 component, nine safety-session,14 read-view/source cases) |
+| `npm run build` | PASS, production Angular templates/assets compiled; not production deployment/auth authorization |
+| `node checks/serve-stage-arrival.mjs --port=4406` + `node checks/native-arrival-browser-check.mjs` | PASS on final native implementation checkpoint; Chrome155, synthetic Fetch interception ONLY, owned4406/9406, no Oracle/native writer/account access |
+| `node checks/serve-native-arrival-double.mts --synthetic-native-http-double` + `node checks/serve-stage-arrival.mjs --port=4406 --native-http-double-proxy` + `node checks/native-arrival-browser-check.mjs --http-double` | PASS; actual same-origin HTTP to typed synthetic stub on4407, NOT parallel native backend. Context1/PURE2/command1; Escape0, explicit confirm1, pending duplicate Space1/focus, exact native receipt, synthetic `oracle` detail + `oracle-read-only` attendance readback and exact return opener/filter. Stub logs one **synthetic acceptance**, not Oracle effect |
+| `.\node_modules\.bin\tsc.cmd --noEmit --strict --target ES2024 --module NodeNext --moduleResolution NodeNext --typeRoots ../../backend/fixture-slice/node_modules/@types --types node --allowImportingTsExtensions --verbatimModuleSyntax --erasableSyntaxOnly checks/serve-native-arrival-double.mts` | PASS, no typecheck suppression or installs; canonical type-only DTOs, existing installed backend Node types reused for test helper |
+| `node --check checks/native-arrival-browser-check.mjs`; `node --check checks/serve-stage-arrival.mjs` | PASS, exit0 |
+| `node checks/serve-stage-arrival.mjs` + `node checks/stage-arrival-browser-check.mjs` | PASS existing F1 synthetic browser regression; exact old7 read-only denial and fixture9 preserved |
+| `node checks/serve-stage-arrival.mjs --fixture-proxy` + `node checks/serve-stage-arrival-fixture.mjs --isolated-fixture --scenario=clean` + `node checks/stage-arrival-browser-check.mjs --fixture-proxy --scenario=clean` | PASS; actual F1 memory runtime over normal HTTP, not native adapter. PURE1, UI command1 + explicit test-only KNOWN replay1, one installed arrival/receipt/audit |
+| Same two scenario commands for `late`, `unknown`, `stale`, `expired`, one fresh owned helper per scenario | ALL PASS. Late PURE2/command1/effect1; post-install UNKNOWN command1/effect1 honestly unresolved; stale/expired command1/effect0. No Fetch interception in proxy matrix; no SQL/Oracle |
+| `node checks/stage-arrival-legacy-check.mjs` | PASS unchanged current/detail/search/schedule browser suite, synthetic interception |
+| `$env:SHF_ATTENDANCE_ONLY='1'; node checks/stage-arrival-legacy-check.mjs` | PASS original attendance suite, filters/25+5/scroll/opener/two actors/Back/Forward/320-font30 |
+| `$env:SHF_CARD_ONLY='1'; node checks/stage-arrival-legacy-check.mjs` | PASS card five origins, source/capabilities/races/focus/RTL |
+| `$env:SHF_ITEMS_ONLY='1'; node checks/stage-arrival-legacy-check.mjs` | PASS items sources/25+5/errors/keyboard/RTL/320-font30 |
+
+Native Chrome assertions: full-operation checkbox/final button, Cancel/Escape0,
+PURE0, command1, duplicate Space while pending1, exact pending/success/UNKNOWN
+opener focus, persistent source/auth disclosures, complete date/seconds/zone,
+1440×900/390×900/320×900-font30 bounded scrolling dialog and no page horizontal overflow.
+Forged clock, wrong selected employee, native late-warning reply, late refusal,
+already-recorded context and monotonic expiry send0 commands. Native success
+requires exact receipt + ACK/readback; network loss, missing readback or fixture
+receipt after POST become UNKNOWN.10→9→7→10 full-document switches and pending
+reload add0 context/validation/command requests, no cached result.
+Synthetic screenshots generated and visually inspected at320-font30 and1440;
+no real records or personal-data captures.
+
+Historical failures fixed before passing runs: missing type narrowing; test
+fixture `unknown` HTTP flush typing; worker thread startup timeout (stopped owned
+run, rerun passed; later buffered focused run also stopped, visible rerun passed);
+new read-test initially called `apply` rather than existing search `search`
+handler (test corrected); changed generic read-source text (restored legacy text);
+full-document switch originally dropped in-memory safety (opaque tab marker
+added); native test-driver final button raced checkbox rendering (effective
+readiness barrier added); old F1 known-success string restored without labeling
+native success as simulation. The HTTP helper's first standalone typecheck could
+not find frontend-local Node types; corrected to the already installed backend
+type root, strict typecheck PASS without install. No failed check is counted as passing.
+jsdom emits expected `scrollTo`-not-implemented notices; real keyboard/focus/
+geometry claims use Chrome, not jsdom. No accessibility scanner or screen-reader
+certification; this is **not** full WCAG2.2 conformance.
+
+### Not run / owners / next action
+
+* **Actual native adapter integration and live Oracle write/readback NOT RUN.**
+  Native Chrome uses interception or a typed synthetic HTTP stub, not the parallel backend.
+  Backend owner/independent QA must exercise the canonical native implementation;
+  final operator alone performs the approved controlled synthetic TEST write.
+* Current eligibility, prepared-marker/private bindings, current grants/policy/
+  window/freeze/allowance, commit acknowledgment and independent database readback
+  remain backend/operator evidence. No real IDs/data, ENV/credential files,
+  database/Oracle transport or native SQL was accessed/executed by this owner.
+* Real authorized attendance-list reachability for the admitted tuple remains
+  an explicit live QA prerequisite; no fabricated row closes that gap.
+* Durable native receipt/replay/status, general cross-tab/process exactly-once,
+  production real authentication and later dev/test/production configuration
+  tooling are not implemented by frontend. Required environment behavior is captured in
+  README; backend/operator/caller own delivery and deployment decisions.
+* Backend `ba8f` READY OFFLINE420/420 (340 old+80 native), strict PASS was
+  relayed by caller; not an independently rerun frontend result. Backend README
+  and `native-stage-arrival-config.mts` exact private schema were read, with
+  no configuration values/ENV files accessed. Separate pools/UoW and external
+  one-attempt restart-protection allowance belong to backend/operator; its
+  private path never enters browser. Shared canonical contract unchanged.
+  Prepared `_B` window is expired per handoff: operator must revalidate actual
+  current eligibility; no manufactured Clock or UI override.
+* User ports4350/4349/4319/4328/4320/4389/4399 untouched. Only owned
+  4388/4398/9398 (F1) and4406/4407/9406 (native) helpers/profiles used and cleaned up.
+  No Git action, secret inspection, install, legacy execution or live effect.
+
+---
+
+# Historical SHF-F1-UI-20 verification baseline
+
+Everything below is prior fixture-only evidence; its earlier "no native DML
+approval" statements are historical, not a reversal of subsequent §43/§45
+implementation approval. Current live evidence remains NOT RUN as stated above.
 
 **Status: UI READY / review for independent QA — actual Angular F1, synthetic
 checks and real same-origin fixture proxy matrix PASS after parent §40.5 READY.**

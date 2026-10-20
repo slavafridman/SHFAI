@@ -20,6 +20,8 @@ import { invalidAttendance, parseAttendanceQuery } from "./attendance-validation
 import { attendanceProblem, AttendanceError } from "./attendance-errors.mts";
 import { handleStageArrival, isStageArrivalRoute, stageArrivalParserProblem, validateStageArrivalHttpOptions } from "./stage-arrival-http.mts";
 import type { StageArrivalHttpOptions } from "./stage-arrival-http.mts";
+import { BackendLifecycle, linkBackendShutdown, registerBackendLifecycle } from "./backend-lifecycle.mts";
+import { StageArrivalError, stageProblem } from "./stage-arrival-errors.mts";
 
 export const REQUEST_BUDGET_MS = 5000;
 export const RESPONSE_LIMIT_BYTES = 16 * 1024;
@@ -137,10 +139,11 @@ function send(response: ServerResponse, status: number, contentType: string, pay
 }
 export function createLoopbackServer(runtime: SliceRuntime, options: StageArrivalHttpOptions = {}) {
   validateStageArrivalHttpOptions(options);
+  const lifecycle = new BackendLifecycle();
   const inFlight = new WeakMap<Duplex, number>();
   // Leave room for the F1 application-level 16KiB header problem response.
   // The native parser still bounds larger malformed transport before dispatch.
-  const server = createServer({ maxHeaderSize: 32 * 1024 }, async (request, response) => {
+  const handle = async (request: IncomingMessage, response: ServerResponse) => {
     const socket = request.socket;
     inFlight.set(socket, (inFlight.get(socket) ?? 0) + 1);
     let released = false;
@@ -166,6 +169,7 @@ export function createLoopbackServer(runtime: SliceRuntime, options: StageArriva
     const scheduleEndpoint = (request.url ?? "").split("?")[0] === "/api/v1/my-shifts" ||
       (request.url ?? "").split("?")[0] === "/api/v1/my-shifts/context";
     const cancellation = new AbortController();
+    const unlinkShutdown = linkBackendShutdown(cancellation);
     let timer: ReturnType<typeof setTimeout> | undefined;
     let abort: () => void = () => {};
     try {
@@ -245,10 +249,24 @@ export function createLoopbackServer(runtime: SliceRuntime, options: StageArriva
         request.resume();
       }
     } finally {
+      unlinkShutdown();
       if (timer) clearTimeout(timer);
       response.removeListener("close", abort);
     }
+  };
+  const server = createServer({ maxHeaderSize: 32 * 1024 }, (request, response) => {
+    if (lifecycle.stopping) {
+      // Never authenticate/admit a pipelined request once shutdown starts.
+      const problem = isStageArrivalRoute(request.url ?? "")
+        ? stageProblem(new StageArrivalError("DEPENDENCY_UNAVAILABLE"), randomUUID())
+        : toProblem(new SliceError("DEPENDENCY_UNAVAILABLE"), randomUUID());
+      response.setHeader("Connection", "close");
+      send(response, problem.status, "application/problem+json; charset=utf-8", JSON.stringify(problem));
+      request.resume(); return;
+    }
+    void lifecycle.run(() => handle(request, response)).catch(() => { response.destroy(); });
   });
+  registerBackendLifecycle(server, lifecycle);
   server.on("clientError", (error, socket) => {
     // Never inject a "none" problem ahead of an earlier pipelined command's
     // response: that earlier command may already have installed an effect.

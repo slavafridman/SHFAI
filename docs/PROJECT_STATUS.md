@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-20, synthetic Oracle TEST fixture prepared and verified.
+Last updated: 2026-10-20, SHF-NATIVE-PILOT-FINAL-20 publication verification.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -25,19 +25,182 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ## Current priority: first controlled TEST Oracle arrival update
 
+### SHF-NATIVE-PILOT-FINAL-20 — current execution checkpoint
+
+**State: OFFLINE READY; publication running; native arrival NOT YET LIVE.**
+This checkpoint supersedes the older implementation/QA-in-progress statements
+below; those statements are retained as historical evidence.
+
+- Approved baseline: sections 43/45 v0.1, including the 16:07 approval and
+  conditional planning refresh of only the existing exact synthetic marker.
+  Production, station/F2, CTI/EMS, DDL, custom functions and legacy execution
+  remain excluded. Native commands remain disabled by default.
+- Backend owner digest `ba8f446`: four API findings D01–D04 corrected.
+  UI owner digest `7605430`: UI-D01/UI-D02 corrected. Caller-provided same
+  independent QA digest `35aALL6` closes all six findings, with 26 new
+  regressions, 106 native backend tests and independent shutdown/readback/
+  allowance/abort and UI focus/HTTP-double evidence. These are offline
+  fixtures/doubles, not a live Oracle result or production certification.
+- Fresh final verification in this task: backend strict typecheck and
+  **446/446 tests PASS**; frontend strict typecheck, **430/430 tests in 30
+  files PASS**, and production-assets build PASS. No test runner connected
+  to Oracle. A redundant frontend run stalled before totals and its owned
+  runner was stopped; the single bounded retry passed in 20.75 seconds.
+- Capability boundaries remain read-only **7**, isolated F1 **9**, controlled
+  TEST **10**. Native identity is `oracle`, synthetic actor with null employee
+  identity; native arrival DTO source is `oracle-test`, not a fixture receipt.
+- Initial index empty; main and fetched approved origin/main both
+  `0b9c550f1cf696a185526b647bda423c21b96086`, ahead/behind 0/0.
+  Twenty-three unrelated paths were identified and a bytewise/deletion
+  baseline captured without reading any protected environment file.
+- Candidate bounded private-key, literal-password, DDL and brief/protected-file
+  parser scans found zero matches. Existing/new synthetic fixtures and the
+  three-field SQL/UoW path were reviewed. This is a bounded publication
+  review, not a general privacy/security certification.
+- Standard evidence verifier PASS: 31 CSVs, 10,000 inventory references,
+  454 source hashes, 391 local links, 250 line anchors and 20 preserved Oracle
+  captures; the documented legacy duplicate route remains unchanged.
+  Scoped staging contains 50 authorized files only. New/existing application
+  and all staged documentation whitespace checks PASS without overrides
+  (no intentional Markdown hard-break exception was required).
+  Staged link closure, normal commit/push and final synchronization are
+  checked at publication; no pilot connection precedes those gates.
+- Actual native UPDATE, setup refresh, UI command, COMMIT and readback:
+  **NOT RUN in this checkpoint**. The old four-minute eligibility is historical.
+  One operator must establish fresh independent TEST identity, metadata,
+  exact-marker ownership and real-clock eligibility before enabling anything.
+- Required dev/test/production environment-profile work remains **pending
+  next task**. No production deployment, real authentication, whole-project
+  completion, WCAG conformance or SLA claim is made.
+
+Next safe action: finish and verify the scoped feature publication, then one
+separately journaled operator-only synthetic planning refresh if required and
+one real Angular controlled native TEST command, or record the exact blocker.
+Keep credentials, private keys, plan timestamps, bindings and tokens out of
+Git, logs and this checkpoint. Retain any consumed allowance; never retry an
+unknown command.
+
 The user asked when real Oracle records could be updated. On 20 October at
 14:25, the next priority changed from more fixture features to native write
 readiness and a controlled first-arrival plan.
 
 | Work item | State | Owner / next action |
 |---|---|---|
-| Native first-arrival plan, design section 43 v0.1 | review | Proposal and sanitized preflight evidence; not approved for adapter implementation or execution |
+| Native first-arrival plan, design section 43 v0.1 | approved; contracts ready | Section 45 records approval and canonical native handoff; backend/UI consumers running |
 | Current TEST metadata and fixture preflight | done within scope | Three fixture tables, 84 columns and 22 enabled/validated constraints; required columns/FKs/current literal defaults checked, enabled triggers/visible VPD zero; not native UPDATE grant or safety certification |
 | Eligible TEST record | time-sensitive, revalidate | New synthetic dataset verified eligible at read-back, with approximately four minutes left in its allowed window; do not assume eligibility now |
 | Synthetic TEST data preparation | done: PREPARED_VERIFIED | Three acknowledged INSERTs, one successful COMMIT and separate read-only read-back; first arrival still NULL |
 | Preflight connection health | review | Earlier NJS-500/failed rollback remains unexplained; a later single read-only connection completed six SELECTs and cleanup successfully |
 | Native readiness checkpoint | done: documentation / review: proposal | Plan and partial preflight recorded; publication is included in this scoped checkpoint; verify synchronization before resuming |
-| Actual Oracle UPDATE | blocked | Needs fresh grants/window/concurrency validation, approved APP43 contract and section 43.8 exact-record/three-field execution/read-back scope; successful TEST restoration is not mandatory |
+| Actual Oracle arrival UPDATE | not yet executed | Implement and verify adapter first; runtime must bind the prepared synthetic marker, current grants/values/window and three-field scope before one controlled TEST commit/read-back |
+
+### Latest approval and requested environments
+
+At 16:07 the user agreed to the requested native adapter step and asked for
+dev, test and production support by the end of the process, then said "do next
+step". Record section 43 implementation approval and proceed without repeating
+general TEST access, candidate-selection or post-success restoration questions.
+This approval does not enable production writes, DDL, CTI/EMS or arbitrary
+changes to real employees.
+
+Native canonical contract handoff completed: section 45 and
+`backend/fixture-slice/oracle-stage-arrival-contracts.mts`.
+Backend and UI consumers are implementing the disabled-by-default controlled
+TEST writer and existing UI mode changes in disjoint directories.
+The prepared synthetic record's old four-minute eligibility is not current;
+verify real Clock, source facts and policy again at execution. Only the exact
+synthetic test scope may be used. A rejected/expired window is not overridden.
+
+Environment support is a required later delivery item:
+
+- dev: explicit isolated fixture mode, no implicit access to real infrastructure;
+- test: explicit Oracle connection/secrets and independently enabled scoped
+  native TEST commands;
+- production: synthetic login and TEST command modes rejected, no dev/test
+  fallback, real authentication/configuration prerequisite;
+- secrets stay server-side; frontend gets only public configuration.
+
+Environment support is not production deployment authorization. Do not
+automatically provision containers, change the schema or contact production.
+
+### Active implementation: SHF-NATIVE-ARRIVAL-API/UI-20
+
+- Read-only Oracle remains seven-capability, isolated F1 remains nine-capability;
+  the new controlled TEST mode has ten, including the explicit native write cap.
+- Native identity stays `oracle`; native context/validation/receipt use
+  `oracle-test`. A validated success is `oracle-test-committed`, not a fixture
+  receipt and not a durable exactly-once guarantee.
+- One command may change only stage time, trusted server-principal stamp and
+  TADREECH=0 on the operator-allowlisted synthetic row. No INSERT, audit/receipt
+  table changes, station/exit/CTI/EMS or schema changes in the command.
+- Backend implementation completed: owner-reported strict typecheck and
+  **420/420 tests** (340 prior + 80 native) passed. Independent offline backend
+  QA confirmed four defects despite the passing suite; corrections are running.
+- UI implementation completed: owner-reported **427/427 tests** (357 prior +
+  70 native), typecheck, build, native synthetic interception/HTTP-double checks,
+  and prior fixture/read-flow browser checks passed. Independent UI QA repeated
+  427 tests/typecheck/build/native HTTP-double and prior read-view checks, then
+  confirmed two keyboard-focus defects; targeted corrections are running.
+- New backend checks are doubles/fixtures only. No native Oracle connection,
+  FOR UPDATE, arrival UPDATE, COMMIT or live read-back was executed by the
+  implementation task. The previous synthetic-data INSERT is a separate step.
+- The writer requires a stable private one-attempt allowance path as well as
+  exact TEST identity, marker/record scope and current eligibility. This is not
+  a durable receipt or distributed exactly-once guarantee.
+- After owner checks, independent QA precedes one controlled TEST UI commit and
+  independent read-back, only if current real temporal/scope checks pass.
+- Native UI live integration has not run. The typed native HTTP stub is not an
+  Oracle adapter or evidence of COMMIT. Current synthetic record window is
+  expired according to the owner; an operator must verify it afresh before any
+  controlled test operation. The application must not auto-reset its plan.
+- Environment profiles remain a subsequent required delivery item; no
+  production mode is being activated by these tasks.
+
+### Native offline QA findings: SHF-NATIVE-QA-API-20
+
+Independent 420-test/typecheck run passed, but 60 additional synthetic scenarios
+found four confirmed failures:
+
+- D01, high: stage time NULL with non-NULL stage user was incorrectly admitted;
+  preparation and locked revalidation must reject the orphan stamp.
+- D02, high: shutdown could close pools while native COMMIT was still active;
+  all operations and cleanup must settle before pool closure.
+- D03, medium: an impossible read-back timestamp passed the receipt guard;
+  malformed dates cannot establish success.
+- D04, medium: an ancestor junction bypassed the external-only allowance path
+  boundary; lexical path comparison is insufficient.
+
+Backend owner supplied the four targeted corrections: orphan provenance
+rejection, underlying-operation shutdown drain before pool closure, strict
+Gregorian receipt instants and physical allowance-path checks. Owner-reported
+26 new regressions, 106 native tests, full **446/446** and typecheck passed.
+The original four failures were reproduced before the fix. Independent bounded
+retest is running; they are not yet declared closed.
+Independent
+frontend QA may use interception and typed HTTP stubs while backend changes
+continue; real backend/native execution is not accepted yet. No Oracle
+connection or mutation was performed by this offline QA. Do not start the
+controlled TEST update until the findings have been independently closed.
+
+Independent native UI QA confirmed:
+
+- UI-D01: Material confirmation Cancel/final-confirm and the pending opener had
+  no visible outline; measured state contrasts were approximately 1.14-1.22:1,
+  below the approved 3:1 indicator criterion.
+- UI-D02: on 1440x900, the exact focused pending opener was entirely below the
+  viewport after dialog closure. Preserving DOM focus alone is insufficient.
+
+UI owner is fixing scoped overlay/component indicators and post-render minimal
+scroll/focus visibility, with duplicate-submit and stale-generation guards
+preserved. The candidate fix now passed owner-reported **430/430 tests**,
+typecheck/build and actual synthetic pixel/geometry checks: indicator contrasts
+about 12.53/12.62:1, desktop pending opener visible and hit-testable, one command
+despite repeated Space. The correction uses a namespaced visible ring and
+afterNextRender restoration with minimal nearest scrolling; no magic offset.
+Independent bounded retest remains pending. Functional/privacy/source checks
+passed, but these findings must
+close before native pilot acceptance. All browser data remains synthetic;
+typed HTTP stubs are not evidence of a real Oracle COMMIT.
 
 The user subsequently approved full access to the previously named TEST
 CTIDBT_WFMT database. General TEST access is therefore approved and must not be
@@ -259,7 +422,7 @@ Keep historical proposal text; use the approval records rather than treating old
 | Section 17 tooling | Approved Node.js/Angular/Material/TypeScript baseline; do not upgrade automatically |
 | Sections 38-40 and 40.5 | F1 fixture-only approved and implemented; internal cancellation/transport fixes recorded |
 | Sections 41-42 and station-arrival mock | User approved 2026-10-20 14:21; only future fixture implementation, not native writes |
-| Section 43 v0.1 | Native write readiness proposal; approval and named-record execution gate still pending |
+| Section 43 v0.1 | User agreed to native adapter implementation at 16:07; only the prepared synthetic TEST scope, with runtime grants/value/window checks before execution |
 
 Synthetic Administrator remains explicitly enabled local/isolated-only, with
 `employeeId=null`; it is neither real credential verification nor infrastructure
@@ -400,7 +563,7 @@ native arrival eligibility.
 | Connection failure / failed rollback | DBA/platform must investigate NJS-500 and confirm the next safe connection attempt; no automatic reconnect/test UPDATE |
 | Native update temporal eligibility | Synthetic fixture exists, but its short allowed window must be rechecked against real Clock before any future arrival write |
 | Preparation observability | Latest transaction and separate read-back verified; earlier unknown attempt and possible sequence allocation remain historical, not a completed fixture |
-| Native adapter/API approval | Section 43 is review-only; user + architect |
+| Native adapter implementation | Approval received; canonical handoff, backend/UI implementation and independent QA remain |
 | Exact native three-field TEST mutation/read-back authorization | Section 43.8 scope is not granted by fixture INSERT approval; user + DBA/security. Successful TEST restoration is not mandatory; any later requested compensating write needs its own authorization |
 | Attendance live detail HTTP and exact row-opener focus | On 20 October current defaults and one diagnostic previous-day filter both returned 0 rows; QA/data owner needs one known permissible nonempty context |
 
@@ -508,19 +671,19 @@ from the earlier application tests.
 
 ## Exact next safe action
 
-1. Present the single decision packet in section 44.6: section 43 v0.1 approval
-   for a disabled-by-default native adapter and the desired pilot/full delivery
-   boundary. General TEST database access has already been approved.
-   Do not treat approval as permission to execute an UPDATE.
+1. Complete the section 43 approved native contract handoff, then backend/UI
+   implementation and independent tests. General TEST access and successful
+   result retention are already approved; do not ask for them again.
 2. Rediscover the verified synthetic generation by exact public marker and
    revalidate its current values, scope and real temporal eligibility before
    any native arrival command. Do not INSERT another fixture automatically or
    change its plan/Clock when the allowed window expires.
    The earlier NJS-500 remains separately unexplained.
-3. Before native execution, fill the separate section 43.8 authorization for
-   account/actor/record, three SET fields and before-images, proposed values,
-   one COMMIT/read-back. Leaving a successful TEST change is already approved;
-   any later compensating restoration requires its own precise conditions.
+3. Before native execution, bind section 43.8 runtime inputs to the exact
+   synthetic marker/account/actor, three SET fields, current before-images,
+   proposed values and one COMMIT/read-back. Reject mismatches rather than
+   broadening to real employee records. Successful TEST changes may remain;
+   later compensating restoration requires its own precise conditions.
 4. Resume only after prerequisites change; recheck the approved record and
    environment. The one conditional synthetic preparation is completed, not
    an automatic repeat authorization; no native arrival UPDATE is running. Do not falsify

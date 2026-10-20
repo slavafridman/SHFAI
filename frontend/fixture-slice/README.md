@@ -1,4 +1,181 @@
-# SHF-F1-UI-20 — Angular stage-arrival simulation
+# SHF-NATIVE-ARRIVAL-UI-20 — existing Angular F1 + controlled TEST mode
+
+## Current delivery: approved §43.5 / §43.7 / §45 v0.1
+
+### Independent-QA follow-up: UI-D01 / UI-D02 (20 October)
+
+Both confirmed focus defects are fixed; developer retest PASS, ready for the
+same independent QA's bounded two-defect retest before publication. API/design
+versions and business behavior are unchanged.
+
+* Arrival buttons have scoped `3px solid #002f65` keyboard outlines with3px
+  offset. Only arrival dialog overlays opt into `.shf-arrival-dialog`; Material
+  overlays are outside the component style boundary. No generic Material global
+  override or `!important`. Aria-disabled uses separate foreground/background
+  treatment, not opacity on the button/ring; same DOM/duplicate-submit guards.
+* Native dialog auto-restore is disabled. Exact-opener restoration follows
+  Angular `afterNextRender`, with measured sticky-header/ring margins and
+  `scrollIntoView(nearest)` only if outside the usable viewport. Result callbacks
+  only reveal a node that still owns focus; changed generations, departed views
+  and user navigation do not receive stolen focus. No timer/poll/magic Y offset.
+* `node checks/native-arrival-browser-check.mjs --focus-retest` checks all
+  1440×900/390×900/320×900-font30 review/Cancel/enabled final-confirm/pending/
+  SUCCESS/UNKNOWN states. It measures exact focus, full ring bounds, hit-testing,
+  ancestor opacity, solid outline and **actual screenshot ring/adjacent pixels**,
+  not nominal computed width alone. Measured contrast12.5332:1 in dialog and
+  12.6179:1 on opener; all required states pass≥3.
+* Focused component/generation checks87/87; complete suite430/430
+  (original427+3 focused regressions). Typecheck/build and native interception/
+  typed HTTP stub pass. See current `VERIFICATION.md` follow-up for measurements.
+
+Native frontend support reuses the existing F1 route/layout; it does **not**
+implement a writer or grant access to Oracle. Canonical DTOs are imported
+**type-only** from `backend/fixture-slice/oracle-stage-arrival-contracts.mts`
+and the unchanged fixture companion. No dependency installs/upgrades, new
+application, identity fields, read DTO fields or deployment tooling.
+
+| Explicit server identity | Arrival mode / public sources | UI behavior |
+|---|---|---|
+| Ordered read7, including `dataSource=oracle` | Read-only; list `oracle-read-only`, detail `oracle` | Existing seven read views; no arrival command controls |
+| Ordered read7 + prepare + commit =9, synthetic/null employee, fixture identity | F1; `isolated-fixture` throughout | Existing simulation/warning/fixture receipt, unchanged |
+| Same ordered9 + `attendance-stage-arrival:test-oracle-write` =10, synthetic/null employee, identity `oracle` | Controlled TEST; reads remain Oracle; arrival context/validation/receipt `oracle-test` | Actual TEST-write disclosure, on-time/null-draft only, whole-operation confirmation dialog |
+
+Neither Administrator role text, browser settings, selected employee nor a
+failed Oracle request can select/enable native mode. No nine-right identity
+requirement is erroneously applied to native10. Missing/malformed identity,
+wrong sources, reordered/partial/extra rights (including future F2) fail closed.
+Selection must originate from the coherent authorized attendance row. Cold
+direct routes without the volatile selected row remain a chooser. Backend
+admission alone binds the private allowlisted synthetic marker, exact resource,
+grants, before-image, current policy/window and operator allowance; the UI cannot
+change that scope. No private key, before-image or raw write-account field was
+added to any public DTO.
+
+### Native operation and honest outcome
+
+The same GET `…/stage-arrival/context`, PURE POST `…/validations`, and POST
+`…/commands` paths are used. No fallback/status/retry/reset endpoint. Native
+PURE request is exactly `{lateReasonCode:null,lateRemark:null}`. Ready responses
+have no warnings/reason catalog/late overrides. No arrival date/time or client
+clock input exists; all full local date/seconds/zone values are server-owned.
+The client only measures elapsed token lifetime using a monotonic clock.
+
+Whole-operation review identifies selected employee/day/team, planned range,
+current stage NULL → proposed server time, TADREECH NULL/0 →0, and protected
+server-side synthetic operator stamping. Its raw stamp is not public, so it
+is not invented/displayed. A Material dialog requires the checkbox **and**
+explicit final button. Native command adds exactly
+`operationConfirmation:{accepted:true}`; inherited `confirmation:null` is
+**not** whole-operation consent. Cancel/Escape discard preparation, send no
+command or automatic API read/prepare, and retain the exact focusable opener.
+New explicit preparation is required. Native late/ineligible/expired requests
+are refused, never converted to F1 late actions or backdated.
+
+Native success requires a strictly matching `oracle-test-committed` /
+`oracle-test` receipt, three public recorded fields, COMMIT acknowledgment
+timestamp and independent matching-readback timestamp in the canonical shape.
+The frontend validates the backend attestation; it does **not** independently
+read Oracle or expose a private operator stamp. `replayed=false`,
+`receiptPersistence=none`, `partnerCompletion=not-invoked`; there is no durable
+receipt/global exactly-once/partner-completion claim. Native success is never
+labeled simulation. Fixture success remains explicitly simulation.
+
+Before POST, a native opaque `{commandId,kind:"stage-arrival",
+mode:"test-oracle-controlled"}` marker enters history **and tab sessionStorage**
+(`shfNativeArrivalSafety`). No employee/name/team/actor/token/fingerprint,
+payload or receipt is serialized. SessionStorage carries ONLY this conservative
+blocker across full-document source/config switches as well as reload; it is
+not a personal cache or authorization source. F1 keeps its existing UUID history
+marker. A pending/UNKNOWN native attempt globally blocks new context/prepare/
+command for both native and fixture selections, including10→9→7→10. There is
+no reset UI, new-demo advice for unresolved native outcomes, automatic recovery
+or inferred zero effect. Corrupt/unavailable native safety persistence fails
+closed. Back/Forward never restore consent/preparation/receipt or auto-submit.
+
+Only an exactly bound valid receipt or definitive canonical none/rolled-back
+response resolves the active attempt; changed identity/source/grants during
+flight cannot clear it. A known native success is terminal for the same
+employee/day in the current service even after actor/unit changes. After
+restart the backend current-stage/token/consumed-allowance checks remain
+authoritative. No durable replay/reconciliation service is invented. New tabs,
+cleared browser storage and cross-instance/crash durability cannot be secured
+by a frontend marker; operator/backend admission remains required.
+
+### Environments and verification boundary
+
+Frontend selection is entirely from approved public identity + coherent
+read/context sources, not a frontend environment variable/local privilege flag.
+Deployment support remains a backend/operator delivery requirement:
+
+* **dev:** explicitly isolated fixture sources and synthetic authentication.
+* **test:** separately configured server-side Oracle accounts/secrets and
+  independently enabled scoped `test-oracle-controlled` admission; reads stay
+  read-only. Private marker/window/allowance checks remain server-owned.
+* **production:** real authentication and public configuration are prerequisites;
+  synthetic auth/TEST commands must be rejected server-side, without dev/test
+  fallback. This frontend does not create new deployment configuration/schema
+  or claim that a synthetic login verified credentials.
+
+QA here uses **synthetic HTTP interception for native mode**, not actual
+Oracle/native-adapter execution. F1 proxy checks use the actual isolated
+memory fixture runtime and cannot establish native persistence. A real native
+UI→prepare→confirm→COMMIT/readback of the approved synthetic TEST tuple is
+**NOT RUN** by this frontend owner. Backend/operator/QA must first establish
+current eligibility and actual authorized attendance-list reachability; do not
+substitute a test double to close that live evidence gap. See `VERIFICATION.md`.
+
+Native browser reproduction (free owned ports only; stop helper after check):
+
+```powershell
+npm run typecheck
+npm test
+npm run build
+# separate attached helper process, no API proxy:
+node checks/serve-stage-arrival.mjs --port=4406
+node checks/native-arrival-browser-check.mjs
+```
+
+For a separate **typed synthetic HTTP stub**, without Fetch interception, stop
+the4406 static helper and start these two owned helpers instead, each in its
+own attached process. This does not start the native backend or access Oracle:
+
+```powershell
+node checks/serve-native-arrival-double.mts --synthetic-native-http-double
+node checks/serve-stage-arrival.mjs --port=4406 --native-http-double-proxy
+node checks/native-arrival-browser-check.mjs --http-double
+```
+
+The stub is on4407, with canonical type-only DTO imports, invented employee/day
+and fixed Clock/receipt values. Its counters are synthetic acceptances, **not
+COMMITs or database effects**. The check proves normal same-origin HTTP
+GET/POST/POST, consent/cancel/pending focus, exact source receipt and updated
+synthetic detail/list with exact attendance-return opener/filter preservation.
+It does not prove the parallel native adapter, private bindings, grants,
+transaction/cancellation or actual readback.
+
+Backend handoff received: `ba8f` READY OFFLINE420/420, as relayed by caller, not
+rerun by this frontend owner. Backend README and
+`native-stage-arrival-config.mts` were read for the exact **operator-owned**
+configuration schema. All read/write account values, independent identity and
+metadata binding, ownership/freeze attestations, UTC window and external
+one-attempt allowance path stay server/operator-only. No such private packet or
+path is bundled in frontend configuration, DTOs or fixtures. Preserve the same
+operator allowance across restarts; browser reset/new UUID cannot reopen it.
+The prepared `_B` eligibility window is expired per handoff: real current
+eligibility/list reachability must be revalidated by the operator, never
+backdated or replaced by this stub.
+
+Chrome runner owns9406/random profile; public user ports are not used. Evidence
+is synthetic-only `.angular/browser-evidence/NATIVE-*-SYNTHETIC.png`. Helpers/
+profiles are cleaned up after checks. No full WCAG conformance assertion.
+
+---
+
+# Historical SHF-F1-UI-20 baseline (fixture-only delivery)
+
+The following records the earlier F1 implementation and its prior approval/
+verification boundaries. Statements that native DML was not approved describe
+that historical step, not the subsequent bounded §43/§45 implementation approval.
 
 ## Approved F1 v0.1 / implementation boundary (20 October 2026)
 

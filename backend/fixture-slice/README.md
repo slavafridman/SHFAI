@@ -1,10 +1,11 @@
-# SHF backend: seven read APIs and opt-in isolated F1 stage-arrival simulation
+# SHF backend: seven reads, isolated F1, and default-off controlled native TEST F1
 
 Implements approved section 13 v0.1 of `docs/SHF_REVERSE_ENGINEERING_DESIGN.md`;
 section 15 records detail approval and section 17 approves the local tooling.
 Section 19 v0.1 / 22.3 approve the list; section 22.4 approves bounded Oracle test
-reads with driver 26.0.0 Thick and the existing Client 19.3. No EMS, database business writes,
-real authentication, runtime framework, schema changes or production deployment.
+reads with driver 26.0.0 Thick and the existing Client 19.3. Sections 43/45 v0.1
+approve the separately gated native TEST arrival adapter below. No EMS,
+real authentication, new runtime framework, schema changes or production deployment.
 All checked-in identities/rows are synthetic; live checks output aggregates only.
 
 Observed execution environment: Node 24.21.0, npm 11.19.0 on Windows.
@@ -35,6 +36,289 @@ current/search and employee-schedule application, HTTP and Oracle-double tests:
 ```powershell
 npm test
 ```
+
+## SHF-NATIVE-ARRIVAL-API-20 — §43/§45 v0.1, controlled TEST only
+
+**Implemented and offline/double-verified; NOT a live Oracle write result, QA
+sign-off or production readiness claim.** Existing R=7 and fixture F1=9 behavior
+remain separate. Native mode has exactly the same ordered nine rights followed
+by `attendance-stage-arrival:test-oracle-write`. No station/F2 rights, broker,
+late reason writes, fallback provider or real authentication were added.
+
+### Configuration and actual entrypoint
+
+`npm start` still runs `server.mts` / `startFromEnvironment`. The native account
+is a **separate pool/configuration**, not DML through `OracleReadSession`.
+No driver/client/dependency versions or manifests were changed. Actual Oracle11
+bind/lock/encoding/metadata behavior remains for authorized operator verification;
+offline doubles are not a compatibility or least-privilege certification.
+
+Default-off example (no secrets; existing read configuration must separately
+be supplied by the operator):
+
+```powershell
+$env:SHF_TEST_ORACLE_STAGE_WRITE_ENABLED = 'false'
+# Omit all SHF_NATIVE_STAGE_* values.
+# In the existing SHF_ORACLE_CONFIG omit attendanceStageArrivalMode or use
+# attendanceStageArrivalMode="disabled". This preserves seven read rights.
+```
+
+To select the implemented branch, the private `SHF_ORACLE_CONFIG` must specify
+`attendanceStageArrivalMode:"test-oracle-controlled"`,
+`dataSource:"oracle-read-only"`, `oracleTestScopeConfirmed:true`,
+`deploymentClass:"isolated-test-demo"`, `authenticationMode:"synthetic"`,
+`syntheticAdministratorEnabled:true`, a real configured IANA
+`businessTimeZone`, and the original exact `syntheticOrgUnitIds`.
+Native enabling is independent of mock enabling:
+
+| Environment input | Required meaning |
+|---|---|
+| `SHF_TEST_ORACLE_STAGE_WRITE_ENABLED` | Exact `"true"` only in the native branch. Omitted/`"false"` keeps a disabled branch off; mixed/unknown values fail before listen. |
+| `SHF_ORACLE_CONFIG`, `SHF_ORACLE_PORT` | Existing source/configuration and explicit loopback port, unchanged. |
+| `SHF_ORACLE_CONNECT_STRING`, `SHF_ORACLE_USER`, `SHF_ORACLE_PASSWORD`, `SHF_ORACLE_CLIENT_LIB_DIR` | Existing environment-only read-account packet. No credential-file/brief parsing. |
+| `SHF_NATIVE_STAGE_CONNECT_STRING`, `SHF_NATIVE_STAGE_USER`, `SHF_NATIVE_STAGE_PASSWORD`, `SHF_NATIVE_STAGE_CLIENT_LIB_DIR` | Independently supplied TEST write-account packet, same approved TNS alias restriction and installed Thick Client19.3. Never implicitly copied from the read packet. |
+| `SHF_NATIVE_STAGE_BINDING` | Private JSON packet described below; never frontend configuration, checked-in fixtures, logs or URL parameters. |
+| `SHF_STAGE_ARRIVAL_ORIGINS` | Required nonempty JSON array in native mode: at most10 distinct canonical exact http(s) loopback frontend Origins, each<=128 characters, entire value<=4096 UTF-8 bytes. No wildcard, remote origin, request-Host inference or Origin stripping. Existing proxy guidance above applies. |
+
+`SHF_NATIVE_STAGE_BINDING` is a strict object with **all** of:
+
+* `marker`: exactly the public synthetic `SHF_TEST_ARRIVAL_20261020_B`.
+* `employeeId`, `shiftDayId`, `orgUnitId`: private decimal employee/day keys and
+  exact current J01 grant, rediscovered by a read-only exact-marker scan before
+  enablement. No real staff or new marker is admitted.
+* `readIdentity`, `writeIdentity`: each exactly
+  `{database,host,service,user,schema}`. Independent expected DB_NAME,
+  SERVER_HOST, SERVICE_NAME, SESSION_USER and CURRENT_SCHEMA, not copied from a
+  connection's answer or inferred from its TNS alias. Both must designate the
+  same TEST database/host/service; SQL always explicitly targets SHIFTER.
+* `metadataDigest`: lowercase SHA256 of canonical **ordered arrays** returned
+  by the nine `nativeMetadataSql` queries exported from
+  `oracle-stage-arrival-snapshot.mts`, in export order, including column types,
+  byte limits, constraints/constraint columns, triggers, VPD, direct table/
+  column grants, direct role grants and dependencies. This is a named operator/
+  DBA's current privately reviewed metadata binding, not a fabricated DB
+  rowversion. `stage-arrival-domain.mts:fingerprint` defines canonical hashing.
+  Compute/review through an independently authorized read-only session before
+  enabling; do not guess the digest or use the unit-double proof as live proof.
+* `approval`, `freezeOwner`, `recoveryOwner`: nonempty private reference/owners.
+* `writerFreezeConfirmed:true`, `noExternalEffectsConfirmed:true`,
+  `singleExecutorConfirmed:true`: operator attestations covering this exact
+  tuple **and employee/day/report/policy/metadata context**, excluding legacy
+  writers through independent readback, and no unapproved autonomous/observer
+  effects. These are operational prerequisites, not properties inferred from
+  a row lock, Administrator role or zero visible triggers. Do not set them if
+  the exclusion/review has not actually been established.
+* `windowStart`, `windowEnd`: explicit UTC millisecond-Z instants, start<end;
+  the window applies to actual server time, not client timestamps.
+* `allowanceFile`: absolute **external operator-controlled** file path outside
+  this repository; existing trusted **local physical** parent directory, file
+  initially absent. Every ancestor must already exist and be a non-link
+  directory. Junction/symlink ancestors and a linked final component are
+  rejected. The canonical `realpath` parent is checked against the module's
+  actual repository root (not process CWD), and checked again before `wx`.
+  Windows case and ordinary/extended DOS drive syntax are normalized; UNC,
+  device/volume-GUID namespaces and alternate-stream/trailing-dot aliases are
+  rejected fail-closed before network/filesystem lookup of those namespaces.
+  No directory, share, ACL or infrastructure is provisioned automatically.
+  One synchronous exclusive `wx` create + fsync consumes the admission fuse
+  before acquisition. Its contents contain no business data or credentials.
+  Keep the **same path** across restarts/executors. Existing file or local
+  consumption rejects another attempt, including after UNKNOWN. Do not delete
+  it or change its path/approval to retry. Reopening is manual operator/DBA
+  reconciliation only. This is neither a command receipt nor a distributed
+  exactly-once mechanism; a general multi-instance feature remains unsupported.
+
+Startup performs writer SELECT-only metadata/identity and actual zero-row
+SELECT privilege probes, followed by rollback,
+then a separate read-only exact-marker/prefix/cardinality/source/policy snapshot
+and real Clock eligibility check **before listen**. Missing dictionary
+visibility (DBA views), unsupported/virtual columns or nonpersistent-table
+objects in the read set, enabled triggers/VPD, unknown safety,
+wrong identity, reused allowance, invalid scopes or expired/late data stop
+startup. Same-owner SHIFTER privileges are recognized explicitly; accepting
+that account is **not** certification of least privilege. Otherwise direct
+table UPDATE or all three direct column grants are required; role membership
+alone is not used to infer write permission. Read/write accounts must separately
+have their actual required SELECT privileges.
+
+No read-only pool or fixture Clock is reused for native DML/time. Native startup
+does not read protected `.env` files, collect passwords from the browser,
+reschedule/recreate data or run a command automatically.
+
+### Runtime and UI handoff
+
+The three existing paths/methods are unchanged. Identity remains source
+`oracle`, synthetic Administrator, `employeeId:null`; existing Oracle inquiries
+retain their old source markers. Native context/validation are `oracle-test`.
+GET/context and POST/validations end their READ ONLY transactions before review,
+perform zero business/receipt/audit DML, and expose no before-images/private
+binding. Native draft is exactly null/null; late or unsupported native context
+returns `COMMAND_SCOPE_DEFERRED`, not an override/warning-bearing token.
+
+POST/commands uses strict `NativeStageArrivalCommitV1`: fresh opaque token,
+fingerprint, UUID, null/null draft, `confirmation:null`, plus
+`operationConfirmation:{accepted:true}` for the **whole real TEST operation**.
+Duplicate/unknown JSON keys, client Clock/stamp, wrong Origin and missing
+confirmation are rejected. The existing three bounded client-hint headers are
+still ignored as metadata, never authority. No extra public endpoint, wrapper,
+retry or reconciliation API exists.
+
+The ephemeral HMAC fingerprint/token binds source/mode, process nonce, full
+actor/grants, private approval/allowance/window, exact full original snapshot,
+policy and zone. Tokens expire at min120s/next on-time transition/window-end
+and are consumed on attempted command; no durable receipt or replay claim.
+Central rights/scope checks repeat under transaction ownership.
+
+The dedicated writer uses autoCommit=false, bounded NOWAIT locks on existing
+attendance/day/employee rows, fresh original-value/policy reads and actual
+server Clock. Current TODAY, start−60min<=now<=end and
+now+actual configured parent policy<=start must all hold. Original fields are
+compared independently, and generated null-safe bound predicates cover the
+complete attendance before-image plus relevant baseline/overlay/employee/
+hierarchy/policy and no outstanding report. No fabricated version column.
+Unknown source flags or nonordinary activity/exception provenance defer this
+narrow pilot; they are never normalized to eligibility.
+
+Only STAGE_ARRIVAL_TIME / server subject-bound STAGE_ARRIVAL_USER (<=100 UTF-8
+bytes) / TADREECH=0 are SET on the existing row. No INSERT/upsert, late triplet,
+station/exit/missing/report change, custom SHF function, extra audit/receipt
+table or partner invocation. Rows0 require proven rollback/stale; rows>1 or
+undefined require invariant failure/rollback. Locks are not cross-table
+serializability; the named contextual writer freeze remains mandatory.
+
+Both explicit AbortSignal and ambient ALS/deadline are checked after waits,
+staging, UPDATE and synchronously immediately before DML/COMMIT. Native work
+and any break settle before rollback/drop/release. Abort during a sent COMMIT
+cannot guarantee undo. Pre-COMMIT failures are `rolled-back` only after
+acknowledged complete rollback. Unconfirmed rollback after attempted effect,
+COMMIT ACK loss, or unavailable/mismatched readback are
+`503 COMMAND_OUTCOME_UNKNOWN / unknown / reconcile`, with no automatic retry,
+new UUID retry, fake NONE, inferred success or compensating restoration.
+
+Success requires acknowledged COMMIT, released writer lease and an independent
+matching READ ONLY readback of all originals except the exact three allowed
+after-values. Receipt is `oracle-test-committed`, source `oracle-test`,
+`commitAcknowledgedAt`, `readBackVerifiedAt`, `replayed:false`,
+`receiptPersistence:"none"`, `partnerCompletion:"not-invoked"`. No `committedAt`
+or durable attribution is claimed. Replay cannot overwrite an arrival or
+manufacture a receipt. UI must use the canonical native receipt guard, retain
+an actual-TEST-write notice separate from synthetic-auth notice, and reconcile
+UNKNOWN rather than display fixture success or automatically resend.
+
+The known prepared `_B` record's earlier four-minute margin is historical and
+likely expired. **No current live eligibility or arrival UPDATE is claimed.**
+Expired data stops the feature; only the parent/operator may separately refresh
+the same synthetic setup under its inherited preparation authority, then
+revalidate. No backend auto-reset/developer endpoint or live-check autoexecution
+was added. This assignment performs no Oracle connection, FOR UPDATE or DML.
+
+### Verification and environment delivery boundary
+
+From `backend/fixture-slice`:
+
+```powershell
+node --test test/oracle-stage-arrival.test.mts test/native-stage-arrival-http.test.mts
+npm run typecheck
+npm test
+```
+
+Native N01–N07 tests use explicitly isolated connection/lock/update/commit/
+readback doubles and the actual HTTP environment entrypoint with a typed pool
+factory seam (not configurable by ENV/HTTP). They cover PURE0, rowcounts0/1/many,
+stale facts/grants/marker/policy/token/time, native late refusal, 7/9/10 rights,
+production/invalid/mixed mode rejection, Origin forwarding and rejection,
+commit uncertainty, unconfirmed rollback, independent readback mismatch,
+explicit+ALS cancellation/deadline, pending commit/break cleanup, no replay
+overwrite/retry, and both pools' shutdown. Existing F1 module-hook tests still
+prohibit Oracle imports in fixture startup. Live checks remain NOT RUN here.
+
+Recorded implementation check,20Oct2026: focused native **80/80 PASS**;
+`npm run typecheck` **PASS** (strict/noEmit); full `npm test` **420/420 PASS**
+(original340 + native80, zero skips). The first focused TDD run was red because
+the native modules did not yet exist; subsequent integration/type failures were
+repaired and the final commands above rerun. Installed Node24.21.0,
+TypeScript5.9.3, oracledb26.0.0 confirmed without installing/upgrading anything.
+**Status: backend implementation complete / REVIEW for independent QA.**
+Actual Oracle metadata/privileges/client behavior, current `_B` eligibility,
+live DML/COMMIT/readback, UI acceptance and SLA remain unverified by this task.
+Parent owns the shared project checkpoint; QA then operator/DBA own the next
+controlled execution. No new generic user-access/contract approval is pending.
+
+### Independent QA corrections D01–D04 (20Oct2026)
+
+The four independent findings were reproduced first: **4/4 RED** on
+`node --test test/native-arrival-qa-regressions.test.mts`, then repaired:
+
+* **D01:** stage time NULL with any non-NULL stage user is contradictory
+  provenance, not a legal zero briefing flag. Pure preparation and the fresh
+  locked snapshot both reject `COMMAND_SCOPE_DEFERRED`, without issuing a token
+  or UPDATE. Normal NULL/NULL still commits once.
+* **D02:** `backend-lifecycle.mts` owns per-server admission and ALL underlying
+  request-budget promises, not just HTTP handler/race completion. Shutdown
+  rejects new admission, signals pre-COMMIT cancellation, stops the listener/
+  HTTP sockets, and awaits SQL/acquisition/COMMIT/break/rollback/readback/release
+  settlement before either Oracle pool is closed. Closing an HTTP socket is
+  never considered cancellation/settlement of a native operation. Transport
+  loss after command send is UNKNOWN; a sent COMMIT cannot be undone by shutdown.
+  `stopBackendServer` is idempotent and waits at most6s **per caller**. If still
+  pending it throws sanitized `BackendDrainPendingError`, not a success/drained
+  claim. The original completion remains owned by the server's shutdown record;
+  if native work is still active, pools remain open, with no forced DROP/close
+  under that work. Eventual settlement continues cleanup; another stop call
+  waits for the same completion, never replays a command. Pool-close failures
+  also remain failures. An unresponsive driver therefore requires operator
+  attention/manual reconciliation; this is not a guarantee of process exit
+  within6s and never an instruction to force release a running COMMIT.
+* **D03:** both receipt diagnostics require strict millisecond-Z formatting,
+  finite Gregorian instants and exact Date/ISO round-trip. Impossible dates,
+  leap-day errors, normalized overflow, whitespace and reversed ordering fail.
+  A malformed receipt after COMMIT remains UNKNOWN, never success or NONE.
+* **D04:** allowance admission now verifies physical ancestry/boundaries as
+  described above, and repeats checks before consumption. Only the verified
+  canonical parent is used for exclusive file creation. Tests create/remove
+  only their own TEMP links and never consume through a repository junction.
+  This is a private trusted-operator directory requirement, **not an OS
+  sandbox or protection against a hostile concurrent directory rename**:
+  Node path checks and a later open are not one atomic handle-relative
+  filesystem transaction. The trusted directory/ancestors must remain stable;
+  `wx` independently prevents final-component overwrite/link following.
+
+The added regression file covers active-operation counters and strict ordering
+through the **actual environment/HTTP entrypoint** with pool doubles: gated
+lease, query, UPDATE, COMMIT, break, rollback, release, readback and read cleanup;
+bounded pending drain/repeated stop; read-only and F1 shutdown; Gregorian and
+post-commit malformed receipt matrices; physical TEMP junction/final-link/path
+normalization and sanitized failures. Shared public DTOs/signatures, caps7/9/10,
+Origin/client hints, marker/three-field scope, driver pins and default-off
+configuration are unchanged. Same independent QA must retest D01–D04 before
+any live operation. No Oracle read or mutation was performed for these fixes.
+
+Final fix verification (offline/doubles only):
+
+```powershell
+node --test test/native-arrival-qa-regressions.test.mts
+# QA regression26/26 PASS.
+node --test test/oracle-stage-arrival.test.mts test/native-stage-arrival-http.test.mts test/native-arrival-qa-regressions.test.mts
+# Native80 + QA26 =106/106 PASS.
+npm run typecheck
+# PASS, strict/noEmit.
+npm test
+#446/446 PASS, previous420 + QA26; zero failures/skips.
+```
+
+Status: **fixes implemented / REVIEW for the same independent QA retest**,
+not independent closure or authorization to execute a live command. All owned
+TEMP links and test listeners were cleaned up; the gated drain test explicitly
+settled its native/break gates and awaited the same owned shutdown completion.
+
+Environment requirements remain intentionally distinct:
+
+* **dev:** existing explicitly isolated fixture mode; no implicit infrastructure.
+* **test:** explicit Oracle read secrets plus independently enabled/bound native
+  TEST packet above. All secrets and private bindings stay backend/operator-only.
+* **production:** synthetic auth and TEST writer modes reject startup; no dev/
+  TEST/Admin fallback. Real authentication/environment delivery is a future
+  prerequisite, not implemented or authorized by this change.
 
 ## SHF-F1-API-20 — isolated fixture only (§38/39/40 v0.1)
 

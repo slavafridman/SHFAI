@@ -4,11 +4,16 @@ import { readFile } from 'node:fs/promises';
 import { resolve, extname } from 'node:path';
 const root = resolve('dist/fixture-slice/browser');
 const proxy = process.argv.includes('--fixture-proxy');
+const nativeDouble = process.argv.includes('--native-http-double-proxy');
+if (proxy && nativeDouble) throw Error('Mixed proxy targets are forbidden');
+const targetPort = nativeDouble ? 4407 : 4398;
+const port = Number(process.argv.find(v => v.startsWith('--port='))?.slice(7) ?? 4388);
+if (!Number.isInteger(port) || port < 1024 || port > 65535) throw Error('Invalid owned test port');
 const server = createServer(async (req, res) => {
   if (req.url.startsWith('/api/')) {
-    if (!proxy) { res.writeHead(503); res.end(); return; }
-    const upstream = request({ host: '127.0.0.1', port: 4398, method: req.method, path: req.url,
-      headers: { ...req.headers, host: '127.0.0.1:4398' } }, r => { res.writeHead(r.statusCode, r.headers); r.pipe(res); });
+    if (!proxy && !nativeDouble) { res.writeHead(503); res.end(); return; }
+    const upstream = request({ host: '127.0.0.1', port: targetPort, method: req.method, path: req.url,
+      headers: { ...req.headers, host: `127.0.0.1:${targetPort}` } }, r => { res.writeHead(r.statusCode, r.headers); r.pipe(res); });
     upstream.on('error', () => { res.writeHead(503); res.end(); }); req.pipe(upstream); return;
   }
   try {
@@ -21,5 +26,5 @@ const server = createServer(async (req, res) => {
     res.end(body);
   } catch { res.writeHead(404); res.end(); }
 });
-server.listen(4388, '127.0.0.1', () => console.log(`F1 owned UI helper ready 4388; fixture proxy=${proxy}; target only 4398`));
+server.listen(port, '127.0.0.1', () => console.log(`Arrival owned UI helper ready ${port}; fixture proxy=${proxy}; native HTTP DOUBLE proxy=${nativeDouble}; target only ${targetPort}`));
 process.once('SIGINT', () => server.close()); process.once('SIGTERM', () => server.close());

@@ -2,7 +2,7 @@
 export type DecimalId = string;
 export type ShiftDayId = string;
 export type LocalDateTime = string;
-export type CapabilityV1 = "shift-day:read" | "current-shifts:read" | "shift-search:read" | "my-shifts:read" | "shift-items:read" | "employee:read" | "attendance:read" | "attendance-stage-arrival:prepare" | "attendance-stage-arrival:commit";
+export type CapabilityV1 = "shift-day:read" | "current-shifts:read" | "shift-search:read" | "my-shifts:read" | "shift-items:read" | "employee:read" | "attendance:read" | "attendance-stage-arrival:prepare" | "attendance-stage-arrival:commit" | "attendance-stage-arrival:test-oracle-write";
 export interface PrincipalV1 {
   subject: string;
   provider: "synthetic" | "real";

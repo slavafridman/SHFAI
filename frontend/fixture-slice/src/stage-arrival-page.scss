@@ -12,7 +12,16 @@ dt { color:#526077; } dd { margin:0; font-weight:600; }
 p, dd, dt, bdi, h1, h2, summary { overflow-wrap:anywhere; }
 .actions { display:flex; flex-wrap:wrap; gap:12px; margin-block:20px; }
 .actions > * { min-height:48px; max-width:100%; height:auto; white-space:normal; padding-block:10px; }
-[aria-disabled="true"] { opacity:.65; cursor:default; }
+.actions .mat-mdc-button-base:focus-visible,
+.actions .mat-mdc-button-base.cdk-keyboard-focused:focus {
+  outline:3px solid #002f65;
+  outline-offset:3px;
+}
+// Keep the outside focus ring fully opaque. Disabled presentation is separate
+// from aria-disabled + synchronous command guard (the same DOM node stays).
+.actions .mat-mdc-button-base[aria-disabled="true"] {
+  color:#526077; background-color:#e4e8ef; cursor:default;
+}
 mat-form-field { width:100%; margin-block:8px; }
 summary { min-height:48px; cursor:pointer; padding:12px; }
 @media(max-width:760px) { dl { grid-template-columns:1fr; } .surface, .isolation, .recovery { padding:12px; } }

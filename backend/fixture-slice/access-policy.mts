@@ -27,6 +27,17 @@ export const stageArrivalAccessPolicy: StageArrivalAccessPolicy = {
   },
 };
 
+export const nativeStageArrivalAccessPolicy = {
+  requirePrepare(p: import("./contracts.mts").PrincipalV1) {
+    stageArrivalAccessPolicy.requirePrepare(p);
+    if (!p.synthetic || p.provider !== "synthetic" || p.employeeId !== null ||
+        !p.capabilities.includes("attendance-stage-arrival:test-oracle-write")) stageFail("FORBIDDEN");
+  },
+  requireCommit(p: import("./contracts.mts").PrincipalV1) {
+    this.requirePrepare(p); stageArrivalAccessPolicy.requireCommit(p);
+  },
+};
+
 export function employeeCardAccessPolicy(configuration: unknown): EmployeeOperationalCardAccessPolicy {
   const config = validateRuntimeConfig(configuration);
   const actor = shiftItemsAccessPolicy(config);

@@ -5,6 +5,7 @@ import { sampleStageArrivalConfig, sampleStageArrivalFacts } from "../stage-arri
 import { createRuntime, SyntheticAdministratorProvider } from "../synthetic-identity.mts";
 import { createStageArrivalFixture, stageArrivalReadAdapters } from "../stage-arrival-fixture.mts";
 import type { StageArrivalCommitDraftV1, StageArrivalDraftV1, StageArrivalValidationDraftV1 } from "../stage-arrival-contracts.mts";
+import type { NativeStageArrivalValidationV1 } from "../oracle-stage-arrival-contracts.mts";
 
 export class VirtualClock {
   milliseconds = Date.parse("2026-10-20T07:22:00.000Z");
@@ -15,7 +16,7 @@ export const clean: StageArrivalDraftV1 = { lateReasonCode: null, lateRemark: nu
 export const late: StageArrivalDraftV1 = { lateReasonCode: "1", lateRemark: null };
 export const selected = { employeeId: "9001", shiftDayId: "6201" };
 export const principal = () => new SyntheticAdministratorProvider(sampleStageArrivalConfig).authenticate({ authorization: null });
-export function commitInput(v: StageArrivalValidationDraftV1, d = clean,
+export function commitInput(v: StageArrivalValidationDraftV1 | NativeStageArrivalValidationV1, d = clean,
   commandId = "11111111-1111-4111-8111-111111111111"): StageArrivalCommitDraftV1 {
   return { commandId, draft: d, validationToken: v.validationToken, fingerprint: v.fingerprint,
     confirmation: v.confirmationRequired ? { accepted: true, warningCodes: ["STAGE_ARRIVAL_LATE"] } : null };

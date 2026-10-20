@@ -1,0 +1,7 @@
+// Material overlays are outside the component's emulated style boundary.
+// Only arrival dialogs opt in via panelClass; no generic Material override.
+.cdk-overlay-pane.shf-arrival-dialog .mat-mdc-button-base:focus-visible,
+.cdk-overlay-pane.shf-arrival-dialog .mat-mdc-button-base.cdk-keyboard-focused:focus {
+  outline: 3px solid #002f65;
+  outline-offset: 3px;
+}
