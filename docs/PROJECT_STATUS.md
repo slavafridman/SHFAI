@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-20, native Oracle readiness checkpoint.
+Last updated: 2026-10-20, completion roadmap and offline Oracle diagnosis.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -37,6 +37,34 @@ readiness and a controlled first-arrival plan.
 | Preflight connection health | blocked | After ten successful SELECTs, the next SELECT failed with NJS-500; rollback failed, unsafe lease dropped and pool closed |
 | Native readiness checkpoint | done: documentation / review: proposal | Plan and partial preflight recorded; publication is included in this scoped checkpoint; verify synchronization before resuming |
 | Actual Oracle UPDATE | blocked | Needs resolved connection/data prerequisites, approved native contract and separate named-record execution/restoration authorization |
+
+The user subsequently approved full access to the previously named TEST
+CTIDBT_WFMT database. General TEST access is therefore approved and must not be
+requested again. This does not supply a selected record, permitted before/after
+values, a concurrency window or a restore YES/NO decision, and does not approve
+production, DDL, new contracts or arbitrary business changes.
+
+### Completion priority and delivery definitions
+
+See design section 44 v0.1 for the finite proposed completion roadmap:
+
+| Milestone | Measurable delivery boundary |
+|---|---|
+| M1 | Operational TEST pilot: delivered read views plus one controlled native arrival update and UI read-back |
+| M2 | Agreed attendance command cycle: station arrival, exit/early exit, late and administrative actions |
+| M3 | Shift creation, modification, cancellation and interactive CSV upload |
+| M4 | Exchanges, forced swaps, staffing/reduction/time-change requests, exceptions and break management |
+| M5 | Remaining employee/admin/building, messaging/reporting/forecast, CTI administration and IWD timing scope |
+| M6 | Integrated acceptance of the agreed coverage |
+
+This is a proposed prioritization, not approval of all contracts or a reduction
+of legacy scope. M1 is a pilot, not the complete rewrite. Live EMS, batch, DDL
+and production deployment remain excluded. Real authentication remains a
+production prerequisite. Do not resume fixture-only F2 expansion by default.
+
+Use bundled milestone contract/UI approvals and focused checks rather than new
+approval requests for every internal helper. An exact completion date remains
+unknown until remaining work is estimated and external prerequisites are ready.
 
 The first attempt made zero connections because process ENV was absent.
 The follow-up used an independently approved operator reference only in memory;
@@ -157,6 +185,30 @@ These are current read results, not native write proof. Internal scan cost,
 current deployed-policy purity and the cause of NJS-500 remain unknown.
 No credentials, real employee values or record keys are retained here.
 
+### Offline diagnosis: SHF-ORACLE-OFFLINE-20
+
+Completed without application changes or another database connection:
+
+- 14 independent fault-double assertions and 13 targeted Oracle lifecycle tests
+  passed.
+- One initial selector command actually ran the complete backend suite:
+  **340/340 PASS**. It is a full-suite result, not a focused-test count.
+- An NJS-500 query failure remains DEPENDENCY_UNAVAILABLE with its primary cause
+  preserved even when rollback or close also fails. Unsafe cleanup calls
+  `close(true)`. Successful cleanup must not be inferred from a returned error.
+- Failure during cleanup after an otherwise successful read does not return
+  success. Abort/break and late acquisition cases passed isolated tests.
+- Secondary rollback/close errors are not carried in the returned primary error
+  object. This is a diagnostic limitation, not a newly implemented contract.
+- No confirmed session-wrapper bug was found; no speculative patch was made.
+  Native network/server root cause is still unknown.
+
+DBA/platform should correlate the preflight timestamp with Oracle Net/OCI,
+listener, alert and server-session diagnostics, and confirm session and
+read-only transaction termination. Do not infer a network cause from NJS-500
+alone. No automatic reconnect, broader candidate search or test UPDATE follows
+from these offline results.
+
 ## Open blockers
 
 | Blocker | Evidence and owner |
@@ -176,7 +228,8 @@ Last recorded published feature/design references:
 
 - `fa40c6e941dc9419ad0f61a19e5e2e6a7a1678bd`: F1 executable Origin fix;
 - `0b0ceddc3f4e10dabfaa38c5224e64674a439630`: F2 design checkpoint;
-- `1ea16bbcc19e4dac8b9ee1380a4642d0abd4a01d`: resumable checkpoint and workflow rule.
+- `1ea16bbcc19e4dac8b9ee1380a4642d0abd4a01d`: resumable checkpoint and workflow rule;
+- `ddf4c2bfcf967da9785c2774f250c2c08458db3c`: native readiness plan and partial preflight.
 
 At those publications remote and local HEAD matched. Recheck Git; do not assume
 this remains the newest remote commit.
@@ -269,7 +322,9 @@ from the earlier application tests.
 
 ## Exact next safe action
 
-1. Present section 43 v0.1 for approval of a disabled-by-default native adapter.
+1. Present the single decision packet in section 44.6: section 43 v0.1 approval
+   for a disabled-by-default native adapter and the desired pilot/full delivery
+   boundary. General TEST database access has already been approved.
    Do not treat approval as permission to execute an UPDATE.
 2. Obtain DBA/platform resolution of NJS-500 and a named, eligible TEST fixture
    from the data owner, including an explicit concurrency window.
@@ -280,3 +335,48 @@ from the earlier application tests.
    the approved record under the authorized environment. Do not create test
    records, alter dates/Clock, expand scope, retry an unknown write or silently
    switch back to F2 fixture work.
+
+## Completion checkpoint: SHF-COMPLETION-PLAN-20
+
+- Changed paths: section 44 of the design baseline, this status file and the
+  standard verifier JSON refresh. Application source and contracts unchanged.
+- Completed: finite delivery roadmap, recorded general TEST access approval,
+  offline failure-handling diagnosis and current backend regression evidence.
+- Not run: frontend checks/build, live Oracle, candidate discovery, native
+  UPDATE, restore or deployment. No restricted environment content accessed.
+- Publication execution: SHF-COMPLETION-CHECKPOINT-20, documentation-only.
+  Initial index was empty; branch `main`, HEAD and fetched `origin/main` were
+  `ddf4c2bfcf967da9785c2774f250c2c08458db3c`, ahead/behind 0/0.
+  Approved origin was verified without displaying credentials.
+- Root `node docs\reverse-engineering\verify-evidence.mjs` passed with
+  `passed_with_documented_source_anomaly`: 31 CSV files, 10,000 inventory row
+  references, 454 source hashes, 391 local links, 250 source-line anchors and
+  80 physical table/view rows. All 20 Oracle capture hashes match published
+  HEAD. The documented duplicate legacy route remains unchanged.
+- Supplemental checks passed: four status relative links, all 391 baseline
+  local targets present in HEAD (including tracked directory descendants) or
+  the scoped publication, and nonempty resume/approval/blocker/next-action
+  sections. Both actual package README paths exist:
+  `backend/fixture-slice/README.md`, `frontend/fixture-slice/README.md`.
+  The complete pre-section-44 baseline is preserved after EOL normalization.
+  Initial supplemental checker assumptions about directory targets, multiline
+  README matching and the appended separator were corrected; no document
+  link defect or feature change was needed.
+- Bounded added-text secret/PII pattern checks passed without printing values;
+  this is not a complete secret/PII certification. Twenty-three unrelated
+  dirty user paths were fingerprinted for bytewise preservation. Existing
+  design HTML/PNG artifacts are outside this change.
+- Scoped publication is ready and included in this checkpoint: exactly this
+  file, the existing design baseline and `verification.json`; normal commit
+  and push only, with staged whitespace/scope and final synchronization checks.
+  Exactly three staged paths, default `git diff --cached --check`, final bounded
+  sensitive-pattern checks and bytewise preservation of all 23 unrelated paths
+  passed; no whitespace override was needed. This
+  pre-commit record does not claim that push has already succeeded; discover
+  the resulting SHA using Git history, without a self-commit edit loop.
+- No application tests/builds, servers, browser checks, new Oracle connections,
+  DML, live EMS or legacy execution ran in this publication step. Today's
+  separately completed offline 340 full-suite, 13 focused and 14 fault-double
+  results above were not rerun. No application code or new contract was added.
+- Next remains M1 prerequisites above; named TEST data and mutation/restoration
+  instructions remain blocked with user/data-owner/DBA, not an active writer.
