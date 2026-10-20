@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-20, completion roadmap and offline Oracle diagnosis.
+Last updated: 2026-10-20, recent-record selection and restoration decision.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -33,16 +33,23 @@ readiness and a controlled first-arrival plan.
 |---|---|---|
 | Native first-arrival plan, design section 43 v0.1 | review | Proposal and sanitized preflight evidence; not approved for adapter implementation or execution |
 | Current TEST metadata, triggers and privileges | done within scope | Five tables and eight enabled/validated constraints checked; visible attendance triggers/policies zero; not a DML safety certification |
-| Eligible TODAY candidate in the one inspected exact J01 | blocked | Aggregate returned zero planned-start rows; no private candidate handle and no full candidate-policy evaluation |
-| Preflight connection health | blocked | After ten successful SELECTs, the next SELECT failed with NJS-500; rollback failed, unsafe lease dropped and pool closed |
+| Eligible TEST record | blocked | Latest changed-day candidate is historical/ended and has no attendance row; no eligible record or private handle retained |
+| Preflight connection health | review | Earlier NJS-500/failed rollback remains unexplained; a later single read-only connection completed six SELECTs and cleanup successfully |
 | Native readiness checkpoint | done: documentation / review: proposal | Plan and partial preflight recorded; publication is included in this scoped checkpoint; verify synchronization before resuming |
 | Actual Oracle UPDATE | blocked | Needs resolved connection/data prerequisites, approved native contract and separate named-record execution/restoration authorization |
 
 The user subsequently approved full access to the previously named TEST
 CTIDBT_WFMT database. General TEST access is therefore approved and must not be
 requested again. This does not supply a selected record, permitted before/after
-values, a concurrency window or a restore YES/NO decision, and does not approve
-production, DDL, new contracts or arbitrary business changes.
+values or a concurrency window, and does not approve production, DDL, new
+contracts or arbitrary business changes.
+
+At 15:11 the user authorized selecting a record by the nearest update date,
+interpreted as the most recent actual modification. At 15:13 the user confirmed
+that post-test restoration is not mandatory: a successfully committed TEST
+result may remain. Do not ask again for general access or mandatory restoration.
+Rollback of an unsuccessful, uncommitted transaction and reconciliation of an
+unknown COMMIT outcome remain required.
 
 ### Completion priority and delivery definitions
 
@@ -91,7 +98,9 @@ Before execution, explicitly agree:
 - one private employee/day/attendance record and its exact J01 scope;
 - the three permitted fields, before-images, proposed values and time window;
 - current constraints, trigger/policy effects and exclusion of competing writers;
-- COMMIT/read-back checks and owner of conditional compensating restoration;
+- COMMIT/read-back checks; successful TEST changes may remain, as approved;
+- a separately approved conditional restoration plan only if restoration is
+  subsequently requested;
 - STOP/reconciliation behavior for conflict or an unknown commit outcome.
 
 After COMMIT, ordinary rollback cannot restore the record. A compensating UPDATE
@@ -209,12 +218,41 @@ read-only transaction termination. Do not infer a network cause from NJS-500
 alone. No automatic reconnect, broader candidate search or test UPDATE follows
 from these offline results.
 
+### Recent-record selection: SHF-RECENT-CANDIDATE-20
+
+The first role-assigned executor performed zero connections because its live
+execution scope was unavailable. This was not a database permission denial or
+evidence that no records exist. A separately assigned authorized operator then
+performed the one bounded read-only selection:
+
+- TEST endpoint/database/user identity checked first; one connection and six
+  successful SELECTs.
+- Metadata: 73 column records across three relevant tables; PK and source
+  meaning checked.
+- `SHF_ATTENDANCE` has no reliable last-update timestamp column.
+  `SHF_DAY_CHANGES.MODIFICATION_TIME` records a day change, not an attendance
+  update. No ID, planned date or ORA_ROWSCN substitute was represented as a
+  modification timestamp.
+- Ten day-change candidates in one exact J01 were ordered by modification not
+  later than database-now, descending/nulls-last, then PK. One was selected.
+- The selected day had a unique owner and was not cancelled, but its plan is
+  historical and ended, and its attendance row is absent. It is **ineligible**
+  for the proposed current/on-time, existing-row arrival UPDATE.
+- Remaining policy checks were not performed. No private keys, before-images
+  or durable candidate handle were retained; no broader date/team search ran.
+- Rollback, connection release and pool close succeeded in this attempt.
+  This does not diagnose the earlier NJS-500 or prove that it is resolved.
+- DML, DDL, PL/SQL and COMMIT: zero. No application source or fixtures changed.
+
+Native execution remains blocked on a suitable existing TEST record, not on
+general DB access or a mandatory post-success restore decision.
+
 ## Open blockers
 
 | Blocker | Evidence and owner |
 |---|---|
 | Connection failure / failed rollback | DBA/platform must investigate NJS-500 and confirm the next safe connection attempt; no automatic reconnect/test UPDATE |
-| Eligible named TEST data | Zero TODAY rows in the one inspected J01; DBA/data owner must supply a named suitable employee/day with existing attendance, stage NULL and a real on-time window |
+| Eligible named TEST data | Earlier TODAY aggregate was zero; newest changed-day candidate is historical/ended and has no attendance. DBA/data owner must supply a suitable employee/day with existing attendance, stage NULL and a real on-time window |
 | Native adapter/API approval | Section 43 is review-only; user + architect |
 | Named TEST mutation and restoration authorization | Not granted by fixture approval or generic prior read access; user + DBA/security |
 | Attendance live detail HTTP and exact row-opener focus | On 20 October current defaults and one diagnostic previous-day filter both returned 0 rows; QA/data owner needs one known permissible nonempty context |
@@ -229,7 +267,8 @@ Last recorded published feature/design references:
 - `fa40c6e941dc9419ad0f61a19e5e2e6a7a1678bd`: F1 executable Origin fix;
 - `0b0ceddc3f4e10dabfaa38c5224e64674a439630`: F2 design checkpoint;
 - `1ea16bbcc19e4dac8b9ee1380a4642d0abd4a01d`: resumable checkpoint and workflow rule;
-- `ddf4c2bfcf967da9785c2774f250c2c08458db3c`: native readiness plan and partial preflight.
+- `ddf4c2bfcf967da9785c2774f250c2c08458db3c`: native readiness plan and partial preflight;
+- `3df7c225c5739dbf6938b015ced34bcaee72b35e`: finite completion roadmap and offline diagnosis.
 
 At those publications remote and local HEAD matched. Recheck Git; do not assume
 this remains the newest remote commit.
@@ -330,7 +369,8 @@ from the earlier application tests.
    from the data owner, including an explicit concurrency window.
 3. Before native execution, fill the separate section 43.8 authorization for
    account/actor/record, three SET fields and before-images, proposed values,
-   one COMMIT/read-back and any conditional compensating restoration.
+   one COMMIT/read-back. Leaving a successful TEST change is already approved;
+   any later compensating restoration requires its own precise conditions.
 4. Resume only after those prerequisites change; recheck current metadata and
    the approved record under the authorized environment. Do not create test
    records, alter dates/Clock, expand scope, retry an unknown write or silently
@@ -378,5 +418,71 @@ from the earlier application tests.
   DML, live EMS or legacy execution ran in this publication step. Today's
   separately completed offline 340 full-suite, 13 focused and 14 fault-double
   results above were not rerun. No application code or new contract was added.
-- Next remains M1 prerequisites above; named TEST data and mutation/restoration
-  instructions remain blocked with user/data-owner/DBA, not an active writer.
+- At that checkpoint M1 inputs remained blocked with user/data-owner/DBA.
+  The later post-success restoration decision is recorded above; eligible
+  named TEST data and exact mutation instructions are still missing.
+
+## Latest selection checkpoint: SHF-RECENT-CANDIDATE-CHECKPOINT-20
+
+- User input, 20 October: 15:11 select by the most recent actual modification;
+  15:13 a successful committed TEST result may remain. General TEST CTIDBT_WFMT
+  access is already approved. Neither general access nor restore YES/NO is an
+  open decision. Failure rollback remains mandatory; an unknown COMMIT means
+  STOP and reconciliation, never retry or blind restoration.
+- Completed selection, not a new publication-time attempt: one authorized
+  read-only operator connection, identity checked before business reads, six
+  successful SELECTs, 73 column records across three tables, PK and TNS/DNS
+  checks. Attendance has no reliable last-update timestamp;
+  `SHF_DAY_CHANGES.MODIFICATION_TIME` is a day-change timestamp, not an
+  attendance-update timestamp. Ten candidates in one J01 were ordered by
+  modification <= database-now, descending/nulls-last, then PK; one selected.
+  Unique owner and not cancelled, but historical/ended and attendance absent:
+  **INELIGIBLE** for the current/on-time existing-row first-arrival update.
+  This is not a finding of zero eligible records across the whole database.
+- Remaining policy checks NOT RUN; private keys/before-images/handle not
+  retained. ROLLBACK, release and pool close succeeded for this attempt.
+  Earlier NJS-500 and failed rollback are separate historical evidence, not
+  root-caused or certified resolved by this success. No INSERT, UPDATE, DDL,
+  PL/SQL, COMMIT, FOR UPDATE, retries or clock/planned-date alteration occurred.
+- Changed paths, exactly: `docs/PROJECT_STATUS.md`,
+  `docs/SHF_REVERSE_ENGINEERING_DESIGN.md` (targeted sections 43/44), and
+  `docs/reverse-engineering/verification.json` (standard verifier refresh).
+  No application/native writer or canonical contract change.
+- Publication preflight: initial index empty, branch `main`, HEAD and fetched
+  `origin/main` at `3df7c225c5739dbf6938b015ced34bcaee72b35e`, ahead/behind
+  0/0; approved GitHub origin verified without exposing credentials.
+- Executed from repository root:
+  `node docs\reverse-engineering\verify-evidence.mjs` passed with
+  `passed_with_documented_source_anomaly`: 31 CSVs, 10,000 inventory references,
+  454 source hashes, 391 document-local links, 250 line anchors, 80 physical
+  table/view rows. All 20 capture hashes match published HEAD; the documented
+  duplicate legacy route is unchanged.
+- Supplemental checks passed: four status relative links resolve against
+  published HEAD or this scoped publication; all 391 design-link targets are
+  published or included here, including tracked directory descendants. Design
+  content before section 43 is unchanged after EOL normalization. Bounded
+  added-text sensitive-pattern checks passed without printing values; this is
+  not full secret/PII certification. Default scoped whitespace check passed;
+  no whitespace override is needed.
+- Publication is included in this checkpoint: exactly the three paths above,
+  normal scoped commit and push, mandatory co-author trailer, staged scope/
+  whitespace and final remote synchronization checks. This pre-commit record
+  does not claim push has already succeeded; discover the resulting SHA from
+  Git history without a self-SHA edit/commit loop. Twenty-three unrelated
+  dirty user paths stay unstaged and untouched; their contents were not read
+  or fingerprinted during publication.
+- Not run in this documentation-only step: application tests/builds, browser/
+  HTTP/server/process checks, new Oracle connections/queries, DB mutations,
+  native smoke tests, EMS/CTI, dependencies or legacy execution. Historical
+  backend 340/frontend 357 and offline 340 full-suite, 13 focused and 14
+  fault-double results were not rerun and are not fresh publication checks.
+  No project-complete, release, deployment or native-write success is claimed.
+- Exact next gate: data owner supplies one named eligible existing TEST
+  attendance context in the agreed J01/current on-time window, stage NULL;
+  user explicitly approves the section 43 native contract (still REVIEW) and
+  section 43.8 record/account/actor, exact three SET before/after values,
+  concurrency window and COMMIT/read-back scope. Earlier diagnostic follow-up
+  stays with DBA/platform. No new query until prerequisites change; stop rather
+  than INSERT, overwrite an existing arrival, alter clock/planned dates or
+  enumerate historical candidates indefinitely. Successful-result retention
+  is settled, not another approval gate.
