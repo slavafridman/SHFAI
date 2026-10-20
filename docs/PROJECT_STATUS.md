@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-20, verified environment/SID publication; live pilot host-reference blocker.
+Last updated: 2026-10-20, host-reference discovery exhausted; TEST pilot externally blocked.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -78,6 +78,31 @@ SID endpoint proof. Do not infer it from the DB reply, reverse DNS or suffixes.
 Then await a separate parent LIVE GO before any fresh metadata, eligible-row
 read, synthetic planning refresh, application startup or UI command.
 General TEST access and sections 43/45 approval are already settled.
+
+### SHF-HOST-REFERENCE-20 — bounded independent source discovery
+
+**State: BLOCKED; bounded source discovery complete, no LIVE GO.**
+The operator checked two authorized historical captures; neither contains
+SERVER_HOST/HOST_NAME. One configured-endpoint forward-CNAME query failed
+with DNS_9002, returning zero targets; this does not establish CNAME absence.
+The single alternative forward A query used the same configured OS DNS
+with DNS-only/no-hosts-file/quick-timeout options and also failed DNS_9002.
+No CNAME absence, canonical host or address-set proof can be inferred.
+There were zero target-resolution queries and zero Oracle connections,
+application starts, setup changes, commands, DML/COMMIT or allowance actions.
+No additional retries or fallback searches are planned.
+Missing input owner: TEST operator/DBA must supply an authoritative exact host
+mapping tied to the configured TNS endpoint, through the private operator
+configuration channel without passwords or private row keys in this document.
+That changed prerequisite is required before parent LIVE GO can be considered.
+The rewrite as a whole and the real arrival pilot remain incomplete.
+No DNS-server replacement, public DNS, reverse lookup, guessed suffix/shortname,
+DB-reply-seeded lookup, machine-wide search or restricted-file access is allowed.
+Only independently declared finite aliases with equal full address sets could
+satisfy the unchanged section 45.7 proof. No Oracle connection, application
+startup, data refresh, native command or allowance consumption is permitted in
+this source-discovery step. If neither source provides the required reference,
+stop with the operational input still owned by TEST operator/DBA.
 
 ### Environment/SID implementation and QA evidence
 
