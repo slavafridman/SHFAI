@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-20 14:41 +03:00.
+Last updated: 2026-10-20, native Oracle readiness checkpoint.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -31,12 +31,17 @@ readiness and a controlled first-arrival plan.
 
 | Work item | State | Owner / next action |
 |---|---|---|
-| Native first-arrival plan, design section 43 v0.1 | review | Architect drafted it locally; not yet approved for adapter implementation or execution |
-| Current TEST metadata, triggers, privileges and one eligible candidate | running | Backend owner is performing one bounded READ ONLY preflight |
-| First preflight attempt | blocked | No `SHF_ORACLE_*` in that process; zero connections/queries, not evidence of zero eligible rows |
-| Preflight follow-up | running | An independently approved operator reference may be passed only in memory to the read-only process; no restricted-file access |
-| Native readiness publication | ready after prerequisites | Integrate sanitized preflight evidence into section 43 and this checkpoint, validate links, then publish |
-| Actual Oracle UPDATE | blocked | Needs approved native contract and a separate named-record execution/restoration authorization |
+| Native first-arrival plan, design section 43 v0.1 | review | Proposal and sanitized preflight evidence; not approved for adapter implementation or execution |
+| Current TEST metadata, triggers and privileges | done within scope | Five tables and eight enabled/validated constraints checked; visible attendance triggers/policies zero; not a DML safety certification |
+| Eligible TODAY candidate in the one inspected exact J01 | blocked | Aggregate returned zero planned-start rows; no private candidate handle and no full candidate-policy evaluation |
+| Preflight connection health | blocked | After ten successful SELECTs, the next SELECT failed with NJS-500; rollback failed, unsafe lease dropped and pool closed |
+| Native readiness checkpoint | done: documentation / review: proposal | Plan and partial preflight recorded; publication is included in this scoped checkpoint; verify synchronization before resuming |
+| Actual Oracle UPDATE | blocked | Needs resolved connection/data prerequisites, approved native contract and separate named-record execution/restoration authorization |
+
+The first attempt made zero connections because process ENV was absent.
+The follow-up used an independently approved operator reference only in memory;
+it did connect and did not access the restricted environment file.
+No further connection or candidate-search attempt is scheduled automatically.
 
 Do not execute DML, `SELECT FOR UPDATE`, changing procedures, custom functions,
 schema changes or native write smoke tests during this preflight.
@@ -46,8 +51,8 @@ Do not change the clock or planned dates to manufacture an eligible candidate.
 
 The controlling legacy stage-arrival UPDATE affects
 `SHIFTER.SHF_ATTENDANCE.STAGE_ARRIVAL_TIME`, `STAGE_ARRIVAL_USER` and `TADREECH`,
-selected by `SHF_EMPLOYEE_DAY_ID`. These are source-observed names, not proof of
-current grants, triggers or safe execution.
+selected by `SHF_EMPLOYEE_DAY_ID`. The follow-up confirmed the relevant column
+types and constraints in TEST. This does not prove safe UPDATE execution.
 
 Section 43 proposes one on-time update of an existing eligible TEST row.
 It is a proposal, not an implemented or approved native writer.
@@ -117,11 +122,47 @@ checkpoint was initialized.
 Full WCAG conformance, screen-reader coverage, performance/query-plan guarantees,
 SLA and production release approval have not been established.
 
+### Native preflight evidence: SHF-ORACLE-ARRIVAL-PREFLIGHT-20
+
+Overall result: **partial / DATA-BLOCKED**, not PASS.
+TEST database/session/host identity was checked against the approved TNS/DNS
+endpoint before metadata and business reads. Driver 26 Thick / Client 19.3 was
+confirmed. One explicit READ ONLY transaction was started.
+
+- Ten SELECTs succeeded; the eleventh failed with `NJS-500`. No retry or widened
+  search was performed.
+- Five relevant tables were VALID. Fourteen selected column records and eight
+  constraints (five PK, three FK) were returned; all constraints were enabled
+  and validated. No UK was returned in this scoped selection.
+- Attendance day key: NUMBER(10,0), NOT NULL, PK/FK.
+  Stage time: nullable DATE; stage user: nullable VARCHAR2(100 BYTE);
+  TADREECH: nullable NUMBER, scale 0.
+- Visible attendance triggers, enabled UPDATE triggers and VPD policies: zero.
+  Trigger/package bodies were not loaded. Hidden/external effects remain
+  unverified.
+- The account owns the table and therefore has recognized owner privileges.
+  UPDATE ANY TABLE, matching explicit table UPDATE grants and column grants
+  were zero. Ownership is not proof of a least-privilege write-account baseline.
+- In one exact J01 under G01, the completed aggregate found zero effective
+  planned starts TODAY under the real server Clock in Asia/Jerusalem.
+  Necessary eligibility therefore fails in that scope. This says nothing
+  about other scopes or historical dates.
+- The later candidate-key SELECT failed. No candidate was obtained; remaining
+  on-time/window/policy conditions were not evaluated.
+- Rollback was attempted but failed: **successful rollback is not claimed**.
+  The unsafe lease was dropped and the pool closed; no owned resources remained.
+- DML, DDL, PL/SQL, COMMIT and FOR UPDATE: **zero**.
+
+These are current read results, not native write proof. Internal scan cost,
+current deployed-policy purity and the cause of NJS-500 remain unknown.
+No credentials, real employee values or record keys are retained here.
+
 ## Open blockers
 
 | Blocker | Evidence and owner |
 |---|---|
-| Native write metadata/candidate readiness | Current values remain unknown until the actual bounded preflight report arrives; backend/DB owner |
+| Connection failure / failed rollback | DBA/platform must investigate NJS-500 and confirm the next safe connection attempt; no automatic reconnect/test UPDATE |
+| Eligible named TEST data | Zero TODAY rows in the one inspected J01; DBA/data owner must supply a named suitable employee/day with existing attendance, stage NULL and a real on-time window |
 | Native adapter/API approval | Section 43 is review-only; user + architect |
 | Named TEST mutation and restoration authorization | Not granted by fixture approval or generic prior read access; user + DBA/security |
 | Attendance live detail HTTP and exact row-opener focus | On 20 October current defaults and one diagnostic previous-day filter both returned 0 rows; QA/data owner needs one known permissible nonempty context |
@@ -134,7 +175,8 @@ Do not repeat unbounded historical searches or claim fixture tests close it.
 Last recorded published feature/design references:
 
 - `fa40c6e941dc9419ad0f61a19e5e2e6a7a1678bd`: F1 executable Origin fix;
-- `0b0ceddc3f4e10dabfaa38c5224e64674a439630`: F2 design checkpoint.
+- `0b0ceddc3f4e10dabfaa38c5224e64674a439630`: F2 design checkpoint;
+- `1ea16bbcc19e4dac8b9ee1380a4642d0abd4a01d`: resumable checkpoint and workflow rule.
 
 At those publications remote and local HEAD matched. Recheck Git; do not assume
 this remains the newest remote commit.
@@ -171,17 +213,70 @@ tokens, fingerprints, private record keys or real-person screenshots here.
   No application commands are needed for this documentation-only step.
 - Not run: application tests/builds, servers, Oracle queries/DML, native smoke
   tests, and the design evidence verifier. No prior engineering results were
-  rerun. Native preflight follow-up remains pending; section 43 remains a local,
-  unapproved proposal owned by the architect.
+  rerun. At that initialization checkpoint the native follow-up was pending
+  and section 43 was still local; the later findings above supersede that state.
 - Publication boundary: stage and commit only the two paths above after
   `git diff --cached --check`; verify normal push synchronization and report
   its actual outcome. Preserve all unrelated unstaged edits and deletions.
 
-## Next checkpoint to write
+## Native readiness checkpoint: SHF-NATIVE-ARRIVAL-READINESS-20
 
-Replace the preflight "running/unknown" entries with its actual outcome:
-executed versus not-run queries, sanitized metadata/candidate flags, blockers,
-owners and one concrete next action. Then integrate the same evidence into
-section 43 through the architect owner and publish a scoped readiness checkpoint.
-If blocked, stop native execution and name the exact missing operator/DBA input;
-do not silently resume F2 or execute a test UPDATE.
+Changed paths for this step: this file, section 43 of the existing design
+baseline, and the standard evidence verifier's `verification.json` refresh.
+No application or canonical API types changed. Publication and structural checks
+are documentation-only evidence; do not infer native readiness from them or
+from the earlier application tests.
+
+- State: plan completed for review; native preflight **PARTIAL / DATA-BLOCKED**,
+  not PASS. STOP for DBA/platform investigation and named eligible TEST data.
+  Section 43 v0.1 APP approval and separate section 43.8 execution approval
+  remain outstanding; no native write code, write test or DML was performed.
+- Publication included in this checkpoint: normal commit/push to the approved
+  original GitHub `slavafridman/SHFAI` repository on `main`, only the three paths
+  above. Before publication, fetch confirmed HEAD and `origin/main` at
+  `1ea16bbcc19e4dac8b9ee1380a4642d0abd4a01d`, ahead/behind 0/0 and initial
+  index empty. The published checkpoint SHA is discoverable with the command
+  above; this pre-commit record is not a claim that push already succeeded.
+- Ran at repository root:
+  `node docs\reverse-engineering\verify-evidence.mjs`.
+  Result: `passed_with_documented_source_anomaly`; 31 CSV files, 10,000
+  inventory row references, 454 source hashes, 391 local document links,
+  250 source-line anchors and 80 physical table/view rows checked.
+  The known duplicate legacy route remains documented, not newly fixed.
+  All 20 Oracle capture hashes match the prior published verification.
+- Additional bounded checks passed: four checkpoint relative links resolve;
+  all 391 baseline local-link targets exist in published HEAD; 273 baseline
+  anchors resolve, including eight explicit HTML IDs. Section 43 introduces
+  no Markdown links. No external GitHub link fetch was needed.
+  Previous baseline content is preserved after CRLF/LF normalization.
+- Checkpoint ASCII and bounded sensitive-pattern checks of added documentation
+  passed; these are not a complete secret/PII certification. No private record
+  keys, real-person values or before-images were intentionally persisted.
+  Restricted environment content was not accessed.
+- Exactly three assigned paths staged; default `git diff --cached --check`
+  passed, with no whitespace override. Twenty-three unrelated user paths,
+  including their unstaged edits/deletions, were fingerprinted for bytewise
+  preservation; the already published workflow instruction is unchanged.
+  Recheck path scope, preservation and remote synchronization after push.
+- Validation-tool corrections: Python was unavailable, so checks used existing
+  Node.js without installation. Initial supplemental checks needed EOL
+  normalization and HTML-ID support; corrected checks passed. These were
+  checker limitations, not broken document links or changed business facts.
+- Not run in this documentation step: application tests/builds, servers,
+  browser/HTTP checks, new Oracle queries, DML/DDL/PLSQL/COMMIT/FOR UPDATE,
+  native smoke tests, live EMS/CTI or legacy execution. Historical engineering
+  results above were not rerun. No project-complete, release or deployment claim.
+
+## Exact next safe action
+
+1. Present section 43 v0.1 for approval of a disabled-by-default native adapter.
+   Do not treat approval as permission to execute an UPDATE.
+2. Obtain DBA/platform resolution of NJS-500 and a named, eligible TEST fixture
+   from the data owner, including an explicit concurrency window.
+3. Before native execution, fill the separate section 43.8 authorization for
+   account/actor/record, three SET fields and before-images, proposed values,
+   one COMMIT/read-back and any conditional compensating restoration.
+4. Resume only after those prerequisites change; recheck current metadata and
+   the approved record under the authorized environment. Do not create test
+   records, alter dates/Clock, expand scope, retry an unknown write or silently
+   switch back to F2 fixture work.
