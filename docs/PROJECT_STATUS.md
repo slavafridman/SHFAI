@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-20, host-reference discovery exhausted; TEST pilot externally blocked.
+Last updated: 2026-10-20, TEST pilot externally blocked; approved independent F2 work resumed.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -103,6 +103,36 @@ satisfy the unchanged section 45.7 proof. No Oracle connection, application
 startup, data refresh, native command or allowance consumption is permitted in
 this source-discovery step. If neither source provides the required reference,
 stop with the operational input still owned by TEST operator/DBA.
+
+### SHF-F2-CONTRACTS-20 — independent approved implementation
+
+**State: canonical checks PASS / dependent implementation RUNNING.** The user expressly requested autonomous implementation
+after the host-reference blocker was reported. Native TEST F1 remains the
+priority and remains externally blocked; no further DNS/Oracle attempts are
+planned without the missing authoritative input.
+To make independent progress, the architect is verifying and materializing
+the previously approved sections 41/42 F2 station-arrival fixture contracts.
+This is not native F2 approval, not M1 completion, and not a substitute for a
+real Oracle result. If the approval record or prerequisites are insufficient,
+the owner must stop rather than invent approval.
+The architect confirmed the 20 October 14:21 approval and materialized only
+the capability union, new canonical station-arrival types and a focused
+contract test. Existing F1 canonical ports need no change. Manual source/shape
+review is complete. Direct backend execution now passed the new contract
+test 1/1, strict typecheck and existing F1 focused suite 117/117.
+The first command-runner attempt was blocked before any command by the host's
+maximum sub-agent-depth limit, not by a failing application check. A backend
+owner resolved this tooling limitation using direct CLI without nested agents.
+The canonical prerequisite is satisfied; backend and UI owners are now
+implementing against the frozen types in disjoint package paths.
+The backend owner has exclusive noncanonical backend implementation/test/wiring
+and README ownership; canonical files remain architect-owned. F1 public behavior and read7/fixture9/native10 remain
+protected. Joint F1/F2 fixture capabilities and shared state must follow the
+approved explicit mode; nullable stage arrival is not a station prerequisite.
+The UI owner has exclusive frontend component/API/guard/history/style/tests
+and directly related documentation ownership. No infrastructure/live access,
+new framework versions or dependencies are implied. Parent retains status
+ownership; canonical-step publication precedes completed consumer publication.
 
 ### Environment/SID implementation and QA evidence
 
