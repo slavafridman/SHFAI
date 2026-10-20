@@ -8,6 +8,7 @@ import type { SelectedShiftItemsRequestV1 } from './shift-items-contract';
 import type { AttendanceRequestV1 } from '../../../backend/fixture-slice/attendance-contracts.mts';
 import type { StageArrivalDraftV1, StageArrivalCommitDraftV1 } from '../../../backend/fixture-slice/stage-arrival-contracts.mts';
 import type { NativeStageArrivalCommitV1 } from '../../../backend/fixture-slice/oracle-stage-arrival-contracts.mts';
+import { environment } from './environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class SliceApi {
@@ -27,7 +28,7 @@ export class SliceApi {
       .pipe(map(r => this.arrivalBody(r, 16384)));
   }
   private arrivalBase(employeeId: string, shiftDayId: string) {
-    return `/api/v1/employees/${employeeId}/shift-days/${shiftDayId}/stage-arrival`;
+    return `${environment.apiBasePath}/v1/employees/${employeeId}/shift-days/${shiftDayId}/stage-arrival`;
   }
   private arrivalBody(response: HttpResponse<unknown>, maxBytes: number): unknown {
     if (response.status !== 200 || !/^application\/json(?:;\s*charset=utf-8)?$/i.test(response.headers.get('Content-Type') ?? '') ||
@@ -38,7 +39,7 @@ export class SliceApi {
     return response.body;
   }
   attendanceContext() {
-    return this.http.get<unknown>('/api/v1/attendance/filter-context', { cache: 'no-store' });
+    return this.http.get<unknown>(`${environment.apiBasePath}/v1/attendance/filter-context`, { cache: 'no-store' });
   }
   attendance(request: AttendanceRequestV1) {
     const params: Record<string, string> = {
@@ -48,42 +49,42 @@ export class SliceApi {
     if (request.mokedCode !== undefined) params['mokedCode'] = request.mokedCode;
     for (const key of ['teamCodes', 'innerJobCodes', 'workLocations'] as const)
       if (request[key]?.length) params[key] = request[key]!.join(',');
-    return this.http.get<unknown>('/api/v1/attendance', { params, cache: 'no-store' });
+    return this.http.get<unknown>(`${environment.apiBasePath}/v1/attendance`, { params, cache: 'no-store' });
   }
   employeeCard(employeeId: string) {
-    return this.http.get<unknown>(`/api/v1/employees/${employeeId}/operational-card`, { cache: 'no-store' });
+    return this.http.get<unknown>(`${environment.apiBasePath}/v1/employees/${employeeId}/operational-card`, { cache: 'no-store' });
   }
   shiftItems(request: SelectedShiftItemsRequestV1) {
     return this.http.get<unknown>(
-      `/api/v1/employees/${request.employeeId}/shift-days/${request.shiftDayId}/breaks-and-exceptions`,
+      `${environment.apiBasePath}/v1/employees/${request.employeeId}/shift-days/${request.shiftDayId}/breaks-and-exceptions`,
       { params: { limit: String(request.limit ?? 25), offset: String(request.offset ?? 0),
         sort: 'start-asc' }, cache: 'no-store' });
   }
   // Runtime validation is mandatory; HTTP generic types do not validate JSON.
   identity() {
-    return this.http.get<unknown>('/api/v1/identity', { cache: 'no-store' });
+    return this.http.get<unknown>(`${environment.apiBasePath}/v1/identity`, { cache: 'no-store' });
   }
   detail(employeeId: string, shiftDayId: string) {
     return this.http.get<unknown>(
-      `/api/v1/employees/${employeeId}/shift-days/${shiftDayId}`, { cache: 'no-store' });
+      `${environment.apiBasePath}/v1/employees/${employeeId}/shift-days/${shiftDayId}`, { cache: 'no-store' });
   }
   filterContext() {
-    return this.http.get<unknown>('/api/v1/current-shifts/filter-context', { cache: 'no-store' });
+    return this.http.get<unknown>(`${environment.apiBasePath}/v1/current-shifts/filter-context`, { cache: 'no-store' });
   }
   searchContext() {
-    return this.http.get<unknown>('/api/v1/shift-search/filter-context', { cache: 'no-store' });
+    return this.http.get<unknown>(`${environment.apiBasePath}/v1/shift-search/filter-context`, { cache: 'no-store' });
   }
   myShiftsContext(request: MyShiftsContextRequestV1) {
     const params: Record<string, string> = { mode: request.mode };
     if (request.mode === 'selected') params['employeeId'] = request.employeeId;
-    return this.http.get<unknown>('/api/v1/my-shifts/context', { params, cache: 'no-store' });
+    return this.http.get<unknown>(`${environment.apiBasePath}/v1/my-shifts/context`, { params, cache: 'no-store' });
   }
   myShifts(request: MyShiftsRequestV1) {
     const params: Record<string, string> = { mode: request.mode, dateFrom: request.dateFrom,
       dateTo: request.dateTo, limit: String(request.limit ?? 25), offset: String(request.offset ?? 0),
       sort: 'effective-start-asc' };
     if (request.mode === 'selected') params['employeeId'] = request.employeeId;
-    return this.http.get<unknown>('/api/v1/my-shifts', { params, cache: 'no-store' });
+    return this.http.get<unknown>(`${environment.apiBasePath}/v1/my-shifts`, { params, cache: 'no-store' });
   }
   shiftSearch(request: ShiftSearchRequestV1) {
     const params: Record<string, string> = {
@@ -93,7 +94,7 @@ export class SliceApi {
     if (request.mokedCode !== undefined) params['mokedCode'] = request.mokedCode;
     for (const key of ['teamCodes', 'innerJobCodes', 'workLocations'] as const)
       if (request[key]?.length) params[key] = request[key]!.join(',');
-    return this.http.get<unknown>('/api/v1/shift-search', { params, cache: 'no-store' });
+    return this.http.get<unknown>(`${environment.apiBasePath}/v1/shift-search`, { params, cache: 'no-store' });
   }
   currentShifts(request: CurrentShiftRequestV1) {
     const params: Record<string, string> = { mode: request.mode };
@@ -105,6 +106,6 @@ export class SliceApi {
     params['limit'] = String(request.limit ?? 25);
     params['offset'] = String(request.offset ?? 0);
     params['sort'] = 'effective-start-asc';
-    return this.http.get<unknown>('/api/v1/current-shifts', { params, cache: 'no-store' });
+    return this.http.get<unknown>(`${environment.apiBasePath}/v1/current-shifts`, { params, cache: 'no-store' });
   }
 }

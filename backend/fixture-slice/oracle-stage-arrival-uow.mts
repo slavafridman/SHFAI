@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import type { OracleEnvironment } from "./runtime-config.mts";
 import type { OracleReadSession } from "./oracle-session.mts";
 import type { NativeBinding } from "./native-stage-arrival-config.mts";
+import { nativeBinding, nativeIdentityBindingReference } from "./native-stage-arrival-config.mts";
 import { nativeIdentity, nativeSafety, nativeSnapshot, nativeUpdate } from "./oracle-stage-arrival-snapshot.mts";
 import type { NativeQuery, NativeSchema, NativeSnapshot } from "./oracle-stage-arrival-snapshot.mts";
 import { checkStageBudget } from "./stage-arrival-memory.mts";
@@ -58,8 +59,9 @@ export class OracleStageArrivalUow {
   private readonly reads: OracleReadSession;
   private readonly binding: NativeBinding;
   private schema?: NativeSchema;
+  get identityReference() { return nativeIdentityBindingReference(this.binding); }
   constructor(pool: NativePool, reads: OracleReadSession, binding: NativeBinding) {
-    this.pool = pool; this.reads = reads; this.binding = structuredClone(binding);
+    this.pool = pool; this.reads = reads; this.binding = nativeBinding(binding);
   }
   // Startup certification uses only SELECTs on the writer, followed by rollback.
   async initialize(signal?: AbortSignal) {

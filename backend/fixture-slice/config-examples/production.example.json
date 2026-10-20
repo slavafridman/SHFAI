@@ -1,0 +1,9 @@
+{
+  "deploymentClass": "production",
+  "authenticationMode": "real",
+  "syntheticAdministratorEnabled": false,
+  "realProviderId": "",
+  "dataSource": "oracle-read-only",
+  "businessTimeZone": "UTC",
+  "attendanceStageArrivalMode": "disabled"
+}

@@ -5,7 +5,8 @@ import { createLoopbackServer } from "./http-adapter.mts";
 import { validateRaw } from "./contract-validation.mts";
 import type { RawShiftDay } from "./contracts.mts";
 import { CurrentFixtureReader } from "./current-shifts-fixture.mts";
-import { validateRuntimeConfig, oracleEnvironment } from "./runtime-config.mts";
+import { oracleEnvironment } from "./runtime-config.mts";
+import { loadEnvironmentConfig, RealAuthenticationNotConfiguredError } from "./environment-profiles.mts";
 import type { OraclePool } from "./oracle-session.mts";
 import type { Server } from "node:http";
 import { once } from "node:events";
@@ -62,13 +63,8 @@ export interface BackendPoolFactories {
 // Oracle credentials are environment-only database configuration, not login passwords.
 export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtureClock = systemClock,
   factories?: BackendPoolFactories) {
-  if (environment.SHF_ORACLE_CONFIG !== undefined && environment.SHF_FIXTURE_CONFIG !== undefined)
-    throw new Error("Choose exactly one backend source configuration");
   const oracleMode = environment.SHF_ORACLE_CONFIG !== undefined;
-  const config = validateRuntimeConfig(JSON.parse(
-    (oracleMode ? environment.SHF_ORACLE_CONFIG : environment.SHF_FIXTURE_CONFIG) ?? "null"));
-  if ((config.dataSource === "oracle-read-only") !== oracleMode)
-    throw new Error("Explicit backend source configuration mismatch");
+  const config = loadEnvironmentConfig(environment);
   if (config.deploymentClass === "production" || config.authenticationMode !== "synthetic")
     throw new Error("Executable backend requires explicit isolated synthetic mode");
   const stageMode = validateStageArrivalMode(config);
@@ -215,9 +211,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     };
     process.once("SIGINT", stop);
     process.once("SIGTERM", stop);
-  } catch {
+  } catch (error) {
     // Never print configuration, fixtures, authorization or raw exception messages.
-    process.stderr.write("Backend startup rejected\n");
+    process.stderr.write(error instanceof RealAuthenticationNotConfiguredError
+      ? "Backend startup rejected: Real authentication provider not configured\n" : "Backend startup rejected\n");
     process.exitCode = 1;
   }
 }

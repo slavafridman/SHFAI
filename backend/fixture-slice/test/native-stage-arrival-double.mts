@@ -35,6 +35,9 @@ export class NativeOracleDouble {
   committed = false;
   count: number | undefined = 1;
   hook?: (event: string) => Promise<void> | void;
+  // Independent synthetic observations, never private expectations learned
+  // from a real connection. SID tests explicitly configure both accounts.
+  identityObservations?: { read: Record<string, string | null>; write: Record<string, string | null> };
   private async point(event: string) { this.events.push(event); await this.hook?.(event); }
   constructor(realClock = false) {
     if (realClock) this.clockMs = Date.now();
@@ -89,7 +92,8 @@ export class NativeOracleDouble {
       if (sql.toLowerCase().includes("shf_inner_jobs")) return [];
       return [{ probe: 1 }];
     }
-    if (tag === "native:identity") return [structuredClone(source === "read" ? this.binding.readIdentity : this.binding.writeIdentity)];
+    if (tag === "native:identity") return [structuredClone(this.identityObservations?.[source] ??
+      (source === "read" ? this.binding.readIdentity : this.binding.writeIdentity))];
     if (tag.startsWith("native:metadata:")) return structuredClone(this.proof[Number(tag.split(":")[2])]);
     if (tag.startsWith("native:privilege:")) return [];
     if (tag.startsWith("native:lock:")) return [{ key: 1 }];

@@ -8,7 +8,7 @@ import { validatePrincipal } from "./contract-validation.mts";
 import { nativeStageArrivalAccessPolicy as policy, stageArrivalAccessPolicy } from "./access-policy.mts";
 import { nativeCommand, nativeDraft } from "./native-stage-arrival-validation.mts";
 import type { OracleStageArrivalUow } from "./oracle-stage-arrival-uow.mts";
-import { nativeBinding, verifiedNativeAllowancePath } from "./native-stage-arrival-config.mts";
+import { nativeBinding, verifiedNativeAllowancePath, nativeIdentityBindingReference } from "./native-stage-arrival-config.mts";
 import type { NativeBinding } from "./native-stage-arrival-config.mts";
 import type { NativeSnapshot } from "./oracle-stage-arrival-snapshot.mts";
 import { nativeOnTime } from "./oracle-stage-arrival-domain.mts";
@@ -18,7 +18,7 @@ import { checkStageBudget } from "./stage-arrival-memory.mts";
 import { stageFail } from "./stage-arrival-errors.mts";
 
 type Preparation = { principal: PrincipalV1; snapshot: NativeSnapshot;
-  issued: number; expires: number; fingerprint: string };
+  issued: number; expires: number; fingerprint: string; identityReference: string };
 // Exclusive operator-controlled file is only a persistent admission fuse:
 // it contains NO business keys, identities, before-images, command receipts or
 // secrets. Same path must be retained across process restarts. Removing it or
@@ -60,8 +60,11 @@ export class OracleStageArrivalApplication {
   private readonly key = randomBytes(32);
   private readonly tokens = new Map<string, Preparation>();
   private knownCommitted = false; // No receipt/replay storage; only a local deny guard.
+  private readonly identityReference: string;
   constructor(uow: OracleStageArrivalUow, binding: NativeBinding, clock: Clock, zone: string, grants: readonly string[]) {
     this.uow = uow; this.binding = nativeBinding(binding); this.clock = clock; this.zone = zone;
+    this.identityReference = nativeIdentityBindingReference(this.binding);
+    if (this.identityReference !== uow.identityReference) throw Error("Native identity reference mismatch");
     this.grants = [...grants]; this.allowance = new NativeAllowance(this.binding);
     if (!this.grants.includes(this.binding.orgUnitId)) throw Error("Native exact grant required");
     this.allowance.assertUnused();
@@ -69,6 +72,7 @@ export class OracleStageArrivalApplication {
   private admit(p: unknown, target: unknown, commit = false) {
     try { validatePrincipal(p); } catch { stageFail("UNAUTHENTICATED"); }
     if (commit) policy.requireCommit(p); else policy.requirePrepare(p);
+    if (this.identityReference !== this.uow.identityReference) stageFail("LIVE_WRITES_DISABLED");
     const s = selection(target), grants = stageArrivalAccessPolicy.authorizedTeamIds(p);
     if (!same(grants, this.grants) || !grants.includes(this.binding.orgUnitId) ||
         s.employeeId !== this.binding.employeeId || s.shiftDayId !== this.binding.shiftDayId)
@@ -118,8 +122,10 @@ export class OracleStageArrivalApplication {
     if (this.tokens.size >= 1000) stageFail("DEPENDENCY_UNAVAILABLE");
     const validationToken = randomBytes(32).toString("base64url");
     const fp = createHmac("sha256", this.key).update(canonical({ mode: "test-oracle-controlled",
-      binding: this.binding, principal, snapshot, zone: this.zone, validationToken, expires })).digest("hex");
-    this.tokens.set(validationToken, { principal, snapshot: structuredClone(snapshot), issued: now.getTime(), expires, fingerprint: fp });
+      binding: this.binding, identityReference: this.identityReference,
+      principal, snapshot, zone: this.zone, validationToken, expires })).digest("hex");
+    this.tokens.set(validationToken, { principal, snapshot: structuredClone(snapshot), issued: now.getTime(), expires,
+      fingerprint: fp, identityReference: this.identityReference });
     return { ...s, state: "ready", evaluatedAt: now.toISOString(), evaluatedLocal: c.local,
       expiresAt: new Date(expires).toISOString(), businessTimeZone: this.zone,
       fingerprint: fp, validationToken, warnings: [], confirmationRequired: false, dataSource: "oracle-test" };
@@ -133,7 +139,8 @@ export class OracleStageArrivalApplication {
       stageFail("LIVE_WRITES_DISABLED"); // Never reopen after external removal.
     }
     const prep = this.tokens.get(cmd.validationToken), now = this.clock.now();
-    if (!prep || prep.fingerprint !== cmd.fingerprint || !same(prep.principal, principal) ||
+    if (!prep || prep.identityReference !== this.uow.identityReference ||
+        prep.fingerprint !== cmd.fingerprint || !same(prep.principal, principal) ||
         now.getTime() < prep.issued || now.getTime() >= prep.expires) stageFail("STALE_PREPARATION");
     this.window(now);
     this.tokens.delete(cmd.validationToken);

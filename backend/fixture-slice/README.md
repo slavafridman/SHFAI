@@ -1,5 +1,115 @@
 # SHF backend: seven reads, isolated F1, and default-off controlled native TEST F1
 
+## SHF-ENV-PROFILES-20 — DEV / TEST / PRODUCTION
+
+Approved existing tooling only: Windows, Node **24.21.0**, npm **11.19.0**,
+TypeScript **5.9.3**, oracledb **26.0.0**. No installation, Docker, WSL,
+CI change, live connection or deployment is required for profile checks.
+The existing Oracle TEST path remains Thick / installed Client19.3 / historical
+DB11.2.0.4; offline profile tests do not recertify live compatibility.
+
+`SHF_APP_ENV` is server-only, exactly **`dev` | `test` | `production`**.
+Empty, uppercase, whitespace, unknown names and cross-profile deployment
+classes fail closed before any pool creation. No profile grants capabilities.
+
+`NODE_ENV=production` is an additional fail-closed production-context guard:
+it rejects `SHF_APP_ENV=dev|test` and nonproduction `deploymentClass`, including
+old profileless fixture configuration, before pool creation/listen. It never
+silently overrides the SHF profile. Missing `NODE_ENV` preserves compatibility;
+other values (including `NODE_ENV=test`) do not select an SHF profile or add
+defaults. Aligned production still hits the existing synthetic/TEST rejection
+or explicit missing-real-provider blocker.
+
+| Profile | Required existing `deploymentClass` | Sources / startup |
+|---|---|---|
+| `dev` | `local-development` | Only explicitly configured isolated fixtures; synthetic Administrator must be explicitly enabled. No live Oracle/native TEST through DEV. |
+| `test` | `isolated-test-demo` | Isolated fixtures for QA/demo, or separately confirmed `oracle-read-only` TEST. Default example has arrival disabled; no native-write default. |
+| `production` | `production` | Synthetic auth/roles, fixture sources, TEST confirmation, F1/native modes, native secret/binding/allowance context and nonproduction callback origins are rejected. Otherwise startup explicitly fails **`Real authentication provider not configured`**. |
+
+**Migration:** if `SHF_APP_ENV` is absent, the old explicit
+`SHF_FIXTURE_CONFIG` / `SHF_ORACLE_CONFIG` configuration continues to work,
+including the existing read7 / isolated F1=9 / controlled TEST=10 gates.
+Absence never creates implicit DEV settings, synthetic login, rows, grants,
+port or Oracle secrets. Exactly one source config and its matching explicit
+port are still mandatory. Existing identity/source JSON contracts are unchanged.
+The public frontend `appEnv` cannot select server modes or enable native rights.
+
+### Sanitized examples and quick start (PowerShell)
+
+Only versioned JSON examples are provided under `config-examples/`; startup
+never automatically loads a file or copies operator values. Run from this
+package directory. The example's UTC/DEMO values are synthetic, not discovered
+business configuration. In a clean, isolated shell with no Oracle/native inputs:
+
+```powershell
+$env:SHF_APP_ENV = 'dev'
+$env:SHF_FIXTURE_CONFIG = Get-Content -Raw config-examples/dev.example.json
+$env:SHF_FIXTURE_PORT = '4310' # choose a free owned loopback port
+$env:SHF_FIXTURE_ROWS = '[]'  # explicit empty synthetic dataset
+$env:SHF_TEST_ORACLE_STAGE_WRITE_ENABLED = 'false'
+npm start
+# Ctrl+C closes this owned application; do not stop someone else's ports.
+```
+
+For isolated fixture QA under TEST, use the same fixture configuration after
+explicitly changing `deploymentClass` to `isolated-test-demo`, set
+`SHF_APP_ENV=test`, and supply the same fixture inputs. F1 remains separately
+opt-in via its existing mode and coherent fixture packet; it is a simulation,
+not an Oracle write.
+
+`test.example.json` instead describes the **default read-only Oracle TEST**
+shape. It deliberately has `oracleTestScopeConfirmed:false` and empty grants:
+**it must fail unchanged**. `test-secrets.example.json` lists only server key
+names and **empty** secret placeholders; it is documentation, not a loader or
+working secret packet. With independently approved TEST scope, the operator
+must supply actual private grants/confirmation and `SHF_ORACLE_CONFIG`,
+`SHF_ORACLE_PORT`, `SHF_ORACLE_CONNECT_STRING`, `SHF_ORACLE_USER`,
+`SHF_ORACLE_PASSWORD`, `SHF_ORACLE_CLIENT_LIB_DIR` through the existing private
+environment mechanism, never through the browser, Git, URLs or logs. Empty
+placeholders and omitted secrets fail; there is no default password or fallback.
+Do not copy protected environment files or infer credentials/identity from
+briefs. No TEST start/connection is authorized by this quick start.
+
+Native writes still require **both** existing
+`attendanceStageArrivalMode=test-oracle-controlled` and exact
+`SHF_TEST_ORACLE_STAGE_WRITE_ENABLED=true`, plus the independently approved
+private binding, grants, current TEST-only synthetic marker/window and external
+operator-controlled allowance described below. Keep the write flag absent or
+`false` and omit **all** `SHF_NATIVE_STAGE_*` keys for read-only TEST.
+Do not enable it merely to pass startup/health checks. DEV rejects this mode.
+The environment task does not modify native identity, metadata, SQL or UoW.
+
+`production.example.json` is a **blocked configuration skeleton**, not an
+executable production adapter/provider approval. It reuses the existing
+`oracle-read-only` source name without TEST confirmation, has an empty
+`realProviderId`, synthetic disabled and arrival disabled. Even supplying a
+provider ID cannot install the missing provider; no production connection is
+attempted. Supplying fixture/TEST context is rejected earlier. Future real
+authentication, production Oracle support/configuration approval, HTTPS
+external reverse proxy and infrastructure/secrets approval belong to their
+respective application/security/operations owners. TLS/proxy infrastructure is
+not provisioned here; no remote/wildcard CORS is added. F1/native Origin
+allowlists remain exact canonical loopback origins only.
+
+Local private overrides can be kept in ignored `config-local/`; logs in
+ignored `logs/` / `*.log`. Existing build/dependency ignores remain unchanged.
+Do not place secrets in versioned examples. There is no dotenv loader.
+
+### Isolated verification
+
+```powershell
+npm run test:profiles
+npm run typecheck
+npm test
+```
+
+Profile tests cover exact names/mapping, old explicit configuration, explicit
+synthetic opt-in, ordered 7/9/10 rights, empty example rejection, loopback
+fixture startup, controlled TEST startup with **pool doubles only**, and
+production rejection/missing-provider diagnostic with zero Oracle factory
+calls. All temporary listeners/pools/directories are closed/removed by tests.
+No actual operator environment file is read and no real SQL/DML is run.
+
 Implements approved section 13 v0.1 of `docs/SHF_REVERSE_ENGINEERING_DESIGN.md`;
 section 15 records detail approval and section 17 approves the local tooling.
 Section 19 v0.1 / 22.3 approve the list; section 22.4 approves bounded Oracle test
@@ -86,11 +196,14 @@ Native enabling is independent of mock enabling:
 * `employeeId`, `shiftDayId`, `orgUnitId`: private decimal employee/day keys and
   exact current J01 grant, rediscovered by a read-only exact-marker scan before
   enablement. No real staff or new marker is admitted.
-* `readIdentity`, `writeIdentity`: each exactly
-  `{database,host,service,user,schema}`. Independent expected DB_NAME,
-  SERVER_HOST, SERVICE_NAME, SESSION_USER and CURRENT_SCHEMA, not copied from a
-  connection's answer or inferred from its TNS alias. Both must designate the
-  same TEST database/host/service; SQL always explicitly targets SHIFTER.
+* `readIdentity`, `writeIdentity`: independent expected database and respective
+  account/schema, with exactly one identity strategy. Existing
+  `{database,host,service,user,schema}` packets retain their authoritative
+  service/host comparisons. SID-only connections instead use
+  `{database,user,schema,target}` as described below. Both identities must
+  designate the same TEST target/proof; SQL always explicitly targets SHIFTER.
+  Never infer DB_NAME or SERVICE_NAME from a TNS alias/SID, or copy expected
+  values from the connection's identity response.
 * `metadataDigest`: lowercase SHA256 of canonical **ordered arrays** returned
   by the nine `nativeMetadataSql` queries exported from
   `oracle-stage-arrival-snapshot.mts`, in export order, including column types,
@@ -127,6 +240,47 @@ Native enabling is independent of mock enabling:
   it or change its path/approval to retry. Reopening is manual operator/DBA
   reconciliation only. This is neither a command receipt nor a distributed
   exactly-once mechanism; a general multi-instance feature remains unsupported.
+
+#### SID-only target binding (internal compatibility erratum, section 45.7)
+
+For SID-configured connections, both identities use the same target shape:
+
+```typescript
+{
+  kind: "sid",
+  instanceSid: independentlyConfiguredInstanceSid,
+  endpointProof: {
+    kind: "configured-address-sets",
+    revision: independentProofRevision,
+    connectionAliases: independentlyValidatedTnsAliases,
+    endpoint: { kind: "dns", name: configuredEndpoint, addresses: endpointAddresses },
+    serverHosts: [
+      { kind: "dns", name: independentlyDeclaredServerHost, addresses: hostAddresses }
+    ]
+  }
+}
+```
+
+This is a shape with symbolic references, not a runnable configuration.
+Use `kind:"address"` for a literal IP. Supply DB_NAME from an independent
+authoritative TEST reference and INSTANCE/SID from the independently configured
+connection. Database, instance and each account/schema comparison are exact;
+SID is not assumed to equal SERVICE_NAME. The latter is diagnostic only in
+this explicitly selected branch; there is no fallback between strategies.
+
+Declare the finite endpoint/server-host names and used connection aliases
+before connecting. Resolve only these independently trusted names outside
+Oracle. Every normalized address set must be nonempty and equal in full;
+overlap alone, wildcard/suffix matching, reverse-name inference and aliases
+learned from a database reply are not evidence. The private proof factory
+requires an explicitly supplied trusted resolver, has no default live resolver
+and bounds resolution to one second. Never fabricate a proof to pass startup.
+
+Read, write and independent readback share one immutable target/proof revision,
+with separate exact read/write account expectations. A reference change requires
+new construction/preparation; old tokens cannot cross it. Identity failure after
+COMMIT remains UNKNOWN/reconcile, not success or an invitation to retry.
+All metadata, grants, freeze, allowance and current-eligibility gates still apply.
 
 Startup performs writer SELECT-only metadata/identity and actual zero-row
 SELECT privilege probes, followed by rollback,

@@ -165,9 +165,11 @@ test("N07 safety metadata and exact identity fail closed before startup/command"
       if (kind === "vpd") d.proof[4] = [{ enabled: "YES" }];
       if (kind === "type") d.proof[0].push({ tableName: "SHF_ATTENDANCE", columnName: "UNREVIEWED_LOB", dataType: "CLOB" });
       if (kind === "identity") d.hook = event => { if (event === "write:native:identity") throw { code: "ORA-01031" }; };
-      if (kind === "wrong-identity") d.hook = event => {
-        if (event === "write:native:identity") d.binding.writeIdentity.database = "SYNTHETIC_OTHER";
-      };
+      if (kind === "wrong-identity") {
+        const read = d.binding.readIdentity, write = d.binding.writeIdentity;
+        assert.ok("host" in read && "host" in write);
+        d.identityObservations = { read: { ...read }, write: { ...write, database: "SYNTHETIC_OTHER" } };
+      }
       if (kind === "virtual-report") {
         for (const c of d.proof[0]) if (typeof c === "object" && c !== null &&
             "tableName" in c && c.tableName === "SHF_EMPLOYEE_REPORTS" && "virtualColumn" in c)

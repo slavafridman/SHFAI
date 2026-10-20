@@ -6,6 +6,10 @@
   "scripts": {
     "start": "ng serve --host 127.0.0.1 --proxy-config proxy.conf.json",
     "build": "ng build",
+    "build:dev": "ng build --configuration development",
+    "build:test": "ng build --configuration test",
+    "build:production": "ng build --configuration production",
+    "check:profile": "node checks/environment-build-check.mjs",
     "test": "ng test --watch=false",
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },

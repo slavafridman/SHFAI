@@ -1,5 +1,79 @@
 # SHF-NATIVE-ARRIVAL-UI-20 — existing Angular F1 + controlled TEST mode
 
+## SHF-ENV-PROFILES-20 — public build profiles
+
+Uses the approved installed Node24.21.0/npm11.19.0, TypeScript5.9.3,
+Angular21.2.25, Material/CDK21.2.14, existing CLI/build21.2.27 and lockfile.
+No dependencies, installs, parallel toolchain, Docker/WSL or CI were added.
+
+From this package directory (PowerShell or another npm-capable shell):
+
+```powershell
+npm run typecheck
+npm test
+npm run build:dev
+npm run check:profile -- dev
+npm run build:test
+npm run check:profile -- test
+npm run build:production
+npm run check:profile -- production
+```
+
+`build:dev` selects Angular's existing `development` configuration;
+`build:test` selects `test`; `build:production` selects `production`.
+`npm run build` remains the unchanged default production build, with existing
+budgets, optimization and Material styles preserved. Every build replaces the
+same `dist/fixture-slice/browser` output; inspect it **before** the next build.
+`npm start` still serves DEV on loopback with the existing proxy, not a new
+server or production deployment. No remote proxy/CORS access is provisioned.
+
+`src/environments/environment.ts` defaults to production;
+`environment.dev.ts` and `environment.testing.ts` are Angular replacements.
+The TEST filename intentionally avoids the runner's `*.test.ts` discovery.
+Their frozen typed public object has **only**:
+
+```json
+{ "appEnv": "production", "apiBasePath": "/api" }
+```
+
+DEV/TEST differ only in `appEnv`. All API requests use this same-origin,
+relative `/api` base, including arrival calls. No production bundle points at
+localhost. These names are build metadata, **not** backend identity/source,
+verified credentials, authentication, roles, capabilities, TEST marker or
+write enablement. There is no visible environment badge or new UI behavior,
+no private-config fetch, no `process.env` forwarding and no public secret keys.
+Authorization still depends on the existing validated server identity/contracts.
+An arbitrary browser flag cannot enable backend/native write rights.
+
+`check:profile` inspects the three public source literals and the emitted
+application/shared chunks for exactly the selected two-field object and
+relative `/api`; secret/native config fields must not occur in that object.
+This is a **bounded public-module/build-shape check**, not a claim to scan
+all business explanatory text for Oracle words or certify the whole bundle.
+All three builds plus the unit suite are synthetic/offline checks, not a real
+Oracle/native pilot, browser accessibility certification or production release.
+
+The backend independently requires exact server-only `SHF_APP_ENV`
+(`dev|test|production`) consistent with its explicit `deploymentClass`; absence
+preserves its old explicit source configuration, never an implicit DEV default.
+See [backend profile quick start and sanitized JSON examples](../../backend/fixture-slice/README.md#shf-env-profiles-20--dev--test--production).
+DEV is explicitly isolated fixture/synthetic only; TEST defaults to read-only
+Oracle with separately supplied private scope/secrets, while isolated fixture
+QA is also allowed. The examples' empty secret/grant placeholders fail unless
+the authorized operator supplies actual configuration. Never bundle/copy
+private Oracle values into these modules. Native TEST remains default-off and
+requires its existing double opt-in, private grants/marker/window/external
+allowance and exact loopback frontend Origin. None is supplied by a build name.
+
+**Production build support is not production startup readiness.** Backend
+production rejects synthetic/fixture/F1/native TEST context and otherwise
+explicitly stops with `Real authentication provider not configured`; no
+Administrator fallback and no production DB connection. Real authentication,
+approved production Oracle configuration, HTTPS external reverse proxy,
+secret management and infrastructure are separate owner prerequisites, not
+created here. Local config overrides/logs remain ignored under `config-local/`,
+`logs/`, `*.log`; no secret-file loader or generated environment file exists.
+
 ## Current delivery: approved §43.5 / §43.7 / §45 v0.1
 
 ### Independent-QA follow-up: UI-D01 / UI-D02 (20 October)

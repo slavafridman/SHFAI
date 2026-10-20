@@ -1,0 +1,9 @@
+{
+  "deploymentClass": "local-development",
+  "authenticationMode": "synthetic",
+  "syntheticAdministratorEnabled": true,
+  "syntheticOrgUnitIds": ["DEMO"],
+  "dataSource": "isolated-fixture",
+  "businessTimeZone": "UTC",
+  "attendanceStageArrivalMode": "disabled"
+}

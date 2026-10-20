@@ -4,7 +4,7 @@ import { civil, numberText, requireGregorian } from "./oracle-readers.mts";
 import { fingerprint, same } from "./stage-arrival-domain.mts";
 import { stageFail } from "./stage-arrival-errors.mts";
 import type { NativeBinding, NativeIdentity } from "./native-stage-arrival-config.mts";
-import { nativeMarker } from "./native-stage-arrival-config.mts";
+import { nativeMarker, parseNativeIdentity, nativeTargetReference, nativeEndpointHostMatches } from "./native-stage-arrival-config.mts";
 import type { StageArrivalBlockerV1 } from "./stage-arrival-contracts.mts";
 import { nativeBlockers } from "./oracle-stage-arrival-domain.mts";
 
@@ -59,11 +59,26 @@ export const nativeMetadataSql = [
     ORDER BY name,type,referenced_owner,referenced_name,referenced_type`,
 ];
 export async function nativeIdentity(q: NativeQuery, expected: NativeIdentity) {
+  let identity: NativeIdentity;
+  try { identity = parseNativeIdentity(expected); } catch { return stageFail("LIVE_WRITES_DISABLED"); }
+  const reference = nativeTargetReference(identity), target = reference.target;
   await requireGregorian(q);
   const rows = await q(`/* native:identity */ SELECT SYS_CONTEXT('USERENV','DB_NAME') AS "database",
     SYS_CONTEXT('USERENV','SERVER_HOST') AS "host",SYS_CONTEXT('USERENV','SERVICE_NAME') AS "service",
+    ${target.kind === "sid" ? `SYS_CONTEXT('USERENV','INSTANCE_NAME') AS "instance",` : ""}
     SYS_CONTEXT('USERENV','SESSION_USER') AS "user",SYS_CONTEXT('USERENV','CURRENT_SCHEMA') AS "schema" FROM dual`, {}, 1);
-  if (rows.length !== 1 || !same(rows[0], expected)) stageFail("LIVE_WRITES_DISABLED");
+  if (rows.length !== 1) stageFail("LIVE_WRITES_DISABLED");
+  if (target.kind === "service-reference") {
+    if (!same(rows[0], { database: reference.database, host: target.host, service: target.serviceName,
+      user: identity.user, schema: identity.schema })) stageFail("LIVE_WRITES_DISABLED");
+    return;
+  }
+  const row = rows[0];
+  // SERVICE_NAME is deliberately diagnostic-only in the independently selected
+  // SID strategy. No fallback or DNS operation is driven by this DB answer.
+  if (!record(row) || row.database !== reference.database || row.instance !== target.instanceSid ||
+      row.user !== identity.user || row.schema !== identity.schema ||
+      !nativeEndpointHostMatches(target.endpointProof, row.host)) stageFail("LIVE_WRITES_DISABLED");
 }
 export async function nativeSafety(q: NativeQuery, b: NativeBinding): Promise<NativeSchema> {
   await nativeIdentity(q, b.writeIdentity);

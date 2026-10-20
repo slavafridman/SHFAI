@@ -25,7 +25,18 @@
                 { "type": "anyComponentStyle", "maximumWarning": "8kB", "maximumError": "12kB" }
               ]
             },
-            "development": { "optimization": false, "sourceMap": true, "extractLicenses": false }
+            "development": {
+              "optimization": false, "sourceMap": true, "extractLicenses": false,
+              "fileReplacements": [
+                { "replace": "src/environments/environment.ts", "with": "src/environments/environment.dev.ts" }
+              ]
+            },
+            "test": {
+              "outputHashing": "all",
+              "fileReplacements": [
+                { "replace": "src/environments/environment.ts", "with": "src/environments/environment.testing.ts" }
+              ]
+            }
           },
           "defaultConfiguration": "production"
         },

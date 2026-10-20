@@ -1,0 +1,10 @@
+{
+  "deploymentClass": "isolated-test-demo",
+  "authenticationMode": "synthetic",
+  "syntheticAdministratorEnabled": true,
+  "syntheticOrgUnitIds": [],
+  "dataSource": "oracle-read-only",
+  "oracleTestScopeConfirmed": false,
+  "businessTimeZone": "UTC",
+  "attendanceStageArrivalMode": "disabled"
+}

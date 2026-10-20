@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-20, SHF-NATIVE-PILOT-FINAL-20 published / pilot identity-blocked.
+Last updated: 2026-10-20, verified environment/SID publication; live pilot host-reference blocker.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -24,6 +24,148 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
    commit/push. Obtain any missing approval before dependent implementation.
 
 ## Current priority: first controlled TEST Oracle arrival update
+
+### SHF-ENV-SID-PUBLISH-20 — current publication checkpoint
+
+**State: offline implementation/QA DONE; scoped publication RUNNING;
+real TEST pilot BLOCKED.** Publication GO is not LIVE GO.
+
+- Independent QA `7bc`, caller-confirmed against source-stable owners:
+  Phase A frontend 69 focused cases, strict typecheck, all three environment
+  builds and emitted-profile checks PASS. Phase B profiles 33/33, native
+  focused 158/158, strict backend typecheck, full backend 557/557 and 34/34
+  independent actual-entrypoint cases PASS. QA-ENV-01 CLOSED with zero Oracle
+  factories/listeners on rejected production contexts. Focused counts overlap
+  the full suites; the frontend owner's full suite is 433/433.
+- This publication does not rerun those tests, start an application or make
+  DNS/Oracle connections. Fresh structural verifier PASS:
+  31 CSVs, 10,000 inventory references, 454 source hashes, 391 design-local
+  links, 250 line anchors; all 20 historical capture hashes are preserved.
+  The documented legacy duplicate route remains unchanged.
+- Reviewed scope: backend 17 paths, frontend 11, parent status/design 2, plus
+  the required standard verification JSON refresh: 31 candidate paths.
+  Manifest dependency/devDependency/override sets are unchanged. Examples
+  contain empty secret placeholders or explicitly synthetic double literals;
+  public environments contain only build name and relative `/api`.
+  Bounded candidate privacy/DDL/private-key/generated-artifact checks found
+  no unreviewed secret, private native fixture, new DDL or generated candidate.
+  Historical documentation references are not application brief/env parsers.
+- Git preflight: main, HEAD and fetched approved origin/main
+  `4027aedae8d23348a68b342bb83108a465bb745c`; ahead/behind 0/0, index empty,
+  no conflicts. Twenty-three unrelated dirty paths are excluded by names
+  only: their contents were NOT read or hashed in this publication.
+  Scoped and all-staged whitespace checks PASS without exceptions. Exact
+  staged scope is 31 paths; 401 documentation links and 130 relative imports
+  resolve to staged or published HEAD artifacts, with no private session-test
+  import. All 20 capture hashes match prior HEAD and the refreshed verifier
+  matches the staged design. Owner application sources have no unstaged delta.
+  Normal commit/push and final remote synchronization remain publication
+  gates, not LIVE permission.
+- No production readiness, authentication, real TEST arrival, current
+  metadata/grant/freeze/window certification or release is claimed.
+  Native TEST remains default-off with read7/fixture9/native10 separation.
+  Actual setup refresh, native command/UPDATE/COMMIT and allowance use: zero
+  in this publication; existing user instances remain untouched.
+
+Exact live prerequisite: TEST operator/DBA supplies the independently
+authoritative exact SERVER_HOST mapping before constructing the immutable
+SID endpoint proof. Do not infer it from the DB reply, reverse DNS or suffixes.
+Then await a separate parent LIVE GO before any fresh metadata, eligible-row
+read, synthetic planning refresh, application startup or UI command.
+General TEST access and sections 43/45 approval are already settled.
+
+### Environment/SID implementation and QA evidence
+
+1. Native publication is complete, but the actual pilot stopped before business
+   reads. The operator proved three launcher expectation errors: database name
+   derived from SID, service name equated to SID, and an unsupported exact
+   reverse-DNS shortname comparison. One authorized identity-only READ ONLY
+   diagnostic now matches the historically documented TEST database, configured
+   INSTANCE/SID, independently resolved configured TNS endpoint addresses,
+   operator user and schema; all six query aliases/types are valid.
+   Business/metadata queries, setup changes, native UPDATE and COMMIT remain
+   zero; rollback and pool cleanup passed, allowance is unconsumed.
+   Native application binding is still BLOCKED because its exact host/service
+   references are not independently available from the SID-only configuration.
+   Architect completed the internal compatibility erratum in design section
+   45.7: a SID branch may use the independently configured database, instance,
+   account and strict DNS-equivalence proof without equating SID with service.
+   The existing authoritative service-reference branch remains supported.
+   Exactly one branch and one immutable target/proof revision must apply to
+   read/write/readback; mismatch denies and post-COMMIT uncertainty remains
+   UNKNOWN. Public DTOs, capabilities, business scope and approvals are unchanged.
+   Environment owner confirmed native files unchanged and stopped writing.
+   Backend owner completed the seven-file private correction and stopped
+   writing. SID/service selection, independent bounded proof construction,
+   full address-set equality, immutable reference/preparation binding and
+   post-COMMIT UNKNOWN behavior are implemented without changing the
+   server/runtime seam or public contracts. Legacy service packets remain
+   supported. Owner-reported current checks: 78/78 new identity tests,
+   184/184 combined native tests, 33/33 profile tests, strict typecheck and
+   full backend 557/557 PASS. These are offline doubles, not live DNS/Oracle.
+   A material weakening of identity guarantees still requires user approval.
+   Never copy the database answer into expected configuration or weaken guards.
+   Operator offline preparation now confirms the SID shape with a synthetic
+   resolver only. Documented database, configured TNS/SID and historical
+   endpoint-DNS verification are available, but an independently authoritative
+   exact SERVER_HOST reference is still missing. Live execution remains
+   BLOCKED on that operational input; do not learn the alias from a DB reply,
+   reverse DNS or suffix inference. This phase made zero real DNS/DB/app-start
+   or command calls and left the allowance untouched.
+2. SHF-ENV-PROFILES-20 implementation and independent QA are complete; scoped
+   publication is running. `SHF_APP_ENV=dev|test|production` is explicit and typed; absent
+   selection preserves legacy explicit configuration without a DEV fallback.
+   DEV permits only explicitly enabled local fixtures; TEST permits separately
+   authorized isolated/test modes; native write remains default-off.
+   Production rejects synthetic authentication, fixtures and TEST writes before
+   Oracle factories; without real authentication it fails startup explicitly.
+   Frontend public configuration has only environment name and relative `/api`.
+   Sanitized examples contain no operator secrets. No dependencies changed.
+   Owner-reported checks: backend profiles 26/26, full tests 472/472 and strict
+   typecheck PASS; frontend full tests 433/433 and strict typecheck PASS;
+   DEV, TEST and production builds plus selected-profile artifact checks PASS.
+   These are offline checks, not native execution or production readiness.
+   Changed artifacts are package scripts/ignores/READMEs, backend environment
+   selector/startup/profile tests/config examples, and frontend build profiles,
+   public environment modules/API wiring/tests/artifact checker.
+3. SHF-ENV-SID-QA-20 Phase A independently passed 69 focused frontend tests,
+   strict typecheck, all three environment builds and profile artifact checks.
+   HTTP evidence uses Angular doubles; jsdom scrolling warnings do not prove
+   real-browser viewport/focus behavior.
+   QA-ENV-01 was reproduced by the environment owner in the pure profile
+   loader: DEV, TEST and profileless local synthetic configurations were
+   accepted with `NODE_ENV=production`. This did not execute a server.
+   The owner corrected the profile module, added regressions and documented
+   the fixed-message conflict rejection. Seven pure-module regressions PASS,
+   including 16 nonconflicting compatibility combinations. Missing NODE_ENV
+   retains compatibility; NODE_ENV never implicitly selects an SHF profile.
+   Both owners are SOURCE-STABLE. Independent Phase B is now PASS for the
+   bounded offline startup/configuration gate: profile tests 33/33, focused
+   native tests 158/158, strict typecheck, full backend 557/557, and 34/34
+   independent session-only cases PASS. Focused counts overlap the full suite.
+   QA-ENV-01 is CLOSED by actual startFromEnvironment tests proving zero
+   read/native factories and zero listener calls for conflicting production
+   contexts. Independent cases verify legacy 7/9/native10, missing real-provider
+   denial, strict SID/account/proof negatives, resolver timeout, immutable
+   revision/preparation binding, pure preview and post-COMMIT UNKNOWN/no retry.
+   The independent test initially had six fixture-grant omissions; only its
+   session fixture was corrected before the final 34/34 run. No application
+   defect remained and QA changed no repository files.
+   Parent documented the SID private-input shape and proof limits in README.
+   Live Oracle/DNS/EMS, current metadata/eligibility/freeze, native COMMIT,
+   production deployment and real-browser accessibility remain NOT RUN.
+   After native correction, combined checks and independent QA, publish the
+   environment/identity checkpoint. The exact next live prerequisite is an
+   independently authoritative SERVER_HOST reference, owned by the TEST
+   operator/DBA; broad TEST access and native implementation are already
+   approved and do not need to be requested again. No application startup,
+   synthetic planning refresh or command is authorized by this offline QA pass.
+   No production deployment, schema changes or new credentials are implied.
+   Latest operator Git preflight: main and remote both
+   `4027aedae8d23348a68b342bb83108a465bb745c`, ahead/behind 0/0, index empty.
+   Thirty scoped candidate paths (backend 17, frontend 11, parent documents 2)
+   are recorded in the private operator journal; 23 unrelated paths were not
+   read or hashed. Independent QA now passed; scoped publication is next.
 
 ### SHF-NATIVE-PILOT-FINAL-20 — current execution checkpoint
 
