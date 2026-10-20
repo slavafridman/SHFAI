@@ -27,7 +27,7 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-ENV-SID-PUBLISH-20 — current publication checkpoint
 
-**State: offline implementation/QA DONE; scoped publication RUNNING;
+**State: offline implementation/QA DONE and PUBLISHED;
 real TEST pilot BLOCKED.** Publication GO is not LIVE GO.
 
 - Independent QA `7bc`, caller-confirmed against source-stable owners:
@@ -59,8 +59,13 @@ real TEST pilot BLOCKED.** Publication GO is not LIVE GO.
   resolve to staged or published HEAD artifacts, with no private session-test
   import. All 20 capture hashes match prior HEAD and the refreshed verifier
   matches the staged design. Owner application sources have no unstaged delta.
-  Normal commit/push and final remote synchronization remain publication
-  gates, not LIVE permission.
+  Feature commit `03bdd7af2d35502a59fe206f2f9d7edd76ae0d94` published all
+  31 authorized paths with normal commit/push and the required co-author.
+  Direct remote SHA equals local, ahead/behind 0/0 and index empty verified
+  after push. Twenty-three unrelated dirty paths remain outside publication;
+  preservation here is names-only, not a renewed bytewise-content assertion.
+  This status-only follow-up records the verified feature SHA and result;
+  discover its own commit from history without another self-SHA edit loop.
 - No production readiness, authentication, real TEST arrival, current
   metadata/grant/freeze/window certification or release is claimed.
   Native TEST remains default-off with read7/fixture9/native10 separation.
@@ -112,8 +117,8 @@ General TEST access and sections 43/45 approval are already settled.
    BLOCKED on that operational input; do not learn the alias from a DB reply,
    reverse DNS or suffix inference. This phase made zero real DNS/DB/app-start
    or command calls and left the allowance untouched.
-2. SHF-ENV-PROFILES-20 implementation and independent QA are complete; scoped
-   publication is running. `SHF_APP_ENV=dev|test|production` is explicit and typed; absent
+2. SHF-ENV-PROFILES-20 implementation and independent QA are complete and
+   published. `SHF_APP_ENV=dev|test|production` is explicit and typed; absent
    selection preserves legacy explicit configuration without a DEV fallback.
    DEV permits only explicitly enabled local fixtures; TEST permits separately
    authorized isolated/test modes; native write remains default-off.
@@ -165,7 +170,8 @@ General TEST access and sections 43/45 approval are already settled.
    `4027aedae8d23348a68b342bb83108a465bb745c`, ahead/behind 0/0, index empty.
    Thirty scoped candidate paths (backend 17, frontend 11, parent documents 2)
    are recorded in the private operator journal; 23 unrelated paths were not
-   read or hashed. Independent QA now passed; scoped publication is next.
+   read or hashed. Independent QA and scoped publication now passed; the
+   independently authoritative exact SERVER_HOST prerequisite remains open.
 
 ### SHF-NATIVE-PILOT-FINAL-20 — current execution checkpoint
 
