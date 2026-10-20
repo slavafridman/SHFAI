@@ -18,6 +18,7 @@ import { record } from "../contract-validation.mts";
 import type { StageArrivalValidationDraftV1 } from "../stage-arrival-contracts.mts";
 import type { StageArrivalHttpOptions } from "../stage-arrival-http.mts";
 import { exact } from "../stage-arrival-validation.mts";
+import { MemoryStageArrivalStore } from "../stage-arrival-memory.mts";
 
 const base = "/api/v1/employees/9001/shift-days/6201/stage-arrival";
 const chromeClientHints = {
@@ -66,6 +67,154 @@ function raw(url: string, method: string, payload = "", headers: OutgoingHttpHea
     req.once("error", reject); req.end(payload);
   });
 }
+function f1StartupEnvironment(): NodeJS.ProcessEnv {
+  return { SHF_FIXTURE_CONFIG: JSON.stringify(sampleStageArrivalConfig), SHF_FIXTURE_PORT: "0",
+    SHF_STAGE_ARRIVAL_FIXTURE: JSON.stringify([sampleStageArrivalFacts]) };
+}
+async function serveFromEnvironment(environment: NodeJS.ProcessEnv, work: (url: string) => Promise<void>) {
+  const server = await startFromEnvironment(environment, new VirtualClock());
+  try {
+    const a = server.address(); assert.ok(a && typeof a !== "string");
+    await work(`http://127.0.0.1:${a.port}`);
+  } finally { await stopBackendServer(server); }
+}
+async function assertStartupRejected(environment: NodeJS.ProcessEnv) {
+  let unexpected: Awaited<ReturnType<typeof startFromEnvironment>> | undefined;
+  try {
+    await assert.rejects(async () => { unexpected = await startFromEnvironment(environment, new VirtualClock()); });
+  } finally { if (unexpected) await stopBackendServer(unexpected); }
+}
+
+test("ARR-BOOTSTRAP F1 origins forward frontend Origin through actual startup: pure0 then atomic1", async t => {
+  // Observe the real bootstrap-owned store without replacing its reader,
+  // application, UoW, HTTP options or runtime construction.
+  const observed: MemoryStageArrivalStore[] = [], originalRead = MemoryStageArrivalStore.prototype.read;
+  t.mock.method(MemoryStageArrivalStore.prototype, "read",
+    function(this: MemoryStageArrivalStore, ...args: Parameters<typeof originalRead>) {
+      observed.push(this); return originalRead.apply(this, args);
+    });
+  const origin = "http://localhost:4521";
+  await serveFromEnvironment({ ...f1StartupEnvironment(), SHF_STAGE_ARRIVAL_ORIGINS: JSON.stringify([origin]) }, async url => {
+    assert.notEqual(new URL(url).origin, origin); // frontend Origin is NOT backend Host
+    const browserHeaders = { ...chromeClientHints, Origin: origin };
+    const context = await raw(url + base + "/context", "GET", "", browserHeaders);
+    assert.equal(context.status, 200); assert.ok(record(context.body));
+    assert.equal(context.body.dataSource, "isolated-fixture"); assert.equal(context.body.eligibility, "eligible");
+    assert.equal(context.headers["cache-control"], "no-store");
+    assert.equal(context.headers["access-control-allow-origin"], origin);
+    assert.equal(context.headers["access-control-allow-credentials"], undefined);
+    const store = observed[0]; assert.ok(store);
+    const assertZero = () => {
+      const s = store.inspectSnapshot();
+      assert.deepEqual([s.rows[0].attendance?.stageArrivalLocal, s.receipts, s.audits, s.active], [null, 0, 0, 0]);
+    };
+    assertZero();
+    const identity = await object(await fetch(url + "/api/v1/identity"));
+    assert.ok(record(identity.principal) && Array.isArray(identity.principal.capabilities));
+    assert.equal(identity.principal.employeeId, null); assert.equal(identity.principal.capabilities.length, 9);
+    assert.equal(identity.dataSource, "isolated-fixture");
+    const draftBody = JSON.stringify(clean);
+    const postHeaders = { ...browserHeaders, "Content-Type": "application/json; charset=utf-8" };
+    const deniedValidation = await raw(url + base + "/validations", "POST", draftBody, {
+      ...postHeaders, Origin: "http://localhost:4522", "Content-Length": Buffer.byteLength(draftBody),
+    });
+    assert.equal(deniedValidation.status, 403); assert.ok(record(deniedValidation.body));
+    assert.equal(deniedValidation.body.code, "FORBIDDEN"); assert.equal(deniedValidation.body.effect, "none");
+    assert.equal(deniedValidation.headers["access-control-allow-origin"], undefined); assertZero();
+    const prepared = await raw(url + base + "/validations", "POST", draftBody, {
+      ...postHeaders, "Content-Length": Buffer.byteLength(draftBody),
+    });
+    assert.equal(prepared.status, 200); const v = validation(prepared.body); assertZero();
+    const commandBody = JSON.stringify(commitInput(v));
+    const deniedCommand = await raw(url + base + "/commands", "POST", commandBody, {
+      ...postHeaders, Origin: "http://127.0.0.1:4521", "Content-Length": Buffer.byteLength(commandBody),
+    });
+    assert.equal(deniedCommand.status, 403); assert.ok(record(deniedCommand.body));
+    assert.equal(deniedCommand.body.effect, "none"); assertZero();
+    const committed = await raw(url + base + "/commands", "POST", commandBody, {
+      ...postHeaders, "Content-Length": Buffer.byteLength(commandBody),
+    });
+    assert.equal(committed.status, 200); assert.ok(record(committed.body));
+    assert.equal(committed.body.outcome, "fixture-committed");
+    assert.equal(committed.body.dataSource, "isolated-fixture");
+    assert.equal(committed.body.partnerCompletion, "not-invoked");
+    const s = store.inspectSnapshot();
+    assert.deepEqual([s.rows[0].attendance?.stageArrivalLocal, s.receipts, s.audits, s.active],
+      ["2026-10-20T10:22:00", 1, 1, 0]);
+    assert.ok(observed.every(instance => instance === store));
+  });
+});
+
+test("ARR-BOOTSTRAP F1 origins reject malformed/noncanonical/remote/oversized values and non-F1 modes", async () => {
+  const invalid: unknown[] = [null, {}, "http://localhost:4521", [null], [1], ["*"],
+    ["https://example.com:4521"], ["http://localhost.evil:4521"], ["http://0.0.0.0:4521"],
+    ["http://127.0.0.2:4521"], ["http://user@localhost:4521"], ["http://user:pass@localhost:4521"],
+    ["http://localhost:4521/"], ["http://localhost:4521/path"], ["http://localhost:4521?x=1"],
+    ["http://localhost:4521#x"], ["http://localhost:4521 "], ["HTTP://localhost:4521"],
+    ["http://localhost:80"], ["http://LOCALHOST:4521"], ["http://localhost:65536"],
+    ["ftp://localhost:4521"], ["ws://localhost:4521"],
+    ["http://localhost:4521", "http://localhost:4521"],
+    Array.from({ length: 11 }, (_, i) => `http://localhost:${4521 + i}`)];
+  for (const input of [...invalid.map(value => JSON.stringify(value)), "", "not-json", "[", " ".repeat(4097)])
+    await assertStartupRejected({ ...f1StartupEnvironment(), SHF_STAGE_ARRIVAL_ORIGINS: input });
+  const configured = JSON.stringify(["http://localhost:4521"]);
+  await assertStartupRejected({
+    SHF_FIXTURE_CONFIG: JSON.stringify({ ...sampleStageArrivalConfig, attendanceStageArrivalMode: "disabled" }),
+    SHF_FIXTURE_PORT: "0", SHF_FIXTURE_ROWS: "[]", SHF_STAGE_ARRIVAL_ORIGINS: configured,
+  });
+  for (const mode of ["disabled", "isolated-fixture"]) {
+    // Must reject before Oracle imports/configuration/connection acquisition.
+    await assertStartupRejected({
+      SHF_ORACLE_CONFIG: JSON.stringify({ ...sampleStageArrivalConfig, attendanceStageArrivalMode: mode,
+        dataSource: "oracle-read-only", oracleTestScopeConfirmed: true }),
+      SHF_ORACLE_PORT: "0", SHF_STAGE_ARRIVAL_ORIGINS: configured,
+    });
+  }
+});
+
+test("ARR-BOOTSTRAP F1 origins omitted/empty remain fail-closed; disabled read identity remains seven", async () => {
+  for (const configured of [undefined, "[]"]) {
+    await serveFromEnvironment({ ...f1StartupEnvironment(), SHF_STAGE_ARRIVAL_ORIGINS: configured }, async url => {
+      for (const endpoint of ["context", "validations", "commands"]) {
+        const payload = endpoint === "context" ? "" : JSON.stringify(clean);
+        const r = await raw(url + base + "/" + endpoint, endpoint === "context" ? "GET" : "POST", payload, {
+          ...chromeClientHints, Origin: "http://localhost:4521",
+          ...(endpoint === "context" ? {} : { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) }),
+        });
+        assert.equal(r.status, 403); assert.ok(record(r.body));
+        assert.equal(r.body.code, "FORBIDDEN"); assert.equal(r.body.effect, "none");
+      }
+      const context = await raw(url + base + "/context", "GET", "", chromeClientHints);
+      assert.equal(context.status, 200); assert.ok(record(context.body) && record(context.body.recorded));
+      assert.equal(context.body.eligibility, "eligible"); assert.equal(context.body.recorded.stageArrivalLocal, null);
+    });
+  }
+  await serveFromEnvironment({
+    SHF_FIXTURE_CONFIG: JSON.stringify({ ...sampleStageArrivalConfig, attendanceStageArrivalMode: "disabled" }),
+    SHF_FIXTURE_PORT: "0", SHF_FIXTURE_ROWS: "[]",
+  }, async url => {
+    const identity = await object(await fetch(url + "/api/v1/identity"));
+    assert.ok(record(identity.principal) && Array.isArray(identity.principal.capabilities));
+    assert.equal(identity.principal.capabilities.length, 7);
+    assert.equal(identity.dataSource, "isolated-fixture");
+  });
+});
+
+test("ARR-BOOTSTRAP F1 origins accept bounded exact canonical loopback origins, never a hostname/port wildcard", async () => {
+  const origins = ["http://localhost:4521", "http://127.0.0.1:4522", "https://[::1]:4523",
+    ...Array.from({ length: 7 }, (_, i) => `http://localhost:${4530 + i}`)];
+  await serveFromEnvironment({ ...f1StartupEnvironment(), SHF_STAGE_ARRIVAL_ORIGINS: JSON.stringify(origins) }, async url => {
+    for (const origin of origins) {
+      const context = await raw(url + base + "/context", "GET", "", { ...chromeClientHints, Origin: origin });
+      assert.equal(context.status, 200); assert.equal(context.headers["access-control-allow-origin"], origin);
+    }
+    for (const origin of ["http://localhost:4522", "http://127.0.0.1:4521", "http://[::1]:4523", "null"]) {
+      const denied = await raw(url + base + "/context", "GET", "", { ...chromeClientHints, Origin: origin });
+      assert.equal(denied.status, 403); assert.ok(record(denied.body)); assert.equal(denied.body.effect, "none");
+    }
+  });
+});
+
 test("ARR-HTTP actual GET/POST three operations, purity0 then commit1 and replay1, unchanged read DTOs", async () => {
   const f = await runtimeFixture();
   await serve(f.runtime, async url => {
@@ -443,22 +592,43 @@ test("ARR-HTTP actual socket loss after sent command leaves one effect; never pr
 test("ARR-HTTP F1 bootstrap/context/validate/command with Oracle imports prohibited by module hook", () => {
   const script = `
     import { registerHooks } from "node:module";
+    import assert from "node:assert/strict";
+    let oracleImports = 0;
     registerHooks({ resolve(specifier, context, next) {
-      if (specifier.includes("oracledb") || /oracle-[^/]*\\.mts$/.test(specifier))
+      if (specifier.includes("oracledb") || /oracle-[^/]*\\.mts$/.test(specifier)) {
+        oracleImports++;
         throw Error("Oracle import prohibited in F1");
+      }
       return next(specifier, context);
     } });
     const { sampleStageArrivalConfig, sampleStageArrivalFacts } = await import("./stage-arrival-sample.mts");
     const { startFromEnvironment, stopBackendServer } = await import("./server.mts");
+    const origin = "http://localhost:4521";
+    for (const mode of ["disabled", "isolated-fixture"]) {
+      let unexpected;
+      try {
+        await assert.rejects(async () => {
+          unexpected = await startFromEnvironment({
+            SHF_ORACLE_CONFIG: JSON.stringify({ ...sampleStageArrivalConfig, attendanceStageArrivalMode: mode,
+              dataSource: "oracle-read-only", oracleTestScopeConfirmed: true }),
+            SHF_ORACLE_PORT: "0", SHF_STAGE_ARRIVAL_ORIGINS: JSON.stringify([origin])
+          });
+        });
+      } finally { if (unexpected) await stopBackendServer(unexpected); }
+    }
+    assert.equal(oracleImports, 0);
     const server = await startFromEnvironment({
       SHF_FIXTURE_CONFIG: JSON.stringify(sampleStageArrivalConfig), SHF_FIXTURE_PORT: "0",
-      SHF_STAGE_ARRIVAL_FIXTURE: JSON.stringify([sampleStageArrivalFacts])
+      SHF_STAGE_ARRIVAL_FIXTURE: JSON.stringify([sampleStageArrivalFacts]),
+      SHF_STAGE_ARRIVAL_ORIGINS: JSON.stringify([origin])
     }, { now: () => new Date("2026-10-20T07:22:00.000Z") });
     try {
       const a = server.address(); const url = "http://127.0.0.1:" + a.port +
         "/api/v1/employees/9001/shift-days/6201/stage-arrival";
-      const context = await fetch(url + "/context"); if (context.status !== 200) throw Error("context");
-      const headers = { "Content-Type": "application/json" };
+      const browserHeaders = { ...${JSON.stringify(chromeClientHints)}, Origin: origin };
+      const context = await fetch(url + "/context", { headers: browserHeaders });
+      if (context.status !== 200) throw Error("context");
+      const headers = { ...browserHeaders, "Content-Type": "application/json" };
       const draft = { lateReasonCode: null, lateRemark: null };
       const r = await fetch(url + "/validations", { method: "POST", headers, body: JSON.stringify(draft) });
       if (r.status !== 200) throw Error("validation"); const v = await r.json();
@@ -469,6 +639,7 @@ test("ARR-HTTP F1 bootstrap/context/validate/command with Oracle imports prohibi
       if (result.status !== 200) throw Error("command");
       const receipt = await result.json();
       if (receipt.dataSource !== "isolated-fixture" || receipt.partnerCompletion !== "not-invoked") throw Error("source");
+      assert.equal(oracleImports, 0);
       console.log("F1-no-Oracle");
     } finally { await stopBackendServer(server); }
   `;

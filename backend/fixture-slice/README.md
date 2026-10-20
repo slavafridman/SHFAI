@@ -71,11 +71,25 @@ Use `startFromEnvironment` in the existing `server.mts`; no new executable:
 
 ```powershell
 # Deliberately supply only synthetic sample values; no environment files.
-$env:SHF_FIXTURE_CONFIG = '{"attendanceStageArrivalMode":"isolated-fixture","dataSource":"isolated-fixture","deploymentClass":"isolated-test-demo","authenticationMode":"synthetic","syntheticAdministratorEnabled":true,"syntheticOrgUnitIds":["0021"],"businessTimeZone":"Asia/Jerusalem"}'
-$env:SHF_FIXTURE_PORT = '0' # caller chooses an unused loopback port for UI use
-# SHF_STAGE_ARRIVAL_FIXTURE must be JSON.stringify([sampleStageArrivalFacts]).
-# Programmatic construction is shown below; no secrets or external bootstrap.
+Set-Location D:\AIProjects\SHFAI\backend\fixture-slice
+$env:SHF_FIXTURE_CONFIG = node --input-type=module -e "import { sampleStageArrivalConfig } from './stage-arrival-sample.mts'; process.stdout.write(JSON.stringify(sampleStageArrivalConfig));"
+$env:SHF_STAGE_ARRIVAL_FIXTURE = node --input-type=module -e "import { sampleStageArrivalFacts } from './stage-arrival-sample.mts'; process.stdout.write(JSON.stringify([sampleStageArrivalFacts]));"
+# EXAMPLES ONLY: operator chooses a free backend port and the exact existing UI origin.
+$env:SHF_FIXTURE_PORT = '4537'
+$env:SHF_STAGE_ARRIVAL_ORIGINS = '["http://localhost:4521"]'
+npm start
 ```
+
+In this example, configure the UI's existing same-origin development proxy to
+target `http://127.0.0.1:4537`, while the browser address is
+`http://localhost:4521`. Replace these example ports with the operator's actual
+ports; do not stop another user's listener or strip the browser's `Origin`.
+Use **the frontend's canonical Origin**, not the backend/proxy target Host.
+Stop this foreground demo with Ctrl+C. Startup remains fail-closed if any
+conflicting source configuration is present; no Oracle/environment-file bootstrap
+is required. The real demo uses fresh server time: after the sample planned start,
+select the synthetic late reason and explicitly confirm the late warning rather
+than freezing the clock or bypassing validation.
 
 ```typescript
 import { startFromEnvironment, stopBackendServer } from "./server.mts";
@@ -84,6 +98,7 @@ const server = await startFromEnvironment({
   SHF_FIXTURE_CONFIG: JSON.stringify(sampleStageArrivalConfig),
   SHF_FIXTURE_PORT: "0",
   SHF_STAGE_ARRIVAL_FIXTURE: JSON.stringify([sampleStageArrivalFacts]),
+  SHF_STAGE_ARRIVAL_ORIGINS: JSON.stringify(["http://localhost:4521"]),
 });
 // server.address() supplies the owned ephemeral port; stop when finished:
 await stopBackendServer(server);
@@ -101,10 +116,37 @@ source/feature fields. Use the normal same-origin local development proxy:
 `OPTIONS` is still a wrong method405, not a fourth F1 operation. Programmatic
 `createLoopbackServer(runtime, {stageArrivalOrigins: [...]})` accepts only exact
 loopback origins (max10), no wildcard/credential cookies; this does not implement
-cross-origin browser JSON preflight. No additional environment/CORS keys exist.
+cross-origin browser JSON preflight. The **actual executable/startFromEnvironment
+composition** now forwards the same explicitly validated options, not just the
+direct HTTP test helper.
 
-Enabled F1 executable requires **only** `SHF_FIXTURE_CONFIG`,
-`SHF_FIXTURE_PORT`, `SHF_STAGE_ARRIVAL_FIXTURE`; independent `SHF_FIXTURE_ROWS`,
+Enabled F1 executable requires `SHF_FIXTURE_CONFIG`, `SHF_FIXTURE_PORT` and
+`SHF_STAGE_ARRIVAL_FIXTURE`. **Browser/proxy use additionally requires an explicit
+`SHF_STAGE_ARRIVAL_ORIGINS`**, a JSON array of frontend origins. Omitting it, or
+supplying `[]`, preserves the old deny-all policy for requests carrying Origin:
+context/validation/commands return403 FORBIDDEN with no effect. It is not a
+workaround to omit/strip Origin; native requests without Origin merely retain
+their previous behavior.
+
+The deployment-only origin key is accepted **only in enabled isolated F1**,
+never in disabled/seven-read or Oracle-read-only mode, and cannot enable F1.
+Validation happens before listen and before Oracle adapter imports/acquisition:
+JSON <=4096 UTF-8 bytes, array <=10 distinct strings, each <=128 characters.
+Each string must already be a canonical `http://` or `https://` origin with host
+exactly `localhost`, `127.0.0.1` or `[::1]`. The operator enumerates exact frontend
+scheme/host/port tuples; unlisted ports, IP/hostname alternatives and schemes are
+not equivalent grants. No userinfo, path (even `/`), query, fragment, whitespace,
+wildcard, duplicate, remote host or URL normalization is accepted. Default ports
+must be omitted as in canonical browser Origin serialization. Unknown/malformed
+values reject startup; there is no inference from incoming Origin or backend
+Host, no request-time allowlist update and no wildcard reflection.
+
+This is internal deployment configuration, not a public DTO/StartupConfig field,
+authentication grant or new API operation. The original Origin/CSRF/cookie,
+media/body/duplicate/byte limits and exact three Chrome metadata-header policy
+remain unchanged.
+
+Independent `SHF_FIXTURE_ROWS`,
 `SHF_CURRENT_SHIFTS_FIXTURE`, search/schedule/items/card/attendance fixture
 inputs are rejected to prevent split source/session state. Production, Oracle,
 unknown mode/configuration, missing mock opt-in, foreign session adapters and

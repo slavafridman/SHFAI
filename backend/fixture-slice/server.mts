@@ -17,6 +17,7 @@ import { AttendanceFixtureReader } from "./attendance-fixture.mts";
 import { validateStageArrivalMode } from "./stage-arrival-validation.mts";
 import { createStageArrivalFixture } from "./stage-arrival-fixture.mts";
 import { systemClock } from "./read-current-shifts.mts";
+import { validateStageArrivalHttpOptions } from "./stage-arrival-http.mts";
 
 const resources = new WeakMap<Server, OraclePool>();
 export async function stopBackendServer(server: Server) {
@@ -39,6 +40,28 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
     throw new Error("Explicit backend source configuration mismatch");
   if (config.deploymentClass === "production" || config.authenticationMode !== "synthetic")
     throw new Error("Executable backend requires explicit isolated synthetic mode");
+  const stageMode = validateStageArrivalMode(config);
+  let stageArrivalOrigins: readonly string[] | undefined;
+  const originsText = environment.SHF_STAGE_ARRIVAL_ORIGINS;
+  if (originsText !== undefined) {
+    // Deployment-only input. Never infer an allowed frontend Origin from Host,
+    // a request, credentials or an Oracle/read-only configuration.
+    if (stageMode !== "isolated-fixture" || typeof originsText !== "string" ||
+        Buffer.byteLength(originsText, "utf8") > 4096)
+      throw new Error("Explicit isolated F1 origin configuration required");
+    let parsed: unknown;
+    try { parsed = JSON.parse(originsText); }
+    catch { throw new Error("Invalid F1 origin allowlist"); }
+    if (!Array.isArray(parsed) || parsed.length > 10) throw new Error("Invalid F1 origin allowlist");
+    const origins: string[] = [];
+    for (const origin of parsed) {
+      if (typeof origin !== "string" || origin.length > 128) throw new Error("Invalid F1 origin allowlist");
+      origins.push(origin);
+    }
+    if (new Set(origins).size !== origins.length) throw new Error("Duplicate F1 origins are unsupported");
+    validateStageArrivalHttpOptions({ stageArrivalOrigins: origins });
+    stageArrivalOrigins = Object.freeze(origins);
+  }
   const portText = oracleMode ? environment.SHF_ORACLE_PORT : environment.SHF_FIXTURE_PORT;
   if (typeof portText !== "string" || !/^(0|[1-9][0-9]{0,4})$/.test(portText) || Number(portText) > 65535)
     throw new Error("Explicit loopback port required");
@@ -70,7 +93,7 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
         { reader: new OracleCurrentReader(session), searchReader: new OracleSearchReader(session),
           myShiftsReader: new OracleMyShiftsReader(session), shiftItemsReader: new OracleShiftItemsReader(session),
           employeeCardReader: new OracleEmployeeCardReader(session), attendanceReader: new OracleAttendanceReader(session) });
-    } else if (validateStageArrivalMode(config) === "isolated-fixture") {
+    } else if (stageMode === "isolated-fixture") {
       if (["SHF_FIXTURE_ROWS", "SHF_CURRENT_SHIFTS_FIXTURE", "SHF_SHIFT_SEARCH_FIXTURE",
         "SHF_MY_SHIFTS_FIXTURE", "SHF_SHIFT_ITEMS_FIXTURE", "SHF_EMPLOYEE_CARD_FIXTURE",
         "SHF_ATTENDANCE_FIXTURE"].some(key => environment[key] !== undefined))
@@ -114,7 +137,7 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
     if (pool) await pool.close();
     throw error;
   }
-  const server = createLoopbackServer(runtime);
+  const server = createLoopbackServer(runtime, { stageArrivalOrigins });
   try {
     await new Promise<void>((resolve, reject) => {
       server.once("error", reject);
