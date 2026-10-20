@@ -133,8 +133,18 @@ export async function runItemsChecks(h) {
   setItems('normal'); await release(); await ready();
   assert(await evaluate(`document.activeElement===__itemsReload`));
   // Cancelled A and late response cannot overwrite B after leaving and selecting another own row.
+  // Establish a REAL volatile source journey for this assertion. The preceding
+  // Page.navigate(route) intentionally cold-boots another document and destroys
+  // ViewHistory's in-memory source snapshots. Back to that cold source cannot
+  // legitimately recreate an applied inquiry without persistent business cache.
+  // Keep the original link/ID assertions below; repair setup, not acceptance.
+  await navigate('/shift-search');
+  await wait(formReadyExpression('shf-shift-search','search-timeFrom','search-submit'));
+  await input('search-timeFrom','09:00'); await input('search-timeTo','11:00');
+  await click('#search-submit'); await wait(`!!document.getElementById('search-items-3001')`);
+  await click('#search-items-3001'); await ready();
   setItems('hold'); await click('#items-reload');
-  await back('/shift-search'); // cold direct entry has no in-memory parent: browser back still honest
+  await back('/shift-search');
   setItems('normal'); await release().catch(() => {});
   await wait(`!!document.querySelector('a[id^="search-items-"]')`);
   const sourceItem = await evaluate(`document.querySelector('a[id^="search-items-"]').id`);

@@ -17,6 +17,7 @@ import type { IdentityResponseV1 } from './contract';
 export class WorkspaceShell {
   readonly pinned = input(false);
   readonly persistentIdentity = input(false);
+  readonly simulationNotice = input(false);
   readonly principal = input<IdentityResponseV1 | null>(null);
   readonly identityState = input<'loading' | 'ready' | 'error'>('loading');
   readonly identityMessage = input('');

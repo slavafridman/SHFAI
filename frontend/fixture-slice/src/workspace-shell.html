@@ -8,6 +8,9 @@
 </header>
 <aside class="mockbar" aria-label="מצב זהות ומקור נתונים">
   <div>
+    @if (simulationNotice()) {
+      <strong class="simulation-notice">סימולציה מבודדת — ללא Oracle, ללא הגעה אמיתית.</strong>
+    }
     @if (principal(); as identity) {
       @if (identity.principal.synthetic) {
         <strong>מצב הדגמה מקומי — מנהל מערכת סינתטי.</strong>

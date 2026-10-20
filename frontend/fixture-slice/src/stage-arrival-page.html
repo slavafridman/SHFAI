@@ -1,0 +1,104 @@
+<shf-workspace-shell [principal]="principal()" [identityState]="identityState()" [persistentIdentity]="true" [pinned]="true" [simulationNotice]="true"
+  active="attendance" (recheck)="recheck()">
+  <h1 tabindex="-1">הגעה לבמה — סימולציה</h1>
+  <aside class="isolation" aria-label="גבולות הסימולציה">
+    <strong>סימולציה מבודדת — ללא כתיבות Oracle, ללא הגעה אמיתית</strong>
+    <p>מנהל מערכת סינתטי אינו העובד/ת שנבחר/ה. אימות זהות אמיתי לא בוצע.
+      שותף חיצוני לא הופעל — <bdi dir="ltr">partnerCompletion: not-invoked</bdi>.</p>
+  </aside>
+  <p id="arrival-status" role="status" aria-live="polite">{{ message() }}</p>
+  @if (state() === 'recovery' || state() === 'unknown' || (session.uncertain() && !receipt())) {
+    <section class="recovery" aria-labelledby="recovery-title">
+      <h2 id="recovery-title">תוצאה לא ידועה — אין לשלוח שוב</h2>
+      <p>טעינה מחדש, חזרה לרשימה או בחירה חוזרת אינן פותרות את התוצאה הקודמת.
+        אין שירות בדיקת מצב, ניסיון חוזר או ביטול.</p>
+      <p>מופע הדגמה חדש מחייב את בעל המופע להפעיל תהליך fixture מבודד חדש.
+        איפוס מקומי בדפדפן אינו מאפס את השרת. גם מופע חדש אינו מכריע את התוצאה הישנה ואינו מבטל Oracle.</p>
+    </section>
+  }
+  @if (state() === 'chooser') {
+    <section class="surface"><h2>בחירת רשומה בבירור נוכחות</h2>
+      <p>לא נבחרו עובד/ת ויום. יש לחזור לבירור ולבחור רשומה מפורשת במקור ההדגמה. אין ברירת מחדל או הזנת מזהה.</p>
+    </section>
+  }
+  @if (state() === 'loading') { <p>טוענים זהות והקשר… אין עדיין הרשאה לרישום.</p> }
+  @if (context(); as c) {
+    <section class="surface" aria-labelledby="arrival-context-title">
+      <h2 id="arrival-context-title">הקשר הפעולה</h2>
+      <dl>
+        <div><dt>עובד/ת שנבחר/ה</dt><dd>{{ selection()?.name }}</dd></div>
+        <div><dt>צוות</dt><dd><bdi dir="ltr">{{ c.orgUnitId }}</bdi></dd></div>
+        <div><dt>תחילה מתוכננת</dt><dd><bdi dir="ltr">{{ displayTime(c.planned.startLocal) }}</bdi></dd></div>
+        <div><dt>סיום מתוכנן</dt><dd><bdi dir="ltr">{{ displayTime(c.planned.endLocal) }}</bdi></dd></div>
+        <div><dt>זמן שרת בהקשר — לקריאה בלבד</dt><dd><bdi dir="ltr">{{ displayTime(c.serverTime.local) }}</bdi></dd></div>
+        <div><dt>אזור זמן עסקי</dt><dd><bdi>{{ c.serverTime.businessTimeZone }}</bdi></dd></div>
+        <div><dt>הגעה לבמה רשומה</dt><dd><bdi dir="ltr">{{ displayTime(c.recorded.stageArrivalLocal) }}</bdi></dd></div>
+        <div><dt>כניסה לעמדה</dt><dd><bdi dir="ltr">{{ displayTime(c.recorded.stationArrivalLocal) }}</bdi></dd></div>
+        <div><dt>יציאה מעמדה</dt><dd><bdi dir="ltr">{{ displayTime(c.recorded.stationExitLocal) }}</bdi></dd></div>
+        <div><dt>תדריך רשום</dt><dd>{{ c.recorded.briefing === null ? 'לא ידוע' : c.recorded.briefing ? 'כן' : 'לא' }}</dd></div>
+      </dl>
+      <p>השרת קובע את זמן הרישום בעת הפקודה. אין בחירת תאריך או שעה, דקות ידניות או הוספת רשומת נוכחות.</p>
+      @if (state() === 'ineligible') {
+        <p>הקשר לא כשיר או כבר רשום. אין הוספה או דריסה.</p>
+        @for (blocker of c.blockers; track blocker) { <p>{{ blockerLabel(blocker) }}</p> }
+      }
+      @if (allowed() && c.eligibility === 'eligible' && !session.blocked(selection())) {
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>סיבת איחור — לפי דרישת בדיקת השרת</mat-label>
+          <mat-select id="arrival-reason" [formControl]="reason">
+            <mat-option [value]="null">ללא סיבה — בדיקה בזמן</mat-option>
+            @for (option of c.lateReasonOptions; track option.code) {
+              <mat-option [value]="option.code">{{ option.label ?? 'תיאור לא זמין' }}</mat-option>
+            }
+          </mat-select>
+          @if (reason.hasError('server')) { <mat-error>יש לבחור סיבה תקפה לפי בדיקת השרת.</mat-error> }
+          <mat-hint>אין כאן שדה מידע אישי או הערות חופשיות. דקות האיחור מגיעות מהשרת בלבד.</mat-hint>
+        </mat-form-field>
+      }
+    </section>
+  }
+  @if (validation(); as v) {
+    <section class="surface review" aria-labelledby="arrival-review-title">
+      <h2 id="arrival-review-title">סקירת הפעולה המלאה — טרם נרשמה הגעה</h2>
+      <p>{{ selection()?.name }} · תחילה מתוכננת <bdi dir="ltr">{{ displayTime(context()!.planned.startLocal) }}</bdi>.</p>
+      <p>הבדיקה מתייחסת לרשומת הנוכחות הקיימת ביום שנבחר. יירשמו רק הגעה לבמה ותדריך: לא;
+        פרטי איחור יירשמו רק אחרי האזהרה והאישור המדויקים.</p>
+      <p>זמן שנבדק: <bdi dir="ltr">{{ displayTime(v.evaluatedLocal) }}</bdi> · <bdi>{{ v.businessTimeZone }}</bdi>.</p>
+      <p>תוקף הבדיקה עד <bdi dir="ltr">{{ v.expiresAt }}</bdi> (UTC). שינוי קלט או הקשר מחייב בדיקה חדשה.</p>
+      @for (warning of v.warnings; track warning.code) {
+        <p>איחור לפי השרת: {{ warning.minutes }} דקות · סיבה:
+          {{ reasonLabel() }}</p>
+      }
+      <p>זמן הפקודה הסופי ייקבע מחדש בשרת, ולא בהכרח יהיה זהה לזמן הבדיקה.</p>
+    </section>
+  }
+  @if (receipt(); as r) {
+    <section class="surface" id="arrival-success">
+      <h2>הצלחה בסימולציה בלבד</h2>
+      <p><bdi dir="ltr">fixture-committed</bdi> · מקור: הדגמה מבודדת בזיכרון בלבד.</p>
+      <p>הגעה מדומה לבמה: <bdi dir="ltr">{{ displayTime(r.recorded.stageArrivalLocal) }}</bdi>
+        · <bdi>{{ r.businessTimeZone }}</bdi>. תדריך: לא.</p>
+      @if (r.recorded.stageLate; as late) { <p>דקות איחור שנרשמו בהדגמה: {{ late.minutes }}.</p> }
+      <p>השותף לא הופעל. לא בוצעה הגעה אמיתית ולא הוחלו נתוני ההדגמה בתצוגות Oracle.</p>
+    </section>
+  }
+  <div class="actions">
+    @if (allowed() && context()?.eligibility === 'eligible' && !session.blocked(selection())) {
+      <button id="arrival-validate" mat-stroked-button type="button" [attr.aria-disabled]="!canValidate()"
+        (click)="validate()">בדיקה טהורה — ללא רישום</button>
+    }
+    @if (state() === 'review' || commandSent()) {
+      <button id="arrival-confirm" mat-flat-button type="button" [attr.aria-disabled]="state() !== 'review'"
+        (click)="confirm()">{{ state() === 'review' ? 'אישור סימולציה' : state() === 'committing'
+          ? 'ממתינים לתוצאת סימולציה — אין לשלוח שוב' : 'פקודה נשלחה — אין לשלוח שוב' }}</button>
+    }
+    <button id="arrival-cancel" mat-button type="button" [attr.aria-disabled]="state() === 'committing'"
+      (click)="cancel()">{{ commandSent() ? 'חזרה לבירור — אינה ביטול פקודה' : 'חזרה לבירור / ביטול לפני שליחה' }}</button>
+    <a mat-button routerLink="/attendance">בחירת רשומה בבירור נוכחות</a>
+  </div>
+  <details><summary>גבולות והבטחות ההדגמה</summary>
+    <p>זיכרון תהליך זמני בלבד; אין idempotency עמיד, אחסון עסקי בדפדפן או הבטחה לאחר restart / טאב חדש.
+      סמן הבטיחות בהיסטוריית הדפדפן אינו קבלה או הוכחת תוצאה. אין ניסיון חוזר אוטומטי או polling.</p>
+    <p>אין רישום לעמדה, יציאה, ביטול הגעה, CTI, EMS או כתיבה ל־Oracle. אין טענה לעמידה מלאה ב־WCAG.</p>
+  </details>
+</shf-workspace-shell>

@@ -1,4 +1,179 @@
-# SHF-ATTENDANCE-UI-19 — actual Angular attendance inquiry
+# SHF-F1-UI-20 — Angular stage-arrival simulation
+
+## Approved F1 v0.1 / implementation boundary (20 October 2026)
+
+Authority: approved design §§38/39 including **39.7**, HTML
+`#stage-arrival`, canonical approval **§40 v0.1** (user20Oct11:19), and the
+**§40.5 internal compatibility erratum** (public DTOs/operations unchanged).
+Canonical wire names are imported **type-only** from
+`backend/fixture-slice/stage-arrival-contracts.mts`. No read DTO fields,
+identity fields, dependencies, backend files or legacy files were changed by
+this frontend task. Angular21 / Material21 / TS5.9 and Node24 remain installed.
+
+The new actual Angular route is
+`/employees/:employeeId/shift-days/:shiftDayId/stage-arrival`.
+Enter through an explicit **fixture attendance result row**. A cold route without
+the volatile selected row shows an attendance chooser, not employee-ID inputs or
+a default employee. Null inquiry actuals do **not** prove attendance-row existence:
+the canonical context must explicitly admit F1; `ATTENDANCE_ROW_REQUIRED` and
+already-recorded contexts have no validation/command control. No automatic
+attendance INSERT, optimistic row update or Oracle view mutation exists.
+
+F1 controls require the exact ordered **nine** actual capabilities, synthetic
+actor with `employeeId=null`, `dataSource=isolated-fixture`, exact selected team
+grant and coherent row/context/source. The two new capabilities are independently
+`attendance-stage-arrival:prepare` and `attendance-stage-arrival:commit`.
+The existing **seven** read capabilities remain valid, including Oracle identity
+source `oracle` / list source `oracle-read-only`; that mode never enables F1.
+Administrator text, browser state and selected employee never grant authority.
+The backend remains responsible for authentication, capability and business rules.
+
+Exactly three operations, no queries:
+
+| Operation | Meaning |
+|---|---|
+| `GET …/stage-arrival/context` | Source-bound read-only context |
+| `POST …/stage-arrival/validations` | PURE `{lateReasonCode,lateRemark:null}` |
+| `POST …/stage-arrival/commands` | Only explicit **אישור סימולציה**, once per attempt |
+
+The client checks canonical unknown values atomically, success status/media/
+no-store/nosniff and bounded serialized DTO sizes; tokens/receipts/context/actor/
+grants/draft/warning/time binding must still match before action and delivery.
+Requests have a5000ms budget and no retry/polling/cache. Tokens never enter URLs,
+history, logs, Web Storage, IndexedDB or cookies.
+
+### Time, warning, review and volatile result semantics
+
+All business times/minutes come from the server. Planned/existing/evaluated local
+timestamps include seconds and the server's business zone; UTC expiry is labeled.
+No arrival date/time picker, browser-derived lateness, editable minutes or private
+free-text field exists. Optional canonical remark is always explicitly null.
+Reason options are only the returned catalog. The browser measures **elapsed**
+token lifetime conservatively with its monotonic clock, never business time.
+The isolated browser fixture uses a clearly synthetic fixed server clock;
+normal backend commit time is freshly sampled by the backend, not supplied by UI.
+
+Pure validation or late-warning acknowledgment performs **zero commands**.
+Unchecked/generic/stale acknowledgment is rejected. Material warning Cancel/
+native Escape discards preparation, preserves the reason and restores its exact
+opener. Acknowledgment opens whole-operation review, never submits. Final confirm
+is a separate button, not a form submit/implicit Enter handler. Pending button
+uses aria-disabled plus a synchronous handler guard and keeps its DOM/focus.
+
+Only a matching `fixture-committed` receipt is success, with
+`partnerCompletion=not-invoked`: **not real arrival, Oracle DML, real
+authentication, durable audit or partner completion**. No native DML is approved.
+Malformed/wrong-source/wrong-media command success, unproved transport/5xx failure
+or canonical unknown remains **UNKNOWN**, with no success or confirmed-zero claim.
+Canonical proven-none/rolled-back failures are distinct and never automatically
+retried; stale preparation requires explicit validation/review again.
+
+### UNKNOWN / history / starting another demonstration instance
+
+BEFORE sending a command the client writes a minimal history safety marker:
+opaque UUID attempt(s) only, no employee/name/team/token/draft/receipt values.
+The in-memory actor/source/tuple binding stays separate. App navigation and
+Back/Forward conservatively propagate/merge unresolved markers. Reload with lost
+volatile context/token/receipt shows **RECOVERY REQUIRED** and does not prepare.
+Because the opaque marker contains no personal tuple, recovery conservatively
+blocks **all F1 selections** in that history context, including the unresolved
+same tuple. Ordinary chooser navigation cannot turn UNKNOWN into ready/zero.
+
+There is deliberately **no reset/retry/status/lookup endpoint or local reset
+button**. The UI cannot prove that clearing local state reset the backend.
+An operator must explicitly start a genuinely separate isolated fixture process/
+application instance for a new demonstration; the old UNKNOWN tab stays unresolved.
+Starting another instance is not reconciliation, redo, undo or proof about the
+old operation. No automatic source/session switch is inferred from identity.
+The guard is bounded to the retained browser history context, not cross-tab/global
+or durable protection; a new tab, discarded history or process loss supplies no
+durable idempotency proof. Server tokens/receipts are process-local and volatile.
+
+### Local checks and ready-to-relay fixture proxy helper
+
+Run from `frontend/fixture-slice` with the **existing** installed dependencies:
+
+```powershell
+npm test -- --include=src/stage-arrival-contract.spec.ts --include=src/stage-arrival-page.spec.ts --include=src/stage-arrival-generation.spec.ts
+npm test
+npm run typecheck
+npm run build
+node checks/serve-stage-arrival.mjs
+# In another shell; creates/closes only its own Chrome/profile on9398:
+node checks/stage-arrival-browser-check.mjs
+```
+
+Only owned free loopback ports4388(UI),4398(fixture backend) and9398(CDP) are used.
+Never reuse an occupied port or stop a user application. Existing Oracle/user
+instances4350/4349/4319/4328/4320 are not targets.
+
+**Real fixture proxy now PASS after parent READY for §40.5.** All three native
+Chrome hints (`sec-ch-ua`, `sec-ch-ua-mobile`, `sec-ch-ua-platform`) were observed
+unchanged on F1 requests. No header stripping, browser-feature workaround or API
+interception is used. The earlier context400 failure remains in VERIFICATION.
+The prepared helper uses the backend's actual sample configuration including
+`attendanceStageArrivalMode:"isolated-fixture"`, coherent snapshot/store/readers,
+synthetic opt-in and an explicitly injected fixed test Clock. The executable
+backend's separate opt-in input is `SHF_STAGE_ARRIVAL_FIXTURE`, with
+`SHF_FIXTURE_CONFIG`; never supply Oracle settings or mix the old read fixtures.
+Parent's final READY reports focused113/full336/strict backend PASS (caller
+evidence, not rerun here). Use separate owned shells:
+
+```powershell
+node checks/serve-stage-arrival-fixture.mjs --isolated-fixture --scenario=clean
+node checks/serve-stage-arrival.mjs --fixture-proxy
+node checks/stage-arrival-browser-check.mjs --fixture-proxy --scenario=clean
+```
+
+Do not run the static and proxy helpers simultaneously on4388. These helpers
+have no production control/reset endpoints and never read inherited environment/
+credential files or acquire an Oracle adapter. The browser proxy driver does not
+intercept API calls. Its context must actually be admitted, or it stops explicitly
+instead of inventing ready data. It configures the existing exact
+`stageArrivalOrigins` allowlist for the UI origin4388. Stop the owned helpers
+afterwards.
+
+Repeat with **matching** `--scenario=late`, `unknown`, `stale`, or `expired` on
+fixture helper and browser driver. Each scenario is an explicitly new owned
+fixture process and Chrome history/profile; stop only the prior owned helper.
+These switches exist in test scripts only, not StartupConfig, HTTP query/body,
+production controls or reset endpoints. They use the canonical injected Clock
+and existing isolated MemoryStore fault/revision seams:
+
+* clean: cancel0, PURE0, explicit UI confirm1, actual readback; explicit
+  **test-only KNOWN receipt replay** after server-token expiry adds1 HTTP POST
+  but no additional stage/receipt/audit. This is not application retry behavior.
+* late: native warning Escape0, reason preserved, checkbox acknowledgment/review0,
+  explicit confirm1, actual attendance/already-recorded-context readback.
+* unknown: fault **after atomic installation** returns canonical503 UNKNOWN.
+  Actual stage/receipt/audit exist, but UI never claims success/zero. Reload and
+  chooser/same tuple remain blocked with no new context/validation/command.
+* stale/expired: revision conflict or injected server-token expiry returns409,
+  stage/receipt/audit remain0/0/0, no automatic validation/command.
+
+Known successful tuples may reread canonical already-recorded context without
+being mislabeled UNKNOWN; they still cannot prepare or register again.
+The real readbacks use existing attendance/detail projections of the SAME
+snapshot, not an operation-status endpoint and not an Oracle view.
+
+The real sample's explicit attendance inquiry uses20Oct2026 /10:30–10:30
+(planned start), not10:00; the earlier10:00 empty result was honest and was not
+auto-filled. The F1 sample installs only coherent attendance/current/detail read
+projections. Optional search/schedule/items/card adapters are not installed there
+and must fail honestly; their ordinary seven-capability fixture/browser suites
+remain separate and unchanged in capability meaning.
+
+`checks/stage-arrival-legacy-check.mjs` wraps the existing native Chrome driver
+on the same owned UI/CDP ports. Existing `SHF_ATTENDANCE_ONLY`, `SHF_CARD_ONLY`,
+`SHF_ITEMS_ONLY` select its original specialized checks. Only synthetic ignored
+screenshots live in `.angular/browser-evidence`. Nothing is published.
+See the newest VERIFICATION section for measured results and historical failures.
+Keyboard/geometry checks and sampled visual review are **not full WCAG conformance**;
+screen reader, complete contrast/zoom/AT and live Oracle checks are not claimed.
+
+---
+
+# SHF-ATTENDANCE-UI-19 — historical actual Angular attendance inquiry
 
 ## Latest root correction — whole keyboard-modal readiness / cold CDP focus
 

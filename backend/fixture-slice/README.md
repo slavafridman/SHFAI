@@ -1,9 +1,9 @@
-# SHF read-only backend: detail, current, search, schedule, items, card and attendance
+# SHF backend: seven read APIs and opt-in isolated F1 stage-arrival simulation
 
 Implements approved section 13 v0.1 of `docs/SHF_REVERSE_ENGINEERING_DESIGN.md`;
 section 15 records detail approval and section 17 approves the local tooling.
 Section 19 v0.1 / 22.3 approve the list; section 22.4 approves bounded Oracle test
-reads with driver 26.0.0 Thick and the existing Client 19.3. No EMS, business writes,
+reads with driver 26.0.0 Thick and the existing Client 19.3. No EMS, database business writes,
 real authentication, runtime framework, schema changes or production deployment.
 All checked-in identities/rows are synthetic; live checks output aggregates only.
 
@@ -29,12 +29,166 @@ if ($LASTEXITCODE -eq 0) { npm test }
 ES2024/Node types, including **all** source and test `.mts` files. It also enforces
 erasable syntax compatible with native execution. No `skipLibCheck`, strictness
 suppression or substitute syntax-stripping check is used.
-`npm test` runs the explicit package test list, including original regressions,
+`npm test` discovers all `test/*.test.mts`, including original regressions,
 current/search and employee-schedule application, HTTP and Oracle-double tests:
 
 ```powershell
 npm test
 ```
+
+## SHF-F1-API-20 — isolated fixture only (§38/39/40 v0.1)
+
+**SIMULATION / synthetic identity / no Oracle / no real employee arrival.**
+User approval recorded in §40 covers only the F1 memory command, not native DML,
+production, EMS, transport, release or durable idempotency. Historical read-only
+instructions below remain applicable when F1 is disabled.
+
+The canonical type-only `stage-arrival-contracts.mts` and all existing read DTO
+contracts are unchanged. Three operations only, with
+`B=/api/v1/employees/{employeeId}/shift-days/{shiftDayId}/stage-arrival`:
+
+* `GET B/context` — pure context, no business/receipt/audit effect.
+* `POST B/validations` — pure validation; only ephemeral server-token allocation.
+* `POST B/commands` — explicit complete-operation confirmation, atomic installation
+  into one **existing** eligible attendance row + receipt + fixture audit.
+
+There is no insert/upsert, undo, receipt query, retry/polling endpoint, real audit
+writer or partner completion. `attendanceKey.shiftDayId` is the existing day
+relation, **not a newly invented attendance identifier**. Partner completion is
+always `not-invoked`. The legacy `registerStage` write-before-warning and fallback
+insert are intentionally not reproduced (source: AttendanceDataModel.java
+1237–1304; separate addStageLate 1013–1050; action 317–339).
+
+### Exact setup handoff to parent/UI
+
+Existing samples/defaults are unchanged. `stage-arrival-sample.mts` exports
+`sampleStageArrivalConfig` and `sampleStageArrivalFacts`: explicit synthetic
+employee **9001**, day **6201**, attendance day **6201**, J01 **0021**, parent
+G01 **0012**, plan **2026-10-20 10:30–18:30 Asia/Jerusalem**, reason **1**.
+These are a separate demonstration snapshot, never live records or a fallback.
+
+Use `startFromEnvironment` in the existing `server.mts`; no new executable:
+
+```powershell
+# Deliberately supply only synthetic sample values; no environment files.
+$env:SHF_FIXTURE_CONFIG = '{"attendanceStageArrivalMode":"isolated-fixture","dataSource":"isolated-fixture","deploymentClass":"isolated-test-demo","authenticationMode":"synthetic","syntheticAdministratorEnabled":true,"syntheticOrgUnitIds":["0021"],"businessTimeZone":"Asia/Jerusalem"}'
+$env:SHF_FIXTURE_PORT = '0' # caller chooses an unused loopback port for UI use
+# SHF_STAGE_ARRIVAL_FIXTURE must be JSON.stringify([sampleStageArrivalFacts]).
+# Programmatic construction is shown below; no secrets or external bootstrap.
+```
+
+```typescript
+import { startFromEnvironment, stopBackendServer } from "./server.mts";
+import { sampleStageArrivalConfig, sampleStageArrivalFacts } from "./stage-arrival-sample.mts";
+const server = await startFromEnvironment({
+  SHF_FIXTURE_CONFIG: JSON.stringify(sampleStageArrivalConfig),
+  SHF_FIXTURE_PORT: "0",
+  SHF_STAGE_ARRIVAL_FIXTURE: JSON.stringify([sampleStageArrivalFacts]),
+});
+// server.address() supplies the owned ephemeral port; stop when finished:
+await stopBackendServer(server);
+```
+
+`attendanceStageArrivalMode` is an internal **consumer configuration** addition,
+not a new StartupConfig/identity wire field. Omitted/`disabled` keeps **seven**
+read capabilities, including Oracle read-only mode; known F1 routes deny
+`LIVE_WRITES_DISABLED` before store access. Enabled mode returns exactly the
+ordered **nine** rights in §40; actor `employeeId` remains **null**, never 9001.
+UI must require the actual rights **and** known same-session fixture source,
+not Administrator label or the enlarged TypeScript union. Preserve the persistent
+SIMULATION notice on error/UNKNOWN/success; problems deliberately have no new
+source/feature fields. Use the normal same-origin local development proxy:
+`OPTIONS` is still a wrong method405, not a fourth F1 operation. Programmatic
+`createLoopbackServer(runtime, {stageArrivalOrigins: [...]})` accepts only exact
+loopback origins (max10), no wildcard/credential cookies; this does not implement
+cross-origin browser JSON preflight. No additional environment/CORS keys exist.
+
+Enabled F1 executable requires **only** `SHF_FIXTURE_CONFIG`,
+`SHF_FIXTURE_PORT`, `SHF_STAGE_ARRIVAL_FIXTURE`; independent `SHF_FIXTURE_ROWS`,
+`SHF_CURRENT_SHIFTS_FIXTURE`, search/schedule/items/card/attendance fixture
+inputs are rejected to prevent split source/session state. Production, Oracle,
+unknown mode/configuration, missing mock opt-in, foreign session adapters and
+unsupported/native writer adapters fail construction before listen. F1 bootstrap
+does not even import Oracle driver/read adapters. No credential file is needed.
+Outside synthetic mode the original installed-real-provider requirement remains;
+errors never fall back to Administrator.
+
+`createStageArrivalFixture` / `stageArrivalReadAdapters` materialize detail,
+current and attendance read projections from the **same** snapshot. These keep
+their existing JSON shapes. The executable F1 sample does not install the four
+other optional read adapters (their normal dependency-unavailable behavior remains);
+adding them requires genuine same-session fixture projections, not attaching live
+or independent sample readers. The original disabled seven-read setup is unaffected.
+Effective day/employee/team/parent/policy facts are explicit canonical fixture
+facts, not a newly implemented legacy/Oracle resolver. The owned session UUID is
+generated internally and is not client authority or an identity field.
+
+### Effects, atomicity, time and limits
+
+Context, invalid draft/reason, warning display/acknowledgment, cancel/back:
+**zero** attendance fields, receipts and audit entries changed. Cancel sends no
+command. No lock is held while a person reviews a warning.
+
+The UoW owns a bounded employee/day reservation; the decision is synchronous.
+It rechecks scope, retained command binding, full original facts and revisions,
+policy/catalog, opaque token/draft/fingerprint, warnings/minutes, confirmation and
+fresh server Clock under ownership. A single snapshot pointer installs existing
+attendance stage-time/user/briefing(false), confirmed-late triplet, terminal
+receipt and audit **together**. Pre-install failure installs none; `rolled-back`
+is emitted only after discarded private staging, never after an installed effect.
+There is no database transaction or native/EMS adapter hidden behind these ports.
+
+Server local arrival seconds are truncated, not rounded; preview time is not
+commit time. Strict full-precision lateness is `now + policyMinutes > start`;
+equality is on-time and subsecond lateness may mean minutes `"0"`. Resolve IANA
+zone boundaries uniquely; DST folds/gaps and invalid source facts fail closed.
+Production executable uses `systemClock`; the optional second
+`startFromEnvironment(env, fixtureClock)` parameter is solely the isolated
+test clock seam, never an HTTP/browser timestamp. One business-clock sample
+per validation; commit samples freshly while owned.
+
+Tokens use built-in `randomBytes(32)` (43 base64url chars), SHA-256 fingerprints
+and full private immutable binding. Lifetime is the earlier of120s and the next
+warning/minute transition. Logical TTL is checked on access, lazy cleanup is
+bounded. Limits from the canonical contract: <=1000 tokens, <=1000 receipts;
+terminal receipt and its memory audit retained15min, not durable. Additional
+private implementer bounds: <=1000 source rows and <=1000 active reservations;
+no queue/in-flight eviction. Saturation rejects503 before effect. These are local
+implementation limits, not new public fields; a different public limit requires
+architect/parent agreement. Fault injection and `reviseForIsolatedTest` are
+explicit isolated test-double seams, not runtime HTTP commands or resets.
+
+Same retained scoped command/payload can replay once (`replayed=true`) without
+another write, even after token expiry; mismatched payload/grants/source/session
+cannot reveal the receipt. No global exactly-once, cross-instance/restart durability
+or persistent idempotency is claimed. Receipt expiry cannot reconstruct provenance
+from attendance equality.
+
+**UNKNOWN**: timeout/abort/lost acknowledgment after installation, unproved
+attempted outcome, malformed/wrong-source success -> `COMMAND_OUTCOME_UNKNOWN`,
+`effect=unknown`, `nextAction=reconcile`, **not** ordinary retryable503/false zero.
+Network loss after sending means UNKNOWN client-side even if no JSON arrives.
+No automatic retry/fallback/polling. A later context/detail/attendance read shows
+current state but cannot attribute it to the lost command. Process loss destroys
+tokens/receipts/audit/state; starting another demo session does **not** resolve or
+undo the preceding uncertain attempt. Parent UI owns §39.7 uncertainty/history
+safety and cannot turn reload/no token into a new ready command.
+
+### Offline verification
+
+```powershell
+npm run test:stage-arrival
+npm run typecheck
+npm test
+```
+
+F01–F10 tests use VirtualClock and synchronous fault doubles; HTTP uses actual
+native GET/POST on owned ephemeral loopback listeners and virtual deadlines
+(no sleeps). Includes mutex races, every pre-install fault, lost ack/socket,
+bounded saturation/retention, strict grammar/media/headers/bodies, seven/nine
+mode gates and an isolated child module hook that forbids all Oracle imports.
+No live database, native client initialization, DML (even rollback tests), EMS
+or frontend/browser acceptance is part of these checks.
 
 SHF-RW-04 verification: strict typecheck passed and all 34 runtime tests passed.
 The type-only provider binding repair preserves fail-closed startup; HTTP test

@@ -1,4 +1,260 @@
-# SHF-ATTENDANCE-UI-19 — whole keyboard-modal readiness / two cold Chrome checks
+# SHF-F1-UI-20 — frontend F1 verification (20 October 2026)
+
+**Status: UI READY / review for independent QA — actual Angular F1, synthetic
+checks and real same-origin fixture proxy matrix PASS after parent §40.5 READY.**
+This is not a request to reapprove the accepted F1 scope and is not native DML/
+release authorization. The earlier Chrome-header blocker is resolved by the
+canonical backend compatibility correction, not a frontend workaround.
+
+## Approved versions and source evidence
+
+* Design §§38/39 v0.1, latest39.7 D01–D03, existing HTML#stage-arrival,
+  canonical §40 v0.1 plus **§40.5 internal compatibility erratum**, read directly;
+  user20Oct11:19 “Agree. run next step”. Public schemas/operations/capabilities
+  unchanged; explicit UoW cancellation and bounded browser metadata clarified.
+* Canonical `backend/fixture-slice/stage-arrival-contracts.mts`, type-only imports;
+  existing Principal/Identity/read DTO shapes retained. Source catalog absent;
+  reverse-engineering baseline and exact §§38/39/40 were read.
+* Controlling legacy read-only source:
+  `AttendanceDataModel.java:1237–1304` (server clock, update/insert before warning);
+  `AttendanceDataAction.java:317–339` (reports then stage action);
+  `old/SHFWeb/WebContent/js/attendance.js:140–203` (optimistic checkbox/mutating GET).
+  No legacy execution/build/edit; no proof of deployed commit behavior.
+* Existing attendance guards/router/ViewHistory/HTTP helper and calendar/
+  keyboard-modal readiness helpers inspected and reused.
+* Runtime actually reported Node24.21.0 / npm11.19.0. Existing manifests retain
+  Angular21.2.25 / Material-CDK21.2.14 / TS5.9.3 / RxJS7.8.2 / Vitest4.0.8.
+  No dependency install, upgrade or scaffold.
+
+## Implemented behavior / proof distinctions
+
+Actual Angular route and explicit attendance-row entry, server-admitted eligibility,
+reason-only form, PURE validation, native Material warning/checkbox/review,
+separate one-command confirm, guarded pending focus, matching fixture receipt,
+known-none/rollback error and UNKNOWN/recovery are implemented, not storyboard JS.
+Exact ordered nine-cap fixture identity enables F1; seven-cap Oracle remains
+valid read-only. No hardcoded actor fallback or selected employee identity.
+Read DTOs have no invented attendanceId/feature/mode fields.
+
+Context/validation/receipt/problem allowlists are atomically checked at runtime.
+Selected row/day/attendance-day/team/source, actor/grants, draft, preparation
+instance/token/fingerprint, time/expiry and exact warning acknowledgment are
+compared before action/delivery. Success additionally requires200 JSON,
+no-store/nosniff, bounded DTO and fixture-only/not-invoked receipt.
+Unknown/wrong envelopes after submission are never false-safe success/zero.
+Canonical proven-no-effect5xx is an explicit stopped failure; malformed/unproved
+5xx is UNKNOWN. Neither path automatically retries.
+
+Before POST an opaque attempt marker enters history; no business values or
+tokens/receipt are serialized. App navigation/Back/Forward merge it. Reload
+without the volatile preparation stays RECOVERY REQUIRED. The same tuple cannot
+reprepare after pending/UNKNOWN, including chooser navigation. The marker
+conservatively blocks all F1 selections after context loss. No local reset or
+unapproved API exists: a new genuinely isolated fixture application/process must
+be started explicitly by its owner; that never determines the previous outcome.
+History/tab loss and cross-instance durable idempotency remain outside this guard.
+
+Time is server-owned and read-only. Monotonic elapsed time only expires a token;
+no UI business lateness arithmetic or timestamp is submitted. Fixed-clock fixture
+screens, volatile token/receipt retention, no durable idempotency and no Oracle DML
+approval are explicitly disclosed. All failure/success/UNKNOWN states retain a
+persistent compact yellow/blue simulation/no-Oracle/no-real-arrival notice.
+
+## Exact commands / measured results
+
+Working directory for the following commands: `D:\AIProjects\SHFAI\frontend\fixture-slice`.
+
+| Command | Result / evidence class |
+|---|---|
+| `npm test -- --include=src/stage-arrival-contract.spec.ts --include=src/stage-arrival-page.spec.ts --include=src/stage-arrival-generation.spec.ts` | Earlier exact run **47/47 PASS**; final F1 set contains49 cases including immutable restored-entry selection and known-success read-only return, executed in the51-case combined run below. Canonical guards, exact HTTP bodies/headers/query/method/budget, atomic source binding, forged ACK, expiry, malformed/unproved failures, known-none stop, wrong-source receipt, reload/history marker and deliberately ineffective cancellation/late A after B. Angular/jsdom + synthetic HTTP only. |
+| Same command with `--include=src/workspace-shell.spec.ts` | Final **51/51 PASS**, four files:49 F1 +2 existing shell cases. Added regression distinguishes known-success/read-only return from genuine UNKNOWN without allowing another preparation/command. |
+| `npm test` | Final **357/357 PASS**,26 files: all308 original cases +49 F1 cases. Last full run after the known-success versus uncertainty correction passed; jsdom `scrollTo` limitations are not browser evidence. |
+| `npm run typecheck` | PASS / exit0, no dependency changes. |
+| `npm run build` | PASS / exit0, actual Angular templates and production assets compiled. |
+| `node checks/serve-stage-arrival.mjs` | Owned static UI helper4388 READY; no backend/resource/Oracle requests are forwarded. |
+| `node checks/stage-arrival-browser-check.mjs` | Native Chrome155, synthetic API interception: PASS. Fresh owned profile/CDP9398, no arbitrary animation sleeps, native keyboard and existing modal readiness barrier. |
+| `node checks/serve-stage-arrival-fixture.mjs --isolated-fixture` | Actual READY backend runtime on owned4398 started, canonical sample/config and explicitly injected fixed test Clock, SAME snapshot readers/store; not an HTTP double. |
+| `node checks/serve-stage-arrival.mjs --fixture-proxy` | Real same-origin owned UI proxy4388→fixture4398 READY; forwards request headers without silently filtering rejected browser metadata. |
+| `node checks/stage-arrival-browser-check.mjs --fixture-proxy` before §40.5 fix | **Historical BLOCKED**, retained, not retroactively PASS. First inquiry10:00 returned honest empty; corrected to actual planned10:30. Subsequent context GET got400 INVALID_REQUEST due to strict header admission. Header names only were inspected. Each reached-context attempt: context1 / validations0 / commands0. No token/body logging or effects. |
+| `node checks/stage-arrival-browser-check.mjs --fixture-proxy --scenario=clean` | **PASS**, native hints unchanged; context3 / PURE1 / command HTTP2 = UI confirm1 + explicit test-only KNOWN replay1, four detail readbacks. One atomic stage/receipt/audit1/1/1 even after server-token expiry. |
+| Same command with `--scenario=late` | **PASS**; context3 / PURE2 / command1 / detail readbacks5. Warning Escape0 and ACK/review0; final confirm1; stage/receipt/audit1/1/1. |
+| Same command with `--scenario=unknown` | **PASS**; context2 / PURE1 / command1 / detail readbacks3. Actual post-install503 with stage/receipt/audit1/1/1; no false success/zero. Reload→chooser→same tuple adds no context, validation or command. |
+| Same command with `--scenario=stale` | **PASS**; context2 / PURE1 / command1 / detail readbacks3. Existing isolated revision/policy fault seam produces409; stage/receipt/audit0/0/0; no auto retry. |
+| Same command with `--scenario=expired` | **PASS**; context2 / PURE1 / command1 / detail readbacks3. Canonical injected server Clock crosses expiry after PURE response, no sleep/client timestamp;409 and stage/receipt/audit0/0/0. |
+| `node checks/stage-arrival-legacy-check.mjs` | Original current/detail/search/schedule browser suite PASS: strict dates, pickers, errors, scope/source, history, RTL/long text. |
+| `$env:SHF_ATTENDANCE_ONLY='1'; node checks/stage-arrival-legacy-check.mjs` | PASS: original attendance12 columns/25+5, calendar geometry31 real day clicks at320/font30, two-Escape selectors/dialog, two-actor independent ranges and Back/Forward, original D01/D02 focus/contrast checks. |
+| `$env:SHF_CARD_ONLY='1'; node checks/stage-arrival-legacy-check.mjs` | PASS: five origins, nested chains, old source/error/capability/late A-B checks, RTL1440/390/320/font30. |
+| `$env:SHF_ITEMS_ONLY='1'; node checks/stage-arrival-legacy-check.mjs` | Initial and unchanged repeat FAILED at existing `items-browser-check.mjs:139`, cold return expected an applied search after full-document navigation had destroyed its volatile source snapshot. Corrected **test setup**, not assertions or application: create an actual search→items source journey before pending cancellation. Retest PASS, including all original source link/own-ID/error/keyboard/RTL assertions. |
+
+Native F1 measured scenarios:
+
+* Explicit attendance→F1→Cancel: command0, exact attendance opener/filter restored.
+* Clean PURE prepare0→review0→explicit confirm: command1; four repeated native
+  Spaces while pending still command1, same button/focus; actual fixture receipt
+  only, partner not invoked.
+*1440/390/320 +30px: no page overflow; action targets>=48px. Warning at390 and
+ 320/font30 traps Tab/Shift+Tab, has settled finite animations and its **entire**
+ cancel/review buttons fit the viewport. Full local date/time/zone wraps.
+* Browser-only injected elapsed clock crosses token expiry: command0, no auto
+  validation/command. This test instrumentation is not production submit logic.
+*409 stale: no receipt/automatic retry; existing-row-required context blocks
+ validation. Five pure context error classes400/403/404/500/503 send command0.
+* Seven-cap Oracle-marked **intercepted test double** remains valid READONLY,
+ with no F1 controls, context request or command. No actual Oracle instance used.
+* Late warning native Escape: command0 and exact prepare opener. Checked warning
+ review still0; only explicit final confirm sends1. Simulated connection loss
+ yields UNKNOWN; button/focus and persistent notice remain.
+* UNKNOWN reload→actual Angular chooser link→same row remains blocked, no new
+ validation/command. Separate independent synthetic pending test tab reloads
+ **before receipt**, then chooser→same tuple remains recovery, exactly1 command.
+ The prior UNKNOWN tab is not reset or resolved.
+* Aggregate final synthetic F1 browser sequence (including independent pending
+ test):12 F1 context GETs,6 PURE validations,4 commands total: clean1, stale1,
+ late-disconnect1, pending-reload1. Direct/blocked/error/cancel/expiry paths add0.
+ No external runtime requests or JS exceptions were reported.
+
+Ignored synthetic screenshots:
+`.angular/browser-evidence/F1-*-SYNTHETIC.png`; no tokens/private data on screen,
+no publication. Visual inspection exposed initial scroll/notice and large-text
+modal-action clipping: corrected only the F1 opt-in shell/layout and measured
+entire action bounds, not relaxed assertions. Context-ready desktop compact
+primary-action-above-fold is explicitly asserted by the current browser driver.
+
+## Historical failures, blocked checks, risks and next action
+
+* First typecheck exposed a misplaced presentation helper; repaired.
+* First test invocation hit existing Windows Vitest thread-start timeout,
+ collected0 tests and hung; stopped **only owned shell1001**, reran normally.
+ No pool/dependency/timeout manipulation or passing claim for that attempt.
+* Initial focused failures exposed asynchronous MatDialog close timing and stale
+ test component references after route recreation. Awaited real `afterClosed`
+ and used the actual newly routed instance. A later422 test exposed reactive
+ enable clearing server errors; corrected control transition, retained assertion.
+* Native driver initially selected the wrong active Material option, used Enter
+ instead of Space on a checkbox, and used full-document navigation instead of
+ the actual chooser RouterLink for the safety scenario. Those attempts failed;
+ corrected native drivers/setup, not safety checks. Further visual action clipping
+ was fixed in actual F1 layout and now has an explicit viewport-bounds assertion.
+* Native wrappers emit the pre-existing Node MODULE_TYPELESS_PACKAGE_JSON warning;
+ no manifest change made just to silence it. Full WCAG/AT/screen-reader/all-color/
+200% text/400% zoom conformance is **not claimed**.
+* Backend initial READY relay: `f5f618`,262/262 (223 old +39), strict and no-Oracle
+ import child-hook test. Final §40.5 parent READY: focused113 / full336 / strict,
+ explicit pre-install signal+ALS checks and bounded standard client hints.
+ Those backend tests are **caller-supplied evidence**, not executed by this task.
+ Canonical sample/runtime started successfully. F1 sample has attendance/current/
+ detail projections only; optional read adapters are deliberately not fabricated.
+* **Historical blocker RESOLVED:** actual Chrome metadata admission. §40.5 adds
+ exactly the three known hint names as ignored metadata; no proxy stripping,
+ wildcard header bypass or browser-feature workaround. Every final real F1
+ request was asserted to retain all three hints. No HTTP Fetch interception was
+ enabled in the real proxy driver.
+ Existing `stageArrivalOrigins` accepts exact UI origin4388 in the helper for POST.
+ No new feature/identity field, operation/reset endpoint or approval gate is needed.
+* Follow-up focused invocation hit the same existing Windows worker-start timeout
+ at0 collected tests; stopped only owned shell1101. Unmodified rerun passed51,
+ then full357. No skipped test, weakened assertion, pool or dependency change.
+* Actual readback checks exposed the frontend's local terminal-set conflation:
+ a known successful tuple returning from attendance could display recovery.
+ Split known recorded membership from unresolved marker membership. Known
+ success can GET already-recorded context and stays non-commandable; genuine
+ UNKNOWN still blocks context/preparation after reload. New regression + actual
+ clean/late return/readback tests PASS. No reset or receipt persistence was added.
+* **NOT RUN:** production/live Oracle, EMS/CTI, legacy execution, native DML,
+ durable recovery, deployment, screen reader/full-WCAG audit.
+* All writes are inside `frontend/fixture-slice/`. No Git/agents, credential/
+ publication environment, live PII, database or user app/port access performed.
+ Helpers use only owned4388/4398/9398; owned Chrome profiles are removed in finally.
+* Final cleanup: stopped only owned `f1-ui-proxy` / `f1-backend-fixture` tool
+ sessions; verified **no LISTEN sockets on4388/4398/9398**. No owned `f1-*`
+ Chrome profile directories remained. Ignored synthetic screenshots are retained.
+
+Next action: **UI READY for caller's independent QA**, with no remaining frontend
+protocol blocker or new approval request. Native Oracle DML remains separately
+unapproved. History safety is conservative, volatile and not a durable
+reconciliation/idempotency mechanism.
+
+### Real proxy matrix execution details
+
+For each scenario, a genuinely NEW isolated fixture process was started with:
+
+```powershell
+node checks/serve-stage-arrival-fixture.mjs --isolated-fixture --scenario=clean
+node checks/serve-stage-arrival.mjs --fixture-proxy
+node checks/stage-arrival-browser-check.mjs --fixture-proxy --scenario=clean
+```
+
+The same exact commands were run with matching `late`, `unknown`, `stale`,
+`expired` values. Only the owned prior backend helper was stopped between
+scenarios; no reset HTTP endpoint, UI local reset or user-app termination exists.
+The helper uses canonical sample/config, injected Clock and the backend's existing
+isolated MemoryStore fault/revision seams. `unknown` faults at `installed`,
+`stale` changes test policy/revision at `reserved`, `expired` advances the test
+Clock after validation. Clean advances only its test Clock after first known
+commit to prove receipt replay precedes expired-token rejection. These are
+test-process controls, never extra production StartupConfig or wire fields.
+
+Final five-scenario matrix aggregate: **12 context GETs,6 PURE POSTs,6 command
+HTTP POSTs =5 intended UI commands +1 explicit KNOWN-success test replay**;
+18 explicit existing-detail readbacks. Three isolated processes installed1
+stage/receipt/audit each (clean, late, unknown); stale/expired installed0.
+This is not a global/durable exactly-once or production side-effect claim.
+Initial smoke and historical failed attempts are separate from this matrix.
+
+Node helper `finish` observations logged only operation/status and numeric
+installation/receipt/audit counts, never tokens, draft, credentials or response
+bodies. They confirmed all context/PURE stages at0/0/0, clean/late commits1/1/1,
+retained replay still1/1/1, UNKNOWN503 still1/1/1, and stale/expiry4090/0/0.
+Readback was actual same-source attendance/detail projection; no status lookup,
+polling or automatic retry was added. UNKNOWN stayed blocked even though the
+explicit test readback saw a recorded stage, which cannot attribute a lost
+command to the client.
+
+The complete intercepted Chrome suite was rerun after these frontend changes:
+PASS, still12 context /6 PURE /4 command requests across its independent cases,
+seven-cap Oracle test-double read-only, keyboard/focus/RTL/320+30px and pending/
+UNKNOWN reload guards intact. No actual Oracle connection/import/credential/SQL
+work was performed.
+
+Final continuation cleanup PASS: every owned scenario backend and the UI proxy
+were stopped via their exact tool-session IDs; no LISTEN sockets remained on
+4388/4398/9398 and no owned `f1-*` Chrome profile directories remained. Helper
+`node --check` syntax checks passed. All actual failed attempts remain recorded
+above; no previous400/startup-timeout result is relabeled as a success.
+
+## Changed assigned paths (all under frontend/fixture-slice)
+
+```text
+README.md
+VERIFICATION.md
+src/api.ts
+src/contract.ts
+src/routes.ts
+src/view-history.ts
+src/attendance-page.ts
+src/attendance-page.html
+src/workspace-shell.ts
+src/workspace-shell.html
+src/workspace-shell.scss
+src/stage-arrival-contract.ts
+src/stage-arrival-contract.spec.ts
+src/stage-arrival-fixtures.ts
+src/stage-arrival-generation.spec.ts
+src/stage-arrival-page.ts
+src/stage-arrival-page.html
+src/stage-arrival-page.scss
+src/stage-arrival-page.spec.ts
+src/stage-arrival-session.ts
+checks/serve-stage-arrival.mjs
+checks/serve-stage-arrival-fixture.mjs
+checks/stage-arrival-browser-check.mjs
+checks/stage-arrival-legacy-check.mjs
+checks/items-browser-check.mjs
+```
+
+---
+
+# SHF-ATTENDANCE-UI-19 — historical whole keyboard-modal readiness / two cold Chrome checks
 
 **Status: developer verification PASS within the requested bounded plan;
 ready for SAME-QA final stock-full retest.** Latest QA failure was earlier than

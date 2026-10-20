@@ -7,6 +7,25 @@ import { validateRuntimeConfig } from "./runtime-config.mts";
 import type { SelectedShiftItemsAccessPolicy } from "./shift-items-contracts.mts";
 import type { EmployeeOperationalCardAccessPolicy } from "./employee-card-contracts.mts";
 import type { AttendanceAccessPolicy } from "./attendance-contracts.mts";
+import type { StageArrivalAccessPolicy } from "./stage-arrival-contracts.mts";
+import { stageFail } from "./stage-arrival-errors.mts";
+import { unitCode } from "./current-shifts-validation.mts";
+
+export const stageArrivalAccessPolicy: StageArrivalAccessPolicy = {
+  requirePrepare(p) {
+    if (!p.capabilities.includes("attendance-stage-arrival:prepare")) stageFail("FORBIDDEN");
+  },
+  requireCommit(p) {
+    this.requirePrepare(p);
+    if (!p.capabilities.includes("attendance-stage-arrival:commit")) stageFail("FORBIDDEN");
+  },
+  authorizedTeamIds(p) {
+    const grants = [...p.resourceScope.orgUnitIds];
+    if (grants.length > 100 || grants.some(g => !unitCode(g)) ||
+        new Set(grants).size !== grants.length) stageFail("UNAUTHENTICATED");
+    return grants;
+  },
+};
 
 export function employeeCardAccessPolicy(configuration: unknown): EmployeeOperationalCardAccessPolicy {
   const config = validateRuntimeConfig(configuration);

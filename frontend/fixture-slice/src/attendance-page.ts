@@ -23,6 +23,8 @@ import { MinutePicker } from './minute-picker';
 import { ListNavigation } from './list-navigation';
 import { ViewHistory } from './view-history';
 import { EmployeeName } from './employee-name';
+import { StageArrivalSession } from './stage-arrival-session';
+import { f1Identity, actorBinding } from './stage-arrival-contract';
 
 const timeControl = () => new FormControl('', { nonNullable: true,
   validators: [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/)] });
@@ -36,6 +38,7 @@ const timeControl = () => new FormControl('', { nonNullable: true,
   templateUrl: './attendance-page.html', styleUrl: './attendance-page.scss',
 })
 export class AttendancePage {
+  private readonly arrival = inject(StageArrivalSession);
   readonly journey = inject(ViewHistory);
   readonly navigation = inject(ListNavigation);
   private readonly api = inject(SliceApi);
@@ -278,6 +281,22 @@ export class AttendancePage {
   label(v: CatalogValueV1) { return v.label ?? 'תיאור לא זמין'; }
   canReadItems() { const caps = this.principal()?.principal.capabilities;
     return !!caps?.includes('shift-items:read') && caps.includes('shift-day:read'); }
+  canOpenArrival(row: AttendanceRowV1) {
+    return f1Identity(this.principal()) && this.result()?.dataSource === 'isolated-fixture' &&
+      !!row.shiftDayId && row.planned.startLocal !== null && row.planned.endLocal !== null &&
+      this.principal()!.principal.resourceScope.orgUnitIds.includes(row.employee.unit.code);
+  }
+  openArrival(row: AttendanceRowV1, event: MouseEvent) {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
+    event.preventDefault();
+    if (!this.canOpenArrival(row) || !this.result()?.items.includes(row)) return;
+    this.arrival.selection = { employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId!,
+      attendanceKey: { shiftDayId: row.shiftDayId! }, orgUnitId: row.employee.unit.code,
+      name: `${row.employee.firstName} ${row.employee.lastName}`, startLocal: row.planned.startLocal!,
+      endLocal: row.planned.endLocal!, dataSource: 'isolated-fixture', actor: actorBinding(this.principal()!) };
+    void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'stage-arrival'],
+      { state: { origin: 'attendance' } });
+  }
   open(row: AttendanceRowV1, event: MouseEvent, target: 'detail' | 'items' | 'schedule') {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
     event.preventDefault();

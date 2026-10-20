@@ -13,6 +13,7 @@
 .mockbar { padding: 4px 32px; background: var(--soft); border-bottom: 1px solid #d4e3f9; font-size: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .mockbar div { min-width: 0; overflow-wrap: anywhere; }
 .mockbar p { margin: 0; }
+.simulation-notice { display:block; color:#493600; background:#fff4cc; border-inline-start:4px solid #856300; padding-inline:8px; padding-block:2px; }
 .identity-name { display: none; }
 .mockbar button { flex-shrink: 0; }
 .workspace { display: grid; grid-template-columns: 224px minmax(0, 1fr); min-height: calc(100dvh - 125px); }

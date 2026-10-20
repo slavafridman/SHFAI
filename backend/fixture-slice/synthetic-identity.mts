@@ -30,6 +30,11 @@ import type { AttendanceReadPort, AttendanceRequestV1 } from "./attendance-contr
 import { ReadAttendance } from "./read-attendance.mts";
 import { validateAttendanceRequest } from "./attendance-validation.mts";
 import { AttendanceError } from "./attendance-errors.mts";
+import { validateStageArrivalMode } from "./stage-arrival-validation.mts";
+import { StageArrivalApplication } from "./stage-arrival-application.mts";
+import { MemoryStageArrivalStore } from "./stage-arrival-memory.mts";
+import { stageFail } from "./stage-arrival-errors.mts";
+import { same } from "./stage-arrival-domain.mts";
 
 export interface CurrentRuntimeOptions {
   reader: CurrentShiftReadPort;
@@ -39,14 +44,17 @@ export interface CurrentRuntimeOptions {
   shiftItemsReader?: SelectedShiftItemsReadPort;
   employeeCardReader?: EmployeeOperationalCardReadPort;
   attendanceReader?: AttendanceReadPort;
+  stageArrivalStore?: MemoryStageArrivalStore;
 }
 
 export class SyntheticAdministratorProvider implements AuthenticationProvider {
   private readonly orgUnitIds: string[];
+  private readonly stageArrivalEnabled: boolean;
   constructor(configuration: unknown) {
     const config = validateRuntimeConfig(configuration);
     if (config.authenticationMode !== "synthetic") throw new Error("Synthetic provider disabled");
     this.orgUnitIds = [...config.syntheticOrgUnitIds];
+    this.stageArrivalEnabled = validateStageArrivalMode(configuration) === "isolated-fixture";
   }
   async authenticate(_request: AuthenticationRequest): Promise<PrincipalV1> {
     // No password collection, token parsing, credential verification or secret logging.
@@ -54,7 +62,8 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
       subject: "synthetic:administrator",
       displayName: "Synthetic Administrator (local/isolated only)",
       provider: "synthetic", synthetic: true, roles: ["Administrator"],
-      capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read", "attendance:read"], employeeId: null,
+      capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read", "attendance:read",
+        ...(this.stageArrivalEnabled ? ["attendance-stage-arrival:prepare" as const, "attendance-stage-arrival:commit" as const] : [])], employeeId: null,
       resourceScope: { orgUnitIds: [...this.orgUnitIds] },
     };
   }
@@ -66,6 +75,28 @@ export async function createRuntime(
   currentOptions?: CurrentRuntimeOptions,
 ) {
   const config = validateRuntimeConfig(configuration);
+  const stageMode = validateStageArrivalMode(configuration);
+  if (currentOptions && Object.keys(currentOptions).some(k => !["reader", "clock", "searchReader", "myShiftsReader",
+    "shiftItemsReader", "employeeCardReader", "attendanceReader", "stageArrivalStore"].includes(k)))
+    throw new Error("Unsupported backend adapter");
+  if (currentOptions?.stageArrivalStore && stageMode !== "isolated-fixture")
+    throw new Error("Stage-arrival store requires explicit isolated mode");
+  if (stageMode === "isolated-fixture") {
+    if (!(currentOptions?.stageArrivalStore instanceof MemoryStageArrivalStore))
+      throw new Error("Process-owned isolated stage-arrival store required");
+    for (const adapter of [reader, currentOptions.reader, currentOptions.searchReader,
+      currentOptions.myShiftsReader, currentOptions.shiftItemsReader, currentOptions.employeeCardReader,
+      currentOptions.attendanceReader]) {
+      if (adapter && (!("dataSource" in adapter) || adapter.dataSource !== "isolated-fixture"))
+        throw new Error("F1 prohibits mixed/native adapters");
+      if (adapter && (!("stageArrivalSource" in adapter) ||
+          !same(adapter.stageArrivalSource, currentOptions.stageArrivalStore.source)))
+        throw new Error("F1 requires same-session fixture read projections");
+    }
+  }
+  const stageArrival = stageMode === "isolated-fixture" && currentOptions?.stageArrivalStore
+    ? new StageArrivalApplication(currentOptions.stageArrivalStore, currentOptions.clock ?? systemClock, config.businessTimeZone)
+    : undefined;
   if (config.dataSource === "oracle-read-only" && !currentOptions)
     throw new Error("Coherent Oracle readers required");
   if (config.dataSource === "oracle-read-only" &&
@@ -131,7 +162,7 @@ export async function createRuntime(
       ].includes(error.code)) throw error;
       throw new SliceError("DEPENDENCY_UNAVAILABLE");
     }
-    validatePrincipal(principal);
+    validatePrincipal(principal, stageMode);
     if (principal.provider !== config.authenticationMode) throw new SliceError("UNAUTHENTICATED");
     if (config.authenticationMode === "synthetic" &&
         (principal.resourceScope.orgUnitIds.length !== config.syntheticOrgUnitIds.length ||
@@ -147,6 +178,18 @@ export async function createRuntime(
   }
   return Object.freeze({
     authenticate,
+    stageArrivalContext: (p: unknown, target: unknown, signal?: AbortSignal) => {
+      if (!stageArrival) stageFail("LIVE_WRITES_DISABLED");
+      return stageArrival.context(p, target, signal);
+    },
+    stageArrivalValidate: (p: unknown, target: unknown, input: unknown, signal?: AbortSignal) => {
+      if (!stageArrival) stageFail("LIVE_WRITES_DISABLED");
+      return stageArrival.validate(p, target, input, signal);
+    },
+    stageArrivalCommit: (p: unknown, target: unknown, input: unknown, signal?: AbortSignal) => {
+      if (!stageArrival) stageFail("LIVE_WRITES_DISABLED");
+      return stageArrival.commit(p, target, input, signal);
+    },
     attendanceContext: (p: PrincipalV1, signal?: AbortSignal) => {
       validatePrincipal(p); accessPolicy.requireAttendanceRead(p);
       if (!attendance) throw new AttendanceError("DEPENDENCY_UNAVAILABLE");

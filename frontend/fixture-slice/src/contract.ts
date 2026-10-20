@@ -16,6 +16,10 @@ export const id = (v: unknown, max = 38): v is string =>
 const unique = (v: unknown, test: (v: unknown) => boolean): v is string[] =>
   Array.isArray(v) && v.every(test) && new Set(v).size === v.length;
 const unit = (v: unknown): v is string => text(v, 8, 1) && v !== '*';
+export const readCapabilities = ['shift-day:read', 'current-shifts:read', 'shift-search:read',
+  'my-shifts:read', 'shift-items:read', 'employee:read', 'attendance:read'] as const;
+export const f1Capabilities = [...readCapabilities, 'attendance-stage-arrival:prepare',
+  'attendance-stage-arrival:commit'] as const;
 
 export function identity(v: unknown): v is IdentityResponseV1 {
   if (!object(v) || !['isolated-fixture', 'oracle'].includes(String(v.dataSource)) || !object(v.principal)) return false;
@@ -24,13 +28,14 @@ export function identity(v: unknown): v is IdentityResponseV1 {
       !['synthetic', 'real'].includes(String(p.provider)) ||
       p.synthetic !== (p.provider === 'synthetic') ||
       !unique(p.roles, r => r === 'Administrator') ||
-      !unique(p.capabilities, c => c === 'shift-day:read' || c === 'current-shifts:read' || c === 'shift-search:read' || c === 'my-shifts:read' || c === 'shift-items:read' || c === 'employee:read' || c === 'attendance:read') ||
+      !unique(p.capabilities, c => typeof c === 'string' && (f1Capabilities as readonly string[]).includes(c)) ||
       !(p.employeeId === null || id(p.employeeId)) ||
       !object(p.resourceScope) || !unique(p.resourceScope.orgUnitIds, unit)) return false;
   return !p.synthetic || (p.subject === 'synthetic:administrator' &&
     p.displayName === 'Synthetic Administrator (local/isolated only)' &&
     p.employeeId === null && p.roles.length === 1 &&
-    p.capabilities.join(',') === 'shift-day:read,current-shifts:read,shift-search:read,my-shifts:read,shift-items:read,employee:read,attendance:read' &&
+    (p.capabilities.join(',') === readCapabilities.join(',') ||
+      (v.dataSource === 'isolated-fixture' && p.capabilities.join(',') === f1Capabilities.join(','))) &&
     p.resourceScope.orgUnitIds.length > 0 && p.resourceScope.orgUnitIds.length <= 100);
 }
 

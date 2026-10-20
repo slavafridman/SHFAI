@@ -6,21 +6,17 @@ import { validateRaw } from "./contract-validation.mts";
 import type { RawShiftDay } from "./contracts.mts";
 import { CurrentFixtureReader } from "./current-shifts-fixture.mts";
 import { validateRuntimeConfig, oracleEnvironment } from "./runtime-config.mts";
-import { createOraclePool, OracleReadSession } from "./oracle-session.mts";
 import type { OraclePool } from "./oracle-session.mts";
-import { OracleCurrentReader, OracleDetailReader } from "./oracle-readers.mts";
 import type { Server } from "node:http";
 import { once } from "node:events";
-import { OracleSearchReader } from "./oracle-search-reader.mts";
 import { SearchFixtureReader } from "./shift-search-fixture.mts";
 import { MyShiftsFixtureReader } from "./my-shifts-fixture.mts";
-import { OracleMyShiftsReader } from "./oracle-my-shifts-reader.mts";
-import { OracleShiftItemsReader } from "./oracle-shift-items-reader.mts";
 import { ShiftItemsFixtureReader } from "./shift-items-fixture.mts";
 import { EmployeeCardFixtureReader } from "./employee-card-fixture.mts";
-import { OracleEmployeeCardReader } from "./oracle-employee-card-reader.mts";
-import { OracleAttendanceReader } from "./oracle-attendance-reader.mts";
 import { AttendanceFixtureReader } from "./attendance-fixture.mts";
+import { validateStageArrivalMode } from "./stage-arrival-validation.mts";
+import { createStageArrivalFixture } from "./stage-arrival-fixture.mts";
+import { systemClock } from "./read-current-shifts.mts";
 
 const resources = new WeakMap<Server, OraclePool>();
 export async function stopBackendServer(server: Server) {
@@ -33,7 +29,7 @@ export async function stopBackendServer(server: Server) {
 
 // No defaults: executable requires explicit source, isolated synthetic identity and port.
 // Oracle credentials are environment-only database configuration, not login passwords.
-export async function startFromEnvironment(environment: NodeJS.ProcessEnv) {
+export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtureClock = systemClock) {
   if (environment.SHF_ORACLE_CONFIG !== undefined && environment.SHF_FIXTURE_CONFIG !== undefined)
     throw new Error("Choose exactly one backend source configuration");
   const oracleMode = environment.SHF_ORACLE_CONFIG !== undefined;
@@ -53,8 +49,17 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv) {
       if (environment.SHF_FIXTURE_ROWS !== undefined || environment.SHF_CURRENT_SHIFTS_FIXTURE !== undefined ||
           environment.SHF_SHIFT_SEARCH_FIXTURE !== undefined || environment.SHF_MY_SHIFTS_FIXTURE !== undefined ||
           environment.SHF_SHIFT_ITEMS_FIXTURE !== undefined || environment.SHF_EMPLOYEE_CARD_FIXTURE !== undefined ||
-          environment.SHF_ATTENDANCE_FIXTURE !== undefined)
+          environment.SHF_ATTENDANCE_FIXTURE !== undefined || environment.SHF_STAGE_ARRIVAL_FIXTURE !== undefined)
         throw new Error("Oracle mode prohibits fixture input");
+      // Fixture startup never loads a driver/native client. The existing
+      // read-only Oracle path is lazy and still requires its original gates.
+      const [{ createOraclePool, OracleReadSession }, { OracleCurrentReader, OracleDetailReader },
+        { OracleSearchReader }, { OracleMyShiftsReader }, { OracleShiftItemsReader },
+        { OracleEmployeeCardReader }, { OracleAttendanceReader }] = await Promise.all([
+        import("./oracle-session.mts"), import("./oracle-readers.mts"), import("./oracle-search-reader.mts"),
+        import("./oracle-my-shifts-reader.mts"), import("./oracle-shift-items-reader.mts"),
+        import("./oracle-employee-card-reader.mts"), import("./oracle-attendance-reader.mts"),
+      ]);
       pool = await createOraclePool(oracleEnvironment(environment));
       const session = new OracleReadSession(pool);
       await session.read(async query => {
@@ -65,7 +70,17 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv) {
         { reader: new OracleCurrentReader(session), searchReader: new OracleSearchReader(session),
           myShiftsReader: new OracleMyShiftsReader(session), shiftItemsReader: new OracleShiftItemsReader(session),
           employeeCardReader: new OracleEmployeeCardReader(session), attendanceReader: new OracleAttendanceReader(session) });
+    } else if (validateStageArrivalMode(config) === "isolated-fixture") {
+      if (["SHF_FIXTURE_ROWS", "SHF_CURRENT_SHIFTS_FIXTURE", "SHF_SHIFT_SEARCH_FIXTURE",
+        "SHF_MY_SHIFTS_FIXTURE", "SHF_SHIFT_ITEMS_FIXTURE", "SHF_EMPLOYEE_CARD_FIXTURE",
+        "SHF_ATTENDANCE_FIXTURE"].some(key => environment[key] !== undefined))
+        throw new Error("F1 requires a single coherent fixture snapshot");
+      const f1 = createStageArrivalFixture(JSON.parse(environment.SHF_STAGE_ARRIVAL_FIXTURE ?? "null"), fixtureClock);
+      runtime = await createRuntime(config, f1.detail, undefined, { reader: f1.current,
+        attendanceReader: f1.attendance, stageArrivalStore: f1.store, clock: fixtureClock });
     } else {
+      if (environment.SHF_STAGE_ARRIVAL_FIXTURE !== undefined)
+        throw new Error("Stage-arrival fixture requires explicit enabled mode");
       const rows: unknown = JSON.parse(environment.SHF_FIXTURE_ROWS ?? "null");
       if (!Array.isArray(rows)) throw new Error("Explicit synthetic fixture rows required");
       const validatedRows: RawShiftDay[] = rows.map((value: unknown) => { validateRaw(value); return value; });

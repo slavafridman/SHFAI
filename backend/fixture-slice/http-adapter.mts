@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import type { Duplex } from "node:stream";
 import { randomUUID } from "node:crypto";
 import { validateIds } from "./contract-validation.mts";
 import { SliceError, toProblem } from "./errors.mts";
@@ -17,6 +18,8 @@ import { EmployeeCardError, cardProblem } from "./employee-card-errors.mts";
 import { invalidCard, validateCardRequest } from "./read-employee-card.mts";
 import { invalidAttendance, parseAttendanceQuery } from "./attendance-validation.mts";
 import { attendanceProblem, AttendanceError } from "./attendance-errors.mts";
+import { handleStageArrival, isStageArrivalRoute, stageArrivalParserProblem, validateStageArrivalHttpOptions } from "./stage-arrival-http.mts";
+import type { StageArrivalHttpOptions } from "./stage-arrival-http.mts";
 
 export const REQUEST_BUDGET_MS = 5000;
 export const RESPONSE_LIMIT_BYTES = 16 * 1024;
@@ -132,8 +135,23 @@ function send(response: ServerResponse, status: number, contentType: string, pay
   });
   response.end(payload);
 }
-export function createLoopbackServer(runtime: SliceRuntime) {
-  const server = createServer(async (request, response) => {
+export function createLoopbackServer(runtime: SliceRuntime, options: StageArrivalHttpOptions = {}) {
+  validateStageArrivalHttpOptions(options);
+  const inFlight = new WeakMap<Duplex, number>();
+  // Leave room for the F1 application-level 16KiB header problem response.
+  // The native parser still bounds larger malformed transport before dispatch.
+  const server = createServer({ maxHeaderSize: 32 * 1024 }, async (request, response) => {
+    const socket = request.socket;
+    inFlight.set(socket, (inFlight.get(socket) ?? 0) + 1);
+    let released = false;
+    const release = () => {
+      if (released) return; released = true;
+      inFlight.set(socket, Math.max(0, (inFlight.get(socket) ?? 1) - 1));
+    };
+    response.once("finish", release); response.once("close", release);
+    if (isStageArrivalRoute(request.url ?? "")) {
+      await handleStageArrival(request, response, runtime, options); return;
+    }
     const requestId = randomUUID();
     const attendanceEndpoint = ["/api/v1/attendance", "/api/v1/attendance/filter-context"]
       .includes((request.url ?? "").split("?")[0]);
@@ -230,6 +248,18 @@ export function createLoopbackServer(runtime: SliceRuntime) {
       if (timer) clearTimeout(timer);
       response.removeListener("close", abort);
     }
+  });
+  server.on("clientError", (error, socket) => {
+    // Never inject a "none" problem ahead of an earlier pipelined command's
+    // response: that earlier command may already have installed an effect.
+    if ((inFlight.get(socket) ?? 0) > 0) { socket.destroy(); return; }
+    if (stageArrivalParserProblem(error, socket)) return;
+    // Preserve native non-F1 parser rejection semantics. An incomplete/split
+    // request-line is not assigned a fabricated business route or outcome.
+    if (!socket.writable || socket.destroyed) { socket.destroy(); return; }
+    const overflow = "code" in error && error.code === "HPE_HEADER_OVERFLOW";
+    socket.end(overflow ? "HTTP/1.1 431 Request Header Fields Too Large\r\nConnection: close\r\n\r\n" :
+      "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n");
   });
   server.requestTimeout = REQUEST_BUDGET_MS;
   server.headersTimeout = REQUEST_BUDGET_MS;

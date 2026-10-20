@@ -1,0 +1,18 @@
+:host { display:block; min-width:0; }
+h1 { font-size:1.8rem; margin-block:0 16px; }
+h2 { font-size:1.2rem; }
+.surface h2 { margin-block:0 12px; }
+.surface p { margin-block:8px; }
+.isolation p { margin-block:6px 0; }
+.surface, .isolation, .recovery { padding:16px; margin-block:16px; border:1px solid var(--border); border-radius:16px; background:white; }
+.isolation { background:#fff4cc; border-color:#856300; border-inline-start-width:6px; color:#493600; }
+.recovery { background:#edf4ff; border-color:#002f65; border-inline-start-width:6px; }
+dl { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin:0; }
+dt { color:#526077; } dd { margin:0; font-weight:600; }
+p, dd, dt, bdi, h1, h2, summary { overflow-wrap:anywhere; }
+.actions { display:flex; flex-wrap:wrap; gap:12px; margin-block:20px; }
+.actions > * { min-height:48px; max-width:100%; height:auto; white-space:normal; padding-block:10px; }
+[aria-disabled="true"] { opacity:.65; cursor:default; }
+mat-form-field { width:100%; margin-block:8px; }
+summary { min-height:48px; cursor:pointer; padding:12px; }
+@media(max-width:760px) { dl { grid-template-columns:1fr; } .surface, .isolation, .recovery { padding:12px; } }

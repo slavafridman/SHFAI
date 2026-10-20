@@ -50,7 +50,7 @@ export function validateConfig(value: unknown): StartupConfig {
       value.realProviderId.trim().length === 0 || value.syntheticOrgUnitIds !== undefined) return fail();
   return structuredClone(value) as StartupConfig;
 }
-export function validatePrincipal(value: unknown): asserts value is PrincipalV1 {
+export function validatePrincipal(value: unknown, stageMode?: "disabled" | "isolated-fixture"): asserts value is PrincipalV1 {
   const fail = (): never => { throw new SliceError("UNAUTHENTICATED"); };
   if (!record(value) || !text(value.subject, 128, 1) || !text(value.displayName, 128) ||
       typeof value.provider !== "string" || !["synthetic", "real"].includes(value.provider) ||
@@ -58,17 +58,22 @@ export function validatePrincipal(value: unknown): asserts value is PrincipalV1 
       !Array.isArray(value.roles) || value.roles.some(role => role !== "Administrator") ||
       new Set(value.roles).size !== value.roles.length ||
       !Array.isArray(value.capabilities) ||
-      value.capabilities.some(c => c !== "shift-day:read" && c !== "current-shifts:read" && c !== "shift-search:read" && c !== "my-shifts:read" && c !== "shift-items:read" && c !== "employee:read" && c !== "attendance:read") ||
+      value.capabilities.some(c => c !== "shift-day:read" && c !== "current-shifts:read" && c !== "shift-search:read" && c !== "my-shifts:read" && c !== "shift-items:read" && c !== "employee:read" && c !== "attendance:read" && c !== "attendance-stage-arrival:prepare" && c !== "attendance-stage-arrival:commit") ||
       new Set(value.capabilities).size !== value.capabilities.length ||
       !(value.employeeId === null || decimalId(value.employeeId)) ||
       !record(value.resourceScope) || !units(value.resourceScope.orgUnitIds, false)) return fail();
   if (value.synthetic && (value.subject !== "synthetic:administrator" ||
       value.displayName !== "Synthetic Administrator (local/isolated only)" ||
-      value.employeeId !== null || value.roles.length !== 1 || value.capabilities.length !== 7 ||
+      value.employeeId !== null || value.roles.length !== 1 ||
+      !(stageMode === "disabled" ? value.capabilities.length === 7 :
+        stageMode === "isolated-fixture" ? value.capabilities.length === 9 :
+        value.capabilities.length === 7 || value.capabilities.length === 9) ||
       value.capabilities[0] !== "shift-day:read" || value.capabilities[1] !== "current-shifts:read" ||
       value.capabilities[2] !== "shift-search:read" || value.capabilities[3] !== "my-shifts:read" ||
       value.capabilities[4] !== "shift-items:read" || value.capabilities[5] !== "employee:read" ||
       value.capabilities[6] !== "attendance:read" ||
+      (value.capabilities.length === 9 && (value.capabilities[7] !== "attendance-stage-arrival:prepare" ||
+        value.capabilities[8] !== "attendance-stage-arrival:commit")) ||
       value.resourceScope.orgUnitIds.length === 0 || value.resourceScope.orgUnitIds.length > 100)) return fail();
 }
 export function validateIds(employeeId: unknown, shiftDayId: unknown): void {

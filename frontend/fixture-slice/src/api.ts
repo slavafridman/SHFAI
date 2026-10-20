@@ -1,14 +1,41 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, type HttpResponse } from '@angular/common/http';
+import { map } from 'rxjs';
 import type { CurrentShiftRequestV1 } from './current-shifts-contract';
 import type { ShiftSearchRequestV1 } from '../../../backend/fixture-slice/shift-search-contracts.mts';
 import type { MyShiftsContextRequestV1, MyShiftsRequestV1 } from '../../../backend/fixture-slice/my-shifts-contracts.mts';
 import type { SelectedShiftItemsRequestV1 } from './shift-items-contract';
 import type { AttendanceRequestV1 } from '../../../backend/fixture-slice/attendance-contracts.mts';
+import type { StageArrivalDraftV1, StageArrivalCommitDraftV1 } from '../../../backend/fixture-slice/stage-arrival-contracts.mts';
 
 @Injectable({ providedIn: 'root' })
 export class SliceApi {
   private readonly http = inject(HttpClient);
+  stageArrivalContext(employeeId: string, shiftDayId: string) {
+    return this.http.get<unknown>(this.arrivalBase(employeeId, shiftDayId) + '/context',
+      { cache: 'no-store', timeout: 5000, observe: 'response' }).pipe(map(r => this.arrivalBody(r, 65536)));
+  }
+  stageArrivalValidate(employeeId: string, shiftDayId: string, draft: StageArrivalDraftV1) {
+    return this.http.post<unknown>(this.arrivalBase(employeeId, shiftDayId) + '/validations', draft,
+      { cache: 'no-store', timeout: 5000, observe: 'response', headers: { 'Content-Type': 'application/json' } })
+      .pipe(map(r => this.arrivalBody(r, 16384)));
+  }
+  stageArrivalCommand(employeeId: string, shiftDayId: string, command: StageArrivalCommitDraftV1) {
+    return this.http.post<unknown>(this.arrivalBase(employeeId, shiftDayId) + '/commands', command,
+      { cache: 'no-store', timeout: 5000, observe: 'response', headers: { 'Content-Type': 'application/json' } })
+      .pipe(map(r => this.arrivalBody(r, 16384)));
+  }
+  private arrivalBase(employeeId: string, shiftDayId: string) {
+    return `/api/v1/employees/${employeeId}/shift-days/${shiftDayId}/stage-arrival`;
+  }
+  private arrivalBody(response: HttpResponse<unknown>, maxBytes: number): unknown {
+    if (response.status !== 200 || !/^application\/json(?:;\s*charset=utf-8)?$/i.test(response.headers.get('Content-Type') ?? '') ||
+      !response.headers.get('Cache-Control')?.split(',').some(v => v.trim().toLowerCase() === 'no-store') ||
+      response.headers.get('X-Content-Type-Options')?.toLowerCase() !== 'nosniff' ||
+      new TextEncoder().encode(JSON.stringify(response.body)).length > maxBytes)
+      throw Error('Invalid isolated-fixture response envelope');
+    return response.body;
+  }
   attendanceContext() {
     return this.http.get<unknown>('/api/v1/attendance/filter-context', { cache: 'no-store' });
   }
