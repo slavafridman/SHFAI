@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, approved native F2 implementation and independent QA PASS; publication ready.
+Last updated: 2026-10-28, approved native F2 implementation and independent QA published; live TEST DNS blocked.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -27,7 +27,7 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-NATIVE-F2-APPROVED-28 — current resume checkpoint
 
-**State: OFFLINE IMPLEMENTATION/QA PASS; scoped publication preflight PASS.** At 09:00 +02:00 on 28 October the user explicitly approved
+**State: OFFLINE IMPLEMENTATION/QA PASS and PUBLISHED; live TEST blocked.** At 09:00 +02:00 on 28 October the user explicitly approved
 "section 46.1-bootstrap and section 46 native F2", both v0.1. This supersedes
 the approval-pending state below. Scope: bounded host discovery/proof/freeze,
 and controlled native on-time station-arrival implementation; actual writes
@@ -68,8 +68,24 @@ dependency operation. Only normal Git fetch/push/remote verification uses
 network access. Actual TEST endpoint ESERVFAIL remains external and no
 actual arrival or full-project completion is claimed.
 
-Publication is pending the exact 49-path commit/normal push and direct
-remote verification. Next safe action after publication: TEST DNS/network
+**Publication DONE:** feature
+`dbcc33cec97dc961cf41548f5bed2c4585cce648` contains exactly the 49
+assigned paths (backend23/frontend25/status1) and was normally pushed to
+origin/main. Direct remote main SHA equals local HEAD, tracking ahead/behind
+is 0/0, index is empty, conflicts are zero and all 49 scoped working-copy
+paths match publication. Staged privacy/whitespace and HEAD-plus-staged
+closure checks PASS: 386 imports, six template/style references and 12
+local documentation links. No unstaged/session-only QA module is needed.
+All 23 original unrelated user paths remain outside the commit, inspected
+by name only; no contents or hashes were read. Canonical/design/verifier
+paths are unchanged, with no verifier rerun or generated refresh.
+No hooks/signing were bypassed and no publication check failed.
+
+This status-only follow-up records the already verified feature publication.
+Its own normal commit/push and direct remote verification follow this edit;
+the checkpoint SHA is returned in the handoff without a self-hash loop.
+Parent checkpoint ownership resumes on that handoff.
+Next safe action after publication: TEST DNS/network
 owner restores configured-endpoint resolution; operator then revalidates
 full identity proof, current metadata and exact synthetic eligibility
 before a separately gated setup/command. No renewed baseline/host approval
