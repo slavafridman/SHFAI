@@ -26,6 +26,7 @@ import { backendLifecycle, waitForBackendDrain, BackendDrainPendingError } from 
 import { stationMode } from "./station-arrival-validation.mts";
 import { createStationArrivalFixture } from "./station-arrival-fixture.mts";
 import { stationEnvironment } from "./native-station-arrival-config.mts";
+import { validateLimitedMetadataStartup, limitedMetadataWarning } from "./native-metadata-limited.mts";
 import { stationExitMode, exitEnvironment } from "./native-station-exit-config.mts";
 
 const resources = new WeakMap<Server, Array<OraclePool | NativePool>>();
@@ -69,6 +70,7 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
   factories?: BackendPoolFactories) {
   const oracleMode = environment.SHF_ORACLE_CONFIG !== undefined;
   const config = loadEnvironmentConfig(environment);
+  const limitedMetadata = validateLimitedMetadataStartup(environment, config);
   if (config.deploymentClass === "production" || config.authenticationMode !== "synthetic")
     throw new Error("Executable backend requires explicit isolated synthetic mode");
   const stageMode = validateStageArrivalMode(config);
@@ -139,6 +141,7 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
   let pool: OraclePool | undefined;
   let writePool: NativePool | undefined;
   let runtime;
+  if (limitedMetadata) process.stderr.write(limitedMetadataWarning + "\n");
   try {
     if (config.dataSource === "oracle-read-only") {
       if (environment.SHF_FIXTURE_ROWS !== undefined || environment.SHF_CURRENT_SHIFTS_FIXTURE !== undefined ||

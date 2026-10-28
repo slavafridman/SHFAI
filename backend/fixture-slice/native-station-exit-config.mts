@@ -1,20 +1,23 @@
 import { basename } from "node:path";
 import { exact } from "./stage-arrival-validation.mts";
 import { record } from "./contract-validation.mts";
-import { nativeBinding, nativeEnvironment, selectedMetadataProvider } from "./native-stage-arrival-config.mts";
-import type { NativeBinding, NativeConfiguration } from "./native-stage-arrival-config.mts";
+import { nativeBinding, nativeEnvironment, metadataBindingProvenance, checkedNativeWriter } from "./native-stage-arrival-config.mts";
+import type { NativeBindingWithoutDigest, NativeConfiguration } from "./native-stage-arrival-config.mts";
+import { requireLimitedMetadataEnvironment } from "./native-metadata-limited.mts";
+import { oracleEnvironment } from "./runtime-config.mts";
 import type { StationExitModeV1 } from "./station-exit-contracts.mts";
 import { fingerprint } from "./stage-arrival-domain.mts";
 
-export interface ExitBinding extends Omit<NativeBinding, "metadataDigest"> {
+export type ExitBinding = NativeBindingWithoutDigest & {
   operation: "native-station-exit-v0.1";
   exitMetadataDigest: string;
-}
+};
 export function exitBinding(v: unknown): ExitBinding {
   const provider = record(v) && Object.hasOwn(v, "metadataProvider");
+  const limited = record(v) && v.metadataProvider === "owner-test-limited-v1";
   if (!exact(v, ["marker", "employeeId", "shiftDayId", "orgUnitId", "readIdentity", "writeIdentity",
     "exitMetadataDigest", "operation", "approval", "freezeOwner", "recoveryOwner", "windowStart", "windowEnd",
-    "allowanceFile", "writerFreezeConfirmed", "noExternalEffectsConfirmed", "singleExecutorConfirmed",
+    "allowanceFile", "writerFreezeConfirmed", ...(limited ? ["metadataCoverageWaiver"] : ["noExternalEffectsConfirmed"]), "singleExecutorConfirmed",
     ...(provider ? ["metadataProvider"] : [])]) || v.operation !== "native-station-exit-v0.1")
     throw Error("Exact private exit binding required");
   const { operation: _operation, exitMetadataDigest, ...common } = v;
@@ -26,7 +29,7 @@ export function exitBinding(v: unknown): ExitBinding {
 }
 export function exitIdentityReference(b: ExitBinding) {
   return fingerprint({ operation: b.operation, read: b.readIdentity, write: b.writeIdentity,
-    metadata: { provider: selectedMetadataProvider(b), digest: b.exitMetadataDigest } });
+    metadata: { ...metadataBindingProvenance(b), digest: b.exitMetadataDigest } });
 }
 export function stationExitMode(v: unknown): StationExitModeV1 {
   if (!record(v)) throw Error("Invalid exit configuration");
@@ -55,9 +58,14 @@ export function exitEnvironment(env: NodeJS.ProcessEnv, enabled: boolean):
     throw Error("Explicit native exit enablement required");
   let raw: unknown;
   try { raw = JSON.parse(env.SHF_NATIVE_EXIT_BINDING ?? "null"); } catch { throw Error("Invalid exit binding"); }
+  if (record(raw) && raw.metadataProvider === "owner-test-limited-v1") requireLimitedMetadataEnvironment(env);
   const binding = exitBinding(raw);
   const { operation: _operation, exitMetadataDigest, ...common } = binding;
-  const checked = nativeEnvironment({
+  const checked = binding.metadataProvider === "owner-test-limited-v1"
+    ? checkedNativeWriter(env, nativeBinding({ ...common, metadataDigest: exitMetadataDigest }), oracleEnvironment({
+      SHF_ORACLE_CONNECT_STRING: env.SHF_NATIVE_EXIT_CONNECT_STRING, SHF_ORACLE_USER: env.SHF_NATIVE_EXIT_USER,
+      SHF_ORACLE_PASSWORD: env.SHF_NATIVE_EXIT_PASSWORD, SHF_ORACLE_CLIENT_LIB_DIR: env.SHF_NATIVE_EXIT_CLIENT_LIB_DIR,
+    })) : nativeEnvironment({
     SHF_TEST_ORACLE_STAGE_WRITE_ENABLED: "true",
     SHF_ORACLE_CONNECT_STRING: env.SHF_ORACLE_CONNECT_STRING, SHF_ORACLE_USER: env.SHF_ORACLE_USER,
     SHF_NATIVE_STAGE_CONNECT_STRING: env.SHF_NATIVE_EXIT_CONNECT_STRING,

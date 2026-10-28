@@ -5707,3 +5707,119 @@ Step1's type-erased runtime module check does **not** substitute for step2's com
 **UI exclusive handoff — READY for caller-routed read-only consistency review in parallel:** ui-designer reviews the already approved §47.5 layout/copy/state reuse; **no additional user gate** unless review identifies a genuinely new material decision. After canonical checks, UI implements frontend-only files enumerated in §47.5 against these DTOs, with existing attendance opener, Material dialog/layout/receipt, Hebrew/RTL and native source/consent guards. No backend/canonical/config ownership overlap. First focused X05: early/missing-arrival/window states, exact consent and two-field preservation copy, fixture/arrival response rejection, cancel0/duplicate0, stale-generation/history/reload/cross-operation UNKNOWN interlock, focus/keyboard/reflow. Existing native/fixture arrivals remain unchanged. Caller coordinates review/implementation/QA; architect does not invoke peers.
 
 **Owners / remaining gates:** no §47 approval blocker remains. Backend owns immediate executable canonical/typecheck verification and consumers; UI-designer/UI/QA own consistency review and focused UI evidence; parent owns PROJECT_STATUS, approval ledger/publication/normal Git coordination and serialized shared-helper changes. Operator8681/DBA own current rights recheck, metadata, exact tuple/window/exclusion/allowance/recovery/support packet and any separately authorized live GO. Missing DBA-view access is a live certification blocker, not reason to invent public contracts, weaken guards or ask again for broad TEST access. This owner edited no app/server/runtime configuration/UI/status/private environment/legacy/dependencies, used no Git/Oracle/DNS/credentials/allowance/agents and stops after canonical readback.
+
+---
+
+## 48. Approved TEST-only limited metadata coverage v0.1
+
+**Task:** SHF-TEST-METADATA-WAIVER-28. **Date:** 28 October 2026. **Status: APPROVED DECISION / READY for backend-private implementation handoff.** This append alone is changed by architect; no canonical/API/frontend/status/application/private configuration changes. No further user approval is requested for this specific waiver.
+
+### 48.1 Approval, controlling evidence and changed guarantee
+
+**D — explicit user instruction 28Oct2026 11:59+02:** **“Ignore недоступные DBA_TRIGGERS и DBA_ROLE_PRIVS (ORA-00942). and continue”.** This expressly changes the earlier mandatory-two-view prerequisite for the bounded synthetic TEST workflow. It accepts proceeding **without full cross-owner trigger visibility and database-role/PUBLIC-grant visibility**, not absence of triggers/roles. Earlier §§43/46/47 requirements for those two scopes and fully certified no-external-effects statements are superseded **only in the explicitly selected limited provider below**. No request for grants/access to these two views is needed to use that provider. Other approvals/business rules/safety gates remain unchanged; this is not general native, production, schema, EMS, batch, data-creation or live-command approval.
+
+**D from caller:** latest exit/F2-fix feature `18d3f8d`, checkpoint `6c5ffac`, backend942/UI621 results are prior evidence, not checks run here. Operator's strict/hybrid probes observed ORA-00942 for the two named DBA views; normal TNS/OS target proof works. Caller reports owner USER_TRIGGERS zero-row availability probe succeeded; that is visibility evidence only, not a current trigger inventory or proof of no enabled trigger. No Oracle/DNS query is performed by architect.
+
+**S controlling current seams:** `backend/fixture-slice/native-stage-arrival-config.mts` defines default dba-v1/explicit owner-hybrid-v1, exact private binding including noExternalEffectsConfirmed=true, frozen identity references and environment validation. `oracle-stage-arrival-snapshot.mts` builds nine metadata queries; hybrid retains DBA_TRIGGERS slot3 and DBA_ROLE_PRIVS slot7, uses seven USER slots otherwise, validates proofs/digests and checks observed SESSION_USER/CURRENT_SCHEMA against independent expectations. `oracle-station-arrival-snapshot.mts` and `oracle-station-exit-snapshot.mts` each certify their own scope; exit has a separate digest. `server.mts`/`environment-profiles.mts` enforce startup/profile gates. These are private adapter/config seams, not public REST types.
+
+**Accepted residual risk:** triggers owned elsewhere, role/PUBLIC-derived privileges and autonomous/external effects cannot be fully assessed from owner metadata. A two-/three-column application SET clause still describes application-issued SQL, **not all possible database effects**. Ordinary rollback, preserved-field readback and even a matching receipt cannot prove that autonomous audit/other-table/external effects were absent or undone. The waiver accepts that uncertainty for this synthetic TEST slice; do not demand a new assertion that would silently reinstate the waived guarantee. Known enabled triggers/policies, known prohibited effects or other concrete safety violations still reject. No full certification/least-privilege/atomic partner/full-undo claim is permitted.
+
+### 48.2 Exact private selection and unchanged strict providers
+
+Add **`owner-test-limited-v1`**, explicitly selected only; omission remains **dba-v1**. Existing **dba-v1** and **owner-hybrid-v1** retain their query text, mandatory views, nine-array proof shapes, digest formulae, error behavior and full existing configuration grammar. Neither may fall back on ORA-00942 or any other error. No silent mode selection from a successful/failed probe.
+
+Limited mode admission: static configuration gates before pool/listener creation; actual session identity is checked after authorized connection acquisition and before USER metadata/business reads:
+
+* Existing native source oracle-read-only, oracleTestScopeConfirmed=true, deploymentClass=isolated-test-demo, explicitly enabled synthetic Administrator, exact existing grants and **one** F1/F2/exit command mode only. Require **SHF_APP_ENV=test** for this new provider; missing/dev/production profile, local-development or NODE_ENV=production rejects it. Existing strict/hybrid profileless compatibility is unchanged.
+* Existing operation-specific native write flag remains mandatory. Additional server-only explicit opt-in **SHF_TEST_ORACLE_METADATA_LIMITED_ENABLED="true"** is required with this provider. Absent/false/typo denies limited selection; flag true without selected limited native operation denies. False/absent with ordinary providers is allowed; other values reject. Validate even on disabled/production startup before pools; never infer opt-in from user-facing appEnv or ignore stray limited inputs.
+* Independently expected **writer user=SHIFTER AND schema=SHIFTER**, and actual metadata-session **SESSION_USER=SHIFTER AND CURRENT_SCHEMA=SHIFTER**, all mandatory. Preserve database/instance/frozen host proof/calendar checks; CURRENT_SCHEMA alone does not establish owner identity. Read/readback sessions retain their own independently bound identities, not forced owner credentials.
+* Exact approved marker **SHF_TEST_ARRIVAL_20261020_B**, existing private actor/tuple/org/window/freeze/executor/recovery and operation-specific restart-surviving fuse remain mandatory. No new marker, arbitrary real worker, broad row discovery, automatically issued allowance or simultaneous native writers. Application privileges grant no infrastructure permission.
+* Private **limited binding branch** retains all corresponding strict common fields and operation/digest names, but **omits noExternalEffectsConfirmed** rather than requiring/fabricating true. Add exactly:
+
+```typescript
+metadataCoverageWaiver: {
+  id: "shf-test-dba-two-view-waiver-20261028-v0.1";
+  accepted: true;
+  externalEffectsAssessment: "unknown-user-waived";
+}
+```
+
+This is backend-private config, not an exported canonical/API addition. Require exact keys/literals; reject absent/malformed waiver and the misleading noExternalEffectsConfirmed field in the limited branch. Strict/hybrid still require their existing true assertion and reject the new waiver field. Backend may use private discriminated binding types; no widening of REST/identity/principal/capabilities/receipt contracts. F1/F2/exit environment translators must preserve the branch, opt-in and actual deployment checks, not synthesize a strict true flag or lose NODE_ENV/profile admission.
+
+**Startup/operator warning:** emit via the existing normal backend logging path before enabling limited native readiness, with fixed sanitized text:
+
+`WARNING: TEST LIMITED METADATA COVERAGE — DBA_TRIGGERS and DBA_ROLE_PRIVS unavailable scopes ignored by explicit user waiver (2026-10-28). Cross-owner triggers and role/PUBLIC grants remain UNKNOWN; database safety and full rollback are NOT certified.`
+
+Do not interpolate config, credentials, hosts, row IDs, SQL/error bodies or allowance paths. README/private operator packet repeats the limitation. Existing actual-TEST/synthetic UI disclosures remain; no new public coverage field, HTTP header, privilege, fake Origin or UI approval loop. Cannot report limited verification as strict/hybrid PASS.
+
+### 48.3 Typed coverage evidence, required reads and certificates
+
+**No placeholder arrays:** limited evidence must not enter existing nine-array validators as `proof[3]=[]` / `proof[7]=[]`, even when accompanied by an out-of-band warning. Add a private discriminated envelope, with exact fields:
+
+```typescript
+{
+  version: "shf-owner-test-limited-proof-v1";
+  provider: "owner-test-limited-v1";
+  owner: "SHIFTER";
+  operation: "native-stage-arrival-v0.1"
+    | "native-station-arrival-v0.1" | "native-station-exit-v0.1";
+  tableScope: string[];
+  waiverId: "shf-test-dba-two-view-waiver-20261028-v0.1";
+  coverage: {
+    kind: "owner-only-two-dba-scopes-user-waived";
+    unavailable: [
+      { view: "DBA_TRIGGERS"; formerSlot: 3; state: "unknown-user-waived" },
+      { view: "DBA_ROLE_PRIVS"; formerSlot: 7; state: "unknown-user-waived" }
+    ];
+    ownerTriggers: "owner-only-observed";
+  };
+  observations: {
+    columns: unknown[]; constraints: unknown[]; constraintColumns: unknown[];
+    policies: unknown[]; tablePrivileges: unknown[]; columnPrivileges: unknown[];
+    dependencies: unknown[];
+  };
+  ownerTriggers: unknown[];
+}
+```
+
+The shown unknown[] values are **untrusted input rows requiring existing exact shape/type/bound checks**, not permission to accept arbitrary objects. Use backend-private parsed row types afterwards. tableScope is the exact operation's existing ordered allowlist (no duplicates, extras, subset or reordering acceptance); do not broaden metadata scope. The two nonempty typed unavailable records express deliberately unobserved scopes, not empty Oracle results or a claim that ORA-00942 just occurred in this run.
+
+Limited collector executes the seven existing hybrid USER observations only, plus a bounded **owner-only USER_TRIGGERS** query for tableScope, selecting trigger_name/table_name/status and filtering table_owner='SHIFTER'. Preserve the USER_TAB_COLUMNS→USER_TABLES nontemporary-table check and existing sort/projection/binds. **Do not issue DBA_TRIGGERS/DBA_ROLE_PRIVS at all in this branch**; do not query USER_ROLE_PRIVS as a supposedly equivalent substitute. Zero-row probes or ordinary SELECT checks do not certify role closure.
+
+USER_TRIGGERS is available per caller's prior probe and is now a **limited owner-trigger check**, never a cross-owner substitute. Actual query/error/overflow/malformed results must fail closed; an owner trigger row must be disabled to admit this conservative pilot. Empty ownerTriggers is valid only after successful bounded observation, not after an error. Any known enabled trigger on the scoped tables, regardless of provenance/owner, rejects; same for enabled VPD policies. Observations from other required USER views must all succeed with existing completeness/cardinality/constraints/column-type/privilege/dependency checks. ORA-00942 on any of these, table access probes or identity is **not waived**. Preserve complete attendance originals and physical LATE_*/STAGE_LATE_* names; limited coverage must not revive the repaired F2 mapping defect.
+
+**Certificate:** hash the entire validated limited envelope above, with deterministic canonicalization and the same exact operation scope/order, not its observations alone. This is a new domain-separated limited certificate, not a strict/hybrid digest. Retain operation-specific binding field names metadataDigest/stationMetadataDigest/exitMetadataDigest; existing strict/hybrid digest formats are untouched. For limited F1/F2/exit, provider/waiver/coverage/tableScope/owner/operation and actual observed metadata including ownerTriggers are all bound; cross-operation/provider/waiver/coverage mutation rejects even if underlying column rows match.
+
+Every affected native identity/preparation reference must include the selected provider, full metadata certificate and limited waiver/coverage identity; retain frozen independent target/account references. Context/preparation/locked command/current safety/readback cannot change evidence class behind a token. Any reference/certificate drift invalidates preparations before DML; no reusing old nine-array certificates by replacing two slots or recomputing a hash against a different scope. Keep independent readback identity/preservation semantics, budgets and UNKNOWN behavior. No public metadata endpoint or durable evidence/outbox table.
+
+### 48.4 Exclusive implementation handoff and focused checks
+
+**Backend owner through parent — one serialized provider/config/safety writer across all three operations:**
+
+* `backend/fixture-slice/native-stage-arrival-config.mts`, `native-station-arrival-config.mts`, `native-station-exit-config.mts`: new private discriminator/limited binding parser, exact waiver/flag propagation and reference binding; preserve strict branches. No canonical DTO file changes.
+* `oracle-stage-arrival-snapshot.mts`, `oracle-station-arrival-snapshot.mts`, `oracle-station-exit-snapshot.mts`: limited collector/envelope/parser/digest/safety integration, mandatory owner session and known-trigger checks, no missing-slot fabrication. A small shared private helper may be introduced if needed to avoid three divergent implementations; this is not a new public port/provider framework. Preserve existing dba/hybrid SQL/formulae.
+* `environment-profiles.mts`, `server.mts` only for server-side pre-pool limited admission and fixed warning. Existing application/UoW reference checks need no semantic redesign; if specific wiring changes are required, parent serializes `oracle-{stage-arrival,station-arrival,station-exit}-{application,uow}.mts` and returns exact files/results. No endpoint, source, grant, business eligibility, SET fields or receipt change.
+* `README.md`; `test/native-metadata-provider.test.mts`, new `test/native-metadata-limited.test.mts`, relevant profile/HTTP/synthetic protocol tests/doubles. No frontend, dependencies, public canonical, private operator files, legacy, status, DDL, broker/CTI/batch or Git edits in the implementation handoff unless parent separately assigns publication.
+
+Required focused acceptance:
+
+1. **Strict unchanged:** omitted provider=dba-v1; exact old SQL/nine-array/digest results for dba/hybrid; ORA-00942 slot3/7 still rejects without limited queries/fallback. Limited flag/waiver cannot weaken a strict selection.
+2. **Limited grammar/startup:** all three operation modes accept only explicit TEST/isolated/owner/marker/flag/waiver bindings; missing flag/waiver, strict noExternalEffectsConfirmed assertion, NODE_ENV production, production/dev/profileless/local-development, configured nonowner writer/schema, missing native write opt-in, mixed modes or unknown keys reject **before pools/listener/allowance IO**. Actual nonowner SESSION_USER despite CURRENT_SCHEMA SHIFTER rejects after authorized connection acquisition but before USER metadata/business reads. No new authentication/Origin defaults. Read/mock/fixture grant sets unchanged.
+3. **Actual collection coverage:** isolated SQL double rejects unexpected queries; exactly seven required USER observations plus owner USER_TRIGGERS are observed, neither waived DBA query executed, nonempty unavailable tuple present with unknown provenance. ORA-00942/error/malformed/overflow on any remaining query fails. Enabled owner/otherwise-known trigger or policy rejects; disabled/empty owner rows admit only with all other facts valid. Do not construct expected metadata names from production required-column lists alone.
+4. **Certificate separation:** dba↔hybrid↔limited and F1↔F2↔exit substitutions reject; different waiver/coverage/scope/order/owner/metadata/ownerTriggers cannot share certificates. Altered reference/preparation after admission yields stale/disabled before effect. Old arrays with fabricated empty slots fail limited grammar; incomplete arrays/envelopes cannot certify anything.
+5. **Command regression:** actual Clock/window/business eligibility, policy/source mapping, complete originals/NOWAIT/freeze/fuse, F1 three SET/F2 two SET/exit two SET, explicit+ALS cancellation, ACK/readback/UNKNOWN/no-retry and preservation unchanged. Matching receipt proves only the approved application completion under declared limited coverage, never absence of unobserved side effects.
+6. **Warning/privacy:** test exact fixed warning under successful limited selection, none for strict/fixture; no secrets/row payloads/private references in diagnostic. README clearly distinguishes accepted risk from full certification and preserves production prohibition.
+
+**Exact owner commands (not executed here):** from backend/fixture-slice after new suite exists, `node --test test/native-metadata-limited.test.mts test/native-metadata-provider.test.mts test/environment-profiles.test.mts`, then `npm run typecheck`; regress `node --test test/oracle-stage-arrival.test.mts test/native-stage-arrival-http.test.mts test/native-stage-arrival-identity.test.mts test/native-arrival-qa-regressions.test.mts test/oracle-station-arrival-domain.test.mts test/oracle-station-arrival.test.mts test/native-station-arrival-http.test.mts test/oracle-station-exit.test.mts test/native-station-exit-http.test.mts`, then `npm test` for parent checkpoint. QA independently verifies all three modes; old backend942/UI621 results do not prove this new provider.
+
+### 48.5 Operational continuation, checks actually performed and stop
+
+**No unavailable-view permission loop:** after implementation/focused QA/publication, operator can select the approved limited branch and generate **new explicitly limited** current metadata evidence under the existing TEST permission. Do not retry the waived DBA probes, request those grants again or claim their absence harmless/full certification. Record limited coverage with warning/waiver provenance in the existing private readiness packet. All remaining metadata/owner/known-trigger/frozen-target/support/column-mapping facts still must pass; an actual failure outside the two waived scopes is a specific blocker, not a reason to silently ignore more checks.
+
+**Next executable operational sequence, parent/operator owned:** current frozen TNS/OS full address-set identity → explicit limited owner/session/config admission → seven USER metadata observations plus scoped owner-trigger check and real table access probes → exact marker-bound tuple/current actual Clock/operation eligibility → named external eligibility-writer exclusion, before-image and existing operation-specific unused allowance/recovery disposition → report LIMITED-READY with residual effects unknown → **parent operational GO** for the already approved bounded synthetic action. Application startup/setup/allowance/DML are not performed or newly authorized by architect. Preserve actual attendance UI same-tuple reachability gate if claiming UI execution. No new general TEST-access or business/API/UI approval is required; any necessary synthetic setup remains a distinct operator activity under existing permission.
+
+**Recovery guarantee under accepted waiver:** known failures before attempted effect may be none; ordinary transactional rollback must still be confirmed before claiming rolled-back. With unobserved autonomous trigger effects, that label refers to confirmed rollback of the controlled ordinary transaction, **not proof that every side effect was undone**. Do not broaden public effect codes or promise full undo; persist this limitation in private operational evidence/README and startup warning. Unproved transaction/COMMIT ACK/readback/transport outcome remains UNKNOWN/reconcile, no retry/reset/replay/new UUID escape. An independently mandatory audit/recovery requirement known incompatible with these residuals remains a concrete outside-waiver conflict, not an automatic new audit table or renewed demand for the two views.
+
+**Actually checked:** bounded reads of current status, private provider/binding/environment parsers, all three safety/digest seams, shared identity query, server/profile admission, existing allowance/reference pattern, backend README and prior §47 handoff; manual consistency review of exact waiver versus remaining guarantees. Append readback is static evidence. **NOT RUN:** tests/typecheck/build/browser/Git/verifier/diff/link checks (view/patch-only tools, documentation ownership); no Oracle/DNS/USER_TRIGGERS probe, business rows, credentials/private config, setup/DML/COMMIT/allowance, legacy execution, dependencies, external transmission or agents. No current live readiness or installed compatibility claim.
+
+**Result:** §48 v0.1 is an **approved specific coverage reduction**, ready for backend-private implementation; no additional baseline approval request. Parent owns PROJECT_STATUS/publication, serialized backend assignment and QA; backend owns exact provider implementation/tests/README; operator owns new limited current evidence and later bounded GO. Strict/hybrid remain available unchanged. Architect stops after this single appended artifact; no canonical materialization or feature implementation is needed for this private metadata decision.

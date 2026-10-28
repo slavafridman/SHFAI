@@ -1,6 +1,7 @@
 import { record } from "./contract-validation.mts";
 import { validateRuntimeConfig } from "./runtime-config.mts";
 import type { RuntimeConfig } from "./runtime-config.mts";
+import { validateLimitedMetadataStartup } from "./native-metadata-limited.mts";
 
 export type AppEnvironment = "dev" | "test" | "production";
 export const deploymentClasses = Object.freeze({
@@ -25,6 +26,11 @@ export function appEnvironment(value: string | undefined): AppEnvironment | unde
 /** Server-only gate, before driver imports, pool creation or native allowance IO. */
 export function validateEnvironmentProfile(value: unknown, env: NodeJS.ProcessEnv): void {
   const profile = appEnvironment(env.SHF_APP_ENV);
+  const limitedFlag = env.SHF_TEST_ORACLE_METADATA_LIMITED_ENABLED;
+  if (limitedFlag !== undefined && limitedFlag !== "true" && limitedFlag !== "false")
+    throw Error("Invalid TEST limited metadata opt-in");
+  if (limitedFlag === "true" && (profile !== "test" || env.NODE_ENV === "production"))
+    throw Error("TEST profile required for limited metadata");
   if (!record(value)) throw Error("Explicit backend configuration required");
   if (env.NODE_ENV === "production" &&
       (profile !== undefined && profile !== "production" ||
@@ -45,6 +51,7 @@ export function validateEnvironmentProfile(value: unknown, env: NodeJS.ProcessEn
       key.startsWith("SHF_NATIVE_STAGE_") || key.startsWith("SHF_NATIVE_STATION_") || key.startsWith("SHF_NATIVE_EXIT_") || key.startsWith("SHF_FIXTURE_") ||
       key.endsWith("_FIXTURE") || key === "SHF_STAGE_ARRIVAL_ORIGINS" ||
       key === "SHF_STATION_ARRIVAL_ORIGINS" || key === "SHF_STATION_EXIT_ORIGINS" ||
+      key === "SHF_TEST_ORACLE_METADATA_LIMITED_ENABLED" && env[key] !== "false" ||
       ["SHF_TEST_ORACLE_STAGE_WRITE_ENABLED", "SHF_TEST_ORACLE_STATION_WRITE_ENABLED", "SHF_TEST_ORACLE_EXIT_WRITE_ENABLED"].includes(key) && env[key] !== "false"))
       throw Error("Production prohibits synthetic/TEST environment context");
     // No fake provider or production DB implementation. Even otherwise clean
@@ -66,6 +73,7 @@ export function loadEnvironmentConfig(env: NodeJS.ProcessEnv): RuntimeConfig {
   const value: unknown = JSON.parse((oracleMode ? env.SHF_ORACLE_CONFIG : env.SHF_FIXTURE_CONFIG) ?? "null");
   validateEnvironmentProfile(value, env);
   const config = validateRuntimeConfig(value);
+  validateLimitedMetadataStartup(env, config);
   if ((config.dataSource === "oracle-read-only") !== oracleMode)
     throw Error("Explicit backend source configuration mismatch");
   return config;

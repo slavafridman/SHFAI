@@ -7,6 +7,8 @@ import type { OracleEnvironment } from "./runtime-config.mts";
 import { oracleEnvironment } from "./runtime-config.mts";
 import { isIP } from "node:net";
 import { fingerprint, same } from "./stage-arrival-domain.mts";
+import { parseMetadataCoverageWaiver, limitedMetadataCoverage, limitedCollectorMethod, requireLimitedMetadataEnvironment } from "./native-metadata-limited.mts";
+import type { MetadataCoverageWaiver } from "./native-metadata-limited.mts";
 
 export const nativeMarker = "SHF_TEST_ARRIVAL_20261020_B";
 export interface NativeLegacyIdentity {
@@ -25,24 +27,39 @@ export type NativeTarget =
   | { readonly kind: "service-reference"; readonly serviceName: string; readonly host: string };
 export type NativeIdentity = NativeLegacyIdentity |
   { database: string; user: string; schema: string; readonly target: NativeTarget };
-export type NativeMetadataProvider = "dba-v1" | "owner-hybrid-v1";
+export type NativeMetadataProvider = "dba-v1" | "owner-hybrid-v1" | "owner-test-limited-v1";
 export function parseMetadataProvider(value: unknown): NativeMetadataProvider {
-  if (value !== "dba-v1" && value !== "owner-hybrid-v1") throw Error("Explicit supported native metadata provider required");
+  if (value !== "dba-v1" && value !== "owner-hybrid-v1" && value !== "owner-test-limited-v1")
+    throw Error("Explicit supported native metadata provider required");
   return value;
 }
 export function selectedMetadataProvider(binding: { metadataProvider?: unknown }): NativeMetadataProvider {
   return Object.hasOwn(binding, "metadataProvider") ? parseMetadataProvider(binding.metadataProvider) : "dba-v1";
 }
-export interface NativeBinding {
+interface NativeBindingCommon {
   marker: typeof nativeMarker;
   employeeId: string; shiftDayId: string; orgUnitId: string;
   readIdentity: NativeIdentity; writeIdentity: NativeIdentity;
   metadataDigest: string;
-  metadataProvider?: NativeMetadataProvider;
   approval: string; freezeOwner: string; recoveryOwner: string;
-  writerFreezeConfirmed: true; noExternalEffectsConfirmed: true; singleExecutorConfirmed: true;
+  writerFreezeConfirmed: true; singleExecutorConfirmed: true;
   windowStart: string; windowEnd: string;
   allowanceFile: string;
+}
+export type NativeBinding = NativeBindingCommon & (
+  { metadataProvider?: "dba-v1" | "owner-hybrid-v1"; noExternalEffectsConfirmed: true; metadataCoverageWaiver?: never } |
+  { metadataProvider: "owner-test-limited-v1"; metadataCoverageWaiver: MetadataCoverageWaiver; noExternalEffectsConfirmed?: never }
+);
+type WithoutDigest<T> = T extends unknown ? Omit<T, "metadataDigest"> : never;
+export type NativeBindingWithoutDigest = WithoutDigest<NativeBinding>;
+export function metadataBindingProvenance(b: {
+  metadataProvider?: unknown; metadataCoverageWaiver?: unknown; noExternalEffectsConfirmed?: unknown;
+}) {
+  const provider = selectedMetadataProvider(b);
+  if (provider !== "owner-test-limited-v1") return { provider };
+  if (Object.hasOwn(b, "noExternalEffectsConfirmed")) throw Error("Limited metadata cannot assert no external effects");
+  return { provider, waiver: parseMetadataCoverageWaiver(b.metadataCoverageWaiver), coverage: limitedMetadataCoverage,
+    collectorMethod: limitedCollectorMethod };
 }
 export interface NativeConfiguration { writer: OracleEnvironment; binding: NativeBinding }
 function localPath(path: string) {
@@ -218,21 +235,22 @@ export function nativeIdentityBindingReference(binding: NativeBinding) {
   return fingerprint({
     read: { ...nativeTargetReference(binding.readIdentity), user: binding.readIdentity.user, schema: binding.readIdentity.schema },
     write: { ...nativeTargetReference(binding.writeIdentity), user: binding.writeIdentity.user, schema: binding.writeIdentity.schema },
-    metadata: { provider: selectedMetadataProvider(binding), operation: "native-stage-arrival-v0.1",
+    metadata: { ...metadataBindingProvenance(binding), operation: "native-stage-arrival-v0.1",
       digest: binding.metadataDigest },
   });
 }
 export function nativeBinding(v: unknown): NativeBinding {
   const hasProvider = record(v) && Object.hasOwn(v, "metadataProvider");
   const metadataProvider = hasProvider ? parseMetadataProvider(v.metadataProvider) : undefined;
+  const limited = metadataProvider === "owner-test-limited-v1";
   if (!exact(v, ["marker", "employeeId", "shiftDayId", "orgUnitId", "readIdentity", "writeIdentity",
     "metadataDigest", "approval", "freezeOwner", "recoveryOwner", "windowStart", "windowEnd", "allowanceFile",
-    "writerFreezeConfirmed", "noExternalEffectsConfirmed", "singleExecutorConfirmed",
+    "writerFreezeConfirmed", ...(limited ? ["metadataCoverageWaiver"] : ["noExternalEffectsConfirmed"]), "singleExecutorConfirmed",
     ...(hasProvider ? ["metadataProvider"] : [])]) ||
       v.marker !== nativeMarker || !decimalId(v.employeeId) || !decimalId(v.shiftDayId, 10) ||
       !unitCode(v.orgUnitId) || typeof v.metadataDigest !== "string" || !/^[a-f0-9]{64}$/.test(v.metadataDigest) ||
       !text(v.approval, 128, 1) || !text(v.freezeOwner, 128, 1) || !text(v.recoveryOwner, 128, 1) ||
-      v.writerFreezeConfirmed !== true || v.noExternalEffectsConfirmed !== true || v.singleExecutorConfirmed !== true ||
+      v.writerFreezeConfirmed !== true || !limited && v.noExternalEffectsConfirmed !== true || v.singleExecutorConfirmed !== true ||
       typeof v.windowStart !== "string" || typeof v.windowEnd !== "string" ||
       ![v.windowStart, v.windowEnd].every(t => /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(t) && Number.isFinite(Date.parse(t))) ||
       Date.parse(v.windowStart) >= Date.parse(v.windowEnd) ||
@@ -240,17 +258,20 @@ export function nativeBinding(v: unknown): NativeBinding {
     throw Error("Exact private native TEST binding required");
   // The durable allowance marker is operator-controlled, outside source and
   // application directories. It is NOT a command receipt or a recovery ledger.
-  const path = verifiedNativeAllowancePath(v.allowanceFile);
   const readIdentity = parseNativeIdentity(v.readIdentity), writeIdentity = parseNativeIdentity(v.writeIdentity);
   if (!same(nativeTargetReference(readIdentity), nativeTargetReference(writeIdentity))) throw Error("Native source mismatch");
-  if (metadataProvider === "owner-hybrid-v1" && (writeIdentity.user !== "SHIFTER" || writeIdentity.schema !== "SHIFTER"))
+  if ((metadataProvider === "owner-hybrid-v1" || limited) && (writeIdentity.user !== "SHIFTER" || writeIdentity.schema !== "SHIFTER"))
     throw Error("Owner-hybrid requires independently expected SHIFTER writer and schema");
-  return Object.freeze({ marker: nativeMarker, employeeId: v.employeeId, shiftDayId: v.shiftDayId,
+  const waiver = limited ? parseMetadataCoverageWaiver(v.metadataCoverageWaiver) : undefined;
+  const path = verifiedNativeAllowancePath(v.allowanceFile);
+  const common: NativeBindingCommon = { marker: nativeMarker, employeeId: v.employeeId, shiftDayId: v.shiftDayId,
     orgUnitId: v.orgUnitId, readIdentity, writeIdentity, metadataDigest: v.metadataDigest,
-    ...(metadataProvider === undefined ? {} : { metadataProvider }),
     approval: v.approval, freezeOwner: v.freezeOwner, recoveryOwner: v.recoveryOwner,
-    writerFreezeConfirmed: true, noExternalEffectsConfirmed: true, singleExecutorConfirmed: true,
-    windowStart: v.windowStart, windowEnd: v.windowEnd, allowanceFile: path });
+    writerFreezeConfirmed: true, singleExecutorConfirmed: true,
+    windowStart: v.windowStart, windowEnd: v.windowEnd, allowanceFile: path };
+  if (limited && waiver) return Object.freeze({ ...common, metadataProvider: "owner-test-limited-v1", metadataCoverageWaiver: waiver });
+  if (metadataProvider === "owner-test-limited-v1") throw Error("Limited waiver required");
+  return Object.freeze({ ...common, ...(metadataProvider === undefined ? {} : { metadataProvider }), noExternalEffectsConfirmed: true });
 }
 export function nativeEnvironment(env: NodeJS.ProcessEnv, enabled: boolean): NativeConfiguration | undefined {
   const keys = Object.keys(env).filter(k => k.startsWith("SHF_NATIVE_STAGE_"));
@@ -269,8 +290,13 @@ export function nativeEnvironment(env: NodeJS.ProcessEnv, enabled: boolean): Nat
   });
   let parsed: unknown;
   try { parsed = JSON.parse(env.SHF_NATIVE_STAGE_BINDING ?? "null"); } catch { throw Error("Invalid native binding"); }
+  if (record(parsed) && parsed.metadataProvider === "owner-test-limited-v1") requireLimitedMetadataEnvironment(env);
   const binding = nativeBinding(parsed);
-  if (writer.user !== binding.writeIdentity.user || !record(parsed)) throw Error("Native account mismatch");
+  if (!record(parsed)) throw Error("Native account mismatch");
+  return checkedNativeWriter(env, binding, writer);
+}
+export function checkedNativeWriter(env: NodeJS.ProcessEnv, binding: NativeBinding, writer: OracleEnvironment): NativeConfiguration {
+  if (writer.user !== binding.writeIdentity.user) throw Error("Native account mismatch");
   const reference = nativeTargetReference(binding.readIdentity);
   if (reference.target.kind === "sid") {
     const aliases = reference.target.endpointProof.connectionAliases, readAlias = env.SHF_ORACLE_CONNECT_STRING;

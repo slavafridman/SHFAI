@@ -5,7 +5,7 @@ import { fingerprint, instantFor } from "./stage-arrival-domain.mts";
 import { stageFail } from "./stage-arrival-errors.mts";
 import { nativeMarker, selectedMetadataProvider } from "./native-stage-arrival-config.mts";
 import type { StationBinding } from "./native-station-arrival-config.mts";
-import { nativeIdentity, nativeMetadataQueries, nativeMetadataDigest, nativeTables, one, expression } from "./oracle-stage-arrival-snapshot.mts";
+import { nativeIdentity, nativeMetadataQueries, nativeMetadataDigest, collectNativeMetadata, nativeTables, one, expression } from "./oracle-stage-arrival-snapshot.mts";
 import type { NativeQuery, NativeRow, NativeSchema, NativeColumn } from "./oracle-stage-arrival-snapshot.mts";
 import { stationBlockers, stationOverlap } from "./oracle-station-arrival-domain.mts";
 import type { StationCandidate } from "./oracle-station-arrival-domain.mts";
@@ -28,23 +28,15 @@ export const stationTables = {
 export const stationMetadataSql = nativeMetadataQueries(Object.keys(stationTables));
 export async function stationSafety(q: NativeQuery, b: StationBinding): Promise<NativeSchema> {
   const provider = selectedMetadataProvider(b);
-  if (provider === "owner-hybrid-v1" && (b.writeIdentity.user !== "SHIFTER" || b.writeIdentity.schema !== "SHIFTER"))
+  if (provider !== "dba-v1" && (b.writeIdentity.user !== "SHIFTER" || b.writeIdentity.schema !== "SHIFTER"))
     stageFail("LIVE_WRITES_DISABLED");
   await nativeIdentity(q, b.writeIdentity);
-  const proof: unknown[][] = [];
-  for (const [i, sql] of nativeMetadataQueries(Object.keys(stationTables), provider).entries()) {
-    const r = await q(`/* station:metadata:${i} */ ${sql}`, i === 7 ? { writeUser: b.writeIdentity.user } : {}, 1001);
-    if (r.length > 1000 || r.some(v => !record(v))) stageFail("LIVE_WRITES_DISABLED");
-    proof.push(r);
-  }
-  if (nativeMetadataDigest(provider, b.operation, Object.keys(stationTables), proof) !== b.stationMetadataDigest || !proof[1].length ||
-      proof[1].some(r => !record(r) || r.status !== "ENABLED" || r.validated !== "VALIDATED") ||
-      proof[3].some(r => !record(r) || r.status !== "DISABLED") ||
-      proof[4].some(r => !record(r) || r.enabled !== "NO")) stageFail("LIVE_WRITES_DISABLED");
+  const facts = await collectNativeMetadata(q, b, b.operation, Object.keys(stationTables), b.stationMetadataDigest,
+    proof => nativeMetadataDigest(provider, b.operation, Object.keys(stationTables), proof), "station");
   const schema: NativeSchema = {};
   for (const [table, required] of Object.entries(stationTables)) {
     const columns: NativeColumn[] = [];
-    for (const r of proof[0]) {
+    for (const r of facts.columns) {
       if (!record(r) || r.tableName !== table) continue;
       if (typeof r.columnName !== "string" || !/^[A-Z][A-Z0-9_]{0,29}$/.test(r.columnName) ||
           typeof r.dataType !== "string") stageFail("INVALID_SOURCE_DATA");
@@ -69,10 +61,10 @@ export async function stationSafety(q: NativeQuery, b: StationBinding): Promise<
     schema[table] = columns;
   }
   const user = b.writeIdentity.user;
-  if (user !== "SHIFTER" && !proof[5].some(r => record(r) && r.tableName === "SHF_ATTENDANCE" &&
+  if (user !== "SHIFTER" && !facts.tablePrivileges.some(r => record(r) && r.tableName === "SHF_ATTENDANCE" &&
       r.grantee === user && r.privilege === "UPDATE") &&
       !["STATION_ARRIVAL_TIME", "STATION_ARRIVAL_USER"].every(column =>
-        proof[6].some(r => record(r) && r.tableName === "SHF_ATTENDANCE" && r.columnName === column &&
+        facts.columnPrivileges.some(r => record(r) && r.tableName === "SHF_ATTENDANCE" && r.columnName === column &&
           r.grantee === user && r.privilege === "UPDATE"))) stageFail("LIVE_WRITES_DISABLED");
   for (const [table, columns] of Object.entries(schema)) {
     const r = await q(`/* station:privilege:${table} */ SELECT ${columns.map(c => c.name).join(",")}

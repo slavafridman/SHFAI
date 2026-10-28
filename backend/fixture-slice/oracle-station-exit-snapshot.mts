@@ -1,7 +1,8 @@
 import type { BindParameters } from "oracledb";
 import type { ExitBinding } from "./native-station-exit-config.mts";
 import type { NativeQuery, NativeRow, NativeSchema, NativeColumn } from "./oracle-stage-arrival-snapshot.mts";
-import { nativeIdentity, nativeMetadataQueries, one, nativeTables } from "./oracle-stage-arrival-snapshot.mts";
+import { nativeIdentity, collectNativeMetadata, one, nativeTables } from "./oracle-stage-arrival-snapshot.mts";
+import { limitedMetadataDigest } from "./native-metadata-limited.mts";
 import { stationTables, stationCandidateScope, stationCandidateSql } from "./oracle-station-arrival-snapshot.mts";
 import { stationOverlap } from "./oracle-station-arrival-domain.mts";
 import type { StationCandidate } from "./oracle-station-arrival-domain.mts";
@@ -29,33 +30,24 @@ export const exitTables = {
   SHF_ORG_UNITS_SHF_SITES: ["SS_SITE_ID", "SOU_ORG_UNIT_ID"],
 } as const;
 export const exitPolicyKeys = ["shf.param.maxToExitBeforEndShift", "shf.param.maximumMinutesExitAfterShift"] as const;
-export function exitMetadataDigest(b: Pick<ExitBinding, "operation" | "metadataProvider">, proof: unknown[][]) {
-  if (b.operation !== "native-station-exit-v0.1" || proof.length !== 9 || proof.some(r => !Array.isArray(r)))
+export function exitMetadataDigest(b: Pick<ExitBinding, "operation" | "metadataProvider">, proof: unknown) {
+  if (selectedMetadataProvider(b) === "owner-test-limited-v1") return limitedMetadataDigest(proof, b.operation, Object.keys(exitTables));
+  if (b.operation !== "native-station-exit-v0.1" || !Array.isArray(proof) || proof.length !== 9 || proof.some(r => !Array.isArray(r)))
     stageFail("LIVE_WRITES_DISABLED");
   return fingerprint({ version: "shf-native-exit-metadata-v0.1", provider: selectedMetadataProvider(b),
     owner: "SHIFTER", operation: b.operation, tableScope: Object.keys(exitTables), proof });
 }
 export async function exitSafety(q: NativeQuery, b: ExitBinding): Promise<NativeSchema> {
   const provider = selectedMetadataProvider(b);
-  if (provider === "owner-hybrid-v1" && (b.writeIdentity.user !== "SHIFTER" || b.writeIdentity.schema !== "SHIFTER"))
+  if (provider !== "dba-v1" && (b.writeIdentity.user !== "SHIFTER" || b.writeIdentity.schema !== "SHIFTER"))
     stageFail("LIVE_WRITES_DISABLED");
   await nativeIdentity(q, b.writeIdentity);
-  const proof: unknown[][] = [];
-  for (const [i, sql] of nativeMetadataQueries(Object.keys(exitTables), provider).entries()) {
-    // Retained DBA_TRIGGERS/DBA_ROLE_PRIVS are mandatory. ORA-00942 is not
-    // absence and never enables a fallback/certificate bypass.
-    const r = await q(`/* exit:metadata:${i} */ ${sql}`, i === 7 ? { writeUser: b.writeIdentity.user } : {}, 1001);
-    if (r.length > 1000 || r.some(v => !record(v))) stageFail("LIVE_WRITES_DISABLED");
-    proof.push(r);
-  }
-  if (exitMetadataDigest(b, proof) !== b.exitMetadataDigest || !proof[1].length ||
-      proof[1].some(r => !record(r) || r.status !== "ENABLED" || r.validated !== "VALIDATED") ||
-      proof[3].some(r => !record(r) || r.status !== "DISABLED") ||
-      proof[4].some(r => !record(r) || r.enabled !== "NO")) stageFail("LIVE_WRITES_DISABLED");
+  const facts = await collectNativeMetadata(q, b, b.operation, Object.keys(exitTables), b.exitMetadataDigest,
+    proof => exitMetadataDigest(b, proof), "exit");
   const schema: NativeSchema = {};
   for (const [table, required] of Object.entries(exitTables)) {
     const columns: NativeColumn[] = [];
-    for (const r of proof[0]) {
+    for (const r of facts.columns) {
       if (!record(r) || r.tableName !== table) continue;
       if (typeof r.columnName !== "string" || !/^[A-Z][A-Z0-9_]{0,29}$/.test(r.columnName) ||
           typeof r.dataType !== "string") stageFail("INVALID_SOURCE_DATA");
@@ -82,9 +74,9 @@ export async function exitSafety(q: NativeQuery, b: ExitBinding): Promise<Native
     schema[table] = columns;
   }
   const user = b.writeIdentity.user;
-  if (user !== "SHIFTER" && !proof[5].some(r => record(r) && r.tableName === "SHF_ATTENDANCE" &&
+  if (user !== "SHIFTER" && !facts.tablePrivileges.some(r => record(r) && r.tableName === "SHF_ATTENDANCE" &&
       r.grantee === user && r.privilege === "UPDATE") &&
-      !["STATION_EXIT_TIME", "STATION_EXIT_USER"].every(column => proof[6].some(r => record(r) &&
+      !["STATION_EXIT_TIME", "STATION_EXIT_USER"].every(column => facts.columnPrivileges.some(r => record(r) &&
         r.tableName === "SHF_ATTENDANCE" && r.columnName === column && r.grantee === user && r.privilege === "UPDATE")))
     stageFail("LIVE_WRITES_DISABLED");
   for (const [table, columns] of Object.entries(schema)) {

@@ -2210,5 +2210,205 @@ source-policy/mapping/original predicates, rowcounts, contention/concurrency,
 signal/ALS cancellation, COMMIT/readback uncertainty, metadata942 and shutdown
 drain with an uncooperative COMMIT. Commands exit naturally; no forced exit.
 No live writes, real allowance consumption or pilot is authorized here.
-Caller reports the two retained DBA views still unavailable; operator/DBA owns
-that operational prerequisite. Parent owns QA/checkpoint/scoped publication.
+For strict/hybrid providers, the two retained DBA views remain mandatory.
+The explicitly approved §48 limited TEST provider below supersedes that gate
+only when separately selected with its waiver and opt-in. Parent owns
+QA/checkpoint/scoped publication.
+
+## SHF-TEST-METADATA-WAIVER-28 — approved §48 v0.1 limited TEST coverage
+
+The user explicitly waived unavailable DBA_TRIGGERS and DBA_ROLE_PRIVS scopes
+on 28 October 2026 at 11:59 +02:00. This does **not** establish absence of
+cross-owner triggers, role/PUBLIC privileges, autonomous or external effects.
+Application SET columns describe application-issued SQL, not all possible
+database effects. Matching readback and ordinary rollback cannot prove those
+other effects absent or undone. No full-safety, full-undo, least-privilege,
+partner or strict/hybrid certification is claimed for this branch.
+
+### Explicit private selection — no automatic fallback
+
+F1, F2 and exit support `metadataProvider:"owner-test-limited-v1"` in their
+private operation packet only. Omitted provider remains `dba-v1`.
+Existing `dba-v1` and `owner-hybrid-v1` preserve their SQL, nine-array
+certificates, required DBA queries and error behavior. Neither may fall back
+on ORA-00942/00904 or any other error.
+
+Limited startup requires all existing source/auth/grant/Origin/window/freeze/
+single-executor/recovery/fuse gates, plus:
+
+- Exact `SHF_APP_ENV="test"`, isolated-test-demo, confirmed oracle-read-only
+  TEST source, explicit synthetic Administrator, exactly one native operation.
+- Its existing operation-specific write flag **and**
+  `SHF_TEST_ORACLE_METADATA_LIMITED_ENABLED="true"`.
+- Independently expected writer user/schema **SHIFTER/SHIFTER**, with actual
+  SESSION_USER and CURRENT_SCHEMA both SHIFTER checked before USER reads.
+  Frozen target/proof/calendar and independent read/readback accounts remain.
+- The exact existing synthetic `_B` marker and private employee/day/org tuple,
+  operation-specific window and restart-surviving external allowance.
+
+Missing/false/malformed limited opt-in, profileless/dev/production/local mode,
+NODE_ENV production, mixed writers/fixtures, nonowner writer or invalid waiver
+reject before pools/listener/allowance-path IO. A true limited flag without
+selected limited native operation also rejects. Absent/false flag retains
+ordinary strict-provider behavior; other flag spellings reject even disabled
+startup. No implicit environment, identity, Origin or native opt-in is added.
+
+### Limited packet shape
+
+Retain the operation's existing common fields, identities, digest field and
+operation discriminator. **Omit `noExternalEffectsConfirmed` entirely**; true
+or false is rejected in the limited branch. Add exactly:
+
+```text
+metadataProvider: "owner-test-limited-v1"
+metadataCoverageWaiver: {
+  id: "shf-test-dba-two-view-waiver-20261028-v0.1",
+  accepted: true,
+  externalEffectsAssessment: "unknown-user-waived"
+}
+```
+
+Strict/hybrid packets still require their existing
+`noExternalEffectsConfirmed:true` and reject the limited waiver. This is a
+private discriminated packet, not a public DTO, boolean safety bypass or new
+application capability. F1 uses `metadataDigest`, F2 `stationMetadataDigest`,
+exit `exitMetadataDigest`. Keep their distinct operation/allowance names and
+disable other command modes as before; no combined native writer is introduced.
+
+### Eight actual observations and typed UNKNOWN coverage
+
+`nativeMetadataQueries(Object.keys(operationTables), "owner-test-limited-v1")`
+returns exactly eight required SELECTs, in this order:
+
+1. USER_TAB_COLS joined through permanent USER_TABLES, visible columns only.
+2. USER_CONSTRAINTS.
+3. USER_CONS_COLUMNS.
+4. USER_POLICIES.
+5. USER_TAB_PRIVS, OWNER SHIFTER, without grantor filtering.
+6. USER_COL_PRIVS, OWNER SHIFTER, without grantor filtering.
+7. USER_DEPENDENCIES, retaining external reference provenance.
+8. USER_TRIGGERS, **owner-only**, scoped by table_owner SHIFTER/table allowlist.
+
+The limited branch never executes DBA_TRIGGERS/DBA_ROLE_PRIVS and does not
+substitute USER_ROLE_PRIVS or fake two empty result slots. Every remaining
+query must succeed with exact row shapes/types and the existing1000-row plus
+overflow bound. Unknown/missing/extra fields, wrong scope, sparse/overflow
+arrays, invalid column types, visible virtual columns, absent required
+columns, invalid constraints, enabled owner/otherwise-known triggers or
+policies, and failed actual writer SELECT probes still fail closed.
+Zero observed owner triggers means only a successful empty **owner-only**
+observation—not cross-owner absence.
+
+**Oracle11 limited-only compatibility:** caller/operator verified
+USER_TAB_COLS.VIRTUAL_COLUMN and HIDDEN_COLUMN projection under the frozen
+target. The collector uses `tc.hidden_column='NO'`, retains actual
+VIRTUAL_COLUMN, permanent USER_TABLES guarding and
+`ORDER BY tc.table_name,tc.column_id`. It does not fake `virtualColumn:"NO"`.
+Hidden required columns cannot satisfy the visible required-column check.
+The certificate binds `collectorMethod:"user-tab-cols-visible-v1"`.
+
+Legacy strict/hybrid SQL is deliberately unchanged, including its
+TAB_COLUMNS.VIRTUAL_COLUMN projection. The reported Oracle11 ORA-00904 concern
+there is not waived/fixed by this limited provider; strict/hybrid runtime
+certification is not claimed. A separate compatible strict collector would
+require its own defined change, not a silent query/digest substitution.
+
+### Real private evidence/certificate handoff
+
+For a separately authorized operator read-only session, exported
+`oracle-stage-arrival-snapshot.mts:collectLimitedMetadataEvidence` accepts:
+
+```text
+(query, independentExpectedWriterIdentity, operation, orderedTableScope)
+```
+
+The query seam is bounded SELECT-only infrastructure, not an installed
+connection/provider or public endpoint. The collector checks expected and
+actual owner/frozen identity, then runs the eight observations. Pass exactly
+the operation's existing ordered `Object.keys(nativeTables)`,
+`Object.keys(stationTables)` or `Object.keys(exitTables)`. Do not broaden scope.
+It returns this validated **limited evidence**, without a preexisting digest,
+business read, allowance consumption, DML or startup acceptance:
+
+```text
+{
+  version: "shf-owner-test-limited-proof-v1",
+  provider: "owner-test-limited-v1",
+  owner: "SHIFTER",
+  operation: <exact native-stage-arrival-v0.1 /
+              native-station-arrival-v0.1 / native-station-exit-v0.1>,
+  tableScope: <exact ordered operation allowlist>,
+  waiverId: "shf-test-dba-two-view-waiver-20261028-v0.1",
+  collectorMethod: "user-tab-cols-visible-v1",
+  coverage: {
+    kind: "owner-only-two-dba-scopes-user-waived",
+    unavailable: [
+      {view:"DBA_TRIGGERS", formerSlot:3, state:"unknown-user-waived"},
+      {view:"DBA_ROLE_PRIVS", formerSlot:7, state:"unknown-user-waived"}
+    ],
+    ownerTriggers: "owner-only-observed"
+  },
+  observations: {
+    columns, constraints, constraintColumns, policies,
+    tablePrivileges, columnPrivileges, dependencies
+  },
+  ownerTriggers
+}
+```
+
+Coverage is a nonempty typed object separate from observed rows. Parsed
+limited facts retain the full evidence object; no nine-array facade is used.
+The two records describe waived unobserved scopes, not a claim that ORA-00942
+occurred during this run.
+
+Operator must review actual evidence, including known unsafe facts, and then
+compute `native-metadata-limited.mts:limitedMetadataDigest(evidence, operation,
+orderedTableScope)`—the canonical SHA256 of the entire validated envelope,
+not observations alone. Put the reviewed digest in the operation-specific
+private field above. Existing `nativeMetadataDigest` (F1/F2) and
+`exitMetadataDigest` also dispatch explicitly to this limited formula.
+Do not use a unit-double certificate, old nine arrays, another provider or
+another operation/scope/order. Startup compares actual current evidence to the
+supplied reviewed certificate; it does not calculate and accept a new one.
+
+Private identity/preparation references bind provider, full certificate,
+waiver, coverage identity and collector method along with the frozen target/
+accounts. Drift rejects before DML. Public context, identity, receipt and
+problem contracts remain unchanged; no public metadata flag/header is added.
+
+### Warning and unchanged command guarantees
+
+After static admission and before readiness/pool/listener creation, selected
+limited startup emits exactly this fixed sanitized warning, without config,
+host, business IDs, credentials, SQL, tokens or allowance paths:
+
+```text
+WARNING: TEST LIMITED METADATA COVERAGE — DBA_TRIGGERS and DBA_ROLE_PRIVS unavailable scopes ignored by explicit user waiver (2026-10-28). Cross-owner triggers and role/PUBLIC grants remain UNKNOWN; database safety and full rollback are NOT certified.
+```
+
+Known prohibited effects are not waived. Business validation, source policy,
+physical LATE_*/STAGE_LATE_* distinction, NOWAIT/full originals, freeze/fuse,
+F1 three SET/F2 two SET/exit two SET, explicit+ALS cancellation, owned native
+promise drain, COMMIT ACK plus independent preservation readback and UNKNOWN/
+no-auto-retry behavior remain. A returned receipt attests only the approved
+application observation/acknowledgement—not complete database safety or undo
+of unobserved autonomous/external effects.
+
+### Offline checks and operational boundary
+
+```powershell
+node --test test/native-metadata-limited.test.mts test/native-metadata-provider.test.mts test/environment-profiles.test.mts
+npm run typecheck
+node --test test/oracle-stage-arrival.test.mts test/oracle-station-arrival.test.mts test/oracle-station-arrival-physical-columns.test.mts test/oracle-station-exit.test.mts test/native-stage-arrival-identity.test.mts test/native-stage-arrival-http.test.mts test/native-station-arrival-http.test.mts test/native-station-exit-http.test.mts
+npm test
+```
+
+These are synthetic physical-schema/protocol and owned-loopback checks only.
+They include independent Oracle11 projection guards (TAB_COLUMNS virtual
+projection errors), hidden/virtual/type/duplicate/overflow failures, all eight
+required source failures, exact warning timing, before-factory admission,
+certificate/coverage isolation, business validation and transaction regressions.
+No actual Oracle/DNS, grants, schema, broker, real allowance or real DML operation
+is included. The two waived DBA views are **not a limited-provider blocker**.
+Actual required owner evidence/reviewed certificate and unchanged operational
+eligibility/window/freeze/allowance/GO remain parent/operator responsibilities.

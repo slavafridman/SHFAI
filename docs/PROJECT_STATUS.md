@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, verified ordinary station-exit and coupled F2 fix published; live metadata blocked.
+Last updated: 2026-10-28, limited TEST metadata policy independently verified; real metadata PASS, synthetic source diagnostic running.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -25,7 +25,193 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ## Current priority: first controlled TEST Oracle arrival update
 
-### SHF-STATION-EXIT-APPROVED-28 — current resume checkpoint
+### SHF-TEST-METADATA-WAIVER-28 — current resume checkpoint
+
+**State: IMPLEMENTATION/QA PASS / real limited metadata PASS / source diagnostic RUNNING.** At 11:59 +02:00 the user explicitly requested ignoring
+unavailable DBA_TRIGGERS and DBA_ROLE_PRIVS and continuing. This changes those
+two former mandatory visibility gates for the controlled TEST scope only.
+It is not a claim that triggers/roles are absent, grants were provisioned,
+all hidden effects are certified, or production/general writes are approved.
+
+Architect owns a bounded section48 decision/handoff recording this exact
+user-authorized reduced coverage. Implementation must be a separate explicit
+opt-in private TEST-only provider, not catching ORA-00942 and inventing empty
+rows. Default strict providers remain unchanged. Available owner metadata,
+known-trigger/VPD checks, identity, business validation, original predicates,
+allowance, confirmation and UNKNOWN/readback rules remain in force.
+Coverage and certificate provenance must label waived checks unverified,
+reject interchange with strict certificates, and surface a fixed safe warning.
+
+Operator may now read the seven available owner metadata scopes, owner-only
+trigger evidence and the exact known synthetic marker under frozen identity.
+No application startup, synthetic setup refresh, DML, COMMIT or allowance
+action is in this initial handoff. No new retry of the waived DBA queries is
+needed. Parent retains status ownership; no other unavailable checks may be
+silently skipped. Earlier two-view-blocked records below are historical.
+
+Architect recorded section48v0.1 approved decision and handed the limited
+provider to the sole backend owner across F1/F2/exit. Public DTO/UI remain
+unchanged. Limited certificates must carry explicit user-waived unknown
+coverage and owner-trigger observations, not strict empty slots; the limited
+branch must not assert noExternalEffectsConfirmed=true. Cross-owner triggers,
+PUBLIC grants and autonomous/external effects remain unknown, and readback
+cannot establish their absence or reversal.
+
+Actual diagnostic did not query either waived DBA source. It reached a
+different Oracle11 projection defect: USER_TAB_COLUMNS.VIRTUAL_COLUMN is
+unavailable (ORA-00904), so zero metadata slots completed; owner triggers/
+business/eligibility were not read. Identity/owner and cleanup passed; no
+app/DML/allowance actions occurred. Operator is verifying the correct
+USER_TAB_COLS source with actual virtual/hidden flags by bounded zero-row
+projection; architect is checking equivalent hidden-column filtering, while
+backend remains the single query-builder writer. No fake virtual='NO' or
+third-source waiver is authorized.
+
+Oracle11 zero-row compatibility is now verified: USER_TAB_COLS exposes all
+requested virtual/hidden and physical column fields; explicit hidden='NO'
+plus USER_TABLES temporary='N' predicates parse successfully. Architect
+approved the limited-provider-only collector correction with explicit
+user-tab-cols-visible-v1 provenance. Real virtual flags stay observed and
+visible virtual columns still reject; missing/NULL/malformed flags never
+default to NO. Strict/hybrid query/digest preservation remains in this scope;
+their similar catalog concern is documented, not silently rewritten.
+Backend owner is adopting the verified collector and adding protocol tests
+that reject the old invalid metadata projection instead of accepting tags.
+Full metadata collection and business readiness wait for its source-stable
+handoff; no business/DML/allowance action occurred in this projection check.
+
+Section48 limited-provider implementation is now SOURCE-STABLE across11
+backend paths: new evidence helper/test, three operation configs, three
+snapshots, profile/server admission and README. Owner focused340/native383,
+strict typecheck and full backend1189/1189 PASS with natural exit0/no skips.
+No canonical/public DTO/application-UoW/frontend/dependency changes.
+Limited packets omit noExternalEffectsConfirmed and require exact waiver;
+actual warning and TEST-only flag/admission apply consistently to F1/F2/exit.
+Strict providers retain old mandatory query/digest/error behavior.
+
+Independent isolated QA is running while operator performs real guarded
+read-only collection through the exported eight-observation helper.
+New limited evidence binds collector method, waiver/unknown coverage,
+provider/operation/scope and all observations; it cannot masquerade as strict
+certification. If complete, exact synthetic-record readiness may be read;
+app start, setup, DML and allowance still require the next operational handoff.
+Two waived DBA sources are no longer blockers for this explicit limited mode.
+
+Actual limited collection now executes all eight SQL observations successfully:
+F1 scope columns131, constraints37/constraint columns38, policies0,
+table grants74/column grants0, dependencies0, owner triggers0. No waived DBA
+query was executed; cross-owner/PUBLIC/external coverage remains unknown.
+Evidence validation then exposed Oracle catalog nullability:24/38
+USER_CONS_COLUMNS.POSITION values are NULL, but the new validator required
+positive values universally. No value was defaulted, dropped or certified.
+Certificate/business/eligibility/setup remain not run; cleanup passed.
+Operator is grouping this metadata by constraint type, architect classifying
+valid check-constraint null positions versus ordered key positions, and the
+sole backend owner correcting the typed validator/tests. Independent QA
+backend imports pause during this specific edit. This is a compatibility
+repair, not permission to skip another metadata scope or accept malformed keys.
+
+The bounded real aggregate confirms all24 NULL positions belong to C/CHECK;
+P6/R5/U3 column rows all have positive integer positions, no NULL/invalid keys.
+Architect approved typed preservation: C permits NULL or positive integer;
+P/U/R require unique positive positions1..N and exact table/name association.
+Unknown types/constraint links, malformed positions, duplicate/gapped/reversed
+key order still reject. No sorting/defaulting/dropping evidence is permitted;
+NULL remains part of certificate content. Backend is applying this normal
+catalog-compatibility repair and focused tests. Independent QA remains paused
+until source-stable, with its earlier results explicitly pre-correction.
+
+QA clarified a separate open QA48-META-01: F1 safety accepts a required
+station-exit timestamp declared VARCHAR2 when the limited certificate matches
+that evidence; its DATE guard only checks stage arrival. This independent
+synthetic UoW reproducer is unrelated to CHECK positions and does not assert
+the actual Oracle column is wrong. Backend owner is adding the missing required
+DATE guard and a direct metadata-before-business rejection regression before
+SOURCE-STABLE. F2 and exit already reject that synthetic type mutation.
+Both this type finding and nullable-position compatibility must close before
+new evidence/certificate or native command is accepted.
+
+Both corrections are SOURCE-STABLE. Owner focused437/native383, strict
+typecheck and full backend1286/1286 naturally exit0;97 added regressions
+cover the two repaired issues. Actual NULL constraint positions are retained
+with exact type/key association; F1 now checks DATE on all13 existing required
+timestamp fields before privilege/business reads. Wrong-type matching-certificate
+reproduction failed before repair and passes the new rejection check.
+Public/config/certificate formats and SQL/digest formulas are unchanged.
+Independent QA resumes its specific defect matrix; operator resumes one
+actual limited collector and, if valid, exact synthetic readiness. No code
+writer remains active; app/setup/DML/allowance are still not in that handoff.
+
+Independent section48 QA now PASS: original196/196 plus105 new cases form
+one301/301 matrix; repository focused437 and impacted428 distinct tests and
+strict TSC pass naturally, no failures/skips. QA48-META-01 and CHECK-position
+compatibility are independently closed. All13 DATE mutation cases were
+tested under all three providers; NULL preservation and strict key ordering,
+waiver admission, coverage/provenance, warning and zero waived queries pass.
+No frontend rerun was needed; public/UI contracts remain unchanged.
+
+Real fixed limited collector now also PASS: all8 observations accepted with
+131 columns,37 constraints/38 members and24 preserved CHECK NULL positions;
+known owner triggers/policies/virtual/type/constraint violations zero.
+All13 required DATE checks and8 zero-row read-access probes pass.
+Limited digest was computed only in memory, not operationally approved.
+Coverage of the two user-waived scopes remains UNKNOWN.
+
+Exact-marker business diagnostic finds employee1, linked prefix day1 and
+attendance1, but zero rows under the additional SOURCE='SYNTHETIC_DAYS'
+predicate. The fixture is not missing. Operator/architect are tracing actual
+table family, physical SOURCE versus derived source discriminator, null/
+padding/case and all actual arrival fields before any setup proposal.
+Do not retag data to satisfy a potentially wrong field comparison.
+No application start, DML, COMMIT or allowance action occurred; cleanup passed.
+Section48 code/design/checkpoint is ready for scoped publication; source
+diagnostic is independent and does not authorize business effects.
+
+#### SHF-TEST-METADATA-LIMITED-PUBLISH-28 — current publication step
+
+Backend/design owners are stopped and source-stable. Architect/operator source
+diagnostic is read-only and independent; publication operator temporarily owns
+this checkpoint until handoff. Fresh main and fetched origin/main both equal
+`6c5ffac4fd15f9360770d32ac6bfd36471744298`, ahead/behind
+0/0, empty index and no conflicts before staging.
+
+The explicit manifest exactly matches 14 assigned paths: 11 backend limited
+metadata paths (two new helper/test files), this checkpoint, the design's
+append-only approved section48, and the standard verification JSON refresh.
+Canonical/frontend/dependency artifacts are excluded. All 23 unrelated dirty
+paths remain outside publication, inspected by name only, without content
+reads/hashes; no private operator reference, real row keys or live evidence
+capture is selected.
+
+Fresh `node docs\reverse-engineering\verify-evidence.mjs` PASS:
+31 CSVs, 10,000 inventory references, 454 source hashes, 391 design-local
+links and 250 line anchors. All 20 historical capture hashes remain unchanged;
+the known duplicate legacy route remains a documented source anomaly.
+Bounded scoped privacy/credential/private-key/token/private-row/DDL, synthetic
+fixture review and whitespace checks PASS. HEAD-plus-publication closure
+PASS: 134 relative imports and 395 local documentation links; no session-only
+QA/TEMP or unpublished module dependency. Section48 is an approved TEST-only
+waiver decision, not a pending approval or full safety certification.
+Normal verifier JSON LF-to-CRLF warning only; no publication check failed.
+
+Owner1286/focused437/native383 and independent301/focused437/impacted428/TSC
+results above are source-stable owner/QA evidence, not tests rerun here.
+Publication runs no application/compiler/test/build, DNS/DB, allowance,
+grant, DDL, dependency or infrastructure operation; only normal Git
+fetch/push/remote verification uses network access. The known DATE13 guard
+enhancement and CHECK NULL preservation are independently closed fixes,
+not new physical-schema or full hidden-effect certification.
+
+Exact-14-path staged checks, normal commit/push and direct remote verification
+are pending. Next safe action after publication is the bounded read-only
+SOURCE-discriminator diagnostic on the already found synthetic fixture.
+Do not retag data, start the app or consume admission to satisfy a potentially
+incorrect predicate. The two DBA views are explicitly waived for this limited
+provider and are not the current blocker; cross-owner/PUBLIC/external coverage
+remains UNKNOWN. No actual UPDATE or full-project completion is claimed.
+Parent checkpoint ownership returns after publication handoff.
+
+### SHF-STATION-EXIT-APPROVED-28 — prior published milestone
 
 **State: OFFLINE IMPLEMENTATION/QA PASS and PUBLISHED; live certification blocked.** At 11:08 +02:00 the user replied "Agree and continue"
 to the explicit section47v0.1 ordinary native TEST station-exit implementation
