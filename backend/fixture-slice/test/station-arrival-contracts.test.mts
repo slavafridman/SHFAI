@@ -22,7 +22,8 @@ type Assert<T extends true> = T;
 type Assignable<A, B> = [A] extends [B] ? true : false;
 type ContractChecks = [
   Assert<Equal<Extract<CapabilityV1, `attendance-station-arrival:${string}`>,
-    "attendance-station-arrival:prepare" | "attendance-station-arrival:commit">>,
+    "attendance-station-arrival:prepare" | "attendance-station-arrival:commit"
+    | "attendance-station-arrival:test-oracle-write">>,
   Assert<Equal<Extract<CapabilityV1, "attendance-stage-arrival:test-oracle-write">,
     "attendance-stage-arrival:test-oracle-write">>,
   Assert<Equal<keyof StationArrivalDraftV1, "lateReasonCode">>,

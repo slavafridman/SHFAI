@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, diagnostic/design verified and published; approvals pending.
+Last updated: 2026-10-28, sections 46.1-bootstrap and 46 native F2 explicitly approved; implementation running.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -25,7 +25,99 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ## Current priority: first controlled TEST Oracle arrival update
 
-### SHF-RESUME-PUBLISH-28 — current resume checkpoint
+### SHF-NATIVE-F2-APPROVED-28 — current resume checkpoint
+
+**State: RUNNING.** At 09:00 +02:00 on 28 October the user explicitly approved
+"section 46.1-bootstrap and section 46 native F2", both v0.1. This supersedes
+the approval-pending state below. Scope: bounded host discovery/proof/freeze,
+and controlled native on-time station-arrival implementation; actual writes
+still require current operational metadata, eligibility, exclusion, allowance
+and COMMIT/readback gates. Production, DDL, EMS/CTI and batch remain excluded.
+
+Architect owns canonical capability/native station types, focused contract
+tests and the design approval record. Dependent implementation waits for
+canonical checks. Operator owns approved bootstrap and current read-only TEST
+readiness: exact non-host anchors first, independent full endpoint/candidate
+address-set equality, then one immutable USER-CONFIRMED reference; no fallback
+or dynamically accepting a new host after mismatch. No application startup,
+setup refresh or DML is included in this initial operator handoff.
+UI designer is reviewing reuse of the approved F2 layout with native TEST
+disclosure, confirmation and receipt/UNKNOWN states, read-only while the
+architect owns design writes. Parent retains sole checkpoint ownership.
+No new broad access or baseline approval is needed for these exact scopes.
+Previous publication HEAD is 9c00f36; current Git state must still be checked
+before publication, preserving unrelated user edits.
+
+Canonical materialization is source-stable: one new native station capability,
+new type-only native station contract/test and the existing station capability
+expectation test; existing stage/station DTOs and ports remain unchanged.
+Architect recorded explicit approval in section 46.9. Its manual checks are
+complete but executable checks were not available to that owner.
+Backend owner is first running the two canonical tests and strict typecheck;
+consumer implementation waits for PASS. UI designer completed read-only
+review and confirms section 46.6 fits the approved layout without another
+UX decision. Its handoff covers native TEST/two-field disclosure, separate
+synthetic-auth notice, stage/briefing preservation, null-stage admission,
+whole-operation confirmation, strict native receipt/UNKNOWN isolation and
+Hebrew/RTL focus/history behavior. No design/prototype/app file was changed
+by the UI reviewer.
+
+Canonical checks now PASS: two contract tests and strict backend typecheck.
+Backend owner is implementing the approved noncanonical native station
+adapter/config/wiring/tests, and UI owner is implementing the native variant
+in the frontend package; ownership is disjoint and canonical files are frozen.
+
+Approved bootstrap ran against current Oracle 11.2.0.4.0 with Client19.3:
+DB/INSTANCE/user/schema all match. However configured endpoint forward A and
+AAAA resolution both return ESERVFAIL with zero addresses. No full endpoint
+proof can be built; owner is TEST DNS/network operations. No metadata or
+business read, app start, setup, DML, COMMIT or allowance action occurred.
+Rollback, release, pool close and DNS promise settlement passed.
+Additionally the configured Oracle Net endpoint contains an underscore and
+the current strict native name validator rejects it. Architect is assessing
+a bounded compatibility correction without weakening full address-set proof;
+no guard has changed. Host approval is resolved and will not be asked again.
+Offline native F2 implementation can proceed independently of these runtime
+blockers; no passing double is a claim of actual Oracle command execution.
+
+**Canonical publication step, 28 October:** main and freshly fetched
+origin/main both `9c00f36b49973443fb29682dd9233ece6a15d083`,
+ahead/behind 0/0, empty index and no conflicts at preflight. Publication
+ownership of this checkpoint is temporarily assigned to the publication
+operator; backend/UI consumer work continues independently and is excluded.
+Exactly seven assigned paths are eligible: `backend/fixture-slice/contracts.mts`,
+`backend/fixture-slice/oracle-station-arrival-contracts.mts`,
+`backend/fixture-slice/test/oracle-station-arrival-contracts.test.mts`,
+`backend/fixture-slice/test/station-arrival-contracts.test.mts`,
+`docs/SHF_REVERSE_ENGINEERING_DESIGN.md`, this checkpoint, and
+`docs/reverse-engineering/verification.json`.
+
+Fresh standard structural verifier PASS:
+`node docs\reverse-engineering\verify-evidence.mjs`, 31 CSVs,
+10,000 inventory references, 454 source hashes, 391 design-local links,
+250 line anchors and 20 historical capture hashes. The known duplicate
+legacy route remains a documented source anomaly. The two canonical tests
+and strict backend typecheck passed before consumer implementation, as
+reported by the backend owner; they are not rerun here while consumers edit.
+No full application tests, browser, DNS/DB operations, allowance changes,
+dependency installation or infrastructure work is part of publication.
+
+Scoped privacy/credential/private-key/token/private-row/DDL, whitespace,
+local-link and HEAD-plus-publication import-closure review PASS: 395 local
+document links, 12 relative canonical/test imports resolving only to HEAD
+or the assigned publication scope, and all 20 historical capture hashes
+unchanged. No consumer-only module is required by this canonical commit.
+The verifier JSON has the normal Git LF-to-CRLF warning; the two new files
+are intentionally untracked until explicit scoped staging.
+At this review 32 outside-scope dirty paths were visible by name only
+(23 original unrelated user paths plus ongoing consumer work); none was
+read, hashed or selected for publication. Preserve those edits while
+consumers continue. Publication remains pending until direct remote
+verification. Next safe action is this scoped publication, then continued
+offline consumer implementation; live readiness remains blocked by TEST DNS
+and strict endpoint-name validation, not missing host/baseline approval.
+
+### SHF-RESUME-PUBLISH-28 — historical publication checkpoint
 
 **State: documentation review PASS / scoped publication DONE.** The current
 step records the completed identity-only diagnostic and source-backed proposed
