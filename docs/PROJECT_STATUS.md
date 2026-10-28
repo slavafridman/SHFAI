@@ -112,10 +112,27 @@ are intentionally untracked until explicit scoped staging.
 At this review 32 outside-scope dirty paths were visible by name only
 (23 original unrelated user paths plus ongoing consumer work); none was
 read, hashed or selected for publication. Preserve those edits while
-consumers continue. Publication remains pending until direct remote
-verification. Next safe action is this scoped publication, then continued
-offline consumer implementation; live readiness remains blocked by TEST DNS
-and strict endpoint-name validation, not missing host/baseline approval.
+consumers continue.
+
+**Canonical publication DONE:** feature
+`614e32d8987f7f2af329528a77fdf8cad65d85ba` contains exactly the seven
+assigned paths and was normally pushed to origin/main. Direct remote main
+SHA equals local HEAD, tracking ahead/behind is 0/0, index is empty,
+conflicts are zero and all seven scoped working-copy paths match publication.
+Staged import closure additionally PASS: 12 imports resolve to HEAD or the
+staged publication, with no unstaged consumer dependency. Normal hooks/signing
+were not bypassed. All 23 original user paths and continuing backend/frontend
+deltas remain outside the commit; their contents were neither read nor hashed.
+There were no failed behavior checks in this publication; intended untracked
+new canonical-file probes and the normal line-ending warning are not defects.
+
+This status-only follow-up records the verified feature SHA. Its own normal
+commit/push and direct remote verification follow this edit; its SHA is
+reported in the handoff without a self-hash loop. Checkpoint ownership returns
+to the parent after that handoff. Next safe action is continued approved
+offline consumer implementation and focused consumer QA when source-stable;
+live readiness remains blocked by TEST DNS and strict endpoint-name
+validation, not missing host/baseline approval. No actual arrival occurred.
 
 ### SHF-RESUME-PUBLISH-28 — historical publication checkpoint
 
