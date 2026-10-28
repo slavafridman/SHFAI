@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, section47 ordinary native station-exit approved; canonical implementation running.
+Last updated: 2026-10-28, approved station-exit canonical published; disjoint consumer implementation running.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -115,8 +115,22 @@ DNS/DB/application/allowance/grant/dependency operation. Current live
 certification still lacks DBA_TRIGGERS/DBA_ROLE_PRIVS visibility (both
 ORA-00942 on the bounded recheck); TNS/OS proof works, not DNS-blocked.
 
-Exact-six-path staged checks, normal commit/push and direct remote
-verification are pending. Next safe action after publication: continue
+**Canonical publication DONE:** feature
+`7bc1918c020a1b03252b1353f231c373d282a0d5` contains exactly the six
+assigned paths and was normally pushed to origin/main. Direct remote main
+SHA equals local HEAD, tracking ahead/behind is 0/0, index empty, conflicts
+zero and all six scoped working-copy paths match publication.
+Staged privacy/whitespace and HEAD-plus-staged closure checks PASS:
+eight imports, 395 local documentation links and all 20 historical capture
+hashes unchanged. No unpublished consumer dependency is needed. Normal
+hooks/signing were not bypassed; no publication check failed.
+The 23 original user paths and continuing backend/frontend deltas remain
+outside the commit, inspected by name only, without content reads/hashes.
+
+This status-only follow-up records the already verified feature publication.
+Its own normal commit/push and direct remote verification follow this edit;
+the checkpoint SHA is returned in the handoff without a self-hash loop.
+Next safe action after publication: continue
 approved disjoint offline exit consumers and source-stable focused QA;
 operator/DBA resolves the two dictionary prerequisites before current
 operational certification. No actual update or full-project completion
