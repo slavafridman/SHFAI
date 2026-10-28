@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-20, approved fixture F2 implementation and QA published; native TEST still blocked.
+Last updated: 2026-10-28, diagnostic/design verified; scoped publication in progress.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -24,6 +24,124 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
    commit/push. Obtain any missing approval before dependent implementation.
 
 ## Current priority: first controlled TEST Oracle arrival update
+
+### SHF-RESUME-PUBLISH-28 — current resume checkpoint
+
+**State: documentation review PASS / scoped publication pending.** The current
+step records the completed identity-only diagnostic and source-backed proposed
+section 46 v0.1, with its separate section 46.1-bootstrap v0.1 approval gate.
+Neither proposal is approved by publication. No application changes were made.
+
+Fresh publication checks on 28 October: main HEAD and freshly fetched
+origin/main both `ab30f53dcd42974ca2d1b86f1ad7b1ca8a926117`, ahead/behind
+0/0, empty index and no conflicts before staging. There are 23 unrelated dirty
+paths, inspected by name only and excluded from this publication.
+The existing `node docs\reverse-engineering\verify-evidence.mjs` passed:
+31 CSVs, 10,000 inventory references, 454 source hashes, 391 design-local
+links and 250 line anchors. All 20 historical Oracle capture hashes are
+unchanged. The pre-existing duplicate legacy route remains a documented
+source anomaly, not a new verification failure.
+
+Publication scope is exactly three paths: this checkpoint,
+`docs/SHF_REVERSE_ENGINEERING_DESIGN.md` and the standard generated
+`docs/reverse-engineering/verification.json` refresh. Bounded documentation
+privacy/secret/private-key/token/DDL and whitespace checks PASS; local-link
+closure PASS (395 links across the two documents), verifier relative-import
+closure PASS (one import). These checks covered only assigned paths;
+publication is not yet asserted here. Git reported only the normal
+verification JSON LF-to-CRLF conversion warning, not a check failure.
+No application typecheck, unit/UI/browser tests, database or DNS operations
+are run for this documentation-only step. Earlier backend639/frontend477
+totals are historical, not current verification. No dependencies or
+infrastructure were changed.
+
+**Next safe action:** finish scoped checks, commit and normally push only the
+three assigned paths, then verify direct remote SHA, ahead/behind 0/0,
+empty index and scoped published working-copy equality. Record the resulting
+feature SHA in a follow-up checkpoint commit without a self-hash loop.
+After publication, stop for the two explicit user decisions below; broad
+TEST permissions are already settled and are not requested again.
+
+### SHF-NATIVE-RESUME-28 — diagnostic/design evidence
+
+**State: identity discovery PASS / approval-gated before business access.** On 28 October the user explicitly
+confirmed the current Oracle SERVER_HOST and requested continued full project
+implementation. This changes the former missing host-confirmation prerequisite.
+Record the reference as user-confirmed, not independently DBA-verified; freeze
+the exact expected target before checking further business facts. Do not silently
+adopt a changed database reply or remove the configured SID/database/account/
+endpoint-proof checks.
+
+The operator is reconciling actual Git/runtime state and current TEST identity,
+metadata, exact synthetic marker cardinality, actual arrival fields and prior
+allowance/outcome before any mutation. All 20 October checks, windows, process
+IDs and connection results below are historical. The first handoff is read-only;
+application startup, synthetic setup refresh and native command wait for that
+result and a scoped operational GO. Existing TEST access and synthetic-data
+permissions remain in force; production, schema changes, live EMS/CTI and batch
+remain excluded. No restricted environment-file access is authorized.
+
+In parallel, the architect is preparing the next concrete native attendance
+slice against the remaining roadmap and controlling legacy station-arrival
+behavior. Existing fixture F2 approval is not automatically native F2 approval;
+new material API/UI/persistence baselines require explicit approval.
+Parent owns this checkpoint; the architect exclusively owns the bounded design
+appendix, and the operator has no source-file write ownership.
+Previous publication references and blockers below are historical unless
+explicitly reaffirmed by current checks.
+
+Initial 28 October readiness handoff: actual local main HEAD is the published
+`ab30f53dcd42974ca2d1b86f1ad7b1ca8a926117`, index empty, no conflicts;
+cached tracking is 0/0, remote synchronization was not freshly queried.
+Node 24.21.0, npm 11.19.0 and oracledb 26.0.0 are locally verified.
+Nine fileless synthetic identity/proof cases pass; this is not live Oracle.
+The operator did not find a retained exact host/native launcher/trusted TNS
+path in the bounded allowed artifacts. DNS, Oracle, metadata/business reads,
+application starts, mutations and allowance actions remain zero.
+Architect is classifying the user's confirmation as a possible explicit
+one-time identity-discovery bootstrap versus the older independent-reference
+requirement; no guard is removed while this is unresolved. The operator is
+performing bounded legitimate local Oracle Client/TNS location discovery,
+not a credential/environment-file or machine-wide search.
+
+Local infrastructure now verified: OCI was located through the installed
+client, its normal Oracle Net configuration exists with one unambiguous TEST
+alias/SID/endpoint, and explicit Thick initialization passes with Client
+19.3.0.0.0. No DNS/Oracle call was needed for this check.
+Architect appended section 46 v0.1: next native station arrival is a new
+two-column persistence/source/capability baseline, not already authorized by
+fixture F2. It also distinguishes a permitted one-time identity observation
+from promoting its result to a trusted expected-host reference.
+Section 46.1-bootstrap v0.1 requires explicit approval for that promotion
+after independently matching DB/INSTANCE/account and full endpoint address
+sets; the older no-reply-learning rule is not silently overridden.
+One identity-only diagnostic is now assigned; no business reads, metadata,
+application startup, setup refresh, allowance or DML may follow it.
+Native F2 implementation waits for explicit section 46 approval; broad
+continuation and TEST access do not silently approve those new contracts.
+
+Current diagnostic completed: independently expected database (historical
+capture), INSTANCE/SID (TNS), user and schema all matched. Exactly one pool,
+one connection, one READ ONLY transaction statement and one identity SELECT
+were used; rollback acknowledgment, release and pool close all passed.
+Provisional host was nonempty and held only in process memory, not persisted
+or declared trusted. Oracle Client Thick 19.3 is current runtime evidence.
+Oracle Net's explicit default-domain configuration was parsed without guessed
+suffixes. Metadata/business SELECT, DNS diagnostics, UPDATE, COMMIT,
+FOR UPDATE, sequence, allowance and application-start counts remain zero.
+
+Exact next decisions, owned by the user:
+1. Approve section 46.1-bootstrap v0.1: conditional one-time host observation
+   on the independently anchored TEST target, full independent configured-
+   endpoint address-set equivalence, then one frozen USER-CONFIRMED reference.
+   This is a material provenance amendment, not another broad TEST-access ask.
+2. Approve section 46 v0.1 native F2 implementation: first on-time station
+   arrival for an existing eligible synthetic TEST row, updating only station
+   arrival time/user, with canonical native source/capability/receipt changes
+   and actual-TEST UI disclosure. Operational execution gates remain separate.
+Until these decisions, no native F2 code or host-trust promotion is authorized.
+The current verified step is ready for scoped documentation publication;
+previous application test totals are historical and were not rerun here.
 
 ### SHF-ENV-SID-PUBLISH-20 — current publication checkpoint
 
