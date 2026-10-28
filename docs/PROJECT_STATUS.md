@@ -62,12 +62,22 @@ assigned paths and was normally pushed to origin/main. Direct
 ahead/behind was 0/0, index empty, no conflicts, and all three scoped
 working-copy paths matched the published commit. The 23 unrelated dirty
 paths remained outside the commit, inspected by name only. No hooks or
-signing were bypassed. No check failed; the documented historical duplicate
-route anomaly is unchanged.
+signing were bypassed. Structural and scoped review checks passed; the
+documented historical duplicate route anomaly is unchanged.
 
 This status-only follow-up records the already verified feature publication;
 its own normal commit/push and direct remote verification follow this edit.
 Its SHA is reported in the handoff, not recursively embedded here.
+
+Checkpoint `2822a9f70a43c1a60587177166e91bf60d0f8893` was also normally
+pushed and directly verified against remote main. A final names-only helper
+initially failed because its porcelain parser mishandled status spacing and
+its expected list mistyped one path. Correcting only that in-memory helper
+produced PASS: all 23 original unrelated names preserved, exactly three
+published paths, scoped working-copy equality, empty index, no conflicts and
+ahead/behind 0/0. No repository-content defect or corrective application
+change was involved. This status-only clarification receives its own normal
+publication and final verification, with its SHA reported in the handoff.
 
 **Next safe action after that checkpoint publication:** stop for the two
 explicit user decisions below: section 46.1-bootstrap v0.1 host-reference
