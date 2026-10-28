@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, approved ordinary station-exit and coupled F2 fix independently verified; publication ready.
+Last updated: 2026-10-28, verified ordinary station-exit and coupled F2 fix published; live metadata blocked.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -27,7 +27,7 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-STATION-EXIT-APPROVED-28 — current resume checkpoint
 
-**State: OFFLINE IMPLEMENTATION/QA PASS; consumer publication preflight PASS.** At 11:08 +02:00 the user replied "Agree and continue"
+**State: OFFLINE IMPLEMENTATION/QA PASS and PUBLISHED; live certification blocked.** At 11:08 +02:00 the user replied "Agree and continue"
 to the explicit section47v0.1 ordinary native TEST station-exit implementation
 approval request. This approves that APP/API/identity/UI/persistence baseline,
 not early-manager/correction/cancellation flows or an operational write.
@@ -211,8 +211,23 @@ Publication runs no application, test/build/compiler, DNS/Oracle, allowance,
 grant, DDL, dependency or infrastructure operation; only normal Git
 fetch/push/remote verification uses network access.
 
-Exact-57-path staged checks, normal commit/push and direct remote
-verification are pending. Current external live blocker remains unavailable
+**Consumer publication DONE:** feature
+`18d3f8da4e3b280b18c7ae9de158d33704e57a96` contains exactly the 57
+assigned paths (19 exit backend, six F2 fix, 31 frontend, one status) and was
+normally pushed to origin/main. Direct remote main SHA equals local HEAD,
+tracking ahead/behind is 0/0, index empty, conflicts zero and all 57 scoped
+working-copy paths match publication.
+Staged privacy/whitespace and HEAD-plus-staged closure checks PASS:
+445 imports, ten template/style references and 12 local documentation links.
+No unpublished/session-only dependency is required. All 23 unrelated user
+paths remain outside the commit, inspected by name only, without content
+reads/hashes. Canonical/design/verifier remain unchanged; no verifier refresh.
+No hooks/signing were bypassed and no publication check failed.
+
+This status-only follow-up records the already verified feature publication.
+Its own normal commit/push and direct remote verification follow this edit;
+the checkpoint SHA is returned in the handoff without a self-hash loop.
+Current external live blocker remains unavailable
 DBA_TRIGGERS/DBA_ROLE_PRIVS (ORA-00942), not DNS. Next safe action after
 publication: operator resumes current identity/metadata/eligibility readiness
 only after TEST DBA/operator changes and confirms that prerequisite, then
