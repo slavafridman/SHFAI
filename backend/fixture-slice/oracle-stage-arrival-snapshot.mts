@@ -3,8 +3,8 @@ import { decimalId, localDateTime, record } from "./contract-validation.mts";
 import { civil, numberText, requireGregorian } from "./oracle-readers.mts";
 import { fingerprint, same } from "./stage-arrival-domain.mts";
 import { stageFail } from "./stage-arrival-errors.mts";
-import type { NativeBinding, NativeIdentity } from "./native-stage-arrival-config.mts";
-import { nativeMarker, parseNativeIdentity, nativeTargetReference, nativeEndpointHostMatches } from "./native-stage-arrival-config.mts";
+import type { NativeBinding, NativeIdentity, NativeMetadataProvider } from "./native-stage-arrival-config.mts";
+import { nativeMarker, parseNativeIdentity, nativeTargetReference, nativeEndpointHostMatches, parseMetadataProvider, selectedMetadataProvider } from "./native-stage-arrival-config.mts";
 import type { StageArrivalBlockerV1 } from "./stage-arrival-contracts.mts";
 import { nativeBlockers } from "./oracle-stage-arrival-domain.mts";
 
@@ -28,13 +28,14 @@ export const nativeTables = {
   SHF_EMPLOYEE_REPORTS: ["EMPLOYEE_ID", "APPROVED_TIME"],
 } as const;
 export const policyKey = "shf.param.minutesArrivalBeforeStation";
-export function nativeMetadataQueries(tables: readonly string[]) {
+export function nativeMetadataQueries(tables: readonly string[], provider: NativeMetadataProvider = "dba-v1") {
+parseMetadataProvider(provider);
 if (tables.some(t => !/^[A-Z][A-Z0-9_]{0,29}$/.test(t))) throw Error("Invalid metadata table");
 const tablesSql = tables.map(t => `'${t}'`).join(",");
 const scope = `owner='SHIFTER' AND table_name IN (${tablesSql})`;
-// DBA visibility is deliberately required: ALL_* absence does not certify
-// invisible VPD/trigger/grant effects. Failure to inspect is a fail-closed stop.
-return [
+// Preserve the legacy DBA provider verbatim. ALL_* absence is not equivalent
+// certification; only the explicitly selected owner-hybrid branch below exists.
+const dba = [
   `SELECT table_name AS "tableName",column_name AS "columnName",data_type AS "dataType",
     data_length AS "dataLength",char_used AS "charUsed",nullable AS "nullable",virtual_column AS "virtualColumn"
     FROM dba_tab_columns tc WHERE ${scope} AND EXISTS
@@ -60,8 +61,50 @@ return [
     FROM dba_dependencies WHERE owner='SHIFTER' AND name IN (${tablesSql})
     ORDER BY name,type,referenced_owner,referenced_name,referenced_type`,
 ];
+if (provider === "dba-v1") return dba;
+const ownerScope = `table_name IN (${tablesSql})`;
+// Explicit SHIFTER-owner provider only. Keep the two DBA views whose USER
+// substitutes cannot certify cross-owner triggers or PUBLIC role grants.
+return [
+  `SELECT table_name AS "tableName",column_name AS "columnName",data_type AS "dataType",
+    data_length AS "dataLength",char_used AS "charUsed",nullable AS "nullable",virtual_column AS "virtualColumn"
+    FROM user_tab_columns tc WHERE ${ownerScope} AND EXISTS
+      (SELECT 1 FROM user_tables tt WHERE tt.table_name=tc.table_name AND tt.temporary='N')
+    ORDER BY table_name,column_id`,
+  `SELECT table_name AS "tableName",constraint_name AS "name",constraint_type AS "kind",
+    status AS "status",validated AS "validated",r_owner AS "referencedOwner",
+    r_constraint_name AS "referencedConstraint" FROM user_constraints WHERE ${ownerScope} ORDER BY table_name,constraint_name`,
+  `SELECT table_name AS "tableName",constraint_name AS "name",column_name AS "columnName",position AS "position"
+    FROM user_cons_columns WHERE ${ownerScope} ORDER BY table_name,constraint_name,position`,
+  dba[3],
+  `SELECT object_name AS "tableName",policy_name AS "name",enable AS "enabled"
+    FROM user_policies WHERE object_name IN (${tablesSql}) ORDER BY object_name,policy_name`,
+  `SELECT table_name AS "tableName",grantee AS "grantee",privilege AS "privilege"
+    FROM user_tab_privs WHERE ${scope} ORDER BY table_name,grantee,privilege`,
+  `SELECT table_name AS "tableName",column_name AS "columnName",grantee AS "grantee",privilege AS "privilege"
+    FROM user_col_privs WHERE ${scope} ORDER BY table_name,column_name,grantee,privilege`,
+  dba[7],
+  `SELECT name AS "name",type AS "type",referenced_owner AS "referencedOwner",
+    referenced_name AS "referencedName",referenced_type AS "referencedType"
+    FROM user_dependencies WHERE name IN (${tablesSql})
+    ORDER BY name,type,referenced_owner,referenced_name,referenced_type`,
+];
 }
 export const nativeMetadataSql = nativeMetadataQueries(Object.keys(nativeTables));
+export type NativeMetadataOperation = "native-stage-arrival-v0.1" | "native-station-arrival-v0.1";
+export function nativeMetadataDigest(provider: NativeMetadataProvider, operation: NativeMetadataOperation,
+  tables: readonly string[], proof: unknown[][]): string {
+  parseMetadataProvider(provider);
+  if (!["native-stage-arrival-v0.1", "native-station-arrival-v0.1"].includes(operation) ||
+      proof.length !== 9 || proof.some(rows => !Array.isArray(rows)))
+    stageFail("LIVE_WRITES_DISABLED");
+  // Legacy DBA certificates remain byte-for-byte compatible. The explicit
+  // hybrid certificate binds provenance, owner, operation AND reviewed scope.
+  if (provider === "dba-v1") return operation === "native-stage-arrival-v0.1"
+    ? fingerprint(proof) : fingerprint({ operation, proof });
+  return fingerprint({ version: "shf-native-metadata-v1", provider, owner: "SHIFTER",
+    operation, tableScope: [...tables], proof });
+}
 export async function nativeIdentity(q: NativeQuery, expected: NativeIdentity) {
   let identity: NativeIdentity;
   try { identity = parseNativeIdentity(expected); } catch { return stageFail("LIVE_WRITES_DISABLED"); }
@@ -85,14 +128,17 @@ export async function nativeIdentity(q: NativeQuery, expected: NativeIdentity) {
       !nativeEndpointHostMatches(target.endpointProof, row.host)) stageFail("LIVE_WRITES_DISABLED");
 }
 export async function nativeSafety(q: NativeQuery, b: NativeBinding): Promise<NativeSchema> {
+  const provider = selectedMetadataProvider(b);
+  if (provider === "owner-hybrid-v1" && (b.writeIdentity.user !== "SHIFTER" || b.writeIdentity.schema !== "SHIFTER"))
+    stageFail("LIVE_WRITES_DISABLED");
   await nativeIdentity(q, b.writeIdentity);
   const proof: unknown[][] = [];
-  for (const [i, sql] of nativeMetadataSql.entries()) {
+  for (const [i, sql] of nativeMetadataQueries(Object.keys(nativeTables), provider).entries()) {
     const rows = await q(`/* native:metadata:${i} */ ${sql}`, i === 7 ? { writeUser: b.writeIdentity.user } : {}, 1001);
     if (rows.length > 1000 || rows.some(r => !record(r))) stageFail("LIVE_WRITES_DISABLED");
     proof.push(rows);
   }
-  if (fingerprint(proof) !== b.metadataDigest || !proof[1].length ||
+  if (nativeMetadataDigest(provider, "native-stage-arrival-v0.1", Object.keys(nativeTables), proof) !== b.metadataDigest || !proof[1].length ||
       proof[1].some(r => !record(r) || r.status !== "ENABLED" || r.validated !== "VALIDATED") ||
       proof[3].some(r => !record(r) || r.status !== "DISABLED") ||
       proof[4].some(r => !record(r) || r.enabled !== "NO")) stageFail("LIVE_WRITES_DISABLED");

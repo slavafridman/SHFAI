@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, approved native F2 implementation and independent QA published; live TEST DNS blocked.
+Last updated: 2026-10-28, TNS target proof PASS; hybrid metadata QA PASS; scoped publication ready.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -25,7 +25,196 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ## Current priority: first controlled TEST Oracle arrival update
 
-### SHF-NATIVE-F2-APPROVED-28 — current resume checkpoint
+### SHF-ORACLE-NET-RESOLVER-28 — current resume checkpoint
+
+**State: OS target proof PASS / hybrid compatibility QA PASS / live certification externally BLOCKED.** User correctly notes Oracle works through TNS.
+Actual Thick connections and matching non-host identity are already verified;
+ESERVFAIL belongs to our additional DNS-only proof queries, not a demonstrated
+Oracle connectivity outage. The next local hypothesis is that Oracle Net uses
+normal OS name resolution (including legitimate hosts/cache sources) while
+direct DNS A/AAAA queries fail.
+
+Operator is checking exact configured endpoint and approved-bootstrap host
+using normal OS getaddrinfo/all-address resolution, without hosts-file reads,
+DNS-server changes, reverse lookup, guessed addresses or public DNS fallback.
+Architect is assessing whether those complete normalized address sets satisfy
+the existing immutable configured-address-set proof under approved46.1;
+no source guard or public contract is changed by this diagnostic.
+No metadata/business read, application startup, setup, DML or allowance action
+is included. If compatible proof succeeds, current operational readiness
+must still be checked before any real command. Parent owns this checkpoint.
+
+#### SHF-METADATA-EXIT-DESIGN-PUBLISH-28 — scoped publication
+
+All owners are stopped and source-stable. Publication operator temporarily
+owns this checkpoint until handoff. Fresh main and fetched origin/main both
+equal `3da69725d2e622f3736bbd9f6ab82eec3b4965ce`; ahead/behind
+0/0, index empty and conflicts zero before staging.
+
+Exactly nine assigned paths are eligible: the six backend metadata-provider
+paths listed below (including the new metadata-provider test), this checkpoint,
+the existing design's append-only section47 proposal, and the standard
+`docs/reverse-engineering/verification.json` refresh. The 23 unrelated dirty
+paths are excluded and inspected by name only, without content reads/hashes.
+Canonical contracts, frontend and dependency artifacts remain outside scope.
+
+Fresh `node docs\reverse-engineering\verify-evidence.mjs` PASS:
+31 CSVs, 10,000 inventory references, 454 source hashes, 391 design-local
+links and 250 line anchors. All 20 historical capture hashes are unchanged;
+the known duplicate legacy route remains a documented source anomaly.
+Bounded scoped privacy/credential/private-key/token/private-row/DDL and
+whitespace review PASS. HEAD-plus-publication closure PASS: 46 relative
+imports and 395 local documentation links; no session-only QA import.
+Section47 is append-only, REVIEW/approval-required, with no exit types/code
+or approval inferred from the request to finish quickly.
+
+The publication helper initially hit Git-output buffer capacity, then a
+PowerShell non-ASCII regex encoding mismatch. Increasing only its in-memory
+buffer and using an ASCII-safe assertion yielded PASS; neither failure was a
+repository/source defect. Git's verification JSON LF-to-CRLF warning is
+informational. Fresh owner/independent QA outcomes below are not rerun here:
+no compiler/application test/build, DNS/DB, application startup, allowance,
+grant, DDL or dependency operation is part of publication.
+
+Normal exact-nine-path commit/push and staged closure checks are pending.
+Current live blocker is runtime visibility of DBA_TRIGGERS/DBA_ROLE_PRIVS,
+not the historical wire-DNS error. Next safe action after publication is
+operator/DBA resolution of those two read sources and current fail-closed
+certification; separately present section47 v0.1 for explicit implementation
+baseline approval. No actual arrival or full-project completion is claimed.
+
+Architect confirmed normal Windows getaddrinfo/all-family lookup qualifies
+under the existing trusted-resolver address-set contract; this is an internal
+method correction, not new API/security approval. The chosen adapter must
+request family0/all/verbatim without address-family suppression or synthesis,
+preserve and validate every returned address, and compare whole normalized
+nonempty sets. Error, timeout, malformed/overflow/empty result denies proof.
+Provenance is OS resolution, not authoritative wire DNS or inspected HOSTS
+contents. No guessed alias/CNAME, settings change or mixed partial result is
+allowed; DB/INSTANCE/account/schema and strict server-host checks remain.
+If the bounded OS check succeeds, the operator may freeze the approved
+bootstrap reference and perform exact-marker/current metadata read-only
+readiness. No app start, setup refresh, DML or allowance consumption is yet
+permitted. Diagnostic DNS failure remains historical evidence, not erased.
+
+At 10:24 +02 the user requested all necessary work to finish quickly.
+Independent next-slice work is now assigned: architect owns only a source-backed
+station-exit section47 appendix in the existing design, reusing current native
+transaction/UI patterns and separating ordinary exit from early-exit/manager
+approval. Material new API/UI/persistence contracts remain approval-gated;
+no unapproved station-exit code or infrastructure action is assigned.
+This work does not delay the operator's ongoing Oracle Net resolver/readiness
+check and does not replace the required real arrival proof with another mock.
+Historical duplicate tracking entries are closed as superseded, not as evidence
+that a live pilot occurred; current runtime work has one active owner/checkpoint.
+
+The real OS-resolver adapter has now built the unchanged factory's immutable
+proof: complete nonempty endpoint/candidate address sets match. DB/INSTANCE/
+user/schema and subsequent native identity guard pass. The reference is stored
+only in an ACL-protected private Git-internal operator file, without credentials
+or business keys; its contents must not be copied to this checkpoint or Git.
+Previous wire-DNS ESERVFAIL is not an Oracle connectivity blocker.
+
+Current readiness stops at the first required dictionary query joining
+DBA_TAB_COLUMNS/DBA_TABLES with ORA-00942. This does not yet identify which
+view is unavailable or whether absence versus privilege is responsible.
+Operator is isolating those two objects and checking owner-schema metadata
+availability without broad fallback, grants or business reads. Architect is
+assessing whether a rigorously equivalent owner-schema provider can satisfy
+the current safety checks; no weaker ALL_* certification is accepted.
+Current phase counters: one pool/connection/READ ONLY; two identity SELECTs
+and one calendar SELECT succeeded; one dictionary SELECT failed; two OS
+lookups succeeded. Business reads, app starts, DML/COMMIT and allowance zero.
+Rollback/release/pool close/lookup settlement passed.
+
+Next-slice section47 ordinary station-exit v0.1 is drafted and source-reviewed,
+pending explicit new baseline approval. Existing station arrival is required,
+stage is not; proposed write touches only station exit time/user, retaining
+the source-compatible whole-minute early threshold. Early-manager decisions,
+corrections/cancellations and operational execution are separate. No exit
+canonical types or application code is authorized merely by this draft.
+
+Metadata isolation now confirms SYS.DBA_TAB_COLUMNS, SYS.DBA_TABLES,
+DBA_TRIGGERS and DBA_ROLE_PRIVS are unavailable with ORA-00942. USER table/
+column views are available and session user/current schema match the owner.
+Twenty bounded zero-row projection/filter checks additionally confirm owner
+constraints/constraint-columns/triggers/table-grants/column-grants projections
+and ALL_TRIGGERS are accessible. USER_POLICIES lacks OBJECT_OWNER,
+USER_DEPENDENCIES lacks OWNER, and USER_ROLE_PRIVS lacks GRANTEE in the
+existing DBA-shaped query. These are explicit Oracle11 projection differences,
+not empty results or permission certification.
+All checks were READ ONLY; cleanup passed and business/mutation/allowance
+counts remain zero. Complete cross-owner trigger visibility and PUBLIC role
+coverage remain unproven, so no automatic USER/ALL fallback is enabled.
+Architect is considering a strict owner-provider mapping; a bounded executor
+is checking public official Oracle11 references for those precise coverage
+questions. No blanket DBA role, grants or schema changes have been requested
+or performed.
+
+Official Oracle11.2 references were now fetched and verified through public
+documentation only. ALL_TRIGGERS is described by accessible-table scope,
+whereas USER_TRIGGERS is trigger-owner scoped; explicit exhaustive cross-owner
+coverage is not independently established here. GRANT documentation confirms
+roles may be granted to PUBLIC, so USER_ROLE_PRIVS is not accepted as a
+replacement for the required user-plus-PUBLIC grant scope.
+The conservative compatibility path under assessment is an explicit hybrid:
+seven owner-scoped queries with the original DBA_TRIGGERS and DBA_ROLE_PRIVS
+queries retained. This needs only those two scoped dictionary read sources,
+not the DBA role or blanket dictionary access, and must fail closed while
+they remain unavailable. Architect is preparing a private-selector/provenance
+handoff for backend implementation; no provider fallback is enabled yet.
+References: Oracle11.2 Database Reference ALL_TRIGGERS/DBA_TRIGGERS/
+USER_TRIGGERS, DBA_ROLE_PRIVS/USER_ROLE_PRIVS, and SQL Language Reference
+GRANT. These documentation checks involved no database mutation or private
+content transmission.
+
+Architect completed the equivalent hybrid-provider handoff; backend owner is
+implementing it now. Optional private metadataProvider defaults to existing
+dba-v1; explicit owner-hybrid-v1 uses seven verified owner-scoped query slots
+and retains original full-scope DBA_TRIGGERS/DBA_ROLE_PRIVS slots.
+Selection is explicit, never an exception fallback; actual owner session is
+required before certification. Legacy digests stay unchanged; hybrid digests
+bind provider/owner/operation/table scope and reviewed result arrays, with
+independent F1/F2 provenance and preparation invalidation on drift.
+Public contracts, capabilities and frontend remain unchanged.
+Backend exclusively owns private config/query/safety/tests and README.
+This fix reduces excessive dictionary requirements without declaring the two
+remaining missing sources available. Real certification/DML stays blocked on
+their runtime-readable evidence and subsequent current operational checks.
+
+Hybrid provider implementation is now SOURCE-STABLE across six backend
+paths: private F1/F2 config, both snapshots, one new metadata-provider test
+and README. Owner checks: new60/60, combined326/326, strict typecheck and
+full backend811/811 PASS; scoped whitespace PASS. No frontend, public
+canonical, application, dependency or operational-config changes were needed.
+TDD initial failures and one intermediate test-inference error were corrected
+before the final runs. Independent bounded metadata-provider QA is running.
+Actual full-source dictionary visibility remains missing, so no successful
+hybrid certification, eligible-row read, application start or DML is claimed.
+
+Independent hybrid-provider QA is now PASS: new repository suite60/60,
+session-only independent matrix115/115, combined impacted467/467
+(352 repository plus115 independent) and strict typecheck all exit0.
+No defect was reproduced. Actual-UoW protocol-double cases at each retained
+DBA slot deny ORA-00942 without fallback, empty data, certification success,
+DML/COMMIT or admission consumption. Legacy query/digest compatibility,
+owner admission, Oracle11 projection shape, provenance/scope/operation drift
+and trigger/PUBLIC/grant/dependency/VPD/constraint changes were covered.
+Independent command-drift tests used only synthetic TEMP admission files.
+No repository files were changed by QA; all its owned resources closed.
+Prior frontend531/three-profile/browser evidence remains unchanged and was
+not rerun for the backend-only correction.
+
+Next action is scoped publication of the six-path backend compatibility fix,
+the section47 proposal and this checkpoint, with standard verifier refresh
+because the design changed. Actual TEST certification requires runtime-readable
+DBA_TRIGGERS and DBA_ROLE_PRIVS evidence; the user/DBA owns this external
+input, not another host/access approval. Native UPDATE is still unperformed.
+Ordinary native station-exit section47v0.1 is separately ready for explicit
+implementation-baseline approval; no new API/UI/persistence code is inferred
+from the user's general instruction to finish quickly.
+
+### SHF-NATIVE-F2-APPROVED-28 — prior published milestone
 
 **State: OFFLINE IMPLEMENTATION/QA PASS and PUBLISHED; live TEST blocked.** At 09:00 +02:00 on 28 October the user explicitly approved
 "section 46.1-bootstrap and section 46 native F2", both v0.1. This supersedes

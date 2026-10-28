@@ -1,7 +1,7 @@
 import { basename } from "node:path";
 import { exact } from "./stage-arrival-validation.mts";
 import { record } from "./contract-validation.mts";
-import { nativeBinding, nativeEnvironment } from "./native-stage-arrival-config.mts";
+import { nativeBinding, nativeEnvironment, selectedMetadataProvider } from "./native-stage-arrival-config.mts";
 import type { NativeBinding, NativeConfiguration } from "./native-stage-arrival-config.mts";
 import { fingerprint } from "./stage-arrival-domain.mts";
 import type { StationArrivalModeVNext } from "./oracle-station-arrival-contracts.mts";
@@ -14,7 +14,8 @@ const keys = ["marker", "employeeId", "shiftDayId", "orgUnitId", "readIdentity",
   "stationMetadataDigest", "operation", "approval", "freezeOwner", "recoveryOwner", "windowStart", "windowEnd",
   "allowanceFile", "writerFreezeConfirmed", "noExternalEffectsConfirmed", "singleExecutorConfirmed"];
 export function stationBinding(value: unknown): StationBinding {
-  if (!exact(value, keys) || value.operation !== "native-station-arrival-v0.1")
+  const hasProvider = record(value) && Object.hasOwn(value, "metadataProvider");
+  if (!exact(value, [...keys, ...(hasProvider ? ["metadataProvider"] : [])]) || value.operation !== "native-station-arrival-v0.1")
     throw Error("Exact private station operation binding required");
   const { operation: _operation, stationMetadataDigest, ...common } = value;
   const parsed = nativeBinding({ ...common, metadataDigest: stationMetadataDigest });
@@ -26,7 +27,8 @@ export function stationBinding(value: unknown): StationBinding {
   return Object.freeze({ ...binding, operation: "native-station-arrival-v0.1", stationMetadataDigest: metadataDigest });
 }
 export function stationIdentityReference(b: StationBinding) {
-  return fingerprint({ operation: b.operation, read: b.readIdentity, write: b.writeIdentity });
+  return fingerprint({ operation: b.operation, read: b.readIdentity, write: b.writeIdentity,
+    metadata: { provider: selectedMetadataProvider(b), digest: b.stationMetadataDigest } });
 }
 // Does not resolve DNS or weaken the shared immutable identity/proof parser.
 export function nativeStationMode(v: unknown): StationArrivalModeVNext {

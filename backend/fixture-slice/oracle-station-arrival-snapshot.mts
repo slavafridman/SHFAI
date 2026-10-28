@@ -3,9 +3,9 @@ import { decimalId, localDateTime, record } from "./contract-validation.mts";
 import { numberText } from "./oracle-readers.mts";
 import { fingerprint, instantFor } from "./stage-arrival-domain.mts";
 import { stageFail } from "./stage-arrival-errors.mts";
-import { nativeMarker } from "./native-stage-arrival-config.mts";
+import { nativeMarker, selectedMetadataProvider } from "./native-stage-arrival-config.mts";
 import type { StationBinding } from "./native-station-arrival-config.mts";
-import { nativeIdentity, nativeMetadataQueries, nativeTables, one, expression } from "./oracle-stage-arrival-snapshot.mts";
+import { nativeIdentity, nativeMetadataQueries, nativeMetadataDigest, nativeTables, one, expression } from "./oracle-stage-arrival-snapshot.mts";
 import type { NativeQuery, NativeRow, NativeSchema, NativeColumn } from "./oracle-stage-arrival-snapshot.mts";
 import { stationBlockers, stationOverlap } from "./oracle-station-arrival-domain.mts";
 import type { StationCandidate } from "./oracle-station-arrival-domain.mts";
@@ -26,14 +26,17 @@ export const stationTables = {
 } as const;
 export const stationMetadataSql = nativeMetadataQueries(Object.keys(stationTables));
 export async function stationSafety(q: NativeQuery, b: StationBinding): Promise<NativeSchema> {
+  const provider = selectedMetadataProvider(b);
+  if (provider === "owner-hybrid-v1" && (b.writeIdentity.user !== "SHIFTER" || b.writeIdentity.schema !== "SHIFTER"))
+    stageFail("LIVE_WRITES_DISABLED");
   await nativeIdentity(q, b.writeIdentity);
   const proof: unknown[][] = [];
-  for (const [i, sql] of stationMetadataSql.entries()) {
+  for (const [i, sql] of nativeMetadataQueries(Object.keys(stationTables), provider).entries()) {
     const r = await q(`/* station:metadata:${i} */ ${sql}`, i === 7 ? { writeUser: b.writeIdentity.user } : {}, 1001);
     if (r.length > 1000 || r.some(v => !record(v))) stageFail("LIVE_WRITES_DISABLED");
     proof.push(r);
   }
-  if (fingerprint({ operation: b.operation, proof }) !== b.stationMetadataDigest || !proof[1].length ||
+  if (nativeMetadataDigest(provider, b.operation, Object.keys(stationTables), proof) !== b.stationMetadataDigest || !proof[1].length ||
       proof[1].some(r => !record(r) || r.status !== "ENABLED" || r.validated !== "VALIDATED") ||
       proof[3].some(r => !record(r) || r.status !== "DISABLED") ||
       proof[4].some(r => !record(r) || r.enabled !== "NO")) stageFail("LIVE_WRITES_DISABLED");

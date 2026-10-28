@@ -204,7 +204,10 @@ Native enabling is independent of mock enabling:
   designate the same TEST target/proof; SQL always explicitly targets SHIFTER.
   Never infer DB_NAME or SERVICE_NAME from a TNS alias/SID, or copy expected
   values from the connection's identity response.
-* `metadataDigest`: lowercase SHA256 of canonical **ordered arrays** returned
+* `metadataProvider`: optional private selector, exactly `dba-v1` or
+  `owner-hybrid-v1`. Omission retains legacy DBA behavior; no ORA-00942 fallback.
+  The owner-hybrid visibility/certificate requirements are documented below.
+* `metadataDigest`: for omitted/`dba-v1`, lowercase SHA256 of canonical **ordered arrays** returned
   by the nine `nativeMetadataSql` queries exported from
   `oracle-stage-arrival-snapshot.mts`, in export order, including column types,
   byte limits, constraints/constraint columns, triggers, VPD, direct table/
@@ -286,7 +289,8 @@ Startup performs writer SELECT-only metadata/identity and actual zero-row
 SELECT privilege probes, followed by rollback,
 then a separate read-only exact-marker/prefix/cardinality/source/policy snapshot
 and real Clock eligibility check **before listen**. Missing dictionary
-visibility (DBA views), unsupported/virtual columns or nonpersistent-table
+visibility for the selected provider (including its mandatory DBA views),
+unsupported/virtual columns or nonpersistent-table
 objects in the read set, enabled triggers/VPD, unknown safety,
 wrong identity, reused allowance, invalid scopes or expired/late data stop
 startup. Same-owner SHIFTER privileges are recognized explicitly; accepting
@@ -1866,9 +1870,11 @@ does not create it; a command spends it before acquisition, including failed
 or UNKNOWN attempts. Keep its exact path across restart/new UUID. No reset,
 replay, setup or automatic reconciliation API exists.
 
-`stationMetadataDigest` is **not the F1 digest**: it is the existing canonical
+For omitted/`dba-v1` metadata provider, `stationMetadataDigest` is **not the F1 digest**: it is the existing canonical
 SHA-256 fingerprint of `{operation, proof}`, with operation above and the
-ordered results of exported `stationMetadataSql`. Operator certification must
+ordered results of exported `stationMetadataSql`. The optional private
+`metadataProvider` field also supports explicit `owner-hybrid-v1` with the
+versioned provenance certificate below. Operator certification must
 cover the F2 table set, station time/user types, at least100 BYTE VARCHAR2 user
 capacity, all attendance columns, keys, constraints, disabled triggers/VPD,
 dependencies, grants and actual writer SELECT privileges. A matching digest
@@ -1965,9 +1971,129 @@ directories and removed afterward. No real allowance is consumed. The installed
 Node24/npm11/driver26 baseline is retained; operator-reported Oracle11.2.0.4 /
 Client19.3 compatibility is not recertified by offline tests.
 
-Operational GO, current endpoint A/AAAA proof (reported ESERVFAIL remains a
-blocker), identity/bootstrap, actual F2 metadata/byte capacity/hidden-effects
+Operational GO, current complete endpoint target proof, identity/bootstrap,
+actual F2 metadata/byte capacity/hidden-effects
 certification, eligibility, operational freeze/window and a fresh separate
 allowance belong to parent/operator. No live DB/DNS, production, DDL, broker,
 legacy execution, credential-file access or frontend/browser checks are run or
 claimed by this backend implementation.
+
+## ROOTMETADATA compatibility follow-up — explicit owner-hybrid-v1
+
+This approved internal compatibility fix changes only private metadata/configuration
+handling. Public §46 v0.1 contracts, native capabilities, business eligibility,
+two-column F2 DML, transaction/fuse/readback rules and default-off gates are
+unchanged. It does not approve any database access, application startup or DML.
+
+### Provider selection and mandatory identity
+
+F1 and F2 private binding packets accept one **optional** field:
+
+```text
+metadataProvider: "dba-v1" | "owner-hybrid-v1"
+```
+
+Omitted means legacy DBA. Explicit `dba-v1` uses identical legacy queries and
+digest formula. Explicit null/undefined, empty/unknown values and extra keys
+are rejected, not defaulted. Provider selection survives F2's private F1
+environment-validation translation. There is **no automatic ORA-00942 fallback**.
+
+`owner-hybrid-v1` requires the independently expected writer account **and**
+schema to be exactly `SHIFTER`. Before any dictionary query, the existing
+frozen-target identity guard must establish actual `SESSION_USER=SHIFTER` and
+`CURRENT_SCHEMA=SHIFTER`, plus the unchanged DB/host/instance-or-service proof.
+Changing CURRENT_SCHEMA on a nonowner account is not sufficient. Read-account
+identity remains independently checked through its existing binding.
+
+### Exact nine-slot visibility contract
+
+| Slot | owner-hybrid-v1 source / scope |
+|---|---|
+| 0 | USER_TAB_COLUMNS joined through USER_TABLES for the exact reviewed table set and `temporary='N'`; no unavailable OWNER column |
+| 1 | USER_CONSTRAINTS for the exact table set; referenced owner/constraint retained |
+| 2 | USER_CONS_COLUMNS for the exact table set |
+| 3 | **Unchanged DBA_TRIGGERS**, `table_owner='SHIFTER'`, covering cross-owner triggers |
+| 4 | USER_POLICIES for the exact object set; no invalid OBJECT_OWNER predicate |
+| 5 | USER_TAB_PRIVS with `OWNER='SHIFTER'`, no grantor filter |
+| 6 | USER_COL_PRIVS with `OWNER='SHIFTER'`, no grantor filter |
+| 7 | **Unchanged DBA_ROLE_PRIVS**, writer **or PUBLIC**, not USER_ROLE_PRIVS |
+| 8 | USER_DEPENDENCIES for the exact object set; no invalid OWNER predicate; external referenced owner/name/type retained |
+
+These are seven USER-query slots plus two retained DBA-query slots. Projection
+aliases, sorting, nine-array order, table scope, row bounds, required columns,
+type/byte checks, enabled/validated constraints, disabled trigger/VPD rules and
+actual zero-row writer SELECT probes remain in force. A missing required view,
+error, malformed/overflow result, changed unreviewed facts or failed probe stops
+certification. No USER_TRIGGERS/ALL_TRIGGERS substitution or fabricated implicit
+grant rows is used. Owner UPDATE access remains recognized as before, not
+relabelled as least privilege.
+
+**Minimum retained DBA visibility:** the actual SHIFTER writer must still be
+able to query both **DBA_TRIGGERS and DBA_ROLE_PRIVS** with these complete scopes.
+The hybrid selector cannot cure their reported ORA-00942 failures. Availability
+of the required USER views, especially their Oracle11 projection columns, must
+also be verified by the operator. This implementation neither creates views
+nor changes privileges.
+
+### Reviewed certificate and preparation provenance
+
+`oracle-stage-arrival-snapshot.mts:nativeMetadataQueries(tableScope, provider)`
+defines the exact queries for either provider. Exported `nativeMetadataSql`
+and `stationMetadataSql` remain the legacy DBA arrays. The safety consumers
+select the explicit provider using their fixed F1 or F2 table scope; they never
+recalculate and **accept** a replacement certificate at startup.
+
+For owner-hybrid, use the existing canonical `fingerprint` over exactly:
+
+```text
+{
+  version: "shf-native-metadata-v1",
+  provider: "owner-hybrid-v1",
+  owner: "SHIFTER",
+  operation: "native-stage-arrival-v0.1" OR "native-station-arrival-v0.1",
+  tableScope: ordered Object.keys(nativeTables) OR Object.keys(stationTables),
+  proof: [slot0Rows, slot1Rows, ..., slot8Rows]
+}
+```
+
+`nativeMetadataDigest(provider, operation, tableScope, proof)` implements this
+private formula. Supply the reviewed exact result as F1 `metadataDigest` or
+F2 `stationMetadataDigest`. Never reuse F1/F2 certificates, DBA/hybrid
+certificates or a unit-test certificate. For DBA, the old F1 `fingerprint(proof)`
+and F2 `fingerprint({operation,proof})` formulas are unchanged.
+
+The private preparation/UoW construction reference now includes normalized
+provider and the supplied certificate as well as the existing target/account
+identity (and F2 operation). Provider, reviewed scope/digest or identity drift
+requires a new consistent construction/preparation; an app and UoW with
+different certificates cannot be combined. Omitted and explicit `dba-v1`
+normalize identically. No application file or public DTO change was needed.
+
+Synthetic-only example: an isolated double whose independently configured
+writer and observed session are both SHIFTER may set `metadataProvider` to
+`owner-hybrid-v1` and compute the envelope from **its synthetic nine arrays**
+to exercise pure preparation. Such a digest proves nothing about TEST Oracle.
+No live connection details, secrets, reviewed digests or allowance paths are
+published here.
+
+### Offline verification and current operator handoff
+
+```powershell
+node --test test/native-metadata-provider.test.mts
+node --test test/native-metadata-provider.test.mts test/oracle-stage-arrival.test.mts test/oracle-station-arrival.test.mts test/native-stage-arrival-identity.test.mts test/native-stage-arrival-http.test.mts test/native-station-arrival-http.test.mts
+npm run typecheck
+npm test
+```
+
+Checks are synthetic/static/owned-loopback only. No live DB/DNS, grants, new
+views, DDL, real allowance consumption, credential-file access or frontend
+changes are included.
+
+Current caller reports immutable OS/Oracle Net endpoint proof and native
+non-host identity **PASS**; historical direct-DNS ESERVFAIL is not an Oracle
+connectivity blocker. Current operational certification remains blocked by
+missing visibility of the two retained DBA views above. Parent/operator owns
+that visibility resolution, the current independent owner/identity proof and
+reviewed provider-specific F2 certificate, followed by the unchanged eligibility,
+freeze/window/allowance and separate operational GO gates. Offline tests do not
+establish that those operational prerequisites are satisfied.

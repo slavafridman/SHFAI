@@ -25,11 +25,20 @@ export type NativeTarget =
   | { readonly kind: "service-reference"; readonly serviceName: string; readonly host: string };
 export type NativeIdentity = NativeLegacyIdentity |
   { database: string; user: string; schema: string; readonly target: NativeTarget };
+export type NativeMetadataProvider = "dba-v1" | "owner-hybrid-v1";
+export function parseMetadataProvider(value: unknown): NativeMetadataProvider {
+  if (value !== "dba-v1" && value !== "owner-hybrid-v1") throw Error("Explicit supported native metadata provider required");
+  return value;
+}
+export function selectedMetadataProvider(binding: { metadataProvider?: unknown }): NativeMetadataProvider {
+  return Object.hasOwn(binding, "metadataProvider") ? parseMetadataProvider(binding.metadataProvider) : "dba-v1";
+}
 export interface NativeBinding {
   marker: typeof nativeMarker;
   employeeId: string; shiftDayId: string; orgUnitId: string;
   readIdentity: NativeIdentity; writeIdentity: NativeIdentity;
   metadataDigest: string;
+  metadataProvider?: NativeMetadataProvider;
   approval: string; freezeOwner: string; recoveryOwner: string;
   writerFreezeConfirmed: true; noExternalEffectsConfirmed: true; singleExecutorConfirmed: true;
   windowStart: string; windowEnd: string;
@@ -209,12 +218,17 @@ export function nativeIdentityBindingReference(binding: NativeBinding) {
   return fingerprint({
     read: { ...nativeTargetReference(binding.readIdentity), user: binding.readIdentity.user, schema: binding.readIdentity.schema },
     write: { ...nativeTargetReference(binding.writeIdentity), user: binding.writeIdentity.user, schema: binding.writeIdentity.schema },
+    metadata: { provider: selectedMetadataProvider(binding), operation: "native-stage-arrival-v0.1",
+      digest: binding.metadataDigest },
   });
 }
 export function nativeBinding(v: unknown): NativeBinding {
+  const hasProvider = record(v) && Object.hasOwn(v, "metadataProvider");
+  const metadataProvider = hasProvider ? parseMetadataProvider(v.metadataProvider) : undefined;
   if (!exact(v, ["marker", "employeeId", "shiftDayId", "orgUnitId", "readIdentity", "writeIdentity",
     "metadataDigest", "approval", "freezeOwner", "recoveryOwner", "windowStart", "windowEnd", "allowanceFile",
-    "writerFreezeConfirmed", "noExternalEffectsConfirmed", "singleExecutorConfirmed"]) ||
+    "writerFreezeConfirmed", "noExternalEffectsConfirmed", "singleExecutorConfirmed",
+    ...(hasProvider ? ["metadataProvider"] : [])]) ||
       v.marker !== nativeMarker || !decimalId(v.employeeId) || !decimalId(v.shiftDayId, 10) ||
       !unitCode(v.orgUnitId) || typeof v.metadataDigest !== "string" || !/^[a-f0-9]{64}$/.test(v.metadataDigest) ||
       !text(v.approval, 128, 1) || !text(v.freezeOwner, 128, 1) || !text(v.recoveryOwner, 128, 1) ||
@@ -229,8 +243,11 @@ export function nativeBinding(v: unknown): NativeBinding {
   const path = verifiedNativeAllowancePath(v.allowanceFile);
   const readIdentity = parseNativeIdentity(v.readIdentity), writeIdentity = parseNativeIdentity(v.writeIdentity);
   if (!same(nativeTargetReference(readIdentity), nativeTargetReference(writeIdentity))) throw Error("Native source mismatch");
+  if (metadataProvider === "owner-hybrid-v1" && (writeIdentity.user !== "SHIFTER" || writeIdentity.schema !== "SHIFTER"))
+    throw Error("Owner-hybrid requires independently expected SHIFTER writer and schema");
   return Object.freeze({ marker: nativeMarker, employeeId: v.employeeId, shiftDayId: v.shiftDayId,
     orgUnitId: v.orgUnitId, readIdentity, writeIdentity, metadataDigest: v.metadataDigest,
+    ...(metadataProvider === undefined ? {} : { metadataProvider }),
     approval: v.approval, freezeOwner: v.freezeOwner, recoveryOwner: v.recoveryOwner,
     writerFreezeConfirmed: true, noExternalEffectsConfirmed: true, singleExecutorConfirmed: true,
     windowStart: v.windowStart, windowEnd: v.windowEnd, allowanceFile: path });
