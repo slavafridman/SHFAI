@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, hybrid metadata fix and section47 proposal published; two dictionary views block live certification.
+Last updated: 2026-10-28, section47 ordinary native station-exit approved; canonical implementation running.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -25,7 +25,104 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ## Current priority: first controlled TEST Oracle arrival update
 
-### SHF-ORACLE-NET-RESOLVER-28 — current resume checkpoint
+### SHF-STATION-EXIT-APPROVED-28 — current resume checkpoint
+
+**State: RUNNING.** At 11:08 +02:00 the user replied "Agree and continue"
+to the explicit section47v0.1 ordinary native TEST station-exit implementation
+approval request. This approves that APP/API/identity/UI/persistence baseline,
+not early-manager/correction/cancellation flows or an operational write.
+Architect owns capability/canonical exit types/tests and the appended approval
+record. Backend/UI consumers wait for canonical checks. UI designer performs
+read-only consistency review of the approved layout/states; parent owns status.
+
+The same reply is not evidence that DBA privileges have been provisioned.
+Operator is performing one bounded read-only recheck of DBA_TRIGGERS and
+DBA_ROLE_PRIVS behind the frozen identity guard. If unavailable, stop without
+retries/grants or business access. If both available, current hybrid metadata
+and exact synthetic-record readiness may be checked read-only; application
+startup, setup refresh, DML and allowance use still wait for operational GO.
+No new broad TEST or host approval is needed. Normal TNS/OS proof works;
+DNS is not the current blocker. Previously published compatibility feature
+0c5475e/checkpointc69a70b remains historical until current Git reconciliation.
+
+The bounded recheck completed: frozen identity/reference and owner schema
+PASS, but both DBA_TRIGGERS and DBA_ROLE_PRIVS still return ORA-00942.
+One pool/connection/READ ONLY, one identity/calendar SELECT and exactly two
+dictionary probes; cleanup passed. Further metadata/business/application/
+setup/DML/COMMIT/allowance and privilege changes were zero. Stop live checks
+until TEST DBA/operator changes and confirms that concrete prerequisite.
+UI designer completed read-only section47 consistency review: READY, no
+additional decision. Its handoff covers explicit selected-resource navigation,
+actual TEST/separate synthetic notices, station-arrival prerequisite with
+optional stage, unchanged briefing, empty draft/whole-operation consent,
+server-rendered exclusive early bound, ACK/readback receipt and UNKNOWN
+history/source isolation. No source or documentation was edited by UX.
+Consumers still wait for canonical materialization and executable checks.
+
+Architect materialized three exit capability members, the type-only
+station-exit contract and focused canonical test, and recorded section47.7
+approval. No runtime grants or consumers changed in that handoff. Backend
+owner is now running canonical exit/station/native-station tests and strict
+typecheck before consumer work. Existing arrival modes must remain unchanged.
+UI may start only after this gate passes; its read-only UX handoff is READY.
+Current exit approval is implementation-only, not early-manager or live DML.
+
+Canonical gate now PASS: exit/station/native-station contract tests3/3 and
+strict backend typecheck exit0. Architect's three canonical paths are frozen.
+Backend owner is implementing noncanonical exit domain/application/snapshot/
+UoW/config/policy/server/HTTP/tests/README; UI owner is implementing the
+frontend-only exit workflow in parallel. Shared runtime/config has one writer,
+canonical types one architect owner, checkpoint one parent owner.
+UI uses typed HTTP doubles while backend is changing; actual loopback protocol
+integration waits for backend source-stable handoff. No new dependencies,
+live Oracle write or automatic interpretation of unavailable metadata is
+authorized. Canonical-step publication is next, without consumer source.
+
+#### SHF-STATION-EXIT-CANONICAL-PUBLISH-28 — current publication step
+
+Architect's canonical/design artifacts are stopped and source-stable.
+Publication operator temporarily owns this checkpoint until handoff; backend
+and frontend continue disjoint noncanonical implementation, excluded here.
+Fresh main and fetched origin/main both equal
+`c69a70b2bcb9c8fe592fdc7e47015387e46b424f`, ahead/behind
+0/0, empty index and no conflicts before staging.
+
+Exactly six assigned paths: `backend/fixture-slice/contracts.mts`,
+`backend/fixture-slice/station-exit-contracts.mts`,
+`backend/fixture-slice/test/station-exit-contracts.test.mts`,
+`docs/SHF_REVERSE_ENGINEERING_DESIGN.md`, this checkpoint and
+`docs/reverse-engineering/verification.json`. The design delta is solely
+append-only section47.7, recording contextual explicit implementation
+approval; no live GO, early-manager, late/correction/cancellation authority.
+
+Fresh standard verifier PASS:
+`node docs\reverse-engineering\verify-evidence.mjs`, 31 CSVs,
+10,000 inventory references, 454 source hashes, 391 design-local links
+and 250 line anchors. All 20 historical capture hashes remain unchanged;
+the known duplicate legacy route remains a documented source anomaly.
+Scoped privacy/credential/private-key/token/private-row/DDL, whitespace and
+HEAD-plus-publication closure checks PASS: eight relative canonical/test
+imports and 395 local document links. No unpublished consumer/QA module
+is needed by this publication. Normal verifier JSON LF-to-CRLF warning only.
+At this review 25 outside-scope dirty paths were visible by name only:
+23 original unrelated user paths plus ongoing consumer work; no outside
+contents or hashes were read.
+
+Three canonical tests and backend strict typecheck passed before consumer
+implementation, as directly reported above; no application/compiler/test/
+build rerun is performed while consumers edit. Publication performs no
+DNS/DB/application/allowance/grant/dependency operation. Current live
+certification still lacks DBA_TRIGGERS/DBA_ROLE_PRIVS visibility (both
+ORA-00942 on the bounded recheck); TNS/OS proof works, not DNS-blocked.
+
+Exact-six-path staged checks, normal commit/push and direct remote
+verification are pending. Next safe action after publication: continue
+approved disjoint offline exit consumers and source-stable focused QA;
+operator/DBA resolves the two dictionary prerequisites before current
+operational certification. No actual update or full-project completion
+is claimed. Parent checkpoint ownership returns after publication handoff.
+
+### SHF-ORACLE-NET-RESOLVER-28 — prior investigation milestone
 
 **State: OS target proof PASS / hybrid compatibility QA PASS / live certification externally BLOCKED.** User correctly notes Oracle works through TNS.
 Actual Thick connections and matching non-host identity are already verified;
