@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, verified SOURCE/private-ID fix published; setup committed, arrival operational gates unresolved.
+Last updated: 2026-10-28, first real Angular/native Oracle TEST F1 committed and independently readback-verified.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -23,9 +23,108 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 5. Record the next result here and include this file in the step's scoped
    commit/push. Obtain any missing approval before dependent implementation.
 
-## Current priority: first controlled TEST Oracle arrival update
+## Current priority: preserve verified real F1 outcome and separate next-operation gates
 
-### SHF-TEST-METADATA-WAIVER-28 — current resume checkpoint
+### SHF-REAL-F1-OPERATIONAL-GO-28 — current resume checkpoint
+
+**State: REAL UI NATIVE F1 SUCCESS / COMMIT ACK AND INDEPENDENT READBACK VERIFIED.** At14:46+02 the user replied "Agree and conyinue" to the
+remaining short TEST writer-exclusion and trusted allowance-namespace gates.
+Parent records this as USER-CONFIRMED exclusion/trust for one bounded pilot,
+not independent proof of a global database freeze or unmodifiable namespace.
+User confirms the operational window; the assigned operator executes it.
+No new host, DBA-view or source approval is requested.
+
+Parent issued GO for one actual F1 through real Angular UI and the normal
+native F1 backend, only after fresh identity/OS proof, limited metadata,
+read privilege, exact synthetic tuple, current policy/time and unused first
+allowance checks. Reuse the already fixed allowance path; existing fuse or
+UNKNOWN stops without replacement/retry. Section48 unknown coverage persists.
+The old setup window has expired. If needed and all actual attendance fields
+remain NULL, one additional same-tuple six-field planned-day refresh is
+authorized with fresh server Clock+45min lead and preserved source/IDs/
+attendance/work-minute consistency, one setup UPDATE/COMMIT and independent
+preservation readback. This is separate from arrival and uses no command fuse.
+
+The pilot has at most one arrival command, exact three F1 SET fields and
+explicit whole-operation UI confirmation. Success requires real COMMIT ACK
+plus independent matching preservation readback. UNKNOWN/uncertain commit
+stops for reconciliation; no retry/new UUID/path or clearing actual arrival.
+No F2/exit command is included in this GO. Operator must close only its own
+resources after SQL settlement and return actual effect/receipt/fuse counts.
+Production/DDL/EMS/CTI/batch and excluded environment-file access remain
+forbidden. Parent owns this checkpoint and publication after the outcome.
+Published source-fix featurecfcb0db/checkpoint6923285 is the input baseline;
+prior runtime facts below are historical and must be revalidated.
+
+#### SHF-REAL-UI-F1-PILOT-28 — verified outcome
+
+Parent inspected the sanitized aggregate operator journal after completion.
+Actual run started14:56:09+02 and completed14:58:23+02, within its bounded
+window. Main input HEAD6923285, index empty; unrelated edits preserved.
+Current runtime verified Node24.21.0, driver26.0.0, Thick Client19.3.0.0.0
+and Oracle11.2.0.4.0. Fresh production Angular build passed.
+
+Separate setup: old planned window expired; exactly one additional authorized
+six-field synthetic day UPDATE acknowledged, rows1, and one setup COMMIT
+acknowledged. Independent preservation readback passed. SOURCE/identifiers/
+attendance/paid-work consistency preserved. This was not an arrival retry.
+
+Real Chrome used production assets with actual Oracle backend factories,
+native F1 identity10, exact synthetic row selection, context, pure validation,
+review and explicit checkbox. Exactly one command click/request; real Origin
+and Client Hints retained. No interception, fake JSON or handcrafted POST.
+HTTP200 native oracle-test-committed receipt observed. Native attendance
+UPDATE attempt/ACK1/1, rows1; COMMIT attempt/ACK1/1.
+Stage arrival time/user and TADREECH0 verified by separate guarded READ ONLY
+operator readback, with all other attendance/day/employee fields preserved.
+Application also required its own matching independent readback for success.
+
+One initial startup rejected redundant disabled-mode keys in the private
+operator packet; only that harness packet was corrected before the command.
+Already-committed setup was retained, not repeated. The original arrival fuse
+was consumed and retained, never deleted or replaced. F2 and exit commands0.
+No UNKNOWN outcome, resend or compensating restoration was performed.
+All SQL settled; operator rollback/read lease/pool close and application drain,
+proxy/listener/browser/profile cleanup passed. User processes were untouched.
+
+Coverage remains explicitly LIMITED with the two user-waived DBA scopes
+unknown. Freeze/namespace trust is USER-CONFIRMED, not independently proven
+global exclusion or absence/reversal of autonomous/external effects.
+This closes the first bounded real arrival proof, not full-project delivery,
+general native writes, F2/exit live acceptance, UAT or production release.
+No credentials, host values, private keys/rows, tokens, receipt payloads or
+operator fingerprints are recorded here.
+
+#### SHF-REAL-F1-OUTCOME-PUBLISH-28 — scoped publication review
+
+Publication operator temporarily owns only this checkpoint until handoff.
+Fresh main and fetched origin/main both equal
+`69232858cac83a137cc514bc75ce847a52b0a0ac`, ahead/behind
+0/0, empty index and no conflicts before staging. Scope is exactly one path,
+`docs/PROJECT_STATUS.md`; all 23 unrelated dirty paths remain excluded and
+inspected by name only, without content reads/hashes.
+
+Bounded checkpoint privacy/secret/private-row/fingerprint/ACL review and
+whitespace PASS; all four existing local document links resolve to published
+HEAD targets. Application source, design and verification JSON are unchanged.
+No application/test/compiler/build/verifier, DNS/Oracle, allowance or setup
+operation is run by publication. Runtime/build/SQL outcomes above are
+parent-reviewed sanitized operator evidence, not checks rerun by publisher;
+no private operator journal or receipt payload is read for publication.
+
+Only a normal one-path commit/push is authorized; staged checks and direct
+remote verification accompany it. The resulting checkpoint SHA and final
+publication outcome are returned in the handoff and discoverable in Git
+history, without embedding a self-commit hash or claiming push success
+before it occurs. Parent checkpoint ownership returns on handoff.
+
+Next safe action after publication: preserve the consumed
+F1 allowance and committed arrival; do not reset actual fields or reuse that
+attempt. A later F2/exit operational test needs its own current scope,
+certificate, window, operation-bound allowance and GO; prior implementation
+approvals stay valid and are not requested again.
+
+### SHF-TEST-METADATA-WAIVER-28 — prior published milestone
 
 **State: LIMITED PROVIDER and SOURCE-ID fix PUBLISHED / real setup COMMITTED / arrival operationally BLOCKED.** At 11:59 +02:00 the user explicitly requested ignoring
 unavailable DBA_TRIGGERS and DBA_ROLE_PRIVS and continuing. This changes those
