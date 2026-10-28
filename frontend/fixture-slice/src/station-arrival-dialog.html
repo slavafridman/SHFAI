@@ -1,0 +1,29 @@
+<h2 mat-dialog-title>{{ labels.title }}</h2>
+<mat-dialog-content dir="rtl">
+  @if (data.kind === 'native-confirmation') {
+    <p><strong>כתיבה בפועל למסד TEST</strong> — שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור.</p>
+    <p>מנהל מערכת סינתטי אינו העובד/ת שנבחר/ה; לא בוצע אימות סיסמה אמיתית.</p>
+    <p>{{ data.selection.name }} · עובד/ת <bdi dir="ltr">{{ data.selection.employeeId }}</bdi>
+      · יום <bdi dir="ltr">{{ data.selection.shiftDayId }}</bdi> · צוות <bdi dir="ltr">{{ data.selection.orgUnitId }}</bdi></p>
+    <p>ישתנו בדיוק שני שדות: זמן הגעה לעמדה וחותמת מפעיל, שניהם נקבעים בשרת.
+      ההגעה לבמה והתדריך יישמרו ללא שינוי. במה אינה תנאי מקדים; אין ביצוע F1.</p>
+    <p>במה: <bdi dir="ltr">{{ data.context.recorded.stageArrivalLocal === null ? 'NULL' : time(data.context.recorded.stageArrivalLocal) }}</bdi>
+      · תדריך: {{ data.context.recorded.briefing === null ? 'NULL — לא ידוע' : data.context.recorded.briefing ? 'כן' : 'לא' }}.</p>
+    <p>זמן שנבדק: <bdi dir="ltr">{{ time(data.validation.evaluatedLocal) }}</bdi> · <bdi>{{ data.validation.businessTimeZone }}</bdi>.
+      הזמן הסופי ייקבע בשרת. אין רישום איחור, הוספה או הפעלת שותף חיצוני.</p>
+    <p>לאחר שליחה אין לשלוח שוב. עזיבה אינה ביטול. תוצאה לא ידועה מחייבת בירור ידני של המפעיל.</p>
+  } @else {
+    <p>סימולציה מבודדת בלבד — ללא Oracle, ללא כניסה אמיתית לעמדה.</p>
+    <p>{{ data.name }} · תחילה מתוכננת: <bdi dir="ltr">{{ time(data.planned) }}</bdi></p>
+    <p>זמן שרת שנבדק: <bdi dir="ltr">{{ time(data.validation.evaluatedLocal) }}</bdi>
+      · <bdi>{{ data.validation.businessTimeZone }}</bdi></p>
+    <p>איחור שחושב בשרת: {{ data.validation.warnings[0].minutes }} דקות. סיבה: {{ data.reason }}.</p>
+    <p>קריאת האזהרה מעבירה לסקירת כל הפעולה בלבד. עדיין לא נרשמה הגעה.</p>
+  }
+  <mat-checkbox [id]="labels.ackId" [formControl]="accepted">{{ labels.consent }}</mat-checkbox>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button [id]="labels.cancelId" mat-button type="button" (click)="ref.close(false)">{{ labels.cancel }}</button>
+  <button [id]="labels.confirmId" mat-flat-button type="button" [disabled]="!accepted.value"
+    (click)="confirm()">{{ labels.primary }}</button>
+</mat-dialog-actions>

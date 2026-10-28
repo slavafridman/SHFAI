@@ -6,7 +6,8 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { routes } from './routes';
-import { StationArrivalPage, StationWarning } from './station-arrival-page';
+import { StationArrivalPage } from './station-arrival-page';
+import { StationArrivalDialog } from './station-arrival-dialog';
 import { StationArrivalSession } from './station-arrival-session';
 import { StageArrivalSession } from './stage-arrival-session';
 import { stationIdentityFixture, stationSelectionFixture, stationContextFixture,
@@ -127,10 +128,11 @@ describe('F2 §§41–42 Angular, isolated typed HTTP double only', () => {
     ref.close(false); await closed; render();
     expect(page.state()).toBe('ready'); expect(page.validation()).toBeNull();
     validate(true); ref = TestBed.inject(MatDialog).openDialogs[0];
-    const w = ref.componentInstance as StationWarning;
-    w.review(); expect(page.state()).toBe('warning');
+    const w = ref.componentInstance as StationArrivalDialog;
+    expect(w.data.kind).toBe('fixture-warning');
+    w.confirm(); expect(page.state()).toBe('warning');
     closed = new Promise(resolve => ref.afterClosed().subscribe(resolve));
-    w.accepted.setValue(true); w.review(); await closed; render();
+    w.accepted.setValue(true); w.confirm(); await closed; render();
     expect(page.state()).toBe('review'); http.expectNone(base + '/commands');
     page.confirm(); const r = http.expectOne(base + '/commands');
     expect(r.request.body.confirmation).toEqual({ accepted: true, warningCodes: ['STATION_ARRIVAL_LATE'] });

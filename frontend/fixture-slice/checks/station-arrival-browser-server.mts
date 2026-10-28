@@ -4,15 +4,12 @@ import { once } from 'node:events';
 import { readFile } from 'node:fs/promises';
 import { resolve, extname } from 'node:path';
 import type { Server } from 'node:http';
-import { sampleStageArrivalConfig, sampleStageArrivalFacts } from '../../../backend/fixture-slice/stage-arrival-sample.mts';
-import { createStationArrivalFixture } from '../../../backend/fixture-slice/station-arrival-fixture.mts';
-import { createRuntime } from '../../../backend/fixture-slice/synthetic-identity.mts';
-import { createLoopbackServer } from '../../../backend/fixture-slice/http-adapter.mts';
 import type { StationArrivalFixtureEnvelopeV1 } from '../../../backend/fixture-slice/station-arrival-contracts.mts';
-export async function startStationBrowserServer(realFixture = false) {
+export async function startStationBrowserServer(realFixture = false, nativeProtocol = false) {
   const root = resolve('dist/fixture-slice/browser');
   let backend: Server | undefined, backendPort = 0;
-  let fixture: ReturnType<typeof createStationArrivalFixture> | undefined;
+  let fixture: ReturnType<typeof import('../../../backend/fixture-slice/station-arrival-fixture.mts').createStationArrivalFixture> | undefined;
+  let native: Awaited<ReturnType<typeof import('./native-station-protocol-backend.mts').startNativeStationProtocolBackend>> | undefined;
   const ui = createServer(async (req, res) => {
     if (req.url?.startsWith('/api/')) {
       if (!backendPort) { res.writeHead(503); res.end(); return; }
@@ -38,7 +35,17 @@ export async function startStationBrowserServer(realFixture = false) {
     ui.listen(0, '127.0.0.1'); await once(ui, 'listening');
     const address = ui.address(); if (!address || typeof address === 'string') throw Error('No owned UI address');
     const origin = `http://127.0.0.1:${address.port}`;
+    if (nativeProtocol) {
+      if (realFixture) throw Error('Separate fixture/native protocol constructions required');
+      const { startNativeStationProtocolBackend } = await import('./native-station-protocol-backend.mts');
+      native = await startNativeStationProtocolBackend(origin); backendPort = native.port;
+    }
     if (realFixture) {
+      // Offline/native intercepted checks must not import or execute backend code.
+      const { sampleStageArrivalConfig, sampleStageArrivalFacts } = await import('../../../backend/fixture-slice/stage-arrival-sample.mts');
+      const { createStationArrivalFixture } = await import('../../../backend/fixture-slice/station-arrival-fixture.mts');
+      const { createRuntime } = await import('../../../backend/fixture-slice/synthetic-identity.mts');
+      const { createLoopbackServer } = await import('../../../backend/fixture-slice/http-adapter.mts');
       const clock = { now: () => new Date('2026-10-20T07:22:06.000Z') };
       const envelope: StationArrivalFixtureEnvelopeV1 = {
         stageRows: [structuredClone(sampleStageArrivalFacts)], stationFacts: [{
@@ -56,6 +63,7 @@ export async function startStationBrowserServer(realFixture = false) {
       backendPort = address.port;
     }
     return { origin, inspect: () => fixture?.store.inspectSnapshot(),
-      close: async () => { await close(ui); if (backend) await close(backend); } };
-  } catch (e) { await close(ui); if (backend) await close(backend); throw e; }
+      nativeInspect: () => native?.inspect(), nativeHold: () => native?.hold(), nativeRelease: () => native?.release(),
+      close: async () => { await close(ui); if (backend) await close(backend); if (native) await native.close(); } };
+  } catch (e) { await close(ui); if (backend) await close(backend); if (native) await native.close(); throw e; }
 }

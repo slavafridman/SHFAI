@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, sections 46.1-bootstrap and 46 native F2 explicitly approved; implementation running.
+Last updated: 2026-10-28, approved native F2 implementation and independent QA PASS; publication ready.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -27,12 +27,53 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-NATIVE-F2-APPROVED-28 — current resume checkpoint
 
-**State: RUNNING.** At 09:00 +02:00 on 28 October the user explicitly approved
+**State: OFFLINE IMPLEMENTATION/QA PASS; scoped publication preflight PASS.** At 09:00 +02:00 on 28 October the user explicitly approved
 "section 46.1-bootstrap and section 46 native F2", both v0.1. This supersedes
 the approval-pending state below. Scope: bounded host discovery/proof/freeze,
 and controlled native on-time station-arrival implementation; actual writes
 still require current operational metadata, eligibility, exclusion, allowance
 and COMMIT/readback gates. Production, DDL, EMS/CTI and batch remain excluded.
+
+#### SHF-NATIVE-F2-CONSUMER-PUBLISH-28 — current publication step
+
+All implementation/QA owners are stopped and source-stable. Publication
+operator temporarily owns this checkpoint until handoff; parent will not
+edit it concurrently. Fresh main and fetched origin/main both equal
+`1259b893228a9f7bdbaf3d6d2a6216fd140daafc`, ahead/behind 0/0;
+index empty and conflicts zero before staging.
+
+The exact approved manifest matches 49 changed paths: backend23,
+frontend25 and this checkpoint only, including 20 new files. All 23
+unrelated user paths are excluded and inspected by name only, without
+reading or hashing their contents. Canonical contracts/tests, design and
+standard verification JSON remain unchanged from published HEAD; no
+structural-verifier refresh is needed or performed.
+
+Fresh bounded publication review PASS: privacy/credential/private-key/token/
+private-row/DDL scanning over all assigned added lines and new files,
+synthetic-only fixture review, whitespace check and local publication
+closure. The review resolves 386 relative source imports, six Angular
+template/style references and 12 local documentation links against
+HEAD plus the 49 publication paths; no external QA/session-only module is
+required. No private operator allowance path/value or live capture is added.
+Staged closure and working-copy equality are checked again before commit.
+
+The independent backend610/typecheck, frontend focused165/full531/typecheck,
+three naturally completed build/profile pairs and browser closure evidence
+below are owner/QA results, not tests rerun by this publisher. QA28B-01 is
+closed; QA28B-02 remains an unreproduced startup observation of unknown
+cause, not an open reproduced product defect. Counts overlap, not additive.
+Publication runs no application, test, build, DNS, database, allowance or
+dependency operation. Only normal Git fetch/push/remote verification uses
+network access. Actual TEST endpoint ESERVFAIL remains external and no
+actual arrival or full-project completion is claimed.
+
+Publication is pending the exact 49-path commit/normal push and direct
+remote verification. Next safe action after publication: TEST DNS/network
+owner restores configured-endpoint resolution; operator then revalidates
+full identity proof, current metadata and exact synthetic eligibility
+before a separately gated setup/command. No renewed baseline/host approval
+or guessed/public DNS workaround is authorized.
 
 Architect owns canonical capability/native station types, focused contract
 tests and the design approval record. Dependent implementation waits for
@@ -79,6 +120,144 @@ a bounded compatibility correction without weakening full address-set proof;
 no guard has changed. Host approval is resolved and will not be asked again.
 Offline native F2 implementation can proceed independently of these runtime
 blockers; no passing double is a claim of actual Oracle command execution.
+Architect classified endpoint-only underscore support as a bounded internal
+compatibility correction under approved section 46.1: keep SERVER_HOST strict,
+exact spelling and complete address-set proof. Backend owner has exclusive
+ownership of the helper and identity tests alongside native F2; no parallel
+helper writer exists. Actual DNS resolution failure remains external.
+
+#### SHF-NATIVE-F2-API-28 — backend implementation handoff
+
+Backend is SOURCE-STABLE. Owner reports 189/189 focused native station/
+identity tests, strict typecheck and full backend 751/751 PASS, zero skips.
+The 23-path change implements native station domain/snapshot/application/UoW,
+private config/validation, startup/policy/HTTP/lifecycle wiring and tests/README.
+Canonical/public contracts and dependencies are unchanged.
+Only station arrival time/user are SET; complete attendance originals,
+lock/report/exception/overlap and candidate ownership evidence are included.
+Stage NULL/coherent existing stage and briefing NULL/0/1 are preserved.
+Separate native-station10, F1-disabled command construction, station metadata
+digest/allowance and explicit native consent are wired default-off.
+COMMIT acknowledgment plus independent preservation readback is required;
+uncertain outcomes remain UNKNOWN. Explicit/ALS cancellation and underlying
+operation drain are retained.
+
+The endpoint-only underscore correction is implemented and tested; actual
+SERVER_HOST grammar and full target-proof equality remain strict.
+This does not resolve the real endpoint A/AAAA ESERVFAIL.
+Independent SHF-NATIVE-F2-QA-28 Phase A is running against stable backend
+source. Frontend owner may now integrate an isolated actual Node protocol
+double, never live Oracle; its source-stable handoff is pending. Independent
+frontend/browser Phase B waits for that handoff. No actual station command,
+new live metadata certification or real allowance consumption is claimed.
+
+Independent Phase A is now PASS: final bounded regression 610/610, comprising
+480 existing and 130 independently authored session-only checks, with zero
+failures/skips/cancellations; strict backend typecheck passed twice.
+Initial independent harness failures were corrected only in its ALS invocation
+and SQL-SET assertion, not in application code. No product defect was reproduced.
+Coverage includes stage/briefing preservation, precise temporal bounds and
+dependency cardinality, exact capability/config/HTTP guards, two-column SET/
+original predicates, lock/rowcount/drift/cancellation/drain paths, native
+receipt/UNKNOWN/fuse isolation, endpoint-role grammar/full proof and separate
+F2 metadata certification. Evidence is actual loopback Node/HTTP with synthetic
+Oracle protocol doubles; physical Oracle SQL/locking is not verified.
+QA changed no repository paths and closed owned resources. Frontend/browser
+Phase B still waits for UI SOURCE-STABLE; full 751 owner suite was not
+independently repeated.
+
+#### SHF-NATIVE-F2-UI-28 — frontend handoff and CLI verification gap
+
+Frontend owner is SOURCE-STABLE (20 paths, no backend/canonical/dependency
+changes). It implements exact native-station10/source gating, seven inquiries,
+actual TEST and synthetic-auth notices, optional stage/briefing preservation,
+pure review/explicit consent, strict native ACK/readback receipt and separate
+native F2 uncertainty handling; F1 commands are unavailable in this mode.
+Owner results: strict typecheck exit0; focused 159/159 and full frontend
+525/525 summaries; three builds generated and all profile artifact checks
+exit0. However the Angular commands stayed alive after completion and their
+owned sessions were stopped. Clean exit0 is NOT claimed for those commands.
+Independent Phase B must reproduce/resolve the runner-teardown gap before
+publication; a successful summary alone is not a clean command result.
+
+All four final owner Chrome modes exit0: native typed HTTP double, native
+actual backend protocol double, existing fixture HTTP double and actual
+fixture proxy. The native protocol double verifies one two-field UPDATE,
+one COMMIT ACK and independent preservation readback, not a live Oracle call.
+Native 320px opener measured visible/hit-testable 48px with contrast12.6179:1.
+Owned listeners/browser profiles/double directories were closed.
+Independent QA is now authorized for frontend/type/build/CLI teardown,
+source/UNKNOWN isolation and real Chrome protocol-double integration.
+Manual AT, full WCAG/UAT and actual Oracle proof/readiness/writes remain
+unverified; external A/AAAA ESERVFAIL is not resolved by these checks.
+
+#### SHF-NATIVE-F2-QA-28 Phase B — behavior PASS, tooling gate OPEN
+
+Independent Phase B passed strict typecheck, 63/63 session-only frontend
+contract/safety checks, three profile artifact checks, four Chrome modes and
+an augmented protocol-double browser check with 20 additional assertions.
+Actual full Angular execution reached 525/525, but commands and all three
+builds still lingered; none is accepted as clean exit0.
+
+QA28B-01 (Medium) is reproduced: two station dialog components share identical
+inline stylesheet content, triggering concurrent Angular/esbuild context
+creation with only one retained context disposed. Independent minimal proof:
+serial creates/disposes1/1; concurrent2/1 leaves one context. No vendor or
+dependency patch was applied. UI owner is correcting source-level dialog/style
+duplication without arbitrary CSS differences, forced exits or kill workarounds,
+preserving native/fixture confirmation and keyboard behavior.
+QA28B-02 separately records one focused Vitest thread-start timeout before
+any tests; its root cause is not established by the esbuild leak evidence.
+Natural focused/full/test/build completion and owned-service cleanup must be
+retested after the correction; publication is on HOLD.
+Independent behavior includes exact capabilities/source/receipt preservation,
+UNKNOWN/history/no-retry, native two-field protocol-double transaction,
+disabled F1, responsive keyboard/focus at 1440/390/320 and 48px opener with
+measured contrast12.6179:1. These do not establish live Oracle execution or
+full accessibility conformance.
+
+QA28B-01 owner correction is SOURCE-STABLE: one typed station dialog,
+one template and external stylesheet replace the duplicated native/fixture
+dialog components, retaining distinct copy/consent behavior. No dependencies,
+vendor files, cosmetic hash variants or forced-exit hooks changed.
+Owner reproduced the old production CLI lingering beyond60s after generation
+(FAIL, stopped only for cleanup), then obtained natural exit0 for typecheck,
+six new dialog cases, three first-attempt focused runs165/165 each, full
+frontend531/531 in39 files, all three build/profile pairs and four Chrome
+modes. Zero retained frontend esbuild services were observed after commands.
+The worker-start observation QA28B-02 was not reproduced in five first-attempt
+post-fix test startups; its cause remains unknown, not claimed fixed by CSS.
+Independent bounded closure is running against this specific changed evidence,
+including natural CLI completion, service cleanup and both dialog branches.
+Backend remains source-stable; publication still waits for independent result.
+
+Independent closure retest is now PASS. QA28B-01 is CLOSED: focused165/165,
+full frontend531/531, strict typecheck, three build/profile pairs and dialog6/6
+all completed naturally with exit0 on their first attempts. Non-forcing trace
+observed one station stylesheet context, one disposal and zero pending; no
+new esbuild service remained. QA28B-02 is retained as a non-reproduced runner
+observation with unknown root cause, not a proven CSS-caused issue.
+Both native/fixture Chrome dialog branches and the independent augmented
+protocol-double check passed, including20 additional assertions. Final cleanup
+reported zero esbuild services, owned browser processes and browser directories;
+an earlier cleanup probe briefly saw two naturally exiting Chrome processes.
+No application fix beyond the source dialog consolidation was needed.
+
+QA recommends scoped OFFLINE native F2 publication with no open reproduced
+product finding in its assigned scope. Current owner full backend751/751 and
+independent bounded backend610/610 remain valid source-stable evidence;
+current independent full frontend531/531 and three clean builds are verified.
+Counts overlap and must not be added together. The canonical step is already
+published as614e32d with checkpoint1259b89; consumer publication is next.
+Real Oracle SQL/locking/COMMIT and current operational metadata/eligibility/
+freeze/allowance remain NOT VERIFIED. Endpoint A/AAAA ESERVFAIL is the current
+external live blocker; host-bootstrap and native F2 approvals are resolved.
+Next safe action after publication: TEST DNS/network owner restores normal
+configured-endpoint resolution, then operator revalidates the full approved
+identity proof/current metadata and exact synthetic eligibility before any
+separately gated setup or command. No public DNS, guessed address, proof bypass
+or renewed host approval is needed or authorized. Full-project completion,
+production readiness, manual AT, WCAG certification and UAT are not claimed.
 
 **Canonical publication step, 28 October:** main and freshly fetched
 origin/main both `9c00f36b49973443fb29682dd9233ece6a15d083`,

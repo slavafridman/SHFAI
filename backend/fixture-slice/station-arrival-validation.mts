@@ -5,6 +5,8 @@ import type { StationArrivalCommitV1, StationArrivalDraftV1, StationArrivalFacts
   StationArrivalFixtureEnvelopeV1, StationArrivalFixtureExtraV1 } from "./station-arrival-contracts.mts";
 import { canonical } from "./stage-arrival-domain.mts";
 import type { StageArrivalSelectionV1 } from "./stage-arrival-contracts.mts";
+import { nativeStationMode } from "./native-station-arrival-config.mts";
+import type { StationArrivalModeVNext } from "./oracle-station-arrival-contracts.mts";
 
 export function validStationReceipt(value: unknown, cmd: StationArrivalCommitV1, s: StageArrivalSelectionV1): boolean {
   if (!exact(value, ["commandId", "employeeId", "shiftDayId", "outcome", "recorded", "committedAt",
@@ -27,9 +29,10 @@ export function validStationReceipt(value: unknown, cmd: StationArrivalCommitV1,
     /^(0|[1-9][0-9]{0,9})$/.test(late.minutes) && late.remark === null;
 }
 
-export function stationMode(value: unknown): "disabled" | "isolated-fixture" {
+export function stationMode(value: unknown): StationArrivalModeVNext {
   if (!record(value)) throw Error("Invalid station configuration");
   const mode = value.attendanceStationArrivalMode;
+  if (mode === "test-oracle-controlled") return nativeStationMode(value);
   if (mode === undefined || mode === "disabled") return "disabled";
   if (mode !== "isolated-fixture" || value.attendanceStageArrivalMode !== "isolated-fixture" ||
       value.dataSource !== "isolated-fixture" ||

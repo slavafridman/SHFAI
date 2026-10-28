@@ -37,19 +37,21 @@ export function validateEnvironmentProfile(value: unknown, env: NodeJS.ProcessEn
         value.syntheticOrgUnitIds !== undefined)
       throw Error("Production prohibits synthetic authentication");
     if (value.dataSource !== "oracle-read-only" || value.oracleTestScopeConfirmed !== undefined ||
-        value.attendanceStageArrivalMode !== undefined && value.attendanceStageArrivalMode !== "disabled")
+        value.attendanceStageArrivalMode !== undefined && value.attendanceStageArrivalMode !== "disabled" ||
+        value.attendanceStationArrivalMode !== undefined && value.attendanceStationArrivalMode !== "disabled")
       throw Error("Production prohibits fixture and TEST sources/modes");
     if (Object.keys(env).some(key =>
-      key.startsWith("SHF_NATIVE_STAGE_") || key.startsWith("SHF_FIXTURE_") ||
+      key.startsWith("SHF_NATIVE_STAGE_") || key.startsWith("SHF_NATIVE_STATION_") || key.startsWith("SHF_FIXTURE_") ||
       key.endsWith("_FIXTURE") || key === "SHF_STAGE_ARRIVAL_ORIGINS" ||
-      key === "SHF_TEST_ORACLE_STAGE_WRITE_ENABLED" && env[key] !== "false"))
+      key === "SHF_STATION_ARRIVAL_ORIGINS" ||
+      ["SHF_TEST_ORACLE_STAGE_WRITE_ENABLED", "SHF_TEST_ORACLE_STATION_WRITE_ENABLED"].includes(key) && env[key] !== "false"))
       throw Error("Production prohibits synthetic/TEST environment context");
     // No fake provider or production DB implementation. Even otherwise clean
     // configuration must stop here, before examining Oracle secret inputs.
     throw new RealAuthenticationNotConfiguredError();
   }
   if (profile === "dev" && (value.dataSource !== "isolated-fixture" ||
-      value.attendanceStageArrivalMode === "test-oracle-controlled"))
+      value.attendanceStageArrivalMode === "test-oracle-controlled" || value.attendanceStationArrivalMode === "test-oracle-controlled"))
     throw Error("DEV requires isolated fixtures; native TEST is forbidden");
 }
 

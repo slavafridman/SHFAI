@@ -23,6 +23,8 @@ export const f1Capabilities = [...readCapabilities, 'attendance-stage-arrival:pr
 export const nativeArrivalCapabilities = [...f1Capabilities, 'attendance-stage-arrival:test-oracle-write'] as const;
 export const jointArrivalCapabilities = [...f1Capabilities, 'attendance-station-arrival:prepare',
   'attendance-station-arrival:commit'] as const;
+export const nativeStationCapabilities = [...readCapabilities, 'attendance-station-arrival:prepare',
+  'attendance-station-arrival:commit', 'attendance-station-arrival:test-oracle-write'] as const;
 
 export function identity(v: unknown): v is IdentityResponseV1 {
   if (!object(v) || !['isolated-fixture', 'oracle'].includes(String(v.dataSource)) || !object(v.principal)) return false;
@@ -31,7 +33,7 @@ export function identity(v: unknown): v is IdentityResponseV1 {
       !['synthetic', 'real'].includes(String(p.provider)) ||
       p.synthetic !== (p.provider === 'synthetic') ||
       !unique(p.roles, r => r === 'Administrator') ||
-      !unique(p.capabilities, c => typeof c === 'string' && ([...nativeArrivalCapabilities, ...jointArrivalCapabilities] as readonly string[]).includes(c)) ||
+      !unique(p.capabilities, c => typeof c === 'string' && ([...nativeArrivalCapabilities, ...jointArrivalCapabilities, ...nativeStationCapabilities] as readonly string[]).includes(c)) ||
       !(p.employeeId === null || id(p.employeeId)) ||
       !object(p.resourceScope) || !unique(p.resourceScope.orgUnitIds, unit)) return false;
   return !p.synthetic || (p.subject === 'synthetic:administrator' &&
@@ -40,7 +42,7 @@ export function identity(v: unknown): v is IdentityResponseV1 {
     (p.capabilities.join(',') === readCapabilities.join(',') ||
       (v.dataSource === 'isolated-fixture' && p.capabilities.join(',') === f1Capabilities.join(',')) ||
       (v.dataSource === 'isolated-fixture' && p.capabilities.join(',') === jointArrivalCapabilities.join(',')) ||
-      (v.dataSource === 'oracle' && p.capabilities.join(',') === nativeArrivalCapabilities.join(','))) &&
+      (v.dataSource === 'oracle' && [nativeArrivalCapabilities.join(','), nativeStationCapabilities.join(',')].includes(p.capabilities.join(',')))) &&
     p.resourceScope.orgUnitIds.length > 0 && p.resourceScope.orgUnitIds.length <= 100);
 }
 

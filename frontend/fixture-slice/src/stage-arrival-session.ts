@@ -70,9 +70,11 @@ export class StageArrivalSession {
   uncertain() { return this.unresolved.size > 0; }
   nativeUncertain() { return this.native.size > 0; }
   affects(s: ArrivalSelection | null) {
-    return !!s && s.dataSource === 'isolated-fixture' && [...this.unresolved].some(attempt =>
+    return !!s && [...this.unresolved].some(attempt =>
       !this.attemptBindings.has(attempt) || (() => {
         const binding: string[] = JSON.parse(this.attemptBindings.get(attempt)!);
+        if (binding[0] === 'oracle-test') return s.dataSource === 'oracle-test' &&
+          binding[1] === s.employeeId && binding[2] === s.shiftDayId;
         return binding[0] === s.dataSource && binding[2] === s.employeeId &&
           binding[3] === s.shiftDayId && binding[4] === s.orgUnitId;
       })());

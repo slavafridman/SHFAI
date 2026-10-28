@@ -305,6 +305,8 @@ test("F2 malformed/wrong-source/lost command result is UNKNOWN, never fabricated
     const broken: SliceRuntime = { ...rt, stationArrivalCommit: async (...args) => {
       if (mode === "lost") throw Error("isolated response loss");
       const receipt = await rt.stationArrivalCommit(...args);
+      assert.equal(receipt.dataSource, "isolated-fixture");
+      if (receipt.dataSource !== "isolated-fixture") throw Error("Fixture test source mismatch");
       if (mode === "malformed") return { ...receipt, recorded: { ...receipt.recorded, stationArrivalLocal: "invalid" } };
       // Deliberately isolated malformed adapter, not an actual native provider.
       return Object.assign(receipt, { dataSource: "oracle" });

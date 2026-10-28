@@ -49,6 +49,16 @@ export const nativeStageArrivalAccessPolicy = {
     this.requirePrepare(p); stageArrivalAccessPolicy.requireCommit(p);
   },
 };
+export const nativeStationArrivalAccessPolicy = {
+  requirePrepare(p: import("./contracts.mts").PrincipalV1) {
+    stationArrivalAccessPolicy.requirePrepare(p);
+    if (!p.synthetic || p.provider !== "synthetic" || p.employeeId !== null ||
+        !p.capabilities.includes("attendance-station-arrival:test-oracle-write")) stageFail("FORBIDDEN");
+  },
+  requireCommit(p: import("./contracts.mts").PrincipalV1) {
+    this.requirePrepare(p); stationArrivalAccessPolicy.requireCommit(p);
+  },
+};
 
 export function employeeCardAccessPolicy(configuration: unknown): EmployeeOperationalCardAccessPolicy {
   const config = validateRuntimeConfig(configuration);

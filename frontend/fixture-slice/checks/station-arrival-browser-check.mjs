@@ -8,8 +8,12 @@ import { physicalInput, formReadyExpression } from './browser-interactions.ts';
 import { waitForKeyboardModalReady } from './keyboard-modal.ts';
 import { proveArrivalFocus } from './arrival-focus-proof.mjs';
 import { startStationBrowserServer } from './station-arrival-browser-server.mts';
+import { nativeStationBrowserDouble as nativeDouble } from './native-station-browser-double.mts';
 const proxy = process.argv.includes('--fixture-proxy');
-const helper = await startStationBrowserServer(proxy), app = helper.origin;
+const nativeProtocol = process.argv.includes('--native-protocol-double');
+const nativeStation = process.argv.includes('--native-station') || nativeProtocol;
+assert(!(proxy && nativeStation), 'fixture backend and native intercepted protocols are distinct');
+const helper = await startStationBrowserServer(proxy, nativeProtocol), app = helper.origin;
 let cdp;
 const profile = resolve(`.angular/f2-chrome-${crypto.randomUUID()}`);
 const chrome = spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',
@@ -38,10 +42,10 @@ const wait = expression => until(() => evaluate(expression), expression);
 const rights = ['shift-day:read', 'current-shifts:read', 'shift-search:read', 'my-shifts:read', 'shift-items:read',
   'employee:read', 'attendance:read', 'attendance-stage-arrival:prepare', 'attendance-stage-arrival:commit',
   'attendance-station-arrival:prepare', 'attendance-station-arrival:commit'];
-const identity = () => ({ principal: { subject: 'synthetic:administrator', provider: 'synthetic', synthetic: true,
+const identity = () => nativeStation ? nativeDouble.identity() : ({ principal: { subject: 'synthetic:administrator', provider: 'synthetic', synthetic: true,
   displayName: 'Synthetic Administrator (local/isolated only)', roles: ['Administrator'], employeeId: null,
   capabilities: rights.slice(0, rightsCount), resourceScope: { orgUnitIds: ['0021'] } }, dataSource: 'isolated-fixture' });
-const context = () => ({
+const context = () => nativeStation ? nativeDouble.context(stage, station) : ({
   employeeId: '9001', shiftDayId: '6201', orgUnitId: '0021',
   planned: { startLocal: late ? '2026-10-20T10:00:00' : '2026-10-20T10:30:00', endLocal: '2026-10-20T18:30:00' },
   recorded: { stageArrivalLocal: stage, stationArrivalLocal: station, stationExitLocal: null, briefing: false },
@@ -50,7 +54,7 @@ const context = () => ({
   withinArrivalWindow: true, eligibility: station ? 'already-recorded' : 'eligible', blockers: [],
   lateReasonOptions: [{ code: '1', label: 'סיבה סינתטית בלבד' }], dataSource: 'isolated-fixture',
 });
-const validation = (kind = 'station') => ({
+const validation = (kind = 'station') => nativeStation ? nativeDouble.validation() : ({
   employeeId: '9001', shiftDayId: '6201', state: late ? 'warning-requires-confirmation' : 'ready',
   evaluatedAt: '2026-10-20T07:22:06.000Z', evaluatedLocal: '2026-10-20T10:22:06', expiresAt: '2026-10-20T07:24:06.000Z',
   businessTimeZone: 'Asia/Jerusalem', fingerprint: 'b'.repeat(64), validationToken: 's'.repeat(43),
@@ -73,7 +77,7 @@ async function intercept(e) {
     mokedOptions: [{ code: '0012', label: 'מוקד סימולציה', unitType: 'G01' }],
     teamOptions: [{ code: '0021', label: 'צוות סימולציה', unitType: 'J01', parentMokedCode: '0012' }],
     innerJobOptions: [], workLocationOptions: [{ code: 'home', label: 'בית' }, { code: 'site', label: 'אתר' }],
-    businessTimeZone: 'Asia/Jerusalem', dataSource: 'isolated-fixture',
+    businessTimeZone: 'Asia/Jerusalem', dataSource: nativeStation ? 'oracle-read-only' : 'isolated-fixture',
   });
   if (path === '/api/v1/attendance') {
     const p = url.searchParams, c = context();
@@ -86,7 +90,7 @@ async function intercept(e) {
       applied: { attendanceDate: p.get('attendanceDate'), timeFrom: p.get('timeFrom'), timeTo: p.get('timeTo'),
         mokedCode: p.get('mokedCode'), teamCodes: [], innerJobCodes: [], workLocations: [], sort: 'effective-start-asc' },
       page: { limit: Number(p.get('limit')), offset: Number(p.get('offset')), hasMore: false, nextOffset: null },
-      businessTimeZone: 'Asia/Jerusalem', dataSource: 'isolated-fixture',
+      businessTimeZone: 'Asia/Jerusalem', dataSource: nativeStation ? 'oracle-read-only' : 'isolated-fixture',
     });
   }
   assert.equal(url.search, '');
@@ -122,7 +126,10 @@ async function enter(kind = 'station') {
   await wait(formReadyExpression('shf-attendance', 'attendance-date', 'attendance-submit'));
   const input = physicalInput({ send, evaluate, wait });
   const time = proxy ? '10:30' : '10:00';
-  await input('attendance-date', '20/10/2026'); await input('attendance-timeFrom', time); await input('attendance-timeTo', time);
+  const nativePlan = nativeProtocol ? helper.nativeInspect().planned.startLocal : null;
+  await input('attendance-date', nativeProtocol ? `${nativePlan.slice(8,10)}/${nativePlan.slice(5,7)}/${nativePlan.slice(0,4)}` : '20/10/2026');
+  await input('attendance-timeFrom', nativeProtocol ? nativePlan.slice(11,16) : time);
+  await input('attendance-timeTo', nativeProtocol ? nativePlan.slice(11,16) : time);
   await activate('#attendance-submit'); await wait(`!!document.getElementById('attendance-station-6201')`);
   if (kind === 'stage') { await activate('#attendance-arrival-6201'); await wait(`!!document.getElementById('arrival-validate')`); return; }
   await evaluate(`(()=>{const n=document.getElementById('attendance-station-6201');
@@ -154,15 +161,144 @@ try {
     else if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.text);
     else if (m.method === 'Network.requestWillBeSent') {
       const url = m.params.request.url;
-      if (proxy && url.startsWith(app + '/api/')) calls.push({ path: new URL(url).pathname, method: m.params.request.method });
+      if ((proxy || nativeProtocol) && url.startsWith(app + '/api/')) calls.push({ path: new URL(url).pathname, method: m.params.request.method });
       if (!url.startsWith(app) && !url.startsWith('data:') && !url.startsWith('about:')) external.push(url);
     }
   };
   await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
-  if (!proxy) await send('Fetch.enable', { patterns: [{ urlPattern: app + '/api/*' }] });
+  if (!proxy && !nativeProtocol) await send('Fetch.enable', { patterns: [{ urlPattern: app + '/api/*' }] });
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
-  if (proxy) {
+  if (nativeProtocol) {
+    await enter();
+    assert(await evaluate(`document.body.textContent.includes('כתיבה בפועל למסד TEST') && !document.getElementById('station-to-stage')`));
+    assert.equal(helper.nativeInspect().syntheticAllowanceConsumed, false);
+    await activate('#station-validate'); await wait(`!!document.getElementById('station-confirm')`);
+    await activate('#station-confirm'); await wait(`!!document.querySelector('mat-dialog-container')`);
+    await key('Escape'); await wait(`!document.querySelector('mat-dialog-container') && document.activeElement.id==='station-confirm'`);
+    assert.equal(count('commands'), 0); assert.equal(helper.nativeInspect().syntheticAllowanceConsumed, false);
+    assert.equal(helper.nativeInspect().events.filter(e => e === 'write:update' || e === 'write:commit').length, 0);
+    await activate('#station-validate'); await wait(`document.getElementById('station-confirm')?.getAttribute('aria-disabled')!=='true'`);
+    await activate('#station-confirm'); await wait(`!!document.querySelector('mat-dialog-container')`);
+    await evaluate(`(${waitForKeyboardModalReady.toString()})(5000)`);
+    await evaluate(`document.querySelector('#native-station-operation-ack input').focus()`); await key(' ', 'Space');
+    await wait(`!document.getElementById('native-station-operation-confirm').disabled`);
+    helper.nativeHold();
+    await activate('#native-station-operation-confirm');
+    await until(() => helper.nativeInspect().events.includes('write:update'), 'actual native UoW double DML');
+    await wait(`!document.querySelector('mat-dialog-container') && document.activeElement.id==='station-confirm'`);
+    for (let i = 0; i < 3; i++) await key(' ', 'Space');
+    assert.equal(count('commands'), 1);
+    helper.nativeRelease();
+    await wait(`!!document.querySelector('.receipt')`);
+    const proof = helper.nativeInspect();
+    assert.equal(proof.committed, true); assert.equal(proof.syntheticAllowanceConsumed, true);
+    assert.equal(proof.events.filter(e => e === 'write:update').length, 1);
+    assert.equal(proof.events.filter(e => e === 'write:commit').length, 1);
+    assert(proof.events.includes('write:commit-ack'));
+    assert(proof.events.some((e, i) => e === 'read:lease' && i > proof.events.indexOf('write:commit-ack')), 'separate readback');
+    assert.deepEqual(Object.keys(proof.attendance).filter(k => proof.attendance[k] !== proof.before[k]).sort(),
+      ['STATION_ARRIVAL_TIME', 'STATION_ARRIVAL_USER']);
+    const update = proof.sql.filter(s => s.sql.includes('station:update'));
+    assert.equal(update.length, 1);
+    const set = update[0].sql.split(/\bSET\b/i)[1].split(/\bWHERE\b/i)[0];
+    assert.deepEqual([...set.replace(/'(?:''|[^'])*'/g, "''").matchAll(/\b([A-Z_]+)\s*=/g)].map(m => m[1]),
+      ['STATION_ARRIVAL_TIME', 'STATION_ARRIVAL_USER'], 'exactly two SET assignments (excluding NLS string literals)');
+    assert(await evaluate(`document.querySelector('.receipt').textContent.includes('oracle-test-committed')`));
+    const readback = await evaluate(`(async()=>{const r=await fetch('/api/v1/employees/9001/shift-days/6201',{cache:'no-store'});
+      const b=await r.json();return {status:r.status,source:b.dataSource,stage:b.attendance.stageArrivalLocal,station:b.attendance.stationArrivalLocal};})()`);
+    assert.deepEqual(readback, { status: 200, source: 'oracle',
+      stage: proof.before.STAGE_ARRIVAL_TIME, station: proof.attendance.STATION_ARRIVAL_TIME });
+    const disabled = await evaluate(`(async()=>{const r=await fetch('/api/v1/employees/9001/shift-days/6201/stage-arrival/context',{cache:'no-store'});
+      const b=await r.json();return {status:r.status,code:b.code};})()`);
+    assert.deepEqual(disabled, { status: 403, code: 'LIVE_WRITES_DISABLED' });
+    await screenshot('NATIVE-PROTOCOL-DOUBLE-success');
+    assert.equal(errors.length, 0, errors.join('\\n')); assert.equal(external.length, 0);
+    console.log('PASS actual owned loopback native F2 protocol DOUBLE: actual runtime/identity/HTTP/prepare/application/UoW; cancel0/allowance0; pending duplicate block; one UPDATE/two SET + COMMIT ACK + separate readback; stage/user/briefing/all other fields preserved; detail readback; F1 disabled403. NO Oracle connection or pilot proof.');
+    console.log(JSON.stringify({ actualBackendProtocol: true, oraclePoolDouble: true, interceptedHttp: false,
+      liveOracle: false, commands: count('commands'), updates: 1, commits: 1, preservedFields: true,
+      runtimeErrors: errors.length, unexpectedRequests: external.length, fullWcagConformance: false }));
+  } else if (nativeStation) {
+    await enter();
+    assert(await evaluate(`document.body.textContent.includes('כתיבה בפועל למסד TEST') &&
+      document.body.textContent.includes('הגעה לעמדה — TEST') &&
+      !document.body.textContent.includes('ללא Oracle') && !document.querySelector('#station-to-stage,mat-select,input')`));
+    assert.equal(calls.filter(c => c.path.includes('/stage-arrival/')).length, 0);
+    for (const width of [1440, 390, 320]) {
+      await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 500 });
+      assert(await evaluate(`document.documentElement.scrollWidth<=innerWidth`), 'native context no overflow ' + width);
+      await screenshot('NATIVE-context-' + width);
+    }
+    await activate('#station-validate'); await wait(`!!document.getElementById('station-confirm')`);
+    const before = count('commands');
+    await activate('#station-confirm'); await wait(`!!document.querySelector('mat-dialog-container')`);
+    assert.equal(count('commands'), before);
+    for (const width of [1440, 390, 320]) {
+      await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 500 });
+      const ready = await evaluate(`(${waitForKeyboardModalReady.toString()})(5000)`);
+      assert.equal(ready.kind, 'dialog'); assert.equal(ready.finiteAnimations, 0);
+      assert(await evaluate(`document.documentElement.scrollWidth<=innerWidth`));
+      assert(await evaluate(`[...document.querySelectorAll('mat-dialog-actions button')].every(n=>{
+        const r=n.getBoundingClientRect();return r.top>=0 && r.bottom<=innerHeight && r.height>=48;})`));
+      for (let i = 0; i < 6; i++) {
+        await key('Tab', 'Tab', i % 2 ? 1 : 0);
+        assert(await evaluate(`!!document.activeElement.closest('mat-dialog-container')`));
+      }
+      await screenshot('NATIVE-confirm-' + width);
+    }
+    await key('Escape'); await wait(`!document.querySelector('mat-dialog-container') && document.activeElement.id==='station-confirm'`);
+    await proveArrivalFocus({ send, evaluate }, '#station-confirm', 'native F2 Escape320');
+    assert.equal(count('commands'), before);
+    assert(await evaluate(`document.getElementById('station-confirm').getAttribute('aria-disabled')==='true'`), 'cancel discards preparation');
+    await activate('#station-validate'); await wait(`document.getElementById('station-confirm')?.getAttribute('aria-disabled')!=='true'`);
+    await activate('#station-confirm'); await wait(`!!document.querySelector('mat-dialog-container')`);
+    await evaluate(`(${waitForKeyboardModalReady.toString()})(5000)`);
+    await evaluate(`document.querySelector('#native-station-operation-ack input').focus()`); await key(' ', 'Space');
+    await wait(`document.querySelector('#native-station-operation-ack input').checked && !document.getElementById('native-station-operation-confirm').disabled`);
+    await activate('#native-station-operation-confirm'); await until(() => paused, 'native command');
+    await wait(`!document.querySelector('mat-dialog-container') && document.activeElement.id==='station-confirm'`);
+    await proveArrivalFocus({ send, evaluate }, '#station-confirm', 'native F2 pending320');
+    const ev = paused; paused = undefined; const cmd = JSON.parse(ev.request.postData);
+    assert.deepEqual(cmd, { commandId: cmd.commandId, draft: { lateReasonCode: null }, fingerprint: 'b'.repeat(64),
+      validationToken: 's'.repeat(43), confirmation: null, operationConfirmation: { accepted: true } });
+    for (let i = 0; i < 3; i++) await key(' ', 'Space');
+    assert.equal(count('commands'), before + 1);
+    station = '2026-10-20T10:22:10'; await fulfill(ev, nativeDouble.receipt(cmd, stage));
+    await wait(`!!document.querySelector('.receipt')`);
+    await proveArrivalFocus({ send, evaluate }, '#station-confirm', 'native F2 success320');
+    assert(await evaluate(`document.querySelector('.receipt').textContent.includes('אישור COMMIT אינו רגע השמירה המדויק') &&
+      !sessionStorage.getItem('shfNativeStationArrivalSafety')`));
+    await screenshot('NATIVE-success320');
+    await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+    await activate('#station-back'); await wait(`document.activeElement.id==='attendance-station-6201'`);
+    assert(await evaluate(`document.getElementById('attendance-timeFrom').value==='10:00'`));
+    assert.deepEqual(await evaluate(`({scroll:scrollY,horizontal:document.querySelector('.table-wrap').scrollLeft})`),
+      await evaluate('window.__f2Origin'), 'native origin RTL/vertical/exact opener');
+    await evaluate('history.forward()'); await wait(`document.getElementById('station-status')?.textContent.includes('כבר אושרה')`);
+    assert(await evaluate(`!document.querySelector('.receipt')`), 'no reconstructed receipt on Forward');
+    // Independent synthetic scenario; a fresh document is NOT an application reset.
+    station = null; stage = '2026-10-20T10:20:00'; await enter();
+    await activate('#station-validate'); await wait(`!!document.getElementById('station-confirm')`);
+    await activate('#station-confirm'); await wait(`!!document.querySelector('mat-dialog-container')`);
+    await evaluate(`(${waitForKeyboardModalReady.toString()})(5000)`);
+    await evaluate(`document.querySelector('#native-station-operation-ack input').focus()`); await key(' ', 'Space');
+    await wait(`document.querySelector('#native-station-operation-ack input').checked && !document.getElementById('native-station-operation-confirm').disabled`);
+    await activate('#native-station-operation-confirm'); await until(() => paused, 'native malformed readback scenario');
+    const lost = paused; paused = undefined;
+    await fulfill(lost, { ...nativeDouble.receipt(JSON.parse(lost.request.postData), stage),
+      recorded: { ...nativeDouble.receipt(JSON.parse(lost.request.postData), stage).recorded, briefing: true } });
+    await wait(`document.getElementById('station-status')?.textContent.includes('UNKNOWN')`);
+    const contexts = count('context'), stopped = count('commands');
+    assert(await evaluate(`!document.querySelector('.receipt') && sessionStorage.getItem('shfNativeStationArrivalSafety') &&
+      !sessionStorage.getItem('shfStationArrivalSafety') && !sessionStorage.getItem('shfNativeArrivalSafety')`));
+    await navigate('/station-arrival'); await wait(`document.getElementById('station-status')?.textContent.includes('RECOVERY REQUIRED')`);
+    assert.equal(count('context'), contexts); assert.equal(count('commands'), stopped);
+    assert.equal(errors.length, 0, errors.join('\n')); assert.equal(external.length, 0, external.join('\n'));
+    console.log('PASS NATIVE F2 typed synthetic HTTP + real Chrome: honest notices; no F1/late inputs; context/dialog1440/390/320; keyboard trap/Escape zero commands; exact focus/pixel contrast; consent; pending duplicate block; ACK+readback success; origin RTL/scroll/opener; wrong preservation UNKNOWN+reload.');
+    console.log(JSON.stringify({ nativeStationUI: true, typedSyntheticHttpOnly: true, backendImported: false,
+      liveOracle: false, widths: [1440, 390, 320], commands: stopped, runtimeErrors: errors.length,
+      unexpectedRequests: external.length, fullWcagConformance: false, manualAT: false }));
+  } else if (proxy) {
     await enter('stage');
     await activate('#arrival-validate'); await wait(`!!document.getElementById('arrival-confirm')`);
     assert.equal(helper.inspect().receipts, 0); assert.equal(helper.inspect().stationReceipts, 0);

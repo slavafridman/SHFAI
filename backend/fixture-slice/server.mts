@@ -25,6 +25,7 @@ import type { OracleEnvironment } from "./runtime-config.mts";
 import { backendLifecycle, waitForBackendDrain, BackendDrainPendingError } from "./backend-lifecycle.mts";
 import { stationMode } from "./station-arrival-validation.mts";
 import { createStationArrivalFixture } from "./station-arrival-fixture.mts";
+import { stationEnvironment } from "./native-station-arrival-config.mts";
 
 const resources = new WeakMap<Server, Array<OraclePool | NativePool>>();
 const shutdowns = new WeakMap<Server, Promise<void>>();
@@ -71,9 +72,9 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
     throw new Error("Executable backend requires explicit isolated synthetic mode");
   const stageMode = validateStageArrivalMode(config);
   const station = stationMode(config);
-  if (station !== "isolated-fixture" && (environment.SHF_STATION_ARRIVAL_FIXTURE !== undefined ||
-      environment.SHF_STATION_ARRIVAL_ORIGINS !== undefined))
-    throw Error("Station inputs require explicit joint fixture mode");
+  if (station !== "isolated-fixture" && environment.SHF_STATION_ARRIVAL_FIXTURE !== undefined ||
+      station === "disabled" && environment.SHF_STATION_ARRIVAL_ORIGINS !== undefined)
+    throw Error("Station inputs require explicit enabled mode");
   let stationArrivalOrigins: readonly string[] | undefined;
   if (environment.SHF_STATION_ARRIVAL_ORIGINS !== undefined) {
     const raw = environment.SHF_STATION_ARRIVAL_ORIGINS;
@@ -90,6 +91,8 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
     stationArrivalOrigins = Object.freeze(origins);
   }
   const native = nativeEnvironment(environment, stageMode === "test-oracle-controlled");
+  const nativeStation = stationEnvironment(environment, station === "test-oracle-controlled");
+  if (nativeStation && !stationArrivalOrigins?.length) throw Error("Explicit native station Origin allowlist required");
   let stageArrivalOrigins: readonly string[] | undefined;
   const originsText = environment.SHF_STAGE_ARRIVAL_ORIGINS;
   if (originsText !== undefined) {
@@ -123,7 +126,8 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
       if (environment.SHF_FIXTURE_ROWS !== undefined || environment.SHF_CURRENT_SHIFTS_FIXTURE !== undefined ||
           environment.SHF_SHIFT_SEARCH_FIXTURE !== undefined || environment.SHF_MY_SHIFTS_FIXTURE !== undefined ||
           environment.SHF_SHIFT_ITEMS_FIXTURE !== undefined || environment.SHF_EMPLOYEE_CARD_FIXTURE !== undefined ||
-          environment.SHF_ATTENDANCE_FIXTURE !== undefined || environment.SHF_STAGE_ARRIVAL_FIXTURE !== undefined)
+          environment.SHF_ATTENDANCE_FIXTURE !== undefined || environment.SHF_STAGE_ARRIVAL_FIXTURE !== undefined ||
+          environment.SHF_STATION_ARRIVAL_FIXTURE !== undefined)
         throw new Error("Oracle mode prohibits fixture input");
       // Fixture startup never loads a driver/native client. The existing
       // read-only Oracle path is lazy and still requires its original gates.
@@ -141,6 +145,7 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
         if (result.length !== 1) throw new Error("Oracle readiness failed");
       });
       let nativeStageArrival;
+      let nativeStationArrival;
       if (native) {
         // Separate account/UoW, never the read pool or injected fixture Clock.
         const [{ createNativePool, OracleStageArrivalUow }, { OracleStageArrivalApplication }] = await Promise.all([
@@ -155,11 +160,23 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
         // READ ONLY snapshot BEFORE native capabilities become reachable.
         await nativeStageArrival.assertReady();
       }
+      if (nativeStation) {
+        const [{ createNativePool }, { OracleStationArrivalUow }, { OracleStationArrivalApplication }] = await Promise.all([
+          import("./oracle-stage-arrival-uow.mts"), import("./oracle-station-arrival-uow.mts"),
+          import("./oracle-station-arrival-application.mts"),
+        ]);
+        writePool = await (factories?.native ?? createNativePool)(nativeStation.writer);
+        const uow = new OracleStationArrivalUow(writePool, session, nativeStation.binding, config.businessTimeZone);
+        await uow.initialize();
+        nativeStationArrival = new OracleStationArrivalApplication(uow, nativeStation.binding, systemClock,
+          config.businessTimeZone, config.syntheticOrgUnitIds);
+        await nativeStationArrival.assertReady();
+      }
       runtime = await createRuntime(config, new OracleDetailReader(session), undefined,
         { reader: new OracleCurrentReader(session), searchReader: new OracleSearchReader(session),
           myShiftsReader: new OracleMyShiftsReader(session), shiftItemsReader: new OracleShiftItemsReader(session),
           employeeCardReader: new OracleEmployeeCardReader(session), attendanceReader: new OracleAttendanceReader(session),
-          nativeStageArrival });
+          nativeStageArrival, nativeStationArrival });
     } else if (stageMode === "isolated-fixture") {
       if (["SHF_FIXTURE_ROWS", "SHF_CURRENT_SHIFTS_FIXTURE", "SHF_SHIFT_SEARCH_FIXTURE",
         "SHF_MY_SHIFTS_FIXTURE", "SHF_SHIFT_ITEMS_FIXTURE", "SHF_EMPLOYEE_CARD_FIXTURE",

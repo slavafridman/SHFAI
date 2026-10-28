@@ -3,8 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -12,47 +11,14 @@ import { Subscription } from 'rxjs';
 import { SliceApi } from './api';
 import { displayTime, type IdentityResponseV1 } from './contract';
 import { actorBinding, type ArrivalSelection } from './stage-arrival-contract';
-import { stationIdentity, stationContext, stationValidation, stationReceipt, stationProblem,
-  type StationArrivalContextV1, type StationArrivalValidationV1, type StationArrivalReceiptV1,
-  type StationArrivalCommitV1 } from './station-arrival-contract';
+import { stationIdentity, stationSource, stationContext, stationValidation, stationReceipt, stationProblem,
+  type StationContext, type StationValidation, type StationReceipt, type StationCommand,
+  type StationArrivalValidationV1 } from './station-arrival-contract';
 import { StationArrivalSession } from './station-arrival-session';
 import { StageArrivalSession } from './stage-arrival-session';
 import { WorkspaceShell } from './workspace-shell';
 import { ViewHistory } from './view-history';
-
-@Component({
-  selector: 'shf-station-warning',
-  imports: [MatDialogModule, MatCheckboxModule, MatButtonModule, ReactiveFormsModule],
-  template: `
-    <h2 mat-dialog-title>אזהרת איחור לעמדה — סימולציה בלבד</h2>
-    <mat-dialog-content dir="rtl">
-      <p>סימולציה מבודדת בלבד — ללא Oracle, ללא כניסה אמיתית לעמדה.</p>
-      <p>{{ data.name }} · תחילה מתוכננת: <bdi dir="ltr">{{ time(data.planned) }}</bdi></p>
-      <p>זמן שרת שנבדק: <bdi dir="ltr">{{ time(data.validation.evaluatedLocal) }}</bdi>
-        · <bdi>{{ data.validation.businessTimeZone }}</bdi></p>
-      <p>איחור שחושב בשרת: {{ data.validation.warnings[0].minutes }} דקות. סיבה: {{ data.reason }}.</p>
-      <p>קריאת האזהרה מעבירה לסקירת כל הפעולה בלבד. עדיין לא נרשמה הגעה.</p>
-      <mat-checkbox id="station-warning-ack" [formControl]="accepted">קראתי את אזהרת האיחור המדויקת לעמדה</mat-checkbox>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button id="station-warning-cancel" mat-button type="button" (click)="ref.close(false)">ביטול — ללא רישום</button>
-      <button id="station-warning-review" mat-flat-button type="button" [disabled]="!accepted.value"
-        (click)="review()">מעבר לסקירת סימולציה</button>
-    </mat-dialog-actions>`,
-  styles: [`:host { display:flex; flex-direction:column; min-height:0; max-height:calc(100dvh - 24px); overflow-wrap:anywhere; }
-    mat-dialog-content { flex:1 1 auto; min-height:0; max-height:none; overflow:auto; }
-    [mat-dialog-title], mat-dialog-actions { flex-shrink:0; }
-    mat-dialog-actions { flex-wrap:wrap; gap:8px; }
-    button { min-height:48px; height:auto; white-space:normal; max-width:100%; }`],
-})
-export class StationWarning {
-  readonly data = inject<{ name: string; planned: string; reason: string; validation: StationArrivalValidationV1 }>(MAT_DIALOG_DATA);
-  readonly ref = inject(MatDialogRef<StationWarning>);
-  readonly accepted = new FormControl(false, { nonNullable: true });
-  readonly time = displayTime;
-  reviewed = false;
-  review() { if (this.accepted.value) { this.reviewed = true; this.ref.close(true); } }
-}
+import { StationArrivalDialog, type StationArrivalDialogData } from './station-arrival-dialog';
 type State = 'chooser' | 'loading' | 'denied' | 'ready' | 'ineligible' | 'validating' |
   'warning' | 'review' | 'committing' | 'success' | 'error' | 'expired' | 'unknown' | 'recovery';
 @Component({
@@ -75,9 +41,9 @@ export class StationArrivalPage {
   readonly identityState = signal<'loading' | 'ready' | 'error'>('loading');
   readonly state = signal<State>('chooser');
   readonly selection = signal<ArrivalSelection | null>(null);
-  readonly context = signal<StationArrivalContextV1 | null>(null);
-  readonly validation = signal<StationArrivalValidationV1 | null>(null);
-  readonly receipt = signal<StationArrivalReceiptV1 | null>(null);
+  readonly context = signal<StationContext | null>(null);
+  readonly validation = signal<StationValidation | null>(null);
+  readonly receipt = signal<StationReceipt | null>(null);
   readonly reason = new FormControl<string | null>(null);
   readonly message = signal('');
   readonly reviewOffered = signal(false);
@@ -92,10 +58,13 @@ export class StationArrivalPage {
   private restoring = false;
   private work?: Subscription;
   private identityWork?: Subscription;
-  private warning?: MatDialogRef<StationWarning>;
+  private warning?: MatDialogRef<StationArrivalDialog, boolean>;
+  private operation?: MatDialogRef<StationArrivalDialog, boolean>;
+  private operationApproved = false;
+  nativeMode() { return stationSource(this.principal()) === 'oracle-test' || this.selection()?.dataSource === 'oracle-test'; }
   constructor() {
     effect(() => {
-      const pending = !['ready', 'error', 'expired'].includes(this.state()) || this.halted() || this.blocked();
+      const pending = this.nativeMode() || !['ready', 'error', 'expired'].includes(this.state()) || this.halted() || this.blocked();
       if (pending && this.reason.enabled) this.reason.disable({ emitEvent: false });
       else if (!pending && this.reason.disabled) this.reason.enable({ emitEvent: false });
     });
@@ -117,7 +86,7 @@ export class StationArrivalPage {
       this.restoring = !!restored;
       const s = restored ? restored.stationSelection : this.session.selection;
       const selected = s && s.employeeId === params.get('employeeId') && s.shiftDayId === params.get('shiftDayId') &&
-        s.dataSource === 'isolated-fixture' ? structuredClone(s) : null;
+        ['isolated-fixture', 'oracle-test'].includes(s.dataSource) ? structuredClone(s) : null;
       this.selection.set(selected);
       if (selected) this.session.selection = structuredClone(selected);
       this.recheck();
@@ -137,11 +106,12 @@ export class StationArrivalPage {
   private invalidate() {
     this.generation++; this.work?.unsubscribe();
     const warning = this.warning; this.warning = undefined; warning?.close(false);
+    const operation = this.operation; this.operation = undefined; operation?.close(false); this.operationApproved = false;
     this.validation.set(null); this.bound = ''; this.prepared = ''; this.acknowledged = ''; this.deadline = 0;
   }
   private sameSelection(s: ArrivalSelection) {
     const p = this.principal();
-    return this.allowed() && p !== null && s.actor === actorBinding(p) &&
+    return this.allowed() && p !== null && s.dataSource === stationSource(p) && s.actor === actorBinding(p) &&
       p.principal.resourceScope.orgUnitIds.includes(s.orgUnitId) &&
       JSON.stringify(s) === JSON.stringify(this.session.selection);
   }
@@ -159,7 +129,7 @@ export class StationArrivalPage {
         if (!this.active(gen)) return;
         if (!stationIdentity(value)) {
           this.identityState.set('error'); this.state.set('denied');
-          this.message.set('נדרשת תצורת fixture משותפת מפורשת עם 11 הרשאות וזהות סינתטית תקפה. אין מעבר ממקור אמיתי לסימולציה.'); return;
+          this.message.set('נדרשת זהות סינתטית תקפה עם הרשאות ומקור מדויקים: fixture משותף או native station TEST. אין מעבר אוטומטי לסימולציה.'); return;
         }
         this.principal.set(value); this.identityState.set('ready');
         if (this.unresolved()) { this.recovery(); return; }
@@ -184,10 +154,11 @@ export class StationArrivalPage {
     this.work = this.api.stationArrivalContext(s.employeeId, s.shiftDayId).subscribe({
       next: value => {
         if (!this.active(gen)) return;
-        if (!this.sameSelection(s) || !stationContext(value, s)) { this.fail('הקשר לא עקבי או מקור לא מבודד. הפעולה חסומה.'); return; }
+        if (!this.sameSelection(s) || !stationContext(value, s)) { this.fail('הקשר לא עקבי או מקור שגוי. הפעולה חסומה.'); this.halted.set(true); return; }
         this.context.set(structuredClone(value));
         this.state.set(value.eligibility === 'eligible' && value.withinArrivalWindow && !this.session.recorded(s) ? 'ready' : 'ineligible');
-        this.message.set(this.session.recorded(s) ? 'הפעולה כבר אושרה בסימולציה. הקשר חדש לקריאה בלבד; אין רישום נוסף ואין UNKNOWN חדש.' :
+        this.message.set(this.session.recorded(s) ? 'הפעולה כבר אושרה. הקשר חדש לקריאה בלבד; אין רישום נוסף ואין UNKNOWN חדש.' :
+          value.eligibility === 'already-recorded' ? 'הגעה לעמדה כבר רשומה — מצב נצפה לקריאה בלבד, לא קבלה משוחזרת ולא שיוך לפקודה.' :
           value.eligibility === 'eligible' && value.withinArrivalWindow
           ? 'הקשר חדש מהשרת — טרם נשלחה פקודת רישום.' : 'הרשומה אינה כשירה או מחוץ לחלון. אין הוספה, דריסה או כניסה חוזרת.');
         afterNextRender(() => {
@@ -200,7 +171,7 @@ export class StationArrivalPage {
   late() {
     const c = this.context();
     // Presentation only; backend decides classification and warning/minutes.
-    return !!c && c.serverTime.local > c.planned.startLocal;
+    return !this.nativeMode() && !!c && c.serverTime.local > c.planned.startLocal;
   }
   reasonLabel() { return this.context()?.lateReasonOptions.find(r => r.code === this.reason.value)?.label ?? 'תיאור לא זמין'; }
   canValidate() {
@@ -218,7 +189,7 @@ export class StationArrivalPage {
     this.invalidate();
     const gen = this.generation, binding = this.binding(), started = performance.now();
     this.state.set('validating'); this.message.set('בדיקה טהורה — ללא שינוי, ללא קבלה וללא ביקורת עסקית.');
-    this.work = this.api.stationArrivalValidate(s.employeeId, s.shiftDayId, { lateReasonCode: this.reason.value }).subscribe({
+    this.work = this.api.stationArrivalValidate(s.employeeId, s.shiftDayId, { lateReasonCode: this.nativeMode() ? null : this.reason.value }).subscribe({
       next: value => {
         if (!this.active(gen)) return;
         if (binding !== this.binding() || !stationValidation(value, c) ||
@@ -228,7 +199,7 @@ export class StationArrivalPage {
         this.validation.set(structuredClone(value)); this.prepared = JSON.stringify(value); this.bound = binding;
         this.deadline = started + Date.parse(value.expiresAt) - Date.parse(value.evaluatedAt);
         if (this.expired()) return;
-        if (value.confirmationRequired) this.showWarning(value, gen, binding);
+        if (value.dataSource === 'isolated-fixture' && value.confirmationRequired) this.showWarning(value, gen, binding);
         else this.review();
       },
       error: e => { if (this.active(gen)) this.handleError(e); },
@@ -241,8 +212,8 @@ export class StationArrivalPage {
   private showWarning(v: StationArrivalValidationV1, gen: number, binding: string) {
     this.state.set('warning');
     const opener = this.host.nativeElement.querySelector<HTMLElement>('#station-validate');
-    const ref = this.dialog.open(StationWarning, {
-      data: { name: this.selection()!.name, planned: this.context()!.planned.startLocal,
+    const ref = this.dialog.open<StationArrivalDialog, StationArrivalDialogData, boolean>(StationArrivalDialog, {
+      data: { kind: 'fixture-warning', name: this.selection()!.name, planned: this.context()!.planned.startLocal,
         reason: this.reasonLabel(), validation: structuredClone(v) },
       direction: 'rtl', width: '560px', maxWidth: 'calc(100vw - 24px)', maxHeight: 'calc(100dvh - 24px)',
       panelClass: 'shf-arrival-dialog', restoreFocus: false, autoFocus: '#station-warning-cancel',
@@ -255,7 +226,7 @@ export class StationArrivalPage {
       this.warning = undefined;
       if (binding !== this.binding() || this.prepared !== JSON.stringify(this.validation())) {
         this.invalidate(); this.fail('ההקשר השתנה. נדרשת בדיקה חדשה.');
-      } else if (accepted !== true || !instance.reviewed || !instance.accepted.value) {
+      } else if (accepted !== true || !instance.confirmed || !instance.accepted.value) {
         this.invalidate(); this.state.set('ready'); this.message.set('האזהרה בוטלה. לא נשלחה פקודה.');
       } else if (!this.expired()) { this.acknowledged = binding; this.review(); }
       this.restoreOpener(opener);
@@ -275,14 +246,22 @@ export class StationArrivalPage {
       this.invalidate(); this.recovery(); return;
     }
     if (this.expired()) return;
-    const command: StationArrivalCommitV1 = {
-      commandId: crypto.randomUUID(), draft: { lateReasonCode: this.reason.value },
+    if (this.nativeMode() && !this.operationApproved) { this.showOperation(s, c, v); return; }
+    const base = {
       validationToken: v.validationToken, fingerprint: v.fingerprint,
+    };
+    const command: StationCommand = this.nativeMode() ? {
+      ...base, commandId: crypto.randomUUID(), draft: { lateReasonCode: null }, confirmation: null,
+      operationConfirmation: { accepted: true },
+    } : {
+      commandId: crypto.randomUUID(), draft: { lateReasonCode: this.reason.value },
+      ...base,
       confirmation: v.confirmationRequired ? { accepted: true, warningCodes: ['STATION_ARRIVAL_LATE'] } : null,
     };
     if (!this.session.begin(s, command.commandId)) { this.invalidate(); this.recovery(); return; }
     const gen = this.generation, binding = this.bound;
-    this.state.set('committing'); this.message.set('פקודת סימולציה נשלחה. אין לשלוח שוב. עזיבה אינה ביטול.');
+    this.state.set('committing'); this.message.set(this.nativeMode() ?
+      'פקודת כתיבה למסד TEST נשלחה. אין לשלוח שוב. עזיבה אינה ביטול.' : 'פקודת סימולציה נשלחה. אין לשלוח שוב. עזיבה אינה ביטול.');
     this.keepConfirmVisible();
     this.work = this.api.stationArrivalCommand(s.employeeId, s.shiftDayId, command).subscribe({
       next: value => {
@@ -290,18 +269,46 @@ export class StationArrivalPage {
         if (binding !== this.binding() || !this.sameSelection(s) || this.prepared !== JSON.stringify(this.validation()) ||
           !stationReceipt(value, c, command, v) || !this.session.resolve(s, command.commandId)) { this.unknown(); return; }
         this.receipt.set(structuredClone(value)); this.validation.set(null); this.state.set('success');
-        this.message.set('הגעה לעמדה נרשמה בסימולציה בזיכרון בלבד — קבלת F2 וביקורת זיכרון. זו אינה כניסה אמיתית.');
+        this.message.set(this.nativeMode() ?
+          'השרת אישר COMMIT ובדיקה חוזרת תואמת של הגעה לעמדה במסד TEST. שינוי בדיקה אמיתי, לא סימולציה; שותף חיצוני לא הופעל.' :
+          'הגעה לעמדה נרשמה בסימולציה בזיכרון בלבד — קבלת F2 וביקורת זיכרון. זו אינה כניסה אמיתית.');
         this.keepConfirmVisible();
       },
       error: e => {
         if (!this.active(gen) || this.state() !== 'committing') return;
         if (binding !== this.binding() || !this.sameSelection(s) || !(e instanceof HttpErrorResponse) ||
-          !this.problemMedia(e) || !stationProblem(e.error, e.status, command.commandId) ||
+          !this.problemMedia(e) || !stationProblem(e.error, e.status, command.commandId, s.dataSource) ||
           e.error.effect === 'unknown' || ['COMMAND_IN_PROGRESS', 'COMMAND_ID_CONFLICT'].includes(e.error.code) ||
           !this.session.resolve(s, command.commandId, false)) { this.unknown(); return; }
         this.handleError(e, command.commandId);
         this.keepConfirmVisible();
       },
+    });
+  }
+  private showOperation(s: ArrivalSelection, c: StationContext, v: StationValidation) {
+    if (this.operation) return;
+    if (c.dataSource !== 'oracle-test' || v.dataSource !== 'oracle-test') {
+      this.invalidate(); this.fail('מקור הבדיקה השתנה. נדרשת בדיקה חדשה.'); return;
+    }
+    const gen = this.generation, binding = this.bound;
+    const opener = this.host.nativeElement.querySelector<HTMLElement>('#station-confirm');
+    const ref = this.dialog.open<StationArrivalDialog, StationArrivalDialogData, boolean>(StationArrivalDialog, {
+      data: { kind: 'native-confirmation', selection: structuredClone(s), context: structuredClone(c), validation: structuredClone(v) },
+      direction: 'rtl', width: '560px', maxWidth: 'calc(100vw - 24px)', maxHeight: 'calc(100dvh - 24px)',
+      panelClass: 'shf-arrival-dialog', restoreFocus: false, autoFocus: '#native-station-operation-cancel',
+      enterAnimationDuration: 0, exitAnimationDuration: 0, ariaLabel: 'אישור רישום הגעה לעמדה במסד TEST',
+    });
+    this.operation = ref;
+    const instance = ref.componentInstance;
+    ref.afterClosed().pipe(takeUntilDestroyed(this.destroy)).subscribe(accepted => {
+      if (!this.active(gen)) return;
+      this.operation = undefined;
+      if (binding !== this.binding() || this.prepared !== JSON.stringify(this.validation())) {
+        this.invalidate(); this.fail('ההקשר השתנה. נדרשת בדיקה חדשה.');
+      } else if (accepted === true && instance.confirmed && instance.accepted.value) {
+        this.operationApproved = true; this.confirm();
+      } else { this.invalidate(); this.state.set('ready'); this.message.set('האישור בוטל. לא נשלחה פקודה ולא בוצע עדכון.'); }
+      this.restoreOpener(opener);
     });
   }
   private problemMedia(e: HttpErrorResponse) {
@@ -311,11 +318,12 @@ export class StationArrivalPage {
   }
   private handleError(e: unknown, commandId: string | null = null) {
     this.invalidate();
-    if (e instanceof HttpErrorResponse && this.problemMedia(e) && stationProblem(e.error, e.status, commandId)) {
+    if (e instanceof HttpErrorResponse && this.problemMedia(e) && stationProblem(e.error, e.status, commandId,
+      this.selection()?.dataSource ?? 'isolated-fixture')) {
       this.message.set(`${e.error.code} — ${e.error.effect === 'rolled-back' ? 'השרת אישר ביטול מלא' : 'השרת דחה לפני שינוי'}. אין ניסיון חוזר אוטומטי.`);
       this.state.set('error'); this.halted.set(e.error.nextAction === 'stop' || e.error.nextAction === 'prepare-again');
       if (e.error.nextAction === 'prepare-again') this.context.set(null); // Fresh context required, not old F1/F2 prep.
-      if (e.status === 422) {
+      if (e.status === 422 && !this.nativeMode()) {
         this.reason.enable({ emitEvent: false }); this.reason.setErrors({ server: true });
         this.reason.markAsTouched(); this.focusAfterRender('#station-reason');
       }
@@ -360,7 +368,7 @@ export class StationArrivalPage {
   }
   openStage() {
     const s = this.selection();
-    if (!s || !this.allowed() || this.session.affects(s) || this.stage.affects(s) || this.state() === 'committing') return;
+    if (!s || this.nativeMode() || !this.allowed() || this.session.affects(s) || this.stage.affects(s) || this.state() === 'committing') return;
     this.invalidate(); this.stage.selection = structuredClone(s);
     void this.router.navigate(['/employees', s.employeeId, 'shift-days', s.shiftDayId, 'stage-arrival']);
   }

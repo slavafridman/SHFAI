@@ -10,6 +10,7 @@ import { nativeCommand, validNativeReceipt } from "./native-stage-arrival-valida
 import { linkBackendShutdown } from "./backend-lifecycle.mts";
 import { stationCommand, validStationReceipt } from "./station-arrival-validation.mts";
 import { stationProblem } from "./station-arrival-errors.mts";
+import { nativeStationCommand, validNativeStationReceipt } from "./native-station-arrival-validation.mts";
 
 const pattern = /^\/api\/v1\/employees\/([^/]*)\/shift-days\/([^/]*)\/(?:stage-arrival|station-arrival)\/(context|validations|commands)$/;
 export const isStageArrivalRoute = (target: string) => pattern.test(target.split("?")[0]);
@@ -123,10 +124,12 @@ export async function handleStageArrival(request: IncomingMessage, response: Ser
       else if (match[3] === "validations") value = await (station ? runtime.stationArrivalValidate : runtime.stageArrivalValidate)(p, target, input, abort.signal);
       else {
         if (station) {
-          const cmd = stationCommand(input);
+          const native = runtime.attendanceStationArrivalMode === "test-oracle-controlled";
+          const cmd = native ? nativeStationCommand(input) : stationCommand(input);
           commandId = cmd.commandId; commandAttempted = true;
           value = await runtime.stationArrivalCommit(p, target, cmd, abort.signal);
-          if (!validStationReceipt(value, cmd, target)) stageFail("COMMAND_OUTCOME_UNKNOWN");
+          if (!(native ? validNativeStationReceipt(value, nativeStationCommand(cmd), target) :
+              validStationReceipt(value, cmd, target))) stageFail("COMMAND_OUTCOME_UNKNOWN");
         } else {
           const cmd = runtime.attendanceStageArrivalMode === "test-oracle-controlled" ? nativeCommand(input) : command(input);
           commandId = cmd.commandId;

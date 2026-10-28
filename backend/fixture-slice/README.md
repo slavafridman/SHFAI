@@ -1,4 +1,4 @@
-# SHF backend: seven reads, isolated F1, and default-off controlled native TEST F1
+# SHF backend: seven reads, isolated arrivals, and default-off controlled native TEST arrivals
 
 ## SHF-ENV-PROFILES-20 — DEV / TEST / PRODUCTION
 
@@ -1808,3 +1808,166 @@ Not run/claimed here: actual UI/backend integration, browser/RTL/a11y QA,
 native TEST F1 or F2, database/DNS probes, load certification, production,
 EMS/CTI, legacy execution or batch. Parent coordinates independent QA and
 publication; this backend task is not whole-project/M1 completion.
+
+## SHF-NATIVE-F2-API-28 — approved §46 native station arrival v0.1
+
+This is a **separate, default-OFF** construction, not a change to fixture F2
+or native stage arrival. Implementation approval is §46 v0.1 / §46.9,
+28 October 2026 09:00 +02:00. It does **not** authorize operational execution.
+Existing read7, fixture-stage9, native-stage10 and joint-fixture11 capability
+arrays and inputs remain unchanged. The new exact ordered **native-station10**
+is read7 + station prepare + station commit + station test-oracle-write.
+Synthetic identity still has `employeeId:null`, identity source `oracle`,
+and no credential verification. Business validation and exact J01 scope are
+mandatory regardless of Administrator rights.
+
+### Private construction shape (names only; never operator values)
+
+The existing explicit `SHF_ORACLE_CONFIG` requires:
+
+- `attendanceStationArrivalMode:"test-oracle-controlled"`;
+- `attendanceStageArrivalMode:"disabled"` (explicit; no combined native writers);
+- `dataSource:"oracle-read-only"`, `oracleTestScopeConfirmed:true`,
+  `deploymentClass:"isolated-test-demo"`, `authenticationMode:"synthetic"`,
+  `syntheticAdministratorEnabled:true`;
+- explicit `syntheticOrgUnitIds` and `businessTimeZone`.
+
+All existing read connection/port gates still apply. In addition require exact
+`SHF_TEST_ORACLE_STATION_WRITE_ENABLED="true"`, a nonempty separate
+`SHF_STATION_ARRIVAL_ORIGINS` JSON array of canonical approved loopback origins,
+and these private environment keys:
+
+`SHF_NATIVE_STATION_CONNECT_STRING`, `SHF_NATIVE_STATION_USER`,
+`SHF_NATIVE_STATION_PASSWORD`, `SHF_NATIVE_STATION_CLIENT_LIB_DIR`,
+`SHF_NATIVE_STATION_BINDING`.
+
+The binding is an exact object with these required keys:
+
+```text
+operation = "native-station-arrival-v0.1"
+marker, employeeId, shiftDayId, orgUnitId
+readIdentity, writeIdentity
+stationMetadataDigest
+approval, freezeOwner, recoveryOwner
+writerFreezeConfirmed = true
+noExternalEffectsConfirmed = true
+singleExecutorConfirmed = true
+windowStart, windowEnd
+allowanceFile
+```
+
+Marker/scalar/account/frozen-target proof semantics reuse the approved native
+identity parser; no learned expectations, new resolver or bypass is installed.
+Canonical UTC millisecond window instants must be ordered. The local external
+operator allowance filename must begin `station-arrival-`, be separate from
+F1, and pass the existing repository-boundary/ancestor/link/junction guards.
+This operation-bound **single-attempt fuse** is not a receipt. Preparation
+does not create it; a command spends it before acquisition, including failed
+or UNKNOWN attempts. Keep its exact path across restart/new UUID. No reset,
+replay, setup or automatic reconciliation API exists.
+
+`stationMetadataDigest` is **not the F1 digest**: it is the existing canonical
+SHA-256 fingerprint of `{operation, proof}`, with operation above and the
+ordered results of exported `stationMetadataSql`. Operator certification must
+cover the F2 table set, station time/user types, at least100 BYTE VARCHAR2 user
+capacity, all attendance columns, keys, constraints, disabled triggers/VPD,
+dependencies, grants and actual writer SELECT privileges. A matching digest
+alone is not external-effects, freeze or live readiness certification.
+The same immutable independently configured target/proof revision is required
+for read, writer safety, locked transaction and independent readback; account
+observations are checked separately.
+
+Omitted mode is disabled. Missing/malformed flags, origins, private inputs,
+mixed native/fixture inputs, both native writers, local-development native,
+production or conflicting `NODE_ENV=production` reject before pool/listener
+creation. Read-only mode requires flag absent/`false` and no station private
+keys. Never enable writes just to obtain a healthy startup.
+
+### Behavior and transaction limits
+
+GET context and POST validations use plain-table read-only snapshots and no
+legacy mutation helper. Native validation draft is exactly
+`{lateReasonCode:null}`. Commands use the canonical native DTO, including
+`confirmation:null` **and** `operationConfirmation:{accepted:true}`. Fixture
+confirmation/late grammar cannot substitute. Shared strict transport rules
+include duplicate/unknown-key rejection and denial of a present empty Origin.
+Responses are no-store, source `oracle-test`, with the exact canonical F2
+problem union and no Oracle/configuration details.
+
+Only one existing synthetic marker-bound attendance row is eligible. Required
+source facts include exact SHF_LOCKED text `"0"` (null/unknown invalid, `"1"`
+deferred), effective day/overlay/employee and J01/G01 hierarchy, full attendance
+originals, unapproved-report count, counts from **both** per-day exception
+relations, and up to1000 complete effective employee-day candidates plus an
+overflow lookahead. Discovery includes changed-employee overlays, with no
+date-only filter that could miss an overnight interval. Discovery takes the
+conservative baseline-or-any-changed-owner union and includes **all** overlays
+for those days, so an overlay moved to another employee cannot hide duplicate
+cardinality. Coherent moved-away days are validated before exclusion; the
+1000 bound applies to this conservative candidate set. Duplicate,
+overflow, invalid/unknown/full-day candidate evidence fails closed. Candidate
+times must resolve uniquely in the configured zone; half-open overlap permits
+adjacency and zero-length intervals. Any selected exception row, including a
+partial exception, is conservatively unsupported; it is not labeled full-day.
+
+On-time only: same business date, inclusive start−60min through start/end,
+**offset0**, with full-instant start+1ms rejection. Stage may be null or a
+coherent pre-existing pair no later than station; briefing NULL/0/1 is admitted
+and preserved. Missing/report/flag/locked/split/P2/exception/stage-late/
+station-late/exit/unsupported dependencies cannot acquire a ready token.
+Tokens bind operation, private scope, identity reference, principal, zone,
+complete facts and expiry; tokens from another application/source cannot pass.
+
+A dedicated writer pool/UoW acquires short NOWAIT locks and rereads all facts.
+The two-column UPDATE sets **only STATION_ARRIVAL_TIME and
+STATION_ARRIVAL_USER**, with individually bound null-safe full attendance and
+dependency originals, cardinalities and candidate-set predicates. No INSERT,
+late/briefing/stage/mood/exit/report write, stored function, EMS/CTI, schema or
+batch operation is included. Contextual writer exclusion remains an operator
+freeze prerequisite, not a promise of cross-table serializability from hashes
+or attendance-row locks.
+
+Zero affected rows is stale after proved rollback; many/undefined is an
+invariant failure, never success. Explicit AbortSignal and ambient ALS/budget
+guards cover admission, final pre-DML and pre-COMMIT, including a fresh business
+Clock check after UPDATE. Underlying SQL/COMMIT and native break/cleanup promises
+remain owned during disconnect/shutdown; pools cannot close ahead of them.
+Only COMMIT acknowledgement **and** a new independent identity-checked matching
+full-preservation readback yield `oracle-test-committed`. Ambiguous COMMIT,
+rollback or readback yields UNKNOWN/reconcile, never inferred success or
+automatic replay. The native receipt is nonpersistent (`receiptPersistence:
+"none"`); acknowledgement is not an exact commit timestamp or durable
+attribution. Partner completion remains `not-invoked`.
+
+### Narrow endpoint-role compatibility fix
+
+The independently configured Oracle Net **endpoint** DNS labels may contain
+internal underscores, preserving alphanumeric label boundaries and existing
+length limits. **SERVER_HOST mappings remain strict hostname/IP grammar.**
+Parser and bounded injected-resolver proof factory enforce the same distinction,
+with exact spelling and unchanged equal complete nonempty canonical IPv4/IPv6
+sets, alias/account/reference checks. There is no underscore-to-hyphen,
+suffix/case learning or fallback. Syntax acceptance cannot fix actual
+ESERVFAIL, timeouts, missing families or a mismatched physical target.
+
+### Offline verification / operational handoff
+
+```powershell
+node --test test/oracle-station-arrival-contracts.test.mts test/station-arrival-contracts.test.mts
+node --test test/oracle-station-arrival-domain.test.mts test/oracle-station-arrival.test.mts test/native-station-arrival-http.test.mts test/native-stage-arrival-identity.test.mts
+npm run typecheck
+npm test
+```
+
+These are static, synthetic protocol-double and owned-loopback checks only;
+temporary fuses are created exclusively in owned isolated TEST temporary
+directories and removed afterward. No real allowance is consumed. The installed
+Node24/npm11/driver26 baseline is retained; operator-reported Oracle11.2.0.4 /
+Client19.3 compatibility is not recertified by offline tests.
+
+Operational GO, current endpoint A/AAAA proof (reported ESERVFAIL remains a
+blocker), identity/bootstrap, actual F2 metadata/byte capacity/hidden-effects
+certification, eligibility, operational freeze/window and a fresh separate
+allowance belong to parent/operator. No live DB/DNS, production, DDL, broker,
+legacy execution, credential-file access or frontend/browser checks are run or
+claimed by this backend implementation.

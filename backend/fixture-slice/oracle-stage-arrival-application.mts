@@ -26,7 +26,7 @@ type Preparation = { principal: PrincipalV1; snapshot: NativeSnapshot;
 export class NativeAllowance {
   private readonly path: string;
   private used = false;
-  constructor(binding: NativeBinding) { this.path = binding.allowanceFile; }
+  constructor(binding: Pick<NativeBinding, "allowanceFile">) { this.path = binding.allowanceFile; }
   assertUnused() {
     if (this.used) stageFail("LIVE_WRITES_DISABLED");
     try {

@@ -1,12 +1,22 @@
 <shf-workspace-shell active="attendance" [principal]="principal()" [identityState]="identityState()"
-  [persistentIdentity]="true" [pinned]="true" [simulationNotice]="allowed()" (recheck)="recheck()">
+  [persistentIdentity]="true" [pinned]="true" [simulationNotice]="allowed() && !nativeMode()" (recheck)="recheck()">
   <div class="station-page" dir="rtl">
     <div class="breadcrumb"><a routerLink="/attendance" (click)="$event.preventDefault(); cancel()">חזרה לבירור נוכחות / למקור</a></div>
-    <h1 tabindex="-1">הגעה לעמדה — סימולציה</h1>
+    <h1 tabindex="-1">{{ nativeMode() ? 'הגעה לעמדה — TEST' : allowed() ? 'הגעה לעמדה — סימולציה' : 'הגעה לעמדה — מקור טרם אומת' }}</h1>
     <aside class="isolation surface" role="note">
+      @if (nativeMode()) {
+        <strong>כתיבה בפועל למסד TEST</strong>
+        <p>שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור. ללא CTI או הפעלת שותף חיצוני.
+          מנהל מערכת סינתטי אינו העובד/ת שנבחר/ה; לא בוצע אימות סיסמה אמיתית.</p>
+        <p>הגעה בזמן בלבד — ללא רישום איחור, ללא ביצוע F1 וללא שינוי תדריך.</p>
+      } @else if (allowed()) {
       <strong><bdi dir="ltr">FIXTURE LOCAL ONLY</bdi> · סימולציה מבודדת בלבד · לא כניסה אמיתית לעמדה</strong>
       <p>ללא Oracle, ללא CTI, ללא הפעלת שותף חיצוני וללא אימות סיסמה אמיתי.
         מנהל מערכת סינתטי אינו העובד/ת שנבחר/ה. הנתונים והקבלה בזיכרון המופע בלבד.</p>
+      } @else {
+        <strong>מקור והרשאות טרם אומתו — הרישום חסום.</strong>
+        <p>אין הנחת מנהל מערכת ואין מעבר אוטומטי לנתוני סימולציה.</p>
+      }
     </aside>
     <p id="station-status" role="status" aria-live="polite">{{ message() }}</p>
     @if (state() === 'loading') { <p>טוענים זהות והקשר חדש מהשרת…</p> }
@@ -21,7 +31,7 @@
     @if (selection(); as s) {
       <section class="surface"><h2>{{ s.name }} — הקשר עובד/ת נבחר/ת, לא זהות מפעיל</h2>
         <p>מזהה עובד/ת <bdi dir="ltr">{{ s.employeeId }}</bdi> · יום <bdi dir="ltr">{{ s.shiftDayId }}</bdi>
-          · צוות <bdi dir="ltr">{{ s.orgUnitId }}</bdi> · מקור <bdi dir="ltr">isolated-fixture</bdi></p>
+          · צוות <bdi dir="ltr">{{ s.orgUnitId }}</bdi> · מקור <bdi dir="ltr">{{ s.dataSource }}</bdi></p>
       </section>
     }
     @if (context(); as c) {
@@ -41,7 +51,7 @@
           <dt>תדריך רשום — לא ישתנה</dt><dd>{{ c.recorded.briefing === null ? 'NULL — לא ידוע' : c.recorded.briefing ? 'כן' : 'לא' }}</dd>
         </dl>
         @if (c.blockers.length) {
-          <p>נדרשת בדיקת תנאי נוכחות מחוץ לסימולציה. לא תתווסף רשומה ולא יוסרו חסמים.</p>
+          <p>נדרשת בדיקת תנאי נוכחות מחוץ למסך זה. לא תתווסף רשומה ולא יוסרו חסמים.</p>
           <ul>@for (blocker of c.blockers; track blocker) { <li><bdi dir="ltr">{{ blocker }}</bdi></li> }</ul>
         }
         @if (!c.withinArrivalWindow) { <p role="alert">מחוץ לחלון הגעה המותר. אין שינוי שעה או תיקון תאריך אוטומטי.</p> }
@@ -74,27 +84,36 @@
             הזמן הסופי ייקבע מחדש בשרת; שינוי בתנאים יחייב בדיקה חדשה.</p>
           @if (v.confirmationRequired) { <p>אזהרת האיחור לעמדה נקראה: {{ v.warnings[0].minutes }} דקות · סיבה {{ reasonLabel() }}.</p> }
           @else { <p>ללא איחור בבדיקה. סיבה: NULL. עדיין נדרש אישור מפורש של כל הפעולה.</p> }
-          <p>קבלת F2 וביקורת בזיכרון בלבד. שותף חיצוני לא יופעל.</p>
+          @if (nativeMode()) {
+            <p>ישתנו בדיוק שני שדות: זמן הגעה לעמדה וחותמת מפעיל, שניהם נקבעים בשרת.
+              ההגעה לבמה והתדריך יישמרו ללא שינוי. אין קבלה מתמשכת; שותף חיצוני לא יופעל.</p>
+          } @else { <p>קבלת F2 וביקורת בזיכרון בלבד. שותף חיצוני לא יופעל.</p> }
         </section>
       }
     }
     @if (reviewOffered()) {
       <button id="station-confirm" mat-flat-button type="button" [disabled]="state() !== 'review'" [disabledInteractive]="true" (click)="confirm()">
-        {{ state() === 'committing' ? 'ממתינים לתוצאה — אין לשלוח שוב' : 'אישור סימולציה — הגעה לעמדה בלבד' }}</button>
+        {{ state() === 'committing' ? 'ממתינים לתוצאה — אין לשלוח שוב' : nativeMode() ? 'אישור רישום הגעה לעמדה במסד TEST' : 'אישור סימולציה — הגעה לעמדה בלבד' }}</button>
     }
     @if (receipt(); as r) {
-      <section class="surface receipt"><h2>קבלת F2 — סימולציה מקומית בלבד</h2>
+      <section class="surface receipt"><h2>{{ r.dataSource === 'oracle-test' ? 'קבלת F2 — שינוי מאושר במסד TEST' : 'קבלת F2 — סימולציה מקומית בלבד' }}</h2>
         <p>הגעה לעמדה: <bdi dir="ltr">{{ time(r.recorded.stationArrivalLocal) }}</bdi></p>
         <p>הגעה לבמה נשמרה: <bdi dir="ltr">{{ r.recorded.stageArrivalLocal === null ? 'NULL' : time(r.recorded.stageArrivalLocal) }}</bdi></p>
         <p>מזהה פקודה <bdi dir="ltr">{{ r.commandId }}</bdi> · <bdi dir="ltr">{{ r.outcome }}</bdi></p>
-        <p>ביקורת בזיכרון המופע בלבד · שותף חיצוני: לא הופעל · אין קבלה מתמשכת או הגעה אמיתית.</p>
+        @if (r.dataSource === 'oracle-test') {
+          <p>אישור COMMIT: <bdi dir="ltr">{{ r.commitAcknowledgedAt }}</bdi></p>
+          <p>אימות קריאה חוזרת: <bdi dir="ltr">{{ r.readBackVerifiedAt }}</bdi></p>
+          <p>אישור COMMIT אינו רגע השמירה המדויק במסד. אין קבלה מתמשכת או הסקת שיוך פקודה מקריאה חוזרת.
+            אין replay · שותף חיצוני: לא הופעל.</p>
+          <p>תדריך נשמר: {{ r.recorded.briefing === null ? 'NULL — לא ידוע' : r.recorded.briefing ? 'כן' : 'לא' }}.</p>
+        } @else { <p>ביקורת בזיכרון המופע בלבד · שותף חיצוני: לא הופעל · אין קבלה מתמשכת או הגעה אמיתית.</p> }
       </section>
     }
     <div class="actions">
       @if (state() === 'error' || state() === 'expired' || state() === 'denied') {
         <button id="station-refresh" mat-stroked-button type="button" [disabled]="blocked()" (click)="recheck()">טעינת זהות והקשר חדשים — ללא רישום</button>
       }
-      @if (selection() && allowed() && !session.affects(selection()) && !stage.affects(selection()) && state() !== 'committing') {
+      @if (!nativeMode() && selection() && allowed() && !session.affects(selection()) && !stage.affects(selection()) && state() !== 'committing') {
         <button id="station-to-stage" mat-button type="button" (click)="openStage()">הגעה לבמה — הקשר חדש בלבד</button>
       }
       <button id="station-back" mat-button type="button" [disabled]="state() === 'committing'" (click)="cancel()">חזרה ללא רישום נוסף</button>

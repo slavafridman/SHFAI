@@ -26,7 +26,7 @@ import { EmployeeName } from './employee-name';
 import { StageArrivalSession } from './stage-arrival-session';
 import { arrivalSource, actorBinding } from './stage-arrival-contract';
 import { StationArrivalSession } from './station-arrival-session';
-import { stationIdentity } from './station-arrival-contract';
+import { stationSource } from './station-arrival-contract';
 
 const timeControl = () => new FormControl('', { nonNullable: true,
   validators: [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/)] });
@@ -291,7 +291,8 @@ export class AttendancePage {
       this.principal()!.principal.resourceScope.orgUnitIds.includes(row.employee.unit.code);
   }
   canOpenStation(row: AttendanceRowV1) {
-    return stationIdentity(this.principal()) && this.result()?.dataSource === 'isolated-fixture' &&
+    const source = stationSource(this.principal());
+    return source !== null && this.result()?.dataSource === (source === 'oracle-test' ? 'oracle-read-only' : 'isolated-fixture') &&
       !!row.shiftDayId && row.planned.startLocal !== null && row.planned.endLocal !== null &&
       this.principal()!.principal.resourceScope.orgUnitIds.includes(row.employee.unit.code);
   }
@@ -302,7 +303,7 @@ export class AttendancePage {
     this.station.selection = { employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId!,
       attendanceKey: { shiftDayId: row.shiftDayId! }, orgUnitId: row.employee.unit.code,
       name: `${row.employee.firstName} ${row.employee.lastName}`, startLocal: row.planned.startLocal!,
-      endLocal: row.planned.endLocal!, dataSource: 'isolated-fixture', actor: actorBinding(this.principal()!) };
+      endLocal: row.planned.endLocal!, dataSource: stationSource(this.principal())!, actor: actorBinding(this.principal()!) };
     void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'station-arrival'],
       { state: { origin: 'attendance' } });
   }

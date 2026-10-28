@@ -23,6 +23,9 @@
       @if (identity.dataSource === 'oracle' && identity.principal.capabilities.includes('attendance-stage-arrival:test-oracle-write')) {
         <strong class="source-label"> · מקור הקריאה נותר לקריאה בלבד. Controlled TEST Oracle write — הגעה לבמה מבוקרת בלבד; שינוי נתוני בדיקה אמיתי, לא ייצור.</strong>
       }
+      @if (identity.dataSource === 'oracle' && identity.principal.capabilities.includes('attendance-station-arrival:test-oracle-write')) {
+        <strong class="source-label"> · כתיבה בפועל למסד TEST. Controlled TEST Oracle write — הגעה לעמדה בלבד; שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור. בירורים נשארים לקריאה בלבד; פקודות במה מושבתות.</strong>
+      }
     } @else {
       <strong id="identity-heading" tabindex="-1">
         {{ identityState() === 'loading' ? 'טוען את פרטי מצב ההדגמה…' : 'זהות הדגמה לא זמינה — אין הנחת מנהל מערכת.' }}

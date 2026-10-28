@@ -1,4 +1,314 @@
-# SHF-F2-UI-20 — frontend verification (20 October 2026)
+# SHF-NATIVE-F2-UI-28 — frontend verification (28 October 2026)
+
+## QA28B-01 owner fix — shared F2 dialog / natural CLI teardown
+
+**State: SOURCE-STABLE, developer fix/retest PASS; independent parent closure
+pending.** This section supersedes the earlier teardown diagnosis/limitation
+and test totals below. Approval remains §46 v0.1 and §§41–42 v0.1; canonical
+V1 contracts and product behavior are unchanged. No backend, canonical,
+configuration, dependency, lockfile, vendor, Git, design or status writes.
+
+### Reproduction and necessary refactor
+
+Before editing, `npm run build:production` completed generation in4.769s but
+did not return naturally after an observation of more than60s. The owned
+ng/npm command and frontend esbuild service were still alive (observed service
+PID14068, parent21144). **Clean-exit reproduction FAIL**, not a passing build.
+That failed reproduction was stopped for cleanup only. A tests-first new
+dialog spec then produced expected missing-component compiler errors; this
+pre-fix command also failed to exit naturally and was stopped, not counted
+as success.
+
+The independent QA finding identified identical inline style definitions
+in the two F2 components, with concurrent BundlerContext creation retaining a
+context; this owner did not rerun or modify the installed-package trace.
+The source fix replaces both components with **one** `StationArrivalDialog`,
+one template and **one external stylesheet**, owned by that component.
+Discriminated typed data selects fixture-warning or native-confirmation
+content. Shared layout, labels, stable IDs, explicit-checkbox confirmation
+and cancel handling now have one definition; branch bodies and exact approved
+copy remain separate. This is legitimate component/resource deduplication,
+not hash-foiling CSS differences/comments or a vendor/tooling workaround.
+Native F1 source and styles remain unchanged.
+
+The page still enforces the original preparation/generation/source binding,
+checked consent and fresh re-review before command dispatch. Native dialog
+data requires native context/validation; fixture warning is still only a
+late-warning acknowledgement, not command consent. All existing dialog IDs,
+Material overlay options, Hebrew aria labels, focus return and whole-operation
+native confirmation are retained. The six added isolated component cases
+cover branch-only content, unchecked/checked consent and cancel for both modes.
+
+### Changed paths for this follow-up only
+
+All relative to `frontend/fixture-slice`:
+
+```text
+src/station-arrival-page.ts
+src/station-arrival-dialog.ts
+src/station-arrival-dialog.html
+src/station-arrival-dialog.scss
+src/station-arrival-dialog.spec.ts
+src/station-arrival-page.spec.ts
+src/native-station-arrival-page.spec.ts
+README.md
+VERIFICATION.md
+```
+
+### Exact post-fix commands, codes and wall timings
+
+Commands ran from this package using unchanged installed tooling. Times below
+measure the complete command through its **natural return**, not just the
+bundler/test summary. No post-fix command was stopped, killed, forced to exit,
+wrapped in a success-shaped timeout, or retried after failure.
+
+| Command | Result |
+|---|---|
+| `npm run typecheck` | PASS, final natural exit0,3.65s |
+| `npm test -- --include src/station-arrival-dialog.spec.ts` | First post-fix invocation:6/6 PASS, natural exit0,15.96s |
+| `npm test -- --include 'src/*station-arrival*.spec.ts' --include 'src/native-arrival*.spec.ts' --include src/native-read-views.spec.ts` | Three separately counted consecutive invocations, each165/165 PASS /12 files, natural exit0:25.09s,25.62s,24.52s |
+| `npm test` | First post-fix full run:531/531 PASS /39 files, natural exit0,45.13s; existing525 +6 new |
+| `npm run build:dev` | PASS natural exit0,4.96s |
+| `npm run check:profile -- dev` | PASS natural exit0,0.50s |
+| `npm run build:test` | PASS natural exit0,5.07s |
+| `npm run check:profile -- test` | PASS natural exit0,0.38s |
+| `npm run build:production` | PASS natural exit0,5.21s |
+| `npm run check:profile -- production` | PASS natural exit0,0.47s |
+| `node checks/station-arrival-browser-check.mjs --native-station` | PASS exit0,7.16s; actual Chrome + typed synthetic HTTP |
+| `node checks/station-arrival-browser-check.mjs --native-protocol-double` | PASS exit0,5.71s; actual native runtime/HTTP/application/UoW against synthetic pool protocol double |
+| `node checks/station-arrival-browser-check.mjs` | PASS exit0,7.49s; actual Chrome + fixture HTTP interception |
+| `node checks/station-arrival-browser-check.mjs --fixture-proxy` | PASS exit0,6.42s; actual joint memory fixture backend F1→fresh F2 |
+
+All profile checkers preserve the exact public `{appEnv,apiBasePath}` shape and
+`apiBasePath:/api`. Production initial bundle583.20kB; final browser runs use
+that artifact. Existing nonfatal jsdom scroll and Node module-type warnings
+remain visible; no configuration/package change suppresses them.
+
+Each measured command wrapper started a PowerShell Stopwatch, invoked the
+normal command, saved `$LASTEXITCODE` **after the command returned**, and
+printed the code/wall time. Focused runs used a three-iteration loop that
+exits on any nonzero code; it is not a retry loop. Following each focused
+run, full suite and build/profile pair, this exact observation returned0:
+
+```powershell
+@(Get-CimInstance Win32_Process | Where-Object {
+  $_.Name -eq 'esbuild.exe' -and
+  $_.CommandLine -like '*frontend\fixture-slice\node_modules\@esbuild\*'
+}).Count
+```
+
+Final observation also returned0 owned F2 Chrome roots and found no remaining
+`f2-chrome-*` profile directories. All browser helpers closed their owned
+listeners/double resources. No retained owned frontend esbuild service or
+active build/test helper remains. The root-coupled clean-exit failure is
+resolved by this source refactor in these observed checks, rather than
+reclassified as a generic runner limitation.
+
+### Behavior, startup distinction and remaining gates
+
+Both native and fixture Chrome dialogs retain1440/390/320 reflow, reduced
+motion, keyboard trapping, Escape-before-command zero effects and exact
+visible focus return. Native320 Escape/pending/success and fixture focus
+checks retain actual screenshot ring contrast12.6179:1, solid3px/offset3px,
+opacity1 and full48px hit-testable/unobscured button. Native consent still
+sends one command, duplicates are blocked, wrong readback stays UNKNOWN and
+reload cannot resend. Actual protocol double preserves every non-station
+field, returns ACK+separate readback and F1 disabled403. Fixture integration
+preserves its distinct source/receipts and existing F1 behavior.
+
+**QA28B-02 is separate:** no Vitest thread-start timeout or unhandled startup
+error occurred in any of the five post-fix test invocations (small spec,
+three focused, one full). Every invocation's first startup passed; there
+were zero failed-start retries. The earlier intermittent thread-start cause
+remains **unknown/not reproduced**, not claimed fixed by CSS deduplication
+and not conflated with the independently reproduced BundlerContext leak.
+Parent owns independent targeted startup/context-disposal retest before
+publication; a recurrence requires diagnosis, not automatic retry.
+
+No live Oracle/DNS/operational allowance, backend QA rerun, manual AT, full
+WCAG claim, UAT, dependency upgrade or deployment is included. The external
+Oracle DNS/readiness gate remains operator/parent-owned and unchanged.
+
+## Earlier implementation verification — historical counts/teardown finding
+
+**State: implementation SOURCE-STABLE for parent independent QA.** Approved
+UI/API baseline: §46 v0.1, explicit user approval 28Oct09:00+02; existing
+§§41–42 v0.1 F2 layout and fixture canonicals unchanged. Canonical native
+station V1 types/capability were reported source-stable and checked by their
+owner before implementation. Backend SOURCE-STABLE was subsequently provided
+by the parent before any backend runtime imports/integration in this task.
+No live Oracle/DNS/production/EMS/batch operation, credentials, operational
+allowance, dependency or lockfile change is included.
+
+## Changed paths (relative to this package)
+
+```text
+src/api.ts
+src/contract.ts
+src/attendance-page.ts
+src/station-arrival-contract.ts
+src/station-arrival-page.ts
+src/station-arrival-page.html
+src/station-arrival-session.ts
+src/stage-arrival-session.ts
+src/workspace-shell.html
+src/native-read-views.spec.ts
+src/native-station-arrival-fixtures.ts
+src/native-station-arrival-contract.spec.ts
+src/native-station-arrival-page.spec.ts
+src/native-station-arrival-session.spec.ts
+checks/station-arrival-browser-check.mjs
+checks/station-arrival-browser-server.mts
+checks/native-station-browser-double.mts
+checks/native-station-protocol-backend.mts
+README.md
+VERIFICATION.md
+```
+
+Only frontend-owned files are edited. Existing unrelated changes, backend,
+canonicals, root, `.github`, legacy, design and project status are not edited.
+No Git publication is performed by this owner.
+
+## Source evidence and implementation boundary
+
+* `docs/SHF_REVERSE_ENGINEERING_DESIGN.md` §§46.2,46.4–46.6,46.9:
+  approved source/capability/consent/receipt grammar, two-field operation,
+  optional read-only stage and preserved three-state briefing, native TEST
+  copy and fail-closed UNKNOWN semantics. Source catalog is absent.
+* Read-only `old/SHF/src/bzq/shf/model/AttendanceDataModel.java:1054–1115`
+  (`registerStation`) sets station time/user and warns after SQL; its INSERT
+  fallback/finally UI update are NOT adopted. `:2580–2618` (`setTadreech`)
+  is a separate mutation, not part of F2.
+* Canonicals: `backend/fixture-slice/contracts.mts`,
+  `station-arrival-contracts.mts` V1 and new
+  `oracle-station-arrival-contracts.mts` V1 / §46 v0.1. All frontend canonical
+  imports are type-only/erased. No new public fields/endpoints are invented.
+* Existing native F1 guard/session/dialog, fixture F2 layout/API/history,
+  `arrival-focus.scss` and global Material3 focus styles are reused.
+  No framework/runtime/tooling selection or install was needed:
+  Node24.21/npm11.19, Angular21.2.25, Material/CDK21.2.14, TS5.9.3 retained.
+
+Native station10 is read7 + station prepare/commit/test-oracle-write, NOT
+native F1's ten-right set. Existing ordered read7/fixture9/native-stage10/
+fixture11 sets are unchanged. All seven read views accept the new identity
+with their existing Oracle source markers and reject fixture read bodies.
+The native station page cannot launch F1; actual backend disabled403 is checked.
+Null-stage and briefing NULL/false/true remain independent read-only facts.
+Only on-time null draft, null late confirmation, whole-operation accepted
+consent and strict native receipt can produce success. Already-recorded
+context does not create a receipt. ACK/readback timestamps do not claim exact
+DB commit time or durable attribution.
+
+Opaque native F2 safety is separate from all three older namespaces; it
+survives supported history/reload without persisting selected personal context.
+Actor/unit drift/new UUID cannot clear native employee/day uncertainty;
+opposite-operation native UNKNOWN cross-blocks the same tuple. Tokens and
+receipts are never restored from history. Cancel/leave/expiry discard
+preparations. No automatic retry/poll/reconciliation or reset is added.
+
+## Exact checks and results
+
+All commands below run from `frontend/fixture-slice` on Windows.
+
+| Command | Result / classification |
+|---|---|
+| `node --version`; `npm --version` | `v24.21.0`; `11.19.0`, unchanged installed tooling |
+| `npm run typecheck` | PASS, strict app TSC exit0 (repeated after changes) |
+| `npm test -- --include src/native-station-arrival-contract.spec.ts` before implementation | Expected RED compile failure: missing native exports/union branch, establishing test-first boundary |
+| `npm test -- --include src/native-station-arrival-contract.spec.ts --include src/station-arrival-contract.spec.ts --include src/native-arrival-contract.spec.ts` | Final focused guard run 17/17 PASS; first startup attempt timed out with no tests, owned worker stopped and rerun passed |
+| `npm test -- --include 'src/*station-arrival*.spec.ts' --include 'src/native-arrival*.spec.ts' --include src/native-read-views.spec.ts` | Final **159/159 PASS, 11 files**; Angular compilation and Vitest/jsdom with synthetic typed HTTP, not Oracle/browser |
+| `npm test` | Final **525/525 PASS, 38 files** (historical baseline477 +48 new cases); Angular compilation + synthetic tests |
+| `npm run build:dev`; `npm run check:profile -- dev` | Build generation PASS; profile checker exit0, frozen exact keys `{appEnv,apiBasePath}`, `/api` |
+| `npm run build:test`; `npm run check:profile -- test` | Build generation PASS; profile checker exit0, same frozen public shape |
+| `npm run build:production`; `npm run check:profile -- production` | Final build generation PASS (initial583.20kB); artifact/profile checker PASS exit0, frozen exact keys and `/api`; same ng teardown caveat below |
+| `node --check checks/station-arrival-browser-check.mjs`; `node --check checks/native-station-browser-double.mts`; `node --check checks/station-arrival-browser-server.mts` | PASS exit0 syntax checks |
+| `node node_modules/typescript/bin/tsc --noEmit --strict --module nodenext --target es2024 --types node --typeRoots ../../backend/fixture-slice/node_modules/@types --skipLibCheck --allowImportingTsExtensions checks/native-station-browser-double.mts checks/native-station-protocol-backend.mts checks/station-arrival-browser-server.mts` | PASS exit0, strict owned helper types, installed Node types reused, no install |
+| `node checks/station-arrival-browser-check.mjs --native-station` | PASS exit0, real Chrome + typed intercepted synthetic HTTP, no backend runtime imports; details below |
+| `node checks/station-arrival-browser-check.mjs --native-protocol-double` | PASS exit0 after backend SOURCE-STABLE, actual backend runtime/HTTP/native application/UoW + Oracle pool protocol doubles, NO Oracle connection |
+| `node checks/station-arrival-browser-check.mjs` | PASS exit0, existing fixture F2 synthetic interception regression |
+| `node checks/station-arrival-browser-check.mjs --fixture-proxy` | PASS exit0, actual joint memory fixture backend F1 review/commit→fresh F2 review/commit, no interception, no Oracle |
+
+**Runner teardown limitation:** completed Angular test/build summaries are
+distinguished from process exit. In this host Angular CLI stayed alive after
+the completed Vitest summaries / output-location messages. Owned sessions
+were explicitly stopped after recording the results; no clean exit0 is
+claimed for those ng invocations. Static `tsc`, profile, syntax, helper TSC
+and browser commands exit normally. Changing npm shim, calling ng directly,
+or limiting build workers did not remove the teardown issue; no dependency,
+CLI or test config was changed to conceal it. Parent/tooling owner may retest
+clean CLI teardown independently. Existing jsdom `Window.scrollTo` diagnostics
+are not browser scroll proof. Real Chrome supplies the geometry evidence.
+
+## Browser observations (synthetic only)
+
+* Native heading and persistent actual TEST change disclosure; separate
+  synthetic Administrator, employee/day/team/source; no F1/late/clock input.
+* 1440/390/320 CSS-pixel context and dialog: no page horizontal overflow;
+  dialog actions remain visible, targets at least48px; finite animations0
+  under reduced motion. Tab/Shift+Tab stay in dialog; Escape sends zero commands,
+  invalidates preparation and returns to the **exact retained disabled opener**.
+* Screenshot-measured native320 focus after Escape, pending and success:
+  solid3px outline, offset3px, effective opacity1, full48px button visible and
+  hit-testable/unobscured; actual ring `[0,47,101]` against `[250,250,250]`,
+  **contrast12.6179:1**. Existing fixture checks also measured12.6179:1.
+* Explicit checkbox/whole-operation consent sends exactly one native command.
+  Repeated physical Space activation while pending sends no duplicate.
+  Native ACK+readback success is correctly labeled, without fixture success copy.
+* Back/Forward retains exact attendance opener, filters, vertical and RTL
+  horizontal scroll; Forward does not reconstruct receipt. Wrong preserved
+  briefing in post-dispatch native payload becomes UNKNOWN. Native F2 marker
+  survives reload, with zero resend/context reopening and no older namespace
+  falsely populated. No runtime exceptions/unexpected outbound requests.
+* Actual protocol-double integration: real HTTP/native token/fingerprint and
+  mandatory native consent, cancel0/update0/commit0/allowance0, then exactly
+  one actual UoW UPDATE with only station time/user SET, one COMMIT ACK and
+  separate read lease/readback. All other attendance fields equal originals,
+  including existing stage/user and briefing=true. Independent detail GET
+  agrees; F1 endpoint is disabled403. Temporary allowance is synthetic and
+  removed with the owned double directory, never an operational reset.
+* Existing actual joint-fixture integration: F1 receipt/audit1/1,
+  F2 receipt/audit1/1, active0, stage/user/briefing preserved, revision advanced,
+  coherent independent detail readback. This remains a fixture, not native F2.
+* Synthetic screenshot samples reviewed: native dialog320/context390; no
+  personal data or production screenshots. Screenshots remain ignored artifacts.
+
+### Failures found and corrected
+
+Real Chrome caught native dialog Cancel removing its opener; retaining the
+disabledInteractive confirmation button fixed exact return and measurable
+focus. Test automation then needed the existing modal-readiness and
+checkbox-rendered-enabled barriers (not arbitrary sleeps). Protocol helper
+first lacked required source markers; strict runtime correctly refused it.
+Its initial fixed future clock was incompatible with ACK ordering and the
+receipt wait timed out (source analysis identifies the guard rejection, not a
+live observation); the synthetic protocol helper now uses a coherent current
+clock. SQL assertion initially counted `=` inside an NLS
+string; it now verifies exactly the two column assignment names while
+excluding string literals. All browser cases reran successfully.
+Initial helper TSC lacked a Node type root / supplied an extra close argument;
+the existing backend-local types and correct no-argument double close resolved
+that without installations. These were test/helper failures, not live writes.
+An optional assigned-path integrity helper could not use Python (unavailable
+Windows app alias); the same in-memory check reran with existing Node and
+passed for all20 paths (strict UTF-8, final newline, no conflict markers).
+
+## Not run / blockers / next action
+
+No live Oracle/DNS operation, current metadata/readiness, real operational fuse,
+controlled write pilot, EMS/CTI, production/deployment, manual AT, full WCAG
+conformance or stakeholder UAT was run/claimed. Actual TEST endpoint A/AAAA
+ESERVFAIL remains the parent/operator/DNS-network owner's external blocker;
+the endpoint syntax correction is not a full target proof. Offline success
+does not authorize a write or clear an external uncertain allowance.
+Backend implementation has no open dependency for this UI after the parent's
+SOURCE-STABLE signal. Next: parent independent UI/API QA and clean CLI
+teardown retest; operator-owned readiness/write gates remain separate.
+All four browser modes were rerun successfully against the final production
+artifact; all owned Chrome profiles/listeners and protocol-double temporary
+directories were closed/removed by their bounded checks. No helper is left
+running. No blanket accessibility conformance or release approval is implied.
+
+## Historical SHF-F2-UI-20 verification (20 October 2026)
 
 ## Latest follow-up — F2-QA-02 equal endpoints (Medium/P2)
 

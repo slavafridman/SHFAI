@@ -90,18 +90,20 @@ function addresses(value: unknown): readonly string[] {
   if (!Array.isArray(value) || value.length < 1 || value.length > 16) return identityError();
   return Object.freeze([...new Set(Array.from(value, address))].sort());
 }
-function mappingName(v: unknown): { kind: "dns" | "address"; name: string } {
+function mappingName(v: unknown, role: "endpoint" | "server-host" = "server-host"): { kind: "dns" | "address"; name: string } {
   if (!exact(v, ["kind", "name"]) || !referenceText(v.name, 253)) return identityError();
   if (v.kind === "address") return { kind: "address", name: address(v.name) };
-  if (v.kind !== "dns" || isIP(v.name) !== 0 ||
-      !/^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.?$/.test(v.name))
+  const grammar = role === "endpoint"
+    ? /^(?:[A-Za-z0-9](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9])?)(?:\.[A-Za-z0-9](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9])?)*\.?$/
+    : /^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.?$/;
+  if (v.kind !== "dns" || isIP(v.name) !== 0 || !grammar.test(v.name))
     return identityError();
   // DNS spellings are explicit members, not inferred case/suffix/reverse aliases.
   return { kind: "dns", name: v.name };
 }
-function mapping(v: unknown): NativeEndpointMapping {
+function mapping(v: unknown, role: "endpoint" | "server-host"): NativeEndpointMapping {
   if (!exact(v, ["kind", "name", "addresses"])) return identityError();
-  const name = mappingName({ kind: v.kind, name: v.name }), set = addresses(v.addresses);
+  const name = mappingName({ kind: v.kind, name: v.name }, role), set = addresses(v.addresses);
   if (name.kind === "address" && !same(set, [address(name.name)])) return identityError();
   return Object.freeze({ ...name, addresses: set });
 }
@@ -119,8 +121,8 @@ function proofHeader(v: unknown) {
     endpoint: v.endpoint, serverHosts: v.serverHosts };
 }
 export function nativeEndpointProof(v: unknown): NativeEndpointProof {
-  const header = proofHeader(v), endpoint = mapping(header.endpoint);
-  const hosts = Array.from(header.serverHosts, mapping);
+  const header = proofHeader(v), endpoint = mapping(header.endpoint, "endpoint");
+  const hosts = Array.from(header.serverHosts, host => mapping(host, "server-host"));
   if (new Set(hosts.map(h => h.name)).size !== hosts.length ||
       hosts.some(h => !same(h.addresses, endpoint.addresses))) return identityError();
   return Object.freeze({ kind: "configured-address-sets", revision: header.revision,
@@ -142,8 +144,8 @@ export function nativeEndpointHostMatches(proof: NativeEndpointProof, observed: 
 export type NativeEndpointResolver = (configuredName: string, signal: AbortSignal) => Promise<readonly string[]>;
 export async function resolveNativeEndpointProof(input: unknown, resolver: NativeEndpointResolver,
   signal?: AbortSignal): Promise<NativeEndpointProof> {
-  const header = proofHeader(input), endpoint = mappingName(header.endpoint);
-  const hosts = Array.from(header.serverHosts, mappingName);
+  const header = proofHeader(input), endpoint = mappingName(header.endpoint, "endpoint");
+  const hosts = Array.from(header.serverHosts, host => mappingName(host, "server-host"));
   if (new Set(hosts.map(h => h.name)).size !== hosts.length) return identityError();
   const controller = new AbortController(), abort = () => controller.abort();
   let timer: ReturnType<typeof setTimeout> | undefined;

@@ -28,11 +28,13 @@ export const nativeTables = {
   SHF_EMPLOYEE_REPORTS: ["EMPLOYEE_ID", "APPROVED_TIME"],
 } as const;
 export const policyKey = "shf.param.minutesArrivalBeforeStation";
-const tablesSql = Object.keys(nativeTables).map(t => `'${t}'`).join(",");
+export function nativeMetadataQueries(tables: readonly string[]) {
+if (tables.some(t => !/^[A-Z][A-Z0-9_]{0,29}$/.test(t))) throw Error("Invalid metadata table");
+const tablesSql = tables.map(t => `'${t}'`).join(",");
 const scope = `owner='SHIFTER' AND table_name IN (${tablesSql})`;
 // DBA visibility is deliberately required: ALL_* absence does not certify
 // invisible VPD/trigger/grant effects. Failure to inspect is a fail-closed stop.
-export const nativeMetadataSql = [
+return [
   `SELECT table_name AS "tableName",column_name AS "columnName",data_type AS "dataType",
     data_length AS "dataLength",char_used AS "charUsed",nullable AS "nullable",virtual_column AS "virtualColumn"
     FROM dba_tab_columns tc WHERE ${scope} AND EXISTS
@@ -58,6 +60,8 @@ export const nativeMetadataSql = [
     FROM dba_dependencies WHERE owner='SHIFTER' AND name IN (${tablesSql})
     ORDER BY name,type,referenced_owner,referenced_name,referenced_type`,
 ];
+}
+export const nativeMetadataSql = nativeMetadataQueries(Object.keys(nativeTables));
 export async function nativeIdentity(q: NativeQuery, expected: NativeIdentity) {
   let identity: NativeIdentity;
   try { identity = parseNativeIdentity(expected); } catch { return stageFail("LIVE_WRITES_DISABLED"); }
@@ -131,7 +135,7 @@ export async function nativeSafety(q: NativeQuery, b: NativeBinding): Promise<Na
   }
   return schema;
 }
-function expression(c: NativeColumn, alias = "") {
+export function expression(c: NativeColumn, alias = "") {
   const column = alias + c.name;
   return c.kind === "date" ? civil(column) : c.kind === "number" ? numberText(column) : column;
 }
@@ -143,7 +147,7 @@ export interface NativeSnapshot {
   orgUnitId: string;
   blockers: StageArrivalBlockerV1[];
 }
-async function one(q: NativeQuery, schema: NativeSchema, table: string, where: string, binds: BindParameters,
+export async function one(q: NativeQuery, schema: NativeSchema, table: string, where: string, binds: BindParameters,
   optional = false): Promise<NativeRow | null> {
   const columns = schema[table];
   if (!columns?.length) stageFail("INVALID_SOURCE_DATA");

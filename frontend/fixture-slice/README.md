@@ -1,4 +1,106 @@
-# SHF-F2-UI-20 — station arrival, isolated joint fixture only
+# SHF-NATIVE-F2-UI-28 — station arrival, approved native TEST branch
+
+Implements **§46 v0.1**, explicitly approved 28 October 2026 09:00 +02:00,
+using the existing §§41–42 v0.1 layout and canonical
+`oracle-station-arrival-contracts.mts` V1 types. No dependencies, lockfiles,
+framework versions, public environment keys or shared contracts changed.
+Angular21.2/Material+CDK21.2/TypeScript5.9/Node24.21 remain installed.
+
+### QA28B-01 dialog consolidation (28 October follow-up)
+
+Native confirmation and fixture late-warning now use one typed
+`StationArrivalDialog`, one template and one external stylesheet. Their
+approved Hebrew bodies, consent meanings and stable keyboard/test selectors
+remain distinct. Native F1 is unchanged. This removes duplicate inline style
+contexts implicated in the independent Angular bundler disposal finding;
+no dependency/vendor patch, cosmetic CSS hash variation or forced-exit hook
+is used.
+
+Post-fix checks return naturally with exit0: three consecutive focused
+**165/165** runs, full **531/531**, all three build/profile pairs and all four
+Chrome modes below. No retained frontend esbuild service was found after
+the commands. Six new shared-dialog cases account for the increased counts.
+The separate intermittent Vitest thread-start issue QA28B-02 did not reproduce
+in five first-attempt test startups; its cause is not declared fixed.
+Parent independent gate retest is still required. Exact commands/timings,
+pre-fix failed reproduction and process observations are in `VERIFICATION.md`.
+
+The exact new ordered **native-station10** identity is read7 + station prepare,
+commit and `attendance-station-arrival:test-oracle-write`. It is NOT native
+F1's ten-right set. Read7, fixture-stage9, native-stage10 and joint-fixture11
+remain distinct. Identity source stays `oracle`; inquiries keep their existing
+Oracle read sources; station command DTOs use `oracle-test`. Missing/failed
+identity or source/capability mismatch blocks, never falls back to fixture.
+Server configuration/authorization is backend-owned; no browser flags enable
+writes. Native F1 commands are disabled in this backend construction and the
+station page has no F1 action or automatic chain.
+
+Native heading: **הגעה לעמדה — TEST**. Persistent actual-TEST-write disclosure
+is separate from synthetic Administrator/selected employee context. Only an
+on-time null-reason preparation is accepted; no late editor/override, editable
+clock or briefing control. Stage may be NULL or an existing valid read-only
+value; briefing true/false/NULL stays distinct and unchanged. Whole-operation
+review and a Material dialog with explicit consent precede a single command:
+`draft:{lateReasonCode:null}`, `confirmation:null`,
+`operationConfirmation:{accepted:true}`. The review describes exactly two
+server-determined fields: station time and operator stamp.
+
+Success needs the strict native outcome, matching original preparation and
+command, COMMIT ACK plus independent matching readback, preserved exposed
+stage/briefing, `receiptPersistence:none`, `replayed:false`, and partner
+`not-invoked`. ACK is not the exact database commit instant or durable command
+attribution. Already-recorded context is read-only observed state, never a
+reconstructed receipt. Malformed/wrong-source post-dispatch responses remain
+UNKNOWN; no retry/poll/reset/reconcile API is invented.
+
+Native F2 safety has its own `shfNativeStationArrivalSafety` storage slot and
+opaque `shfNativeStationSafety` history marker (`kind:station-arrival`,
+`mode:test-oracle-controlled`). F1 native/F1 fixture/F2 fixture namespaces stay
+separate. Same native employee/day uncertainty blocks the opposite operation;
+actor/unit drift, new UUID, history navigation or reload cannot settle it.
+Only opaque markers persist, not actor/tuple/preparation/receipt. Preparations
+are discarded on leave/cancel/expiry; history never resubmits commands.
+The backend's external operation-bound allowance remains authoritative.
+
+### Native verification commands (this directory)
+
+```powershell
+npm run typecheck
+npm test -- --include 'src/*station-arrival*.spec.ts' --include 'src/native-arrival*.spec.ts' --include src/native-read-views.spec.ts
+npm test
+npm run build:dev
+npm run check:profile -- dev
+npm run build:test
+npm run check:profile -- test
+npm run build:production
+npm run check:profile -- production
+node checks/station-arrival-browser-check.mjs --native-station
+node checks/station-arrival-browser-check.mjs --native-protocol-double
+node checks/station-arrival-browser-check.mjs
+node checks/station-arrival-browser-check.mjs --fixture-proxy
+```
+
+`--native-station` uses strictly typed synthetic HTTP responses and real Chrome,
+with **no backend runtime imports**. `--native-protocol-double` (run only after
+backend SOURCE-STABLE) uses the actual backend runtime/HTTP/native station
+application/UoW against the existing synthetic Oracle pool protocol double.
+Its read ports and temporary single-attempt file are synthetic. It does NOT
+load an environment file, driver/client, credentials or operational fuse, and
+does NOT connect to Oracle. `--fixture-proxy` retains the actual joint memory
+fixture F1→F2 test. These are mutually exclusive constructions; listeners and
+Chrome debugger use owned ephemeral ports and are closed by the checker.
+Screenshots are synthetic, ignored `.angular/browser-evidence/` artifacts.
+
+Current post-fix natural-exit results and the historical failed teardown
+reproduction are in `VERIFICATION.md`.
+No live pilot readiness/write, deployment, full WCAG conformance, manual
+assistive-technology test or UAT sign-off is claimed. Actual TEST DNS proof
+remains operator-owned and externally blocked; passing doubles do not cure it.
+
+## Historical SHF-F2-UI-20 — isolated joint fixture implementation
+
+The following describes the unchanged fixture-only branch and its historical
+approval, not a restriction on the separately approved native branch above.
 
 Implements the approved §§41–42/F2 visual baseline v0.1 and the architect-owned
 `backend/fixture-slice/station-arrival-contracts.mts` v0.1 (20 October approval).

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
-import { nativeBinding, resolveNativeEndpointProof, parseNativeIdentity, nativeIdentityBindingReference } from "../native-stage-arrival-config.mts";
+import { nativeBinding, nativeEndpointProof, resolveNativeEndpointProof, parseNativeIdentity, nativeIdentityBindingReference } from "../native-stage-arrival-config.mts";
 import { nativeIdentity } from "../oracle-stage-arrival-snapshot.mts";
 import type { NativeQuery } from "../oracle-stage-arrival-snapshot.mts";
 import { NativeOracleDouble, nativeConfig, nativeSelection, cleanNative } from "./native-stage-arrival-double.mts";
@@ -19,6 +19,52 @@ const mapping = () => ({
   endpoint: { kind: "dns", name: "endpoint.synthetic.test", addresses: ["192.0.2.10", "2001:db8::10"] },
   serverHosts: [{ kind: "dns", name: "node.synthetic.test", addresses: ["2001:0DB8:0:0:0:0:0:10", "192.0.2.10"] }],
 });
+test("ID-ENDPOINT configured Oracle Net underscore spelling is exact; SERVER_HOST remains strict", async () => {
+  const p = mapping(); p.endpoint.name = "oracle_net.synthetic.test";
+  const parsed = nativeEndpointProof(p);
+  assert.equal(parsed.endpoint.name, "oracle_net.synthetic.test");
+  assert.deepEqual(parsed.endpoint.addresses, ["192.0.2.10", "2001:db8::10"]);
+  const names: string[] = [];
+  const resolved = await resolveNativeEndpointProof({ ...p,
+    endpoint: { kind: "dns", name: p.endpoint.name },
+    serverHosts: [{ kind: "dns", name: p.serverHosts[0].name }] },
+  async name => { names.push(name); return ["2001:db8::10", "192.0.2.10"]; });
+  assert.deepEqual(names, ["oracle_net.synthetic.test", "node.synthetic.test"]);
+  assert.deepEqual(parsed, resolved);
+  p.serverHosts[0].name = "node_name.synthetic.test";
+  assert.throws(() => nativeEndpointProof(p));
+  await assert.rejects(resolveNativeEndpointProof({ ...p,
+    endpoint: { kind: "dns", name: p.endpoint.name },
+    serverHosts: [{ kind: "dns", name: p.serverHosts[0].name }] }, async () => ["192.0.2.10"]));
+});
+for (const name of ["_oracle.test", "oracle_.test", "oracle..test", ".oracle.test", "a".repeat(64) + ".test",
+  "a.".repeat(128) + "test", " oracle_net.test", "oracle_net.test ", "oracle_\nnet.test",
+  "*.oracle_net.test", "http://oracle_net.test", "oracle_net.test:1521", "oracle_net.test/path"])
+  test(`ID-ENDPOINT malformed configured name ${JSON.stringify(name)} fails before resolver`, async () => {
+    const p = mapping(); p.endpoint.name = name;
+    assert.throws(() => nativeEndpointProof(p));
+    let called = false;
+    await assert.rejects(resolveNativeEndpointProof({ ...p, endpoint: { kind: "dns", name } },
+      async () => { called = true; return ["192.0.2.10"]; }));
+    assert.equal(called, false);
+  });
+for (const failure of ["empty", "overlap", "family", "ESERVFAIL", "timeout"] as const)
+  test(`ID-ENDPOINT underscore syntax never bypasses ${failure} proof failure`, async () => {
+    const p = mapping();
+    const input = { ...p, endpoint: { kind: "dns", name: "oracle_net.synthetic.test" },
+      serverHosts: [{ kind: "dns", name: "node.synthetic.test" }] };
+    const controller = new AbortController();
+    await assert.rejects(resolveNativeEndpointProof(input, async (name, signal) => {
+      if (failure === "ESERVFAIL") throw Object.assign(Error("synthetic resolver"), { code: "ESERVFAIL" });
+      if (failure === "timeout") {
+        controller.abort();
+        signal.throwIfAborted();
+      }
+      if (failure === "empty") return [];
+      return name.startsWith("oracle_") ? ["192.0.2.10", "2001:db8::10"] :
+        failure === "family" ? ["192.0.2.10"] : ["192.0.2.10", "2001:db8::11"];
+    }, controller.signal));
+  });
 const sid = () => ({ database: "SYNTHETIC_DOCUMENTED_DB", user: "SYNTHETIC_READ", schema: "SYNTHETIC_READ",
   target: { kind: "sid", instanceSid: "synthetic_instance", endpointProof: mapping() } });
 function query(observed: unknown, calls: string[]): NativeQuery {

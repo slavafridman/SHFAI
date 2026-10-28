@@ -9,6 +9,7 @@ import type { AttendanceRequestV1 } from '../../../backend/fixture-slice/attenda
 import type { StageArrivalDraftV1, StageArrivalCommitDraftV1 } from '../../../backend/fixture-slice/stage-arrival-contracts.mts';
 import type { NativeStageArrivalCommitV1 } from '../../../backend/fixture-slice/oracle-stage-arrival-contracts.mts';
 import type { StationArrivalDraftV1, StationArrivalCommitV1 } from '../../../backend/fixture-slice/station-arrival-contracts.mts';
+import type { NativeStationArrivalCommitV1 } from '../../../backend/fixture-slice/oracle-station-arrival-contracts.mts';
 import { environment } from './environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -23,7 +24,7 @@ export class SliceApi {
       { cache: 'no-store', timeout: 5000, observe: 'response', headers: { 'Content-Type': 'application/json' } })
       .pipe(map(r => this.arrivalBody(r, 16384)));
   }
-  stationArrivalCommand(employeeId: string, shiftDayId: string, command: StationArrivalCommitV1) {
+  stationArrivalCommand(employeeId: string, shiftDayId: string, command: StationArrivalCommitV1 | NativeStationArrivalCommitV1) {
     return this.http.post<unknown>(this.stationBase(employeeId, shiftDayId) + '/commands', command,
       { cache: 'no-store', timeout: 5000, observe: 'response', headers: { 'Content-Type': 'application/json' } })
       .pipe(map(r => this.arrivalBody(r, 16384)));
