@@ -26,6 +26,7 @@ import { backendLifecycle, waitForBackendDrain, BackendDrainPendingError } from 
 import { stationMode } from "./station-arrival-validation.mts";
 import { createStationArrivalFixture } from "./station-arrival-fixture.mts";
 import { stationEnvironment } from "./native-station-arrival-config.mts";
+import { stationExitMode, exitEnvironment } from "./native-station-exit-config.mts";
 
 const resources = new WeakMap<Server, Array<OraclePool | NativePool>>();
 const shutdowns = new WeakMap<Server, Promise<void>>();
@@ -72,6 +73,21 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
     throw new Error("Executable backend requires explicit isolated synthetic mode");
   const stageMode = validateStageArrivalMode(config);
   const station = stationMode(config);
+  const exitMode = stationExitMode(config);
+  if (environment.SHF_STATION_EXIT_FIXTURE !== undefined) throw Error("Exit has no fixture command source");
+  if (exitMode === "disabled" && environment.SHF_STATION_EXIT_ORIGINS !== undefined)
+    throw Error("Exit origins require enabled native exit");
+  let stationExitOrigins: readonly string[] | undefined;
+  if (environment.SHF_STATION_EXIT_ORIGINS !== undefined) {
+    const raw = environment.SHF_STATION_EXIT_ORIGINS;
+    if (Buffer.byteLength(raw) > 4096) throw Error("Invalid exit origins");
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.some(o => typeof o !== "string")) throw Error("Invalid exit origins");
+    const origins: string[] = [];
+    for (const o of parsed) { if (typeof o !== "string") throw Error("Invalid exit origin"); origins.push(o); }
+    validateStageArrivalHttpOptions({ stationExitOrigins: origins });
+    stationExitOrigins = Object.freeze(origins);
+  }
   if (station !== "isolated-fixture" && environment.SHF_STATION_ARRIVAL_FIXTURE !== undefined ||
       station === "disabled" && environment.SHF_STATION_ARRIVAL_ORIGINS !== undefined)
     throw Error("Station inputs require explicit enabled mode");
@@ -92,6 +108,8 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
   }
   const native = nativeEnvironment(environment, stageMode === "test-oracle-controlled");
   const nativeStation = stationEnvironment(environment, station === "test-oracle-controlled");
+  const nativeExit = exitEnvironment(environment, exitMode === "test-oracle-controlled");
+  if (nativeExit && !stationExitOrigins?.length) throw Error("Explicit native exit Origin allowlist required");
   if (nativeStation && !stationArrivalOrigins?.length) throw Error("Explicit native station Origin allowlist required");
   let stageArrivalOrigins: readonly string[] | undefined;
   const originsText = environment.SHF_STAGE_ARRIVAL_ORIGINS;
@@ -146,6 +164,7 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
       });
       let nativeStageArrival;
       let nativeStationArrival;
+      let nativeStationExit;
       if (native) {
         // Separate account/UoW, never the read pool or injected fixture Clock.
         const [{ createNativePool, OracleStageArrivalUow }, { OracleStageArrivalApplication }] = await Promise.all([
@@ -172,11 +191,23 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
           config.businessTimeZone, config.syntheticOrgUnitIds);
         await nativeStationArrival.assertReady();
       }
+      if (nativeExit) {
+        const [{ createNativePool }, { OracleStationExitUow }, { OracleStationExitApplication }] = await Promise.all([
+          import("./oracle-stage-arrival-uow.mts"), import("./oracle-station-exit-uow.mts"),
+          import("./oracle-station-exit-application.mts"),
+        ]);
+        writePool = await (factories?.native ?? createNativePool)(nativeExit.writer);
+        const uow = new OracleStationExitUow(writePool, session, nativeExit.binding, config.businessTimeZone);
+        await uow.initialize();
+        nativeStationExit = new OracleStationExitApplication(uow, nativeExit.binding, systemClock,
+          config.businessTimeZone, config.syntheticOrgUnitIds);
+        await nativeStationExit.assertReady();
+      }
       runtime = await createRuntime(config, new OracleDetailReader(session), undefined,
         { reader: new OracleCurrentReader(session), searchReader: new OracleSearchReader(session),
           myShiftsReader: new OracleMyShiftsReader(session), shiftItemsReader: new OracleShiftItemsReader(session),
           employeeCardReader: new OracleEmployeeCardReader(session), attendanceReader: new OracleAttendanceReader(session),
-          nativeStageArrival, nativeStationArrival });
+          nativeStageArrival, nativeStationArrival, nativeStationExit });
     } else if (stageMode === "isolated-fixture") {
       if (["SHF_FIXTURE_ROWS", "SHF_CURRENT_SHIFTS_FIXTURE", "SHF_SHIFT_SEARCH_FIXTURE",
         "SHF_MY_SHIFTS_FIXTURE", "SHF_SHIFT_ITEMS_FIXTURE", "SHF_EMPLOYEE_CARD_FIXTURE",
@@ -225,7 +256,7 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
     await closePools([...(pool ? [pool] : []), ...(writePool ? [writePool] : [])]).catch(() => {});
     throw error;
   }
-  const server = createLoopbackServer(runtime, { stageArrivalOrigins, stationArrivalOrigins });
+  const server = createLoopbackServer(runtime, { stageArrivalOrigins, stationArrivalOrigins, stationExitOrigins });
   try {
     await new Promise<void>((resolve, reject) => {
       server.once("error", reject);

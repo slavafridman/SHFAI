@@ -11,7 +11,7 @@ function rows() {
       STAGE_ARRIVAL_USER: null as string | null, TADREECH: null as string | null,
       STATION_ARRIVAL_TIME: null, STATION_ARRIVAL_USER: null, STATION_EXIT_TIME: null, STATION_EXIT_USER: null,
       OPTIONAL1: null, MISS_REASON_ID: null, MISSING_TIME: null, MISSING_REMARK: null,
-      STATION_LATE_REASON_ID: null, STATION_LATE_MINUTES: null, STATION_LATE_REMARK: null } };
+      LATE_REASON_ID: null, LATE_MINUTES: null, LATE_REMARK: null } };
 }
 test("native F2 admits null stage and preserves briefing NULL/0/1 and coherent existing stage", () => {
   for (const briefing of [null, "0", "1"]) for (const stage of [null, "2026-10-28T11:00:00"]) {

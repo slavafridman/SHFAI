@@ -142,6 +142,12 @@
                   <td role="cell" data-label="קוד סיבה רשום"><bdi dir="ltr">{{ row.attendance.missingReasonCode ?? 'לא ידוע' }}</bdi><small class="cell-note">קוד רשום בלבד, לא קביעת היעדרות</small></td>
                   <td role="cell" data-label="תדריך רשום">{{ row.attendance.briefingRecorded === null ? 'לא ידוע' : row.attendance.briefingRecorded ? 'כן' : 'לא' }}</td>
                   <td role="cell" data-label="ניווט">
+                    @if (canOpenExit(row)) {
+                      <a class="row-link" [id]="'attendance-exit-' + row.shiftDayId"
+                        [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'station-exit']"
+                        [attr.aria-label]="'יציאה מעמדה — בדיקת כשירות במסד TEST עבור ' + row.employee.firstName + ' ' + row.employee.lastName"
+                        (click)="openExit(row, $event)">יציאה מעמדה — בדיקת כשירות במסד TEST</a>
+                    }
                     @if (canOpenStation(row)) {
                       <a class="row-link" [id]="'attendance-station-' + row.shiftDayId"
                         [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'station-arrival']"

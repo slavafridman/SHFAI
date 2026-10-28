@@ -2097,3 +2097,118 @@ that visibility resolution, the current independent owner/identity proof and
 reviewed provider-specific F2 certificate, followed by the unchanged eligibility,
 freeze/window/allowance and separate operational GO gates. Offline tests do not
 establish that those operational prerequisites are satisfied.
+
+## Ordinary native station exit — §47 v0.1 (implementation only)
+
+The exit-only path is independent of fixture commands and F1/F2 native command
+construction. Its canonical DTOs are `station-exit-contracts.mts`; routes are
+`GET .../station-exit/context`, `POST .../station-exit/validations` (exact `{}`)
+and `POST .../station-exit/commands` (exact empty draft, token/fingerprint,
+UUID and `operationConfirmation: { accepted: true }`). No warning confirmation,
+manager override, client timestamp, cancellation, polling or receipt replay.
+The source is **oracle-test**, never fixture command data or partner completion.
+
+### Private operator configuration handoff (key names only)
+
+`attendanceStationExitMode` defaults to `disabled`. Enabled spelling is
+`test-oracle-controlled`, requiring explicit isolated TEST, Oracle read source,
+confirmed test scope, synthetic Administrator opt-in, exact team grants, and
+**both** arrival command modes explicitly `disabled`. The provider grants
+exact ordered read7 + exit prepare/commit/test-oracle-write, with synthetic
+principal employeeId **null**, not the selected employee. Existing read7,
+fixture9, F1/F2 native10 and joint fixture11 are unchanged.
+
+Private environment keys:
+
+- `SHF_TEST_ORACLE_EXIT_WRITE_ENABLED` (exact `true` when enabled);
+- `SHF_NATIVE_EXIT_CONNECT_STRING`, `SHF_NATIVE_EXIT_USER`,
+  `SHF_NATIVE_EXIT_PASSWORD`, `SHF_NATIVE_EXIT_CLIENT_LIB_DIR`,
+  `SHF_NATIVE_EXIT_BINDING`;
+- `SHF_STATION_EXIT_ORIGINS` (separate nonempty exact isolated-loopback list).
+
+Disabled mode rejects stray exit inputs; there is no exit fixture input.
+Production/NODE_ENV production, DEV/local-development, malformed/mixed modes,
+missing mock opt-in, foreign binding and missing/invalid Origin configuration
+stop before pool/listener creation. Real authentication is not implemented and
+authentication/configuration errors never fall back to Administrator.
+No private values, credentials, actual certificate or allowance path are
+provided here or accepted through the HTTP API.
+
+`ExitBinding` uses the existing independently configured identity/proof,
+marker/tuple/team, approval/window/freeze/recovery/exclusion keys, substituting
+operation `native-station-exit-v0.1`, `exitMetadataDigest` and an external
+`station-exit-` allowance basename. Same operator allowance must survive restart;
+new UUIDs, refresh and process restart do not reopen an attempted operation.
+Physical ancestry/junction checks and exclusive persistent single-attempt
+creation reuse `NativeAllowance`; tests consume **only synthetic TEMP files**.
+
+The exit certificate is separately versioned for **both** metadata providers:
+`exitMetadataDigest(binding, proof)` hashes
+`{version:"shf-native-exit-metadata-v0.1", provider, owner:"SHIFTER",
+operation:"native-station-exit-v0.1", tableScope:Object.keys(exitTables), proof}`.
+The ordered nine arrays retain the established query ordering. Owner-hybrid
+still requires the actual SHIFTER user/schema and seven owner views plus
+**DBA_TRIGGERS and DBA_ROLE_PRIVS**; unreadable/942 is a readiness failure,
+never empty evidence or fallback. Arrival certificates cannot authorize exit.
+
+### Rules, evidence and transaction semantics
+
+- Controlling source: `AttendanceDataAction.agent_exit` integer division,
+  `AttendanceDataModel.exitStation` existing-row/two-column UPDATE,
+  `AgentDayBean.getShiftStart/getShiftEnd/getSiteId`, `SHFParameters`,
+  `LoadTables.loadSiteUnitTable`, `ComplexCodeTable.getSystemParameters` and
+  `SystemParameterForm.getValue`. Legacy code is read-only and was not executed.
+- Full server Clock precision: early iff `now <= end-(B+1)*60000`.
+  Ordinary is strictly greater, then bounded by start−60min, end+A inclusive,
+  station arrival, TODAY and the operator window. DATE civil-second truncation
+  happens **after** classification; no F1 offset or browser Clock. DST
+  gaps/folds, malformed facts and arithmetic overflow fail closed.
+- Actual unique effective site mapping and original system/default/unit rows
+  determine B/A. Nonnull unit override else default; no guessed zero.
+  Complete baseline/overlay/employee/org, candidate membership, both exception
+  relations, reports and attendance originals are reread under NOWAIT ownership.
+- Source/schema cross-check for this new path explicitly uses **LATE_*** for
+  station lateness, not the existing F2 helper's `STATION_LATE_*` names.
+  Historical `oracle-columns.csv` and controlling legacy source support
+  `LATE_REASON_ID/LATE_MINUTES/LATE_REMARK`. Existing F2 is not changed here;
+  its naming discrepancy is a separate architect/parent review item.
+- Existing coherent station arrival is required; stage is optional. Preserve
+  briefing NULL/0/1 and every other attendance column. Locked/missing/flag,
+  either late triplet, unsupported/P2 dependencies, reports/exceptions/overlap
+  defer; incomplete/coherence/cardinality errors do not become false flags.
+- Dedicated short writer transaction uses parameterized SQL, autoCommit=false,
+  full null-safe originals/cardinality/absence predicates and **SET only
+  STATION_EXIT_TIME and STATION_EXIT_USER**. No INSERT, procedure/function,
+  event/mood/report/briefing/late mutation, sequence, DDL, CTI or EMS.
+- External named writer exclusion remains mandatory for cross-table eligibility
+  inputs through readback/disposition. Row locks/hashes do not certify a freeze.
+- Process-local in-flight/UUID conflict checks never replay a receipt and do not
+  replace the restart-surviving external fuse. Explicit signal plus ambient
+  ALS/deadline guards run immediately before UPDATE/COMMIT; underlying
+  acquisition/query/commit/break/rollback/close promises are awaited/drained.
+- rowsAffected0 is stale; 1 is only a commit candidate; many/undefined fail.
+  Pre-DML errors have effect none; only proved rollback permits rolled-back.
+  Unproved rollback, COMMIT ambiguity or missing/mismatched independent full
+  identity-checked preservation readback yields UNKNOWN/reconcile, never retry
+  or success. Bare existing exit is an observation, not a receipt.
+
+### Offline verification
+
+From `backend/fixture-slice`:
+
+```powershell
+node --test test/station-exit-domain.test.mts
+node --test test/station-exit-contracts.test.mts test/station-exit-domain.test.mts test/oracle-station-exit.test.mts test/native-station-exit-http.test.mts
+npm run typecheck
+npm test
+```
+
+These are static, synthetic protocol, TEMP allowance and owned-loopback checks,
+not live Oracle/OS/DNS verification. They include precise boundaries, stage and
+briefing preservation, pure preparation, stale/cross-operation tokens,
+source-policy/mapping/original predicates, rowcounts, contention/concurrency,
+signal/ALS cancellation, COMMIT/readback uncertainty, metadata942 and shutdown
+drain with an uncooperative COMMIT. Commands exit naturally; no forced exit.
+No live writes, real allowance consumption or pilot is authorized here.
+Caller reports the two retained DBA views still unavailable; operator/DBA owns
+that operational prerequisite. Parent owns QA/checkpoint/scoped publication.

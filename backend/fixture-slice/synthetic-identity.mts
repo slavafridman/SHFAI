@@ -43,6 +43,8 @@ import { StationArrivalApplication } from "./station-arrival-application.mts";
 import type { OracleStationArrivalApplication } from "./oracle-station-arrival-application.mts";
 import type { StationArrivalReceiptV1 } from "./station-arrival-contracts.mts";
 import type { NativeStationArrivalReceiptV1 } from "./oracle-station-arrival-contracts.mts";
+import { stationExitMode } from "./native-station-exit-config.mts";
+import type { OracleStationExitApplication } from "./oracle-station-exit-application.mts";
 
 export interface CurrentRuntimeOptions {
   reader: CurrentShiftReadPort;
@@ -55,6 +57,7 @@ export interface CurrentRuntimeOptions {
   stageArrivalStore?: MemoryStageArrivalStore;
   nativeStageArrival?: OracleStageArrivalApplication;
   nativeStationArrival?: OracleStationArrivalApplication;
+  nativeStationExit?: OracleStationExitApplication;
 }
 
 export class SyntheticAdministratorProvider implements AuthenticationProvider {
@@ -63,6 +66,7 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
   private readonly nativeStageArrivalEnabled: boolean;
   private readonly stationArrivalEnabled: boolean;
   private readonly nativeStationArrivalEnabled: boolean;
+  private readonly nativeExitEnabled: boolean;
   constructor(configuration: unknown) {
     const config = validateRuntimeConfig(configuration);
     if (config.authenticationMode !== "synthetic") throw new Error("Synthetic provider disabled");
@@ -71,6 +75,7 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
     this.nativeStageArrivalEnabled = validateStageArrivalMode(configuration) === "test-oracle-controlled";
     this.stationArrivalEnabled = stationMode(configuration) === "isolated-fixture";
     this.nativeStationArrivalEnabled = stationMode(configuration) === "test-oracle-controlled";
+    this.nativeExitEnabled = stationExitMode(configuration) === "test-oracle-controlled";
   }
   async authenticate(_request: AuthenticationRequest): Promise<PrincipalV1> {
     // No password collection, token parsing, credential verification or secret logging.
@@ -82,7 +87,9 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
         ...(this.stageArrivalEnabled || this.nativeStageArrivalEnabled ? ["attendance-stage-arrival:prepare" as const, "attendance-stage-arrival:commit" as const] : []),
         ...(this.nativeStageArrivalEnabled ? ["attendance-stage-arrival:test-oracle-write" as const] : []),
         ...(this.stationArrivalEnabled || this.nativeStationArrivalEnabled ? ["attendance-station-arrival:prepare" as const, "attendance-station-arrival:commit" as const] : []),
-        ...(this.nativeStationArrivalEnabled ? ["attendance-station-arrival:test-oracle-write" as const] : [])], employeeId: null,
+        ...(this.nativeStationArrivalEnabled ? ["attendance-station-arrival:test-oracle-write" as const] : []),
+        ...(this.nativeExitEnabled ? ["attendance-station-exit:prepare" as const, "attendance-station-exit:commit" as const,
+          "attendance-station-exit:test-oracle-write" as const] : [])], employeeId: null,
       resourceScope: { orgUnitIds: [...this.orgUnitIds] },
     };
   }
@@ -96,8 +103,9 @@ export async function createRuntime(
   const config = validateRuntimeConfig(configuration);
   const stageMode = validateStageArrivalMode(configuration);
   const station = stationMode(configuration);
+  const exitMode = stationExitMode(configuration);
   if (currentOptions && Object.keys(currentOptions).some(k => !["reader", "clock", "searchReader", "myShiftsReader",
-    "shiftItemsReader", "employeeCardReader", "attendanceReader", "stageArrivalStore", "nativeStageArrival", "nativeStationArrival"].includes(k)))
+    "shiftItemsReader", "employeeCardReader", "attendanceReader", "stageArrivalStore", "nativeStageArrival", "nativeStationArrival", "nativeStationExit"].includes(k)))
     throw new Error("Unsupported backend adapter");
   if (currentOptions?.stageArrivalStore && stageMode !== "isolated-fixture")
     throw new Error("Stage-arrival store requires explicit isolated mode");
@@ -105,6 +113,14 @@ export async function createRuntime(
     throw new Error("Explicit controlled native TEST adapter required");
   if (currentOptions?.nativeStationArrival && station !== "test-oracle-controlled")
     throw Error("Explicit controlled station TEST adapter required");
+  if (currentOptions?.nativeStationExit && exitMode !== "test-oracle-controlled")
+    throw Error("Explicit controlled exit TEST adapter required");
+  if (exitMode === "test-oracle-controlled") {
+    const { OracleStationExitApplication } = await import("./oracle-station-exit-application.mts");
+    if (!(currentOptions?.nativeStationExit instanceof OracleStationExitApplication) ||
+        currentOptions?.nativeStageArrival || currentOptions?.nativeStationArrival || currentOptions?.stageArrivalStore)
+      throw Error("Exclusive controlled exit TEST adapter required");
+  }
   if (station === "test-oracle-controlled") {
     const { OracleStationArrivalApplication } = await import("./oracle-station-arrival-application.mts");
     if (!(currentOptions?.nativeStationArrival instanceof OracleStationArrivalApplication) ||
@@ -203,7 +219,8 @@ export async function createRuntime(
       ].includes(error.code)) throw error;
       throw new SliceError("DEPENDENCY_UNAVAILABLE");
     }
-    validatePrincipal(principal, station === "test-oracle-controlled" ? "native-station" : station === "isolated-fixture" ? "joint-fixture" : stageMode);
+    validatePrincipal(principal, exitMode === "test-oracle-controlled" ? "native-exit" :
+      station === "test-oracle-controlled" ? "native-station" : station === "isolated-fixture" ? "joint-fixture" : stageMode);
     if (principal.provider !== config.authenticationMode) throw new SliceError("UNAUTHENTICATED");
     if (config.authenticationMode === "synthetic" &&
         (principal.resourceScope.orgUnitIds.length !== config.syntheticOrgUnitIds.length ||
@@ -218,6 +235,19 @@ export async function createRuntime(
     };
   }
   return Object.freeze({
+    attendanceStationExitMode: exitMode,
+    stationExitContext: (p: unknown, target: unknown, signal?: AbortSignal) => {
+      if (!currentOptions?.nativeStationExit) stageFail("LIVE_WRITES_DISABLED");
+      return currentOptions.nativeStationExit.context(p, target, signal);
+    },
+    stationExitValidate: (p: unknown, target: unknown, input: unknown, signal?: AbortSignal) => {
+      if (!currentOptions?.nativeStationExit) stageFail("LIVE_WRITES_DISABLED");
+      return currentOptions.nativeStationExit.validate(p, target, input, signal);
+    },
+    stationExitCommit: (p: unknown, target: unknown, input: unknown, signal?: AbortSignal) => {
+      if (!currentOptions?.nativeStationExit) stageFail("LIVE_WRITES_DISABLED");
+      return currentOptions.nativeStationExit.commit(p, target, input, signal);
+    },
     attendanceStageArrivalMode: stageMode,
     attendanceStationArrivalMode: station,
     stationArrivalContext: (p: unknown, target: unknown, signal?: AbortSignal) => {

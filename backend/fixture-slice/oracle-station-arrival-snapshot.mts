@@ -17,8 +17,9 @@ export const stationTables = {
   SHF_EMPLOYEES: [...nativeTables.SHF_EMPLOYEES, "SHF_LOCKED"],
   SHF_EMPLOYEE_DAY: nativeTables.SHF_EMPLOYEE_DAY,
   SHF_DAY_CHANGES: nativeTables.SHF_DAY_CHANGES,
+  // Physical addLate columns are LATE_*; STAGE_LATE_* belongs to addStageLate.
   SHF_ATTENDANCE: [...nativeTables.SHF_ATTENDANCE, "STATION_ARRIVAL_USER", "STATION_EXIT_USER",
-    "STATION_LATE_REASON_ID", "STATION_LATE_MINUTES", "STATION_LATE_REMARK", "OPTIONAL1"],
+    "LATE_REASON_ID", "LATE_MINUTES", "LATE_REMARK", "OPTIONAL1"],
   SHF_ORG_UNIT: nativeTables.SHF_ORG_UNIT,
   SHF_EMPLOYEE_REPORTS: nativeTables.SHF_EMPLOYEE_REPORTS,
   SHF_EMPLOYEE_EXCEPTIONS: ["AGENT_DAY_ID"],
@@ -56,8 +57,8 @@ export async function stationSafety(q: NativeQuery, b: StationBinding): Promise<
         stageFail("LIVE_WRITES_DISABLED");
       if (table === "SHF_ATTENDANCE" && (
         ["STAGE_ARRIVAL_TIME", "STATION_ARRIVAL_TIME", "STATION_EXIT_TIME"].includes(r.columnName) && kind !== "date" ||
-        ["SHF_EMPLOYEE_DAY_ID", "TADREECH"].includes(r.columnName) && kind !== "number" ||
-        ["STATION_ARRIVAL_USER", "STAGE_ARRIVAL_USER", "STATION_EXIT_USER"].includes(r.columnName) && kind !== "text"))
+        ["SHF_EMPLOYEE_DAY_ID", "TADREECH", "LATE_REASON_ID", "LATE_MINUTES"].includes(r.columnName) && kind !== "number" ||
+        ["STATION_ARRIVAL_USER", "STAGE_ARRIVAL_USER", "STATION_EXIT_USER", "LATE_REMARK"].includes(r.columnName) && kind !== "text"))
         stageFail("LIVE_WRITES_DISABLED");
       if (table === "SHF_ATTENDANCE" && r.columnName === "STATION_ARRIVAL_USER" &&
           (r.dataType !== "VARCHAR2" || r.charUsed !== "B" || typeof r.dataLength !== "number" || r.dataLength < 100))

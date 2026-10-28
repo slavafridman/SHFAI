@@ -10,6 +10,9 @@ export const shiftDayMatcher: UrlMatcher = segments => {
   return null;
 };
 export const routes: Routes = [
+  { path: 'employees/:employeeId/shift-days/:shiftDayId/station-exit',
+    loadComponent: () => import('./station-exit-page').then(m => m.StationExitPage) },
+  { path: 'station-exit', loadComponent: () => import('./station-exit-page').then(m => m.StationExitPage) },
   { path: 'employees/:employeeId/shift-days/:shiftDayId/station-arrival',
     loadComponent: () => import('./station-arrival-page').then(m => m.StationArrivalPage) },
   { path: 'station-arrival', loadComponent: () => import('./station-arrival-page').then(m => m.StationArrivalPage) },

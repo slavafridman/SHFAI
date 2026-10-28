@@ -5,11 +5,12 @@ import { readFile } from 'node:fs/promises';
 import { resolve, extname } from 'node:path';
 import type { Server } from 'node:http';
 import type { StationArrivalFixtureEnvelopeV1 } from '../../../backend/fixture-slice/station-arrival-contracts.mts';
-export async function startStationBrowserServer(realFixture = false, nativeProtocol = false) {
+export async function startStationBrowserServer(realFixture = false, nativeProtocol = false, exitProtocol = false) {
   const root = resolve('dist/fixture-slice/browser');
   let backend: Server | undefined, backendPort = 0;
   let fixture: ReturnType<typeof import('../../../backend/fixture-slice/station-arrival-fixture.mts').createStationArrivalFixture> | undefined;
   let native: Awaited<ReturnType<typeof import('./native-station-protocol-backend.mts').startNativeStationProtocolBackend>> | undefined;
+  let exit: Awaited<ReturnType<typeof import('./native-exit-protocol-backend.mts').startNativeExitProtocolBackend>> | undefined;
   const ui = createServer(async (req, res) => {
     if (req.url?.startsWith('/api/')) {
       if (!backendPort) { res.writeHead(503); res.end(); return; }
@@ -35,6 +36,11 @@ export async function startStationBrowserServer(realFixture = false, nativeProto
     ui.listen(0, '127.0.0.1'); await once(ui, 'listening');
     const address = ui.address(); if (!address || typeof address === 'string') throw Error('No owned UI address');
     const origin = `http://127.0.0.1:${address.port}`;
+    if (exitProtocol) {
+      if (realFixture || nativeProtocol) throw Error('Exit protocol must be isolated from arrivals');
+      const { startNativeExitProtocolBackend } = await import('./native-exit-protocol-backend.mts');
+      exit = await startNativeExitProtocolBackend(origin); backendPort = exit.port;
+    }
     if (nativeProtocol) {
       if (realFixture) throw Error('Separate fixture/native protocol constructions required');
       const { startNativeStationProtocolBackend } = await import('./native-station-protocol-backend.mts');
@@ -64,6 +70,7 @@ export async function startStationBrowserServer(realFixture = false, nativeProto
     }
     return { origin, inspect: () => fixture?.store.inspectSnapshot(),
       nativeInspect: () => native?.inspect(), nativeHold: () => native?.hold(), nativeRelease: () => native?.release(),
-      close: async () => { await close(ui); if (backend) await close(backend); if (native) await native.close(); } };
-  } catch (e) { await close(ui); if (backend) await close(backend); if (native) await native.close(); throw e; }
+      exitInspect: () => exit?.inspect(), exitHold: () => exit?.hold(), exitRelease: () => exit?.release(),
+      close: async () => { await close(ui); if (backend) await close(backend); if (native) await native.close(); if (exit) await exit.close(); } };
+  } catch (e) { await close(ui); if (backend) await close(backend); if (native) await native.close(); if (exit) await exit.close(); throw e; }
 }

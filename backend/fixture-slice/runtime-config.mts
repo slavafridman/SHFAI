@@ -2,6 +2,7 @@ import type { StartupConfig } from "./contracts.mts";
 import { record, text, validateConfig } from "./contract-validation.mts";
 import { validateStageArrivalMode } from "./stage-arrival-validation.mts";
 import { stationMode } from "./station-arrival-validation.mts";
+import { stationExitMode } from "./native-station-exit-config.mts";
 
 type OracleMode = { dataSource: "oracle-read-only"; oracleTestScopeConfirmed: true };
 export type OracleStartupConfig =
@@ -9,6 +10,7 @@ export type OracleStartupConfig =
   | (Omit<Extract<StartupConfig, { authenticationMode: "real" }>, "dataSource"> & OracleMode);
 export type RuntimeConfig = StartupConfig | OracleStartupConfig;
 export function validateRuntimeConfig(value: unknown): RuntimeConfig {
+  stationExitMode(value);
   stationMode(value);
   validateStageArrivalMode(value);
   if (!record(value) || value.dataSource !== "oracle-read-only") return validateConfig(value);

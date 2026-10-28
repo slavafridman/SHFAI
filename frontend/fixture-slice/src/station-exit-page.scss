@@ -1,0 +1,18 @@
+@use './arrival-focus';
+:host { display:block; min-width:0; }
+.exit-page { max-width:1120px; margin:auto; padding:24px; overflow-wrap:anywhere; }
+.surface { background:#fff; border:1px solid #d7dce5; border-radius:12px; padding:20px; margin-block:16px; }
+.notice { background:#fff4cc; color:#493600; border-inline-start:5px solid #856300; }
+.review { border-inline-start:5px solid #056ae5; }
+dl { display:grid; grid-template-columns:minmax(100px,1fr) minmax(0,2fr); gap:12px; }
+dd { margin:0; }
+.actions { display:flex; flex-wrap:wrap; gap:12px; margin-block:16px; }
+button,a[mat-stroked-button] { min-height:48px; height:auto; white-space:normal; max-width:100%; }
+.exit-page .mat-mdc-button-base:focus-visible,
+.exit-page .mat-mdc-button-base.cdk-keyboard-focused:focus { outline:3px solid #002f65; outline-offset:3px; }
+.exit-page .mat-mdc-button-base[aria-disabled="true"] { color:#526077; background-color:#e4e8ef; cursor:default; }
+@media(max-width:600px) {
+  .exit-page { padding:12px; }
+  .surface { padding:12px; }
+  dl { grid-template-columns:minmax(0,1fr); }
+}

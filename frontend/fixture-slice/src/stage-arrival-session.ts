@@ -69,6 +69,15 @@ export class StageArrivalSession {
   }
   uncertain() { return this.unresolved.size > 0; }
   nativeUncertain() { return this.native.size > 0; }
+  crossAffects(s: ArrivalSelection | null) {
+    return [...this.unresolved].some(attempt => {
+      const raw = this.attemptBindings.get(attempt);
+      if (!s || !raw) return true;
+      const b: string[] = JSON.parse(raw);
+      return b[0] === 'oracle-test' ? b[1] === s.employeeId && b[2] === s.shiftDayId :
+        b[2] === s.employeeId && b[3] === s.shiftDayId;
+    });
+  }
   affects(s: ArrivalSelection | null) {
     return !!s && [...this.unresolved].some(attempt =>
       !this.attemptBindings.has(attempt) || (() => {

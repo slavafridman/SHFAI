@@ -50,7 +50,7 @@ export function validateConfig(value: unknown): StartupConfig {
       value.realProviderId.trim().length === 0 || value.syntheticOrgUnitIds !== undefined) return fail();
   return structuredClone(value) as StartupConfig;
 }
-export function validatePrincipal(value: unknown, stageMode?: "disabled" | "isolated-fixture" | "test-oracle-controlled" | "joint-fixture" | "native-station"): asserts value is PrincipalV1 {
+export function validatePrincipal(value: unknown, stageMode?: "disabled" | "isolated-fixture" | "test-oracle-controlled" | "joint-fixture" | "native-station" | "native-exit"): asserts value is PrincipalV1 {
   const fail = (): never => { throw new SliceError("UNAUTHENTICATED"); };
   if (!record(value) || !text(value.subject, 128, 1) || !text(value.displayName, 128) ||
       typeof value.provider !== "string" || !["synthetic", "real"].includes(value.provider) ||
@@ -58,12 +58,16 @@ export function validatePrincipal(value: unknown, stageMode?: "disabled" | "isol
       !Array.isArray(value.roles) || value.roles.some(role => role !== "Administrator") ||
       new Set(value.roles).size !== value.roles.length ||
       !Array.isArray(value.capabilities) ||
-      value.capabilities.some(c => c !== "shift-day:read" && c !== "current-shifts:read" && c !== "shift-search:read" && c !== "my-shifts:read" && c !== "shift-items:read" && c !== "employee:read" && c !== "attendance:read" && c !== "attendance-stage-arrival:prepare" && c !== "attendance-stage-arrival:commit" && c !== "attendance-stage-arrival:test-oracle-write" && c !== "attendance-station-arrival:prepare" && c !== "attendance-station-arrival:commit" && c !== "attendance-station-arrival:test-oracle-write") ||
+      value.capabilities.some(c => c !== "shift-day:read" && c !== "current-shifts:read" && c !== "shift-search:read" && c !== "my-shifts:read" && c !== "shift-items:read" && c !== "employee:read" && c !== "attendance:read" && c !== "attendance-stage-arrival:prepare" && c !== "attendance-stage-arrival:commit" && c !== "attendance-stage-arrival:test-oracle-write" && c !== "attendance-station-arrival:prepare" && c !== "attendance-station-arrival:commit" && c !== "attendance-station-arrival:test-oracle-write" && c !== "attendance-station-exit:prepare" && c !== "attendance-station-exit:commit" && c !== "attendance-station-exit:test-oracle-write") ||
       new Set(value.capabilities).size !== value.capabilities.length ||
       !(value.employeeId === null || decimalId(value.employeeId)) ||
       !record(value.resourceScope) || !units(value.resourceScope.orgUnitIds, false)) return fail();
   const nativeStation = stageMode === "native-station" ||
     stageMode === undefined && value.capabilities.includes("attendance-station-arrival:test-oracle-write");
+  const nativeExit = stageMode === "native-exit" ||
+    stageMode === undefined && value.capabilities.includes("attendance-station-exit:test-oracle-write");
+  if (!nativeExit && value.capabilities.some(c => typeof c === "string" && c.startsWith("attendance-station-exit:")))
+    return fail();
   if (stageMode !== undefined && stageMode !== "joint-fixture" && !nativeStation &&
       value.capabilities.some(c => c === "attendance-station-arrival:prepare" ||
         c === "attendance-station-arrival:commit" || c === "attendance-station-arrival:test-oracle-write")) return fail();
@@ -71,7 +75,7 @@ export function validatePrincipal(value: unknown, stageMode?: "disabled" | "isol
   if (value.synthetic && (value.subject !== "synthetic:administrator" ||
       value.displayName !== "Synthetic Administrator (local/isolated only)" ||
       value.employeeId !== null || value.roles.length !== 1 ||
-      !(nativeStation ? value.capabilities.length === 10 : stageMode === "disabled" ? value.capabilities.length === 7 :
+      !(nativeStation || nativeExit ? value.capabilities.length === 10 : stageMode === "disabled" ? value.capabilities.length === 7 :
         stageMode === "isolated-fixture" ? value.capabilities.length === 9 :
         stageMode === "test-oracle-controlled" ? value.capabilities.length === 10 :
         stageMode === "joint-fixture" ? value.capabilities.length === 11 :
@@ -80,9 +84,9 @@ export function validatePrincipal(value: unknown, stageMode?: "disabled" | "isol
       value.capabilities[2] !== "shift-search:read" || value.capabilities[3] !== "my-shifts:read" ||
       value.capabilities[4] !== "shift-items:read" || value.capabilities[5] !== "employee:read" ||
       value.capabilities[6] !== "attendance:read" ||
-      (value.capabilities.length >= 9 && (value.capabilities[7] !== (nativeStation ? "attendance-station-arrival:prepare" : "attendance-stage-arrival:prepare") ||
-        value.capabilities[8] !== (nativeStation ? "attendance-station-arrival:commit" : "attendance-stage-arrival:commit"))) ||
-      (value.capabilities.length === 10 && value.capabilities[9] !== (nativeStation ? "attendance-station-arrival:test-oracle-write" : "attendance-stage-arrival:test-oracle-write")) ||
+      (value.capabilities.length >= 9 && (value.capabilities[7] !== (nativeExit ? "attendance-station-exit:prepare" : nativeStation ? "attendance-station-arrival:prepare" : "attendance-stage-arrival:prepare") ||
+        value.capabilities[8] !== (nativeExit ? "attendance-station-exit:commit" : nativeStation ? "attendance-station-arrival:commit" : "attendance-stage-arrival:commit"))) ||
+      (value.capabilities.length === 10 && value.capabilities[9] !== (nativeExit ? "attendance-station-exit:test-oracle-write" : nativeStation ? "attendance-station-arrival:test-oracle-write" : "attendance-stage-arrival:test-oracle-write")) ||
       (value.capabilities.length === 11 && (value.capabilities[9] !== "attendance-station-arrival:prepare" ||
         value.capabilities[10] !== "attendance-station-arrival:commit")) ||
       value.resourceScope.orgUnitIds.length === 0 || value.resourceScope.orgUnitIds.length > 100)) return fail();

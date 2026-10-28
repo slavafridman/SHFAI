@@ -1,4 +1,101 @@
-# SHF-NATIVE-F2-UI-28 — station arrival, approved native TEST branch
+# SHF-STATION-EXIT-UI-28 — ordinary native station exit
+
+Implements approved **§47 v0.1 / §47.7**, user acceptance 28 October 2026
+11:08 +02:00 (“Agree and continue”), against the architect-owned type-only
+`station-exit-contracts.mts` V1 family and exact native-exit10 capabilities
+(canonical publication reported by parent: `7bc1918`). No shared contract,
+dependency, manifest, lock, public environment or backend source changes.
+Installed Node24.21.0 / Angular21.2.25 / Material+CDK21.2.14 / TS5.9.3 retained.
+
+**Frontend SOURCE-STABLE; parent independent QA/release remains separate.**
+The final frontend suite passes **621/621** (existing531 +90), strict app/spec
+typing and all three build/profile pairs return naturally with exit0. Public
+profiles remain exactly `{appEnv,apiBasePath}`, with `/api`; browser settings
+do not enable native writes or confer authority. See `VERIFICATION.md` for
+exact commands, failures and the temporary backend integration gate.
+
+### Selected-resource workflow and safety
+
+Attendance exposes **“יציאה מעמדה — בדיקת כשירות במסד TEST”** only under the
+exact ordered exit10 Oracle synthetic identity, coherent Oracle inquiry source
+and selected team/day. Its accessible name includes the selected synthetic
+worker. Neither arrival mode is exposed under exit10. All seven read views
+retain their Oracle source guards and old read7/fixture9/native F1/F2/fixture11
+identities are unchanged. Missing/failed identity never becomes Administrator.
+
+Explicit employee/day selection → fresh GET exit context → pure POST validation
+with exact `{}` → read-only review → the **single shared** typed
+`StationArrivalDialog` exit branch, initially unchecked whole-operation consent
+→ one POST command. The new branch uses the existing single external dialog
+template/stylesheet; no duplicate inline styles, styled clone or vendor patch.
+Command keys are exactly `commandId,draft,validationToken,fingerprint,
+operationConfirmation`; `draft:{}` and `operationConfirmation:{accepted:true}`.
+The API client runtime guard rejects nonempty/nonobject drafts before HTTP.
+No reason, client time, manager, actor stamp or warning-override field exists.
+
+Title **“יציאה מעמדה — TEST”** and persistent **“כתיבה בפועל למסד TEST”**
+separate an actual TEST change from simulation/production and from synthetic
+Administrator identity (not the selected employee; no password verification).
+The UI displays server time including seconds/instant/zone, planned end, actual
+server B/A policy, inclusive millisecond interval and exclusive early rule.
+It never derives eligibility from the browser clock. Early-manager decisions
+are deferred, with the approved Hebrew block and no override dialog/token.
+Station arrival is required; NULL stage is permitted/read-only. Briefing
+true/false/NULL stays distinct. Review states exactly two server-determined exit
+fields; arrival, stage, briefing and all other attendance fields are preserved.
+
+Cancel/Escape before dispatch has zero commands and discards preparation.
+Pending prevents duplicates; leaving/unsubscribing is not cancellation.
+Success requires a matching native receipt, original token/fingerprint,
+COMMIT ACK plus independent matching readback, preserved exposed facts,
+`replayed:false`, `receiptPersistence:none`, partner `not-invoked`. There is
+no invented `committedAt`, durable receipt or partner/CTI completion.
+An observed existing exit is read-only, not a reconstructed command receipt.
+Stale/window/source failures require fresh context/preparation/re-review.
+
+Exit uses separate opaque session/history namespace
+`shfNativeStationExitSafety` (`kind:station-exit`,
+`mode:test-oracle-controlled`). Same employee/day uncertainty blocks F1/F2,
+fixture/native source switches, actor/team drift and fresh command IDs; reload
+without binding evidence conservatively blocks all overlapping work. Existing
+arrival uncertainty also blocks exit across sources. No tokens, tuple/actor,
+row payloads or receipts are serialized into safety markers. History keeps
+only volatile resource/form/navigation context and restores attendance filters,
+page/applied state, RTL/vertical scroll and exact opener, never preparation.
+Lost context returns to the attendance chooser. UNKNOWN has no reset, retry,
+new-command, compensation or fixture-fallback action; operator reconciliation
+is external to this UI.
+
+### Browser checks and temporary integration gate
+
+From `frontend/fixture-slice`, after a production build:
+
+```powershell
+node checks/station-exit-browser-check.mjs
+# Only after parent confirms backend SOURCE-STABLE:
+node checks/station-exit-browser-check.mjs --native-protocol-double
+```
+
+Default mode uses typed synthetic HTTP responses and **does not import backend
+runtime**. The optional protocol mode uses actual exit HTTP/application/UoW
+with the backend's synthetic Oracle protocol pools and a temporary synthetic
+one-shot file, never a driver factory, private environment or real allowance.
+Both use owned ephemeral loopback ports/Chrome profiles and close them.
+The protocol mode passed before the parent's temporary private F2 column-fix
+freeze; final post-fix rerun waits for a new backend SOURCE-STABLE handoff.
+Do not treat that pre-fix pass as final post-fix proof.
+
+Chrome checks Hebrew/RTL, 1440/390/320 reflow, keyboard trap/Escape, explicit
+checkbox consent, zero pre-consent commands, duplicates, source guards,
+UNKNOWN/reload/cross-mode interlocks and origin restoration. Screenshot-pixel
+focus contrast is12.6179:1; focused opener is fully visible/hit-testable48px
+with solid3px outline/3px offset. These are bounded automated observations,
+not full WCAG certification, manual assistive-technology testing or UAT.
+No Oracle/DNS/production/EMS/batch/deployment/live-write proof is claimed.
+
+---
+
+# SHF-NATIVE-F2-UI-28 — station arrival, approved native TEST branch (earlier slice)
 
 Implements **§46 v0.1**, explicitly approved 28 October 2026 09:00 +02:00,
 using the existing §§41–42 v0.1 layout and canonical

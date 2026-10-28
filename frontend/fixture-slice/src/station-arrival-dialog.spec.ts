@@ -5,17 +5,20 @@ import { StationArrivalDialog, type StationArrivalDialogData } from './station-a
 import { stationContextFixture, stationValidationFixture } from './station-arrival-fixtures';
 import { nativeStationContextFixture, nativeStationSelectionFixture,
   nativeStationValidationFixture } from './native-station-arrival-fixtures';
+import { exitContextFixture, exitSelectionFixture, exitValidationFixture } from './station-exit-fixtures';
 
 describe('shared F2 dialog keeps source-specific consent and copy', () => {
   afterEach(() => TestBed.resetTestingModule());
-  for (const kind of ['fixture-warning', 'native-confirmation'] as const) {
+  for (const kind of ['fixture-warning', 'native-confirmation', 'native-exit-confirmation'] as const) {
     function setup() {
       const data: StationArrivalDialogData = kind === 'fixture-warning' ? {
         kind, name: 'עובד סימולציה', planned: stationContextFixture(true).planned.startLocal,
         reason: 'סיבה סינתטית בלבד', validation: stationValidationFixture(true),
-      } : {
+      } : kind === 'native-confirmation' ? {
         kind, selection: nativeStationSelectionFixture(), context: nativeStationContextFixture(),
         validation: nativeStationValidationFixture(),
+      } : {
+        kind, selection: exitSelectionFixture(), context: exitContextFixture(), validation: exitValidationFixture(),
       };
       const close = vi.fn();
       TestBed.configureTestingModule({ imports: [StationArrivalDialog], providers: [
@@ -27,8 +30,8 @@ describe('shared F2 dialog keeps source-specific consent and copy', () => {
     }
     it(`${kind}: renders only its approved body, Hebrew labels and stable selectors`, () => {
       const { host } = setup();
-      const native = kind === 'native-confirmation';
-      expect(host.querySelector(native ? '#native-station-operation-ack' : '#station-warning-ack')).not.toBeNull();
+      const native = kind !== 'fixture-warning';
+      expect(host.querySelector(kind === 'native-exit-confirmation' ? '#native-exit-operation-ack' : native ? '#native-station-operation-ack' : '#station-warning-ack')).not.toBeNull();
       expect(host.textContent).toContain(native ? 'כתיבה בפועל למסד TEST' : 'אזהרת איחור לעמדה — סימולציה בלבד');
       expect(host.textContent).not.toContain(native ? 'סימולציה מבודדת בלבד' : 'כתיבה בפועל למסד TEST');
       expect(host.textContent).toContain(native ? 'ישתנו בדיוק שני שדות' : 'מעבר לסקירת סימולציה');
@@ -36,7 +39,7 @@ describe('shared F2 dialog keeps source-specific consent and copy', () => {
     });
     it(`${kind}: requires explicit checkbox consent before confirming`, () => {
       const { fixture, dialog, close, host } = setup();
-      const id = kind === 'native-confirmation' ? '#native-station-operation-confirm' : '#station-warning-review';
+      const id = kind === 'native-exit-confirmation' ? '#native-exit-operation-confirm' : kind === 'native-confirmation' ? '#native-station-operation-confirm' : '#station-warning-review';
       expect(host.querySelector<HTMLButtonElement>(id)?.disabled).toBe(true);
       dialog.confirm(); expect(dialog.confirmed).toBe(false); expect(close).not.toHaveBeenCalled();
       dialog.accepted.setValue(true); fixture.detectChanges();
@@ -45,7 +48,7 @@ describe('shared F2 dialog keeps source-specific consent and copy', () => {
     });
     it(`${kind}: cancellation does not mark the operation confirmed`, () => {
       const { dialog, close, host } = setup();
-      const id = kind === 'native-confirmation' ? '#native-station-operation-cancel' : '#station-warning-cancel';
+      const id = kind === 'native-exit-confirmation' ? '#native-exit-operation-cancel' : kind === 'native-confirmation' ? '#native-station-operation-cancel' : '#station-warning-cancel';
       host.querySelector<HTMLButtonElement>(id)!.click();
       expect(close).toHaveBeenCalledExactlyOnceWith(false); expect(dialog.confirmed).toBe(false);
     });

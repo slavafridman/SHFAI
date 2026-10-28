@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, approved station-exit canonical published; disjoint consumer implementation running.
+Last updated: 2026-10-28, approved ordinary station-exit and coupled F2 fix independently verified; publication ready.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -27,7 +27,7 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-STATION-EXIT-APPROVED-28 — current resume checkpoint
 
-**State: RUNNING.** At 11:08 +02:00 the user replied "Agree and continue"
+**State: OFFLINE IMPLEMENTATION/QA PASS; consumer publication preflight PASS.** At 11:08 +02:00 the user replied "Agree and continue"
 to the explicit section47v0.1 ordinary native TEST station-exit implementation
 approval request. This approves that APP/API/identity/UI/persistence baseline,
 not early-manager/correction/cancellation flows or an operational write.
@@ -78,7 +78,149 @@ integration waits for backend source-stable handoff. No new dependencies,
 live Oracle write or automatic interpretation of unavailable metadata is
 authorized. Canonical-step publication is next, without consumer source.
 
-#### SHF-STATION-EXIT-CANONICAL-PUBLISH-28 — current publication step
+Backend ordinary-exit implementation is SOURCE-STABLE. Owner reports natural
+exit0 for focused102/102, strict typecheck and full backend913/913 (no skips).
+Exit-only construction, two-field UPDATE, precise early threshold, complete
+preservation, dedicated operation certificate/allowance, explicit/ALS
+cancellation/drain and ACK plus independent readback are implemented.
+Canonical/public contracts, frontend and dependencies were not changed.
+Independent exit QA Phase A is now running; frontend owner may integrate
+an isolated actual backend protocol double and will hand off when stable.
+
+The exit owner found a concrete coupled mapping concern: historical schema/
+legacy station-lateness columns are LATE_*, while an existing native F2 helper
+uses STATION_LATE_*. Exit uses evidenced LATE_* names. Architect is reviewing
+the exact private SQL/certification mapping and regression scope read-only;
+no public contract change or claim of current Oracle column certification.
+Any required correction gets one exclusive backend owner before integration.
+
+Architect confirmed NATIVEF2-PHYSICAL-01: native station-arrival required
+metadata/domain keys incorrectly use STATION_LATE_* instead of the legacy/
+historical physical LATE_REASON_ID/LATE_MINUTES/LATE_REMARK triplet.
+This would reject source-compatible metadata before business reads; the
+existing double derives schema from production constants and masked it.
+Native F1 STAGE_LATE_* mapping and exit's explicit LATE_* mapping are correct.
+One F2 backend owner is correcting only F2 snapshot/domain and direct tests,
+with independent physical metadata and emitted-SQL identifier validation.
+No public API/business/capability changes or new approval are required.
+New backend/integration runs are paused during the edit; UI typed HTTP work
+may continue. Current runtime physical metadata remains unverified and the
+two-view barrier unchanged. Fresh source-stable handoff and regression evidence
+are required before exit integration/acceptance resumes.
+
+Exit QA paused cleanly on that notice. Before the F2 correction it independently
+passed exit102 and impacted-arrival401 distinct existing tests plus strict
+typecheck; these are explicitly pre-fix results, not corrected-source proof.
+No new exit defect was confirmed; the physical-column finding is not duplicated.
+Its independent temporal/preservation/readback/raw-HTTP test artifact is prepared
+outside the repository but not yet executed. No QA helper remains running.
+Backend QA resumes only after the F2 owner's specific SOURCE-STABLE evidence;
+frontend/browser QA separately waits for UI SOURCE-STABLE.
+
+UI exit owner is now SOURCE-STABLE across31 frontend paths. Owner results:
+focused124/124, full621/621 in42 files, app/spec strict typechecks and all
+three build/profile pairs naturally exit0. Typed-HTTP exit Chrome checks at
+1440/390/320 and existing station/default-native browser regressions pass;
+measured opener48px unobscured, contrast12.6179:1. One earlier worker-start
+timeout collected no tests and was stopped/documented, not claimed fixed.
+Final owned esbuild/browser roots/profiles are zero.
+Actual exit protocol-double integration passed before the backend freeze;
+post-F2-fix protocol proof remains NOT RUN. Independent QA may now execute
+stable frontend tests/builds/typed-HTTP browser checks, but backend imports
+and actual protocol integration still wait for the physical-fix handoff.
+UI changed no backend/canonical/dependency/public-environment artifacts.
+
+F2 physical-column correction is SOURCE-STABLE: six assigned F2 files only,
+real LATE_* required names/domain keys and NUMBER/NUMBER/text type checks.
+Independent physical fixture/SQL identifier guard now detects nonexistent
+source columns even behind valid aliases. Owner tests29 physical,
+combined98 and impacted363 pass; strict typecheck and full backend942/942
+naturally exit0, no failures/skips. Both provider paths reproduced the old
+failure before repair. F1/exit production code and canonical/UI are unchanged.
+No live catalog or DML is claimed by this characterization evidence.
+Independent exit QA resumes backend and actual post-fix protocol integration;
+UI owner is rerunning its one previously blocked protocol check and may
+update only existing verification prose. All application code is stable.
+
+UI owner post-fix exit protocol check now PASS, natural exit0 in4.224s.
+Actual Node HTTP/application/UoW protocol doubles show one command/two exit
+SET fields, preservation including null stage/briefing, COMMIT ACK plus
+independent matching readback and both arrival endpoints disabled403.
+Visible success focus at320px measured contrast12.6179:1.
+Only existing frontend verification prose changed; owned Node/Chrome/profile/
+listener/pool cleanup passed. This is not a real Oracle connection or allowance.
+Independent exit QA Phase A/B now PASS against stable post-fix source, with
+no new product defect confirmed. Backend affected532/532 plus seven inquiry
+HTTP62/62; independent exit71/71 and historical-CSV-driven physical F2
+characterization21/21; backend TSC PASS. Frontend focused194/194 and
+native/late-response104/104, app/spec TSC, all three clean build/profile
+pairs, typed-HTTP Chrome and post-fix actual protocol-double Chrome PASS.
+Owner full results remain backend942/942 and frontend621/621; focused/
+independent counts overlap and are not additive completion metrics.
+
+NATIVEF2-PHYSICAL-01 is independently closed for the offline mapping fix:
+real LATE_* metadata is independently sourced, unknown physical identifiers
+reject behind valid aliases, null/nonnull/type checks work under both providers.
+Current live Oracle physical catalog is not certified by these tests.
+Independent Chrome dropped an HTTP200 only after isolated COMMIT ACK/readback:
+exactly one UPDATE/COMMIT and two exit SET fields, full other-field preservation;
+UI remained UNKNOWN through reload, cross-operation navigation and actual
+Back/Forward with no fabricated receipt/new command. Arrival endpoints remain
+disabled403 in exit construction.
+Checked1440/390/320 Hebrew/RTL, keyboard/Escape/opener/reflow; focus3px,
+48px button visible/hit-testable, contrast12.6179:1. Worker-start failure did
+not recur, root cause not declared fixed. Final scoped esbuild count zero;
+QA closed owned resources and changed no repository paths.
+No live Oracle/DNS/DDL/EMS/CTI, operational allowance, UAT, manual AT or full
+WCAG certification occurred. Actual certification remains blocked by the
+two retained DBA metadata sources. Next safe action: scoped consumer/fix
+publication and synchronization, then operator resumes only after that
+external visibility prerequisite changes; no duplicate host approval.
+
+#### SHF-STATION-EXIT-CONSUMER-PUBLISH-28 — current publication step
+
+All code owners are stopped and source-stable after independent Phase A/B
+closure. Publication operator temporarily owns this checkpoint until handoff.
+Fresh main and fetched origin/main both equal
+`f58271a9b7e7d8a5d325829e587822d874fdab38`, ahead/behind
+0/0, empty index and no conflicts before staging.
+
+The explicit owner manifest exactly matches 57 assigned paths:
+19 backend exit, six coupled F2 physical-column correction, 31 frontend
+and this checkpoint; 24 paths are new. No extra path is authorized.
+The 23 unrelated user paths are excluded and inspected by name only,
+without content reads/hashes. Canonical contracts/tests, design and
+verification JSON remain unchanged from published HEAD. No structural
+verifier run or generated refresh is needed or performed.
+
+Fresh bounded publication review PASS: all assigned added lines/new files
+checked for credentials, private keys/tokens/row data, operational paths,
+DDL and synthetic fixture provenance; scoped whitespace PASS.
+HEAD-plus-publication closure PASS: 445 relative imports, ten Angular
+template/style references and 12 local documentation links. No session-only
+QA/TEMP or unpublished module dependency is required. Staged closure and
+working-copy equality are checked again before commit.
+
+The owner backend942/frontend621, independent affected backend532/inquiry62/
+exit71/physical21, frontend194/104, typechecks, three naturally completed
+build/profile pairs and Chrome/response-drop results above are fresh
+source-stable owner/QA evidence, not tests rerun by this publisher.
+Counts overlap and are not additive. The F2 physical defect is closed for
+offline mapping/source-characterization only; no live catalog certification.
+Publication runs no application, test/build/compiler, DNS/Oracle, allowance,
+grant, DDL, dependency or infrastructure operation; only normal Git
+fetch/push/remote verification uses network access.
+
+Exact-57-path staged checks, normal commit/push and direct remote
+verification are pending. Current external live blocker remains unavailable
+DBA_TRIGGERS/DBA_ROLE_PRIVS (ORA-00942), not DNS. Next safe action after
+publication: operator resumes current identity/metadata/eligibility readiness
+only after TEST DBA/operator changes and confirms that prerequisite, then
+separate operational GO is required before setup/command. No actual arrival,
+native exit SQL runtime proof, full-project completion or release is claimed.
+Parent checkpoint ownership returns after publication handoff.
+
+#### SHF-STATION-EXIT-CANONICAL-PUBLISH-28 — prior publication step
 
 Architect's canonical/design artifacts are stopped and source-stable.
 Publication operator temporarily owns this checkpoint until handoff; backend

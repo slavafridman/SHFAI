@@ -16,6 +16,7 @@ import { stationIdentity, stationSource, stationContext, stationValidation, stat
   type StationArrivalValidationV1 } from './station-arrival-contract';
 import { StationArrivalSession } from './station-arrival-session';
 import { StageArrivalSession } from './stage-arrival-session';
+import { StationExitSession } from './station-exit-session';
 import { WorkspaceShell } from './workspace-shell';
 import { ViewHistory } from './view-history';
 import { StationArrivalDialog, type StationArrivalDialogData } from './station-arrival-dialog';
@@ -29,6 +30,7 @@ type State = 'chooser' | 'loading' | 'denied' | 'ready' | 'ineligible' | 'valida
 export class StationArrivalPage {
   readonly session = inject(StationArrivalSession);
   readonly stage = inject(StageArrivalSession);
+  readonly exit = inject(StationExitSession);
   readonly journey = inject(ViewHistory);
   private readonly api = inject(SliceApi);
   private readonly route = inject(ActivatedRoute);
@@ -97,10 +99,10 @@ export class StationArrivalPage {
     });
   }
   allowed() { return this.identityState() === 'ready' && stationIdentity(this.principal()); }
-  blocked() { return this.session.blocked(this.selection()) || this.stage.affects(this.selection()); }
+  blocked() { return this.session.blocked(this.selection()) || this.stage.affects(this.selection()) || this.exit.affects(this.selection()); }
   private unresolved() {
     const s = this.selection();
-    return (s ? this.session.affects(s) : this.session.uncertain()) || this.stage.affects(s);
+    return (s ? this.session.affects(s) : this.session.uncertain()) || this.stage.affects(s) || this.exit.affects(s);
   }
   private active(gen: number) { return this.alive && gen === this.generation; }
   private invalidate() {
@@ -368,7 +370,7 @@ export class StationArrivalPage {
   }
   openStage() {
     const s = this.selection();
-    if (!s || this.nativeMode() || !this.allowed() || this.session.affects(s) || this.stage.affects(s) || this.state() === 'committing') return;
+    if (!s || this.nativeMode() || !this.allowed() || this.session.affects(s) || this.stage.affects(s) || this.exit.affects(s) || this.state() === 'committing') return;
     this.invalidate(); this.stage.selection = structuredClone(s);
     void this.router.navigate(['/employees', s.employeeId, 'shift-days', s.shiftDayId, 'stage-arrival']);
   }

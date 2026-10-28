@@ -90,7 +90,7 @@ export function stationBlockers(rows: Record<string, NativeRow | null>,
     if (["MISS_REASON_ID", "MISSING_TIME", "MISSING_REMARK"].some(k => a[k] !== null)) b.push("MISSING_PRESENT");
     if (a.OPTIONAL1 !== null) b.push("FLAG_PRESENT");
     if (a.STATION_EXIT_TIME !== null || a.STATION_EXIT_USER !== null) b.push("EXIT_PRESENT");
-    if (["STATION_LATE_REASON_ID", "STATION_LATE_MINUTES", "STATION_LATE_REMARK"].some(k => a[k] !== null))
+    if (["LATE_REASON_ID", "LATE_MINUTES", "LATE_REMARK"].some(k => a[k] !== null))
       b.push("EXISTING_STATION_LATE");
     const stage = a.STAGE_ARRIVAL_TIME, user = a.STAGE_ARRIVAL_USER;
     if ((stage === null) !== (user === null) || stage !== null &&
@@ -102,7 +102,7 @@ export function stationBlockers(rows: Record<string, NativeRow | null>,
     const admitted = new Set(["SHF_EMPLOYEE_DAY_ID", "STAGE_ARRIVAL_TIME", "STAGE_ARRIVAL_USER", "TADREECH",
       "STATION_ARRIVAL_TIME", "STATION_ARRIVAL_USER", "STATION_EXIT_TIME", "STATION_EXIT_USER",
       "MISS_REASON_ID", "MISSING_TIME", "MISSING_REMARK", "OPTIONAL1",
-      "STATION_LATE_REASON_ID", "STATION_LATE_MINUTES", "STATION_LATE_REMARK"]);
+      "LATE_REASON_ID", "LATE_MINUTES", "LATE_REMARK"]);
     for (const [k, v] of Object.entries(a))
       if (!admitted.has(k) && v !== null && !(k.startsWith("TADREECH") && k.includes("P2") && v === "0"))
         b.push("UNSUPPORTED_DAY");

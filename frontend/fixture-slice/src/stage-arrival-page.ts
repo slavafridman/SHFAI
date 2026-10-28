@@ -18,6 +18,7 @@ import { StageArrivalSession } from './stage-arrival-session';
 import { WorkspaceShell } from './workspace-shell';
 import { ViewHistory } from './view-history';
 import { StationArrivalSession } from './station-arrival-session';
+import { StationExitSession } from './station-exit-session';
 import { stationIdentity } from './station-arrival-contract';
 
 @Component({
@@ -108,6 +109,7 @@ export class NativeArrivalConfirmation {
 })
 export class StageArrivalPage {
   readonly station = inject(StationArrivalSession);
+  readonly exit = inject(StationExitSession);
   private readonly router = inject(Router);
   readonly session = inject(StageArrivalSession);
   readonly journey = inject(ViewHistory);
@@ -212,7 +214,7 @@ export class StageArrivalPage {
         if (!this.active(gen) || this.identityState() !== 'loading') return;
         if (!identity(v)) { this.identityState.set('error'); this.state.set('denied'); this.message.set('אין זהות תקפה. אין כניסה חלופית כמנהל מערכת.'); return; }
         this.principal.set(v); this.identityState.set('ready');
-        if (this.station.affects(this.selection())) { this.recovery(); return; }
+        if (this.station.affects(this.selection()) || this.exit.affects(this.selection())) { this.recovery(); return; }
         if (!this.allowed()) { this.state.set('denied'); this.message.set('קריאה בלבד או מקור/הרשאות לא תואמים: נדרשת תצורה מפורשת. אין מעבר אוטומטי לסימולציה.'); return; }
         if (this.session.uncertain()) { this.recovery(); return; }
         const s = this.selection();
@@ -269,7 +271,7 @@ export class StageArrivalPage {
   }
   canValidate() {
     return this.allowed() && !this.halted() && !!this.context() && this.context()!.eligibility === 'eligible' &&
-      !this.session.blocked(this.selection()) && !this.station.affects(this.selection()) &&
+      !this.session.blocked(this.selection()) && !this.station.affects(this.selection()) && !this.exit.affects(this.selection()) &&
       ['ready', 'error', 'expired'].includes(this.state());
   }
   validate() {
@@ -360,7 +362,7 @@ export class StageArrivalPage {
   }
   confirm(nativeAccepted = false) {
     if (this.state() !== 'review') return;
-    if (!this.allowed() || this.session.blocked(this.selection()) || this.station.affects(this.selection())) {
+    if (!this.allowed() || this.session.blocked(this.selection()) || this.station.affects(this.selection()) || this.exit.affects(this.selection())) {
       this.invalidate(); this.context.set(null); this.reason.reset(null, { emitEvent: false });
       if (this.session.uncertain()) this.recovery();
       else if (this.selection() && this.session.recorded(this.selection()!))
@@ -472,7 +474,7 @@ export class StageArrivalPage {
   }
   canOpenStation() {
     return stationIdentity(this.principal()) && !!this.selection() && !this.session.uncertain() &&
-      !this.station.affects(this.selection()) && ['ready', 'review', 'success', 'ineligible'].includes(this.state());
+      !this.station.affects(this.selection()) && !this.exit.affects(this.selection()) && ['ready', 'review', 'success', 'ineligible'].includes(this.state());
   }
   openStation() {
     if (!this.canOpenStation()) return;

@@ -52,7 +52,7 @@ for (const [label, change] of [
   ["partial/full exception", (d: StationOracleDouble) => { d.exceptions = "1"; }],
   ["base exception", (d: StationOracleDouble) => { d.baseExceptions = "1"; }],
   ["flag", (d: StationOracleDouble) => { d.rows.SHF_ATTENDANCE!.OPTIONAL1 = "Y"; }],
-  ["station late", (d: StationOracleDouble) => { d.rows.SHF_ATTENDANCE!.STATION_LATE_REASON_ID = "1"; }],
+  ["station late", (d: StationOracleDouble) => { d.rows.SHF_ATTENDANCE!.LATE_REASON_ID = "1"; }],
   ["stage late", (d: StationOracleDouble) => { d.rows.SHF_ATTENDANCE!.STAGE_LATE_REASON_ID = "1"; }],
   ["orphan station user", (d: StationOracleDouble) => { d.rows.SHF_ATTENDANCE!.STATION_ARRIVAL_USER = "synthetic-orphan"; }],
   ["exit user", (d: StationOracleDouble) => { d.rows.SHF_ATTENDANCE!.STATION_EXIT_USER = "synthetic-exit"; }],

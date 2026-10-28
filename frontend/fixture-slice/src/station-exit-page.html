@@ -1,0 +1,99 @@
+<shf-workspace-shell active="attendance" [principal]="principal()" [identityState]="identityState()"
+  [persistentIdentity]="true" [pinned]="true" (recheck)="recheck()">
+  <div class="exit-page" dir="rtl">
+    <a routerLink="/attendance" (click)="$event.preventDefault(); cancel()">חזרה לבירור נוכחות / למקור</a>
+    <h1 tabindex="-1">יציאה מעמדה — TEST</h1>
+    <aside class="notice surface" role="note">
+      <strong>כתיבה בפועל למסד TEST</strong>
+      <p>שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור. ללא CTI או הפעלת שותף חיצוני.
+        מנהל מערכת סינתטי אינו העובד/ת שנבחר/ה; לא בוצע אימות סיסמה אמיתית.</p>
+      <p>יציאה רגילה בלבד. אין הוספת נוכחות, הגעה אוטומטית, תיקון, ביטול או עקיפת מנהל.</p>
+    </aside>
+    <p id="exit-status" role="status" aria-live="polite">{{ message() }}</p>
+    @if (state() === 'loading') { <p>טוענים זהות והקשר יציאה חדש מהשרת…</p> }
+    @if (state() === 'chooser') {
+      <section class="surface"><h2>לא נבחרה רשומה</h2>
+        <p>יש לבחור במפורש עובד/ת ויום סינתטיים בבירור נוכחות. טעינה מחדש אינה משחזרת פקודה או קבלה.</p>
+        <a mat-stroked-button routerLink="/attendance">בחירת רשומה בבירור נוכחות</a></section>
+    }
+    @if (state() === 'unknown' || state() === 'recovery') {
+      <section class="notice surface" role="alert"><h2>UNKNOWN — אין לשלוח שוב</h2>
+        <p>נדרש בירור ידני של המפעיל. אין להסיק הצלחה או אפס השפעות מקריאה חוזרת.
+          אין איפוס, ניסיון חוזר, UUID חדש, פקודת פיצוי או מעבר לסימולציה.</p></section>
+    }
+    @if (selection(); as s) {
+      <section class="surface"><h2>{{ s.name }} — הקשר עובד/ת נבחר/ת, לא זהות מפעיל</h2>
+        <p>מזהה עובד/ת <bdi dir="ltr">{{ s.employeeId }}</bdi> · יום <bdi dir="ltr">{{ s.shiftDayId }}</bdi>
+          · צוות <bdi dir="ltr">{{ s.orgUnitId }}</bdi> · מקור <bdi dir="ltr">{{ s.dataSource }}</bdi></p></section>
+    }
+    @if (context(); as c) {
+      <section class="surface"><h2>נוכחות ומדיניות מהשרת — לקריאה בלבד</h2>
+        <dl>
+          <dt>הגעה לבמה — אינה תנאי ליציאה</dt><dd>@if (c.recorded.stageArrivalLocal === null) { לא נרשמה הגעה לבמה }
+            @else { <bdi dir="ltr">{{ time(c.recorded.stageArrivalLocal) }}</bdi> }</dd>
+          <dt>הגעה לעמדה — תנאי נדרש</dt><dd><bdi dir="ltr">{{ c.recorded.stationArrivalLocal === null ? 'NULL' : time(c.recorded.stationArrivalLocal) }}</bdi></dd>
+          <dt>יציאה רשומה</dt><dd><bdi dir="ltr">{{ c.recorded.stationExitLocal === null ? 'NULL' : time(c.recorded.stationExitLocal) }}</bdi></dd>
+          <dt>תדריך — יישמר ללא שינוי</dt><dd>{{ c.recorded.briefing === null ? 'לא ידוע — NULL' : c.recorded.briefing ? 'כן' : 'לא' }}</dd>
+          <dt>תחילה מתוכננת</dt><dd><bdi dir="ltr">{{ time(c.planned.startLocal) }}</bdi></dd>
+          <dt>סיום מתוכנן</dt><dd><bdi dir="ltr">{{ time(c.planned.endLocal) }}</bdi></dd>
+          <dt>זמן שרת בהקשר — כולל שניות</dt><dd><bdi dir="ltr">{{ time(c.serverTime.local) }}</bdi>
+            · <bdi dir="ltr">{{ c.serverTime.instant }}</bdi></dd>
+          <dt>אזור זמן עסקי</dt><dd><bdi dir="ltr">{{ c.serverTime.businessTimeZone }}</bdi></dd>
+          <dt>מדיניות שרת B — דקות שלמות לפני הסיום</dt><dd><bdi dir="ltr">{{ c.policy.maxEarlyWholeMinutes }}</bdi></dd>
+          <dt>מדיניות שרת A — דקות אחרי הסיום</dt><dd><bdi dir="ltr">{{ c.policy.maxAfterEndMinutes }}</bdi></dd>
+          <dt>תחילת חלון כולל — דיוק אלפית שנייה</dt><dd><bdi dir="ltr">{{ c.exitWindow.earliestInclusiveAt }}</bdi></dd>
+          <dt>סוף חלון כולל — דיוק אלפית שנייה</dt><dd><bdi dir="ltr">{{ c.exitWindow.latestInclusiveAt }}</bdi></dd>
+          <dt>סיווג שרת</dt><dd><bdi dir="ltr">{{ c.classification }}</bdi></dd>
+        </dl>
+        <p>הכלל שאושר: יציאה רגילה רק אחרי הגבול המוקדם הבלעדי
+          <bdi dir="ltr">t &gt; E − (B + 1) × 60,000ms</bdi>.
+          הגבולות בפועל לעיל מגיעים מהשרת, כולל אלפיות שנייה; אין שעון זכאות בדפדפן.
+          זמן השמירה ייקבע בשרת בשניות בלבד. אין בחירת שעה.</p>
+        @if (c.classification === 'early-manager-decision-deferred') {
+          <p role="alert">יציאה מוקדמת דורשת החלטת מנהל — התהליך אינו זמין בגרסה זו</p>
+        }
+        @if (!c.withinExitWindow) { <p>מחוץ לחלון היציאה המותר או חלון ריק — נדרשים הקשר חדש וסקירה, ללא עדכון אוטומטי.</p> }
+        @if (c.blockers.length) {
+          <ul>@for (b of c.blockers; track b) { <li>{{ blockerCopy[b] }} · <bdi dir="ltr">{{ b }}</bdi></li> }</ul>
+        }
+        @if (c.eligibility === 'already-recorded') { <p>יציאה כבר רשומה — לקריאה בלבד. זו אינה קבלת פקודה.</p> }
+      </section>
+      <div class="actions">
+        <button id="exit-validate" mat-stroked-button type="button" [disabled]="!canValidate()" [disabledInteractive]="true"
+          (click)="validate()">בדיקת רישום יציאה — ללא שינוי</button>
+      </div>
+    }
+    @if (validation(); as v) {
+      @if (state() === 'review') {
+        <section class="surface review" aria-labelledby="exit-review-title">
+          <h2 id="exit-review-title">סקירת כל הפעולה — טרם נרשמה יציאה</h2>
+          <p>ישתנו בדיוק שני שדות: זמן יציאה מעמדה וחותמת מפעיל, שניהם נקבעים בשרת.
+            ההגעה לעמדה, ההגעה לבמה, התדריך וכל שאר שדות הנוכחות יישמרו ללא שינוי.</p>
+          <p>זמן שרת שנבדק: <bdi dir="ltr">{{ time(v.evaluatedLocal) }}</bdi> · <bdi dir="ltr">{{ v.evaluatedAt }}</bdi>
+            · <bdi>{{ v.businessTimeZone }}</bdi>. תוקף בדיקה בלעדי: <bdi dir="ltr">{{ v.expiresAt }}</bdi>.</p>
+          <p>ללא אזהרה עסקית לאישור; עדיין נדרש אישור מפורש של כל פעולת הכתיבה למסד TEST.
+            הזמן הסופי ייקבע מחדש בשרת. אין סיבה, מנהל או שעה להזנה. אין קבלה מתמשכת ואין הפעלת שותף.</p>
+        </section>
+      }
+    }
+    @if (reviewOffered()) {
+      <div class="actions"><button id="exit-confirm" mat-flat-button type="button"
+        [disabled]="state() !== 'review'" [disabledInteractive]="true" (click)="confirm()">סקירה ואישור רישום יציאה במסד TEST</button></div>
+    }
+    @if (receipt(); as r) {
+      <section class="surface"><h2>אישור COMMIT ובדיקה חוזרת עצמאית תואמת</h2>
+        <p>יציאה מעמדה: <bdi dir="ltr">{{ time(r.recorded.stationExitLocal) }}</bdi> · <bdi>{{ r.businessTimeZone }}</bdi>.</p>
+        <p>אישור COMMIT: <bdi dir="ltr">{{ r.commitAcknowledgedAt }}</bdi>.
+          בדיקה חוזרת עצמאית: <bdi dir="ltr">{{ r.readBackVerifiedAt }}</bdi>.</p>
+        <p>אישור COMMIT אינו רגע השמירה המדויק. אין קבלה מתמשכת או שחזור קבלה לאחר טעינה.
+          שותף חיצוני לא הופעל; אין אישור CTI או מוכנות שותף.</p>
+        <p>מזהה פקודה: <bdi dir="ltr">{{ r.commandId }}</bdi></p>
+      </section>
+    }
+    @if (state() === 'error' || state() === 'expired') {
+      <button id="exit-refresh" mat-stroked-button type="button" (click)="recheck()">טעינת הקשר חדש — ללא שינוי</button>
+    }
+    <div class="actions"><button id="exit-back" mat-button type="button" [disabled]="state() === 'committing'"
+      (click)="cancel()">חזרה למקור — ללא פקודה נוספת</button></div>
+  </div>
+</shf-workspace-shell>

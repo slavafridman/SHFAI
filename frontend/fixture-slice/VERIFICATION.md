@@ -1,4 +1,221 @@
-# SHF-NATIVE-F2-UI-28 — frontend verification (28 October 2026)
+# SHF-STATION-EXIT-UI-28 — frontend verification (28 October 2026)
+
+**State: frontend SOURCE-STABLE / parent independent QA pending.** Approved
+UI/API/identity/persistence baseline **§47 v0.1**, user acceptance
+28Oct11:08+02 recorded in **§47.7**; exact architect-owned
+`StationExit{Mode,Blocker,Recorded,Context,Validation,Commit,Receipt,Problem}V1`
+and three exit capability additions, parent canonical publication `7bc1918`.
+No public/shared type changes by this owner. Native exit implementation is
+not early-manager/correction/cancellation UI or live execution approval.
+
+## Evidence and implementation boundary
+
+Read project instructions, brief, UI developer skill, current checkpoint and
+§47 source baseline. Catalog absent. Controlling legacy code read-only:
+`old/SHF/src/bzq/shf/actions/AttendanceDataAction.java:180–259`
+(`agent_exit`, whole-minute early classification) and
+`old/SHF/src/bzq/shf/model/AttendanceDataModel.java:1884–1955`
+(`exitStation`, station-arrival prerequisite and exactly exit time/user SET).
+Source inspection is not deployed/Oracle metadata proof. Server policy/window,
+classification and eligibility remain authoritative; UI only validates source
+coherence and renders the contract. No legacy execution/edit, Oracle/DNS,
+credentials/private environment, production, EMS, batch, dependency, lock,
+manifest, canonical, design, status or Git publication writes.
+
+Node24.21.0/npm11.19.0 were observed. Existing Angular21.2.25,
+Material+CDK21.2.14 and TS5.9.3 pins retained; no dependency selection/install.
+The single existing typed F2 dialog is extended with exit-only content/data,
+not copied into another styled component. Its one external stylesheet and
+template are retained. The public environment object remains frozen and exact.
+
+## Exact changed paths
+
+All relative to `frontend/fixture-slice`:
+
+```text
+README.md
+VERIFICATION.md
+checks/arrival-focus-proof.mjs
+checks/station-arrival-browser-server.mts
+checks/native-exit-protocol-backend.mts
+checks/station-exit-browser-check.mjs
+checks/station-exit-browser-double.mts
+src/api.ts
+src/attendance-page.html
+src/attendance-page.ts
+src/contract.ts
+src/native-read-views.spec.ts
+src/routes.ts
+src/stage-arrival-page.ts
+src/stage-arrival-session.ts
+src/station-arrival-dialog.html
+src/station-arrival-dialog.spec.ts
+src/station-arrival-dialog.ts
+src/station-arrival-page.ts
+src/station-arrival-session.ts
+src/station-exit-contract.spec.ts
+src/station-exit-contract.ts
+src/station-exit-fixtures.ts
+src/station-exit-page.html
+src/station-exit-page.scss
+src/station-exit-page.spec.ts
+src/station-exit-page.ts
+src/station-exit-session.spec.ts
+src/station-exit-session.ts
+src/view-history.ts
+src/workspace-shell.html
+```
+
+## Checks actually run
+
+Commands below run from `frontend/fixture-slice`. PASS means command returned
+naturally with exit0, not just emitted a successful build/test summary.
+
+| Exact command | Observed result / evidence class |
+|---|---|
+| `npm run typecheck` | PASS exit0, repeated after final application source; static strict app TSC |
+| `npx tsc --noEmit -p tsconfig.spec.json` | PASS exit0 after final spec source; static strict test TSC |
+| `npm test -- --include src/station-exit-contract.spec.ts --include src/station-exit-page.spec.ts --include src/station-exit-session.spec.ts --include src/station-arrival-dialog.spec.ts` | PASS73/73,4files, natural exit0,18.375s wall before expanded boundary tests |
+| `npm test -- --include src/station-exit-contract.spec.ts --include src/station-exit-page.spec.ts --include src/station-exit-session.spec.ts --include src/station-arrival-dialog.spec.ts --include src/native-read-views.spec.ts` | Final focused PASS124/124,5files, natural exit0; includes all42 native read/source combinations |
+| `npm test` | Earlier612/612, natural exit0,47.787s; final **621/621**,42files, natural exit0,51.271s |
+| `npm run build:dev` | PASS natural exit0,10.225s wall |
+| `npm run check:profile -- dev` | PASS exit0, exact compiled `{appEnv,apiBasePath}` / `/api` |
+| `npm run build:test` | PASS natural exit0,10.508s wall |
+| `npm run check:profile -- test` | PASS exit0, exact compiled `{appEnv,apiBasePath}` / `/api` |
+| `npm run build:production` | Final PASS natural exit0,10.653s wall, initial606.53kB |
+| `npm run check:profile -- production` | PASS exit0, exact compiled `{appEnv,apiBasePath}` / `/api` |
+| `node checks/station-exit-browser-check.mjs` | PASS exit0 on final production artifact; actual Chrome, typed synthetic HTTP only, no backend runtime |
+| `node checks/station-arrival-browser-check.mjs --native-station` | PASS exit0; actual Chrome + existing native F2 typed HTTP regression |
+| `node checks/station-arrival-browser-check.mjs` | PASS exit0; actual Chrome + existing fixture F2 HTTP regression |
+| `node checks/station-exit-browser-check.mjs --native-protocol-double` | **Post-fix PASS**, natural exit0,4.2244264s wall after parent's 28Oct11:38+02 backend SOURCE-STABLE handoff; actual native HTTP/application/UoW with synthetic protocol pools, not Oracle. Supersedes the provisional pre-fix pass |
+| `git --no-pager diff --check -- frontend/fixture-slice` | PASS exit0 from repository root |
+
+Final621 = previous531 +23 exit contract +38 exit page +12 exit safety
++3 shared-dialog +14 seven-read/source tests. Fixtures are synthetic.
+Tests cover exact ordered exit10 (not count-only), no arrival rights,
+empty-object draft/API guard, B=0/5 server-returned exclusive-boundary−1/0/+1ms,
+inclusive latest/+1ms, empty interval, null stage/briefing0/1/NULL and preservation,
+early/station-required/window/already states, zero commands before checkbox and
+on cancel, stale/expired/grant/context changes, pending duplicate suppression,
+strict matching receipt/token/source/envelope/readback, UNKNOWN/reload/history
+and source-independent F1/F2/fixture/native uncertainty interlocks.
+Full suite retains old native/fixture arrival and all seven inquiry tests.
+
+## Real Chrome observations, not live persistence evidence
+
+Default exit browser run: selected synthetic attendance opener and accessible
+name; early and station-required blocks; server policy/seconds/zone/millisecond
+bounds; no business inputs; pure review; dialog initially unchecked and
+confirmation disabled; keyboard Tab/Shift+Tab trapping, Escape0 commands;
+1440/390/320 reflow/RTL and minimum24px targets. Escape restores exact opener.
+Pending, success and UNKNOWN320 retain the exact focused confirmation node.
+Screenshot-pixel ring contrast **12.6179:1**, solid3px/offset3px, opacity1,
+full48px hit-testable/unobscured button. Origin Back restores filters, both
+RTL/vertical scroll axes and exact attendance opener; Forward reads fresh
+already-recorded state and never restores a receipt. Malformed readback remains
+UNKNOWN after reload and fixture-source switch to F1/F2, with no new command
+or context escape. Two synthetic commands represent separate success and
+UNKNOWN scenarios, not a retry of UNKNOWN. Runtime/external requests errors0.
+
+The final post-fix optional protocol retest used actual runtime admission,
+HTTP, exit application, snapshot/UoW and synthetic pools after the parent's
+renewed SOURCE-STABLE handoff for the private F2 physical-column correction.
+Attendance selected the same tuple; context/validation/Escape consumed
+no synthetic allowance and emitted no UPDATE/COMMIT. Whole-operation consent
+produced one exact DTO and one UPDATE with exactly `STATION_EXIT_TIME` and
+`STATION_EXIT_USER` SET, one COMMIT ACK, then separate matching readback.
+Every other synthetic attendance column was compared unchanged, including
+NULL stage/briefing. Both arrival endpoints returned403 LIVE_WRITES_DISABLED.
+This tests the real native code path against a synthetic protocol, not a
+driver, metadata certification, real fuse, Oracle or durable receipt.
+
+## Failures, repairs, tooling risk and exclusions
+
+* Tests-first `npm test -- --include src/station-exit-contract.spec.ts`
+  correctly failed exit1 because the guard module did not yet exist.
+  Next compile failed exit1 on a zone `unknown` argument; fixed by narrowing
+  to its validated string.
+* The next same focused command built, but Vitest reported
+  `[vitest-pool]: Timeout starting threads runner`, collected no tests, and
+  failed to return after120s. The owned failed session was stopped for cleanup;
+  **not** counted as a clean exit/PASS. Existing QA28B-02 startup issue
+  reproduced; root cause remains unknown. No flags/timeouts/config/dependency/
+  vendor/forced-exit workaround was applied. A diagnostic Node worker probe
+  initially failed on PowerShell quote mangling; a corrected standalone
+  worker returned `ready` in41ms/exit0. This does not diagnose Vitest.
+* Strict spec compile caught wrong fixture export and union DI typing;
+  corrected. First executed combined focus run passed72/73 and failed exit1:
+  departure test asserted the destroyed component reference, not its new
+  route instance. Corrected the test reference; focused and full checks passed
+  naturally afterward. No retry loop or suppression was used.
+* First new browser run failed exit1 on the synthetic success→Forward fixture:
+  its server clock preceded its recorded exit, correctly rejected by the
+  source guard; fixed the double's post-write clock and expected readonly copy.
+  Next run exposed a checker readiness race (optional selector inequality
+  passed before the review node existed); fixed by requiring node existence.
+  Subsequent typed HTTP runs, including the final artifact, passed exit0.
+* Existing nonfatal jsdom scroll and Node module-type warnings remain visible.
+  Successful full/focused checks and all final builds returned naturally;
+  the earlier startup failure is retained, not relabeled a product success
+  or claimed fixed by CSS deduplication.
+
+**Temporary integration blocker RESOLVED.** Parent's 28Oct11:38+02 handoff
+confirmed backend SOURCE-STABLE after the private F2
+`STATION_LATE_*`→`LATE_*` correction and independent physical SQL identifier
+guard. Exit already uses correct `LATE_*`; no exit public DTO/body/mode or
+frontend adaptation was needed. No actual backend import/server was started
+during the freeze. This owner then ran only the required post-fix protocol
+command once: **PASS, natural exit0,4.2244264s wall**, one command,
+1440/320 widths, actual backend protocol double only. It confirmed the exact
+two exit SET fields, all other attendance columns preserved including NULL
+stage/briefing, COMMIT ACK plus separate matching readback, both arrival
+endpoints disabled403, zero runtime/external-request errors and visible
+success320 focus (pixel contrast12.6179:1,48px,solid3px/offset3px).
+The unchanged full621 tests/typechecks/three builds were not repeated.
+Parent independent QA remains separate.
+
+Post-fix retest cleanup: Node PID23092 absent, its Chrome child roots0,
+`exit-chrome-*` profile directories0; the helper returned through its normal
+`finally` cleanup of owned ephemeral UI/protocol listeners, synthetic pools
+and temporary synthetic allowance. No owned process/server remains and no
+process was forced to exit. Existing nonfatal Node module-type warning only.
+Only this `VERIFICATION.md` was edited for the retest; README, application
+source, protocol helpers and backend source were left unchanged.
+
+No live Oracle/DNS/credential/private-path access, metadata recertification,
+real operational allowance, real write, EMS/partner/CTI completion, production
+startup/deployment, manual AT, UAT, full WCAG conformance or accessibility
+tool-scan certification. No new agents, Git staging/commit or unrelated edits.
+Current parent-owned operational/readiness gates remain unchanged.
+
+Final cleanup observation: retained frontend `esbuild.exe` count0, owned
+`exit-chrome-*`/`f2-chrome-*` Chrome roots0 and profile directories0. Browser
+helpers closed their port0 UI/protocol listeners/pools and temporary synthetic
+allowance directories in `finally`; no owned server remains. Exact process
+observation (no process-name killing):
+
+```powershell
+@(Get-CimInstance Win32_Process | Where-Object {
+  $_.Name -eq 'esbuild.exe' -and
+  $_.CommandLine -like '*frontend\fixture-slice\node_modules\@esbuild\*'
+}).Count
+Get-CimInstance Win32_Process | Where-Object {
+  $_.Name -eq 'chrome.exe' -and
+  $_.CommandLine -match '--user-data-dir=.*(exit-chrome-|f2-chrome-)'
+} | Select-Object ProcessId,ParentProcessId
+Get-ChildItem frontend/fixture-slice/.angular -Directory | Where-Object {
+  $_.Name -match '^(exit|f2)-chrome-'
+} | Select-Object -ExpandProperty Name
+```
+
+Final `node --check checks/station-exit-browser-check.mjs` also PASS exit0.
+Only the earlier failed Vitest startup session needed cleanup stopping; no
+successful build/test was forced to exit. Manifest/lock/angular/public-profile
+diff is empty. Source is stable for the caller; no work is left running.
+
+---
+
+# SHF-NATIVE-F2-UI-28 — earlier frontend verification (28 October 2026)
 
 ## QA28B-01 owner fix — shared F2 dialog / natural CLI teardown
 

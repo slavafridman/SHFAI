@@ -11,10 +11,30 @@ import type { NativeStageArrivalCommitV1 } from '../../../backend/fixture-slice/
 import type { StationArrivalDraftV1, StationArrivalCommitV1 } from '../../../backend/fixture-slice/station-arrival-contracts.mts';
 import type { NativeStationArrivalCommitV1 } from '../../../backend/fixture-slice/oracle-station-arrival-contracts.mts';
 import { environment } from './environments/environment';
+import { emptyExitDraft, exitCommand, type StationExitCommitV1 } from './station-exit-contract';
 
 @Injectable({ providedIn: 'root' })
 export class SliceApi {
   private readonly http = inject(HttpClient);
+  stationExitContext(employeeId: string, shiftDayId: string) {
+    return this.http.get<unknown>(this.exitBase(employeeId, shiftDayId) + '/context',
+      { cache: 'no-store', timeout: 5000, observe: 'response' }).pipe(map(r => this.arrivalBody(r, 65536)));
+  }
+  stationExitValidate(employeeId: string, shiftDayId: string, draft: Record<string, never>) {
+    if (!emptyExitDraft(draft)) throw Error('Invalid exit draft');
+    return this.http.post<unknown>(this.exitBase(employeeId, shiftDayId) + '/validations', draft,
+      { cache: 'no-store', timeout: 5000, observe: 'response', headers: { 'Content-Type': 'application/json' } })
+      .pipe(map(r => this.arrivalBody(r, 16384)));
+  }
+  stationExitCommand(employeeId: string, shiftDayId: string, command: StationExitCommitV1) {
+    if (!exitCommand(command)) throw Error('Invalid exit command');
+    return this.http.post<unknown>(this.exitBase(employeeId, shiftDayId) + '/commands', command,
+      { cache: 'no-store', timeout: 5000, observe: 'response', headers: { 'Content-Type': 'application/json' } })
+      .pipe(map(r => this.arrivalBody(r, 16384)));
+  }
+  private exitBase(employeeId: string, shiftDayId: string) {
+    return `${environment.apiBasePath}/v1/employees/${employeeId}/shift-days/${shiftDayId}/station-exit`;
+  }
   stationArrivalContext(employeeId: string, shiftDayId: string) {
     return this.http.get<unknown>(this.stationBase(employeeId, shiftDayId) + '/context',
       { cache: 'no-store', timeout: 5000, observe: 'response' }).pipe(map(r => this.arrivalBody(r, 65536)));

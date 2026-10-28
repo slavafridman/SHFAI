@@ -11,8 +11,10 @@ import { linkBackendShutdown } from "./backend-lifecycle.mts";
 import { stationCommand, validStationReceipt } from "./station-arrival-validation.mts";
 import { stationProblem } from "./station-arrival-errors.mts";
 import { nativeStationCommand, validNativeStationReceipt } from "./native-station-arrival-validation.mts";
+import { exitCommand, validExitReceipt } from "./station-exit-validation.mts";
+import { exitProblem } from "./station-exit-errors.mts";
 
-const pattern = /^\/api\/v1\/employees\/([^/]*)\/shift-days\/([^/]*)\/(?:stage-arrival|station-arrival)\/(context|validations|commands)$/;
+const pattern = /^\/api\/v1\/employees\/([^/]*)\/shift-days\/([^/]*)\/(?:stage-arrival|station-arrival|station-exit)\/(context|validations|commands)$/;
 export const isStageArrivalRoute = (target: string) => pattern.test(target.split("?")[0]);
 // Some framing failures happen BEFORE IncomingMessage/our body validator.
 // If Node supplies a complete known F1 request-line, return the same sanitized
@@ -33,9 +35,11 @@ export function stageArrivalParserProblem(error: Error, socket: Duplex): boolean
   else socket.destroy();
   return true;
 }
-export interface StageArrivalHttpOptions { stageArrivalOrigins?: readonly string[]; stationArrivalOrigins?: readonly string[] }
+export interface StageArrivalHttpOptions {
+  stageArrivalOrigins?: readonly string[]; stationArrivalOrigins?: readonly string[]; stationExitOrigins?: readonly string[];
+}
 export function validateStageArrivalHttpOptions(options: StageArrivalHttpOptions) {
-  for (const origins of [options.stageArrivalOrigins, options.stationArrivalOrigins]) {
+  for (const origins of [options.stageArrivalOrigins, options.stationArrivalOrigins, options.stationExitOrigins]) {
   if (origins && (origins.length > 10 || new Set(origins).size !== origins.length ||
       origins.some(origin => {
         try {
@@ -101,6 +105,7 @@ export async function handleStageArrival(request: IncomingMessage, response: Ser
   let timer: ReturnType<typeof setTimeout> | undefined;
   const match = pattern.exec((request.url ?? "").split("?")[0])!;
   const station = (request.url ?? "").split("?")[0].includes("/station-arrival/");
+  const exit = (request.url ?? "").split("?")[0].includes("/station-exit/");
   const post = match[3] !== "context", allow = post ? "POST" : "GET";
   try {
     const timeout = new Promise<never>((_, reject) => {
@@ -111,7 +116,8 @@ export async function handleStageArrival(request: IncomingMessage, response: Ser
     });
     const payload = await Promise.race([withRequestBudget(abort.signal, 5000, async () => {
       if (request.method !== allow) throw new StageArrivalError("INVALID_REQUEST", "none", true);
-      headers(request, post, (station ? options.stationArrivalOrigins : options.stageArrivalOrigins) ?? []);
+      headers(request, post, (exit ? options.stationExitOrigins : station ? options.stationArrivalOrigins : options.stageArrivalOrigins) ?? []);
+      if (exit && runtime.attendanceStationExitMode === "disabled") stageFail("LIVE_WRITES_DISABLED");
       const p = await runtime.authenticate({ authorization: request.headers.authorization ?? null });
       if ((request.url ?? "").includes("?")) stageFail("INVALID_REQUEST");
       let target: ReturnType<typeof selection>;
@@ -120,10 +126,15 @@ export async function handleStageArrival(request: IncomingMessage, response: Ser
       const input = await body(request, post, abort.signal);
       if (abort.signal.aborted || performance.now() >= currentRequestBudget()!.deadline) stageFail("DEPENDENCY_TIMEOUT");
       let value: unknown;
-      if (match[3] === "context") value = await (station ? runtime.stationArrivalContext : runtime.stageArrivalContext)(p, target, abort.signal);
-      else if (match[3] === "validations") value = await (station ? runtime.stationArrivalValidate : runtime.stageArrivalValidate)(p, target, input, abort.signal);
+      if (match[3] === "context") value = await (exit ? runtime.stationExitContext : station ? runtime.stationArrivalContext : runtime.stageArrivalContext)(p, target, abort.signal);
+      else if (match[3] === "validations") value = await (exit ? runtime.stationExitValidate : station ? runtime.stationArrivalValidate : runtime.stageArrivalValidate)(p, target, input, abort.signal);
       else {
-        if (station) {
+        if (exit) {
+          const cmd = exitCommand(input);
+          commandId = cmd.commandId; commandAttempted = true;
+          value = await runtime.stationExitCommit(p, target, cmd, abort.signal);
+          if (!validExitReceipt(value, cmd, target)) stageFail("COMMAND_OUTCOME_UNKNOWN");
+        } else if (station) {
           const native = runtime.attendanceStationArrivalMode === "test-oracle-controlled";
           const cmd = native ? nativeStationCommand(input) : stationCommand(input);
           commandId = cmd.commandId; commandAttempted = true;
@@ -160,7 +171,7 @@ export async function handleStageArrival(request: IncomingMessage, response: Ser
         error.code === "FORBIDDEN" ? "FORBIDDEN" : error.code === "DEPENDENCY_TIMEOUT" ? "DEPENDENCY_TIMEOUT" : "DEPENDENCY_UNAVAILABLE")
       : error instanceof StageArrivalError ? error :
         new StageArrivalError(commandAttempted ? "COMMAND_OUTCOME_UNKNOWN" : "INTERNAL_ERROR");
-    const problem = (station ? stationProblem : stageProblem)(mapped, requestId, commandId);
+    const problem = (exit ? exitProblem : station ? stationProblem : stageProblem)(mapped, requestId, commandId);
     if (!response.destroyed && !response.headersSent) {
       if (mapped.methodNotAllowed) response.setHeader("Allow", allow);
       response.setHeader("Connection", "close"); send(response, problem.status, problem, true);

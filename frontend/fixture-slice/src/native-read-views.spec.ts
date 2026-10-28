@@ -7,6 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from './routes';
 import { nativeIdentityFixture } from './native-arrival-fixtures';
 import { nativeStationIdentityFixture } from './native-station-arrival-fixtures';
+import { exitIdentityFixture } from './station-exit-fixtures';
 import { fixtureRow } from './test-fixtures';
 import { contextFixture, listFixture } from './current-shifts-fixtures';
 import { searchContextFixture, searchListFixture } from './shift-search-fixtures';
@@ -29,11 +30,11 @@ describe('Exact native10 identity preserves ALL seven existing read views and so
     http = TestBed.inject(HttpTestingController); h = await RouterTestingHarness.create();
   });
   afterEach(() => { http.verify({ ignoreCancelled: true }); history.replaceState({}, ''); });
-  for (const mode of ['stage', 'station'] as const)
+  for (const mode of ['stage', 'station', 'exit'] as const)
   for (const name of Object.keys(paths) as (keyof typeof paths)[]) for (const coherent of [true, false]) {
     it(`${mode}/${name}: ${coherent ? 'Oracle read DTO works' : 'fixture read DTO is refused without fallback'} under native identity`, async () => {
       await h.navigateByUrl(paths[name]);
-      const p = mode === 'stage' ? nativeIdentityFixture() : nativeStationIdentityFixture();
+      const p = mode === 'stage' ? nativeIdentityFixture() : mode === 'station' ? nativeStationIdentityFixture() : exitIdentityFixture();
       p.principal.resourceScope.orgUnitIds = ['TEST-U', 'TEST-V'];
       http.expectOne('/api/v1/identity').flush(p);
       const source = coherent ? 'oracle-read-only' as const : 'isolated-fixture' as const;

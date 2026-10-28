@@ -51,6 +51,14 @@ export class StationArrivalSession {
         ({ commandId, kind: 'station-arrival', mode: 'test-oracle-controlled' })) } : {}) };
   }
   uncertain() { return this.unresolved.size > 0; }
+  crossAffects(s: ArrivalSelection | null) {
+    return [...this.unresolved].some(attempt => {
+      const raw = this.bindings.get(attempt);
+      if (!s || !raw) return true;
+      const b: string[] = JSON.parse(raw);
+      return b[1] === s.employeeId && b[2] === s.shiftDayId;
+    });
+  }
   affects(s: ArrivalSelection | null) {
     return !!s && [...this.unresolved].some(attempt =>
       !this.bindings.has(attempt) || this.bindings.get(attempt) === this.key(s));

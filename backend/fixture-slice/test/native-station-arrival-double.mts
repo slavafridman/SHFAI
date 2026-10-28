@@ -53,11 +53,19 @@ export class StationOracleDouble {
       allowanceFile: join(this.directory, "station-arrival-single-attempt") };
     const number = new Set(["EMPLOYEE_ID", "SHF_EMPLOYEE_DAY_ID", "WM_DAY_TYPE", "WM_EXCEPTION_TYPE_ID",
       "NEW_DAY_TYPE", "NEW_EXCEPTION_TYPE_ID", "CANCEL_REASON_CODE", "TADREECH", "MISS_REASON_ID",
-      "STAGE_LATE_REASON_ID", "STAGE_LATE_MINUTES", "STATION_LATE_REASON_ID", "STATION_LATE_MINUTES", "AGENT_DAY_ID"]);
+      "STAGE_LATE_REASON_ID", "STAGE_LATE_MINUTES", "LATE_REASON_ID", "LATE_MINUTES", "AGENT_DAY_ID", "TADREECH_P2"]);
     const date = new Set(["WM_SHIFT_START_DATETIME", "WM_SHIFT_END_DATETIME", "NEW_SHIFT_START", "NEW_SHIFT_END",
       "SPLIT_START", "SPLIT_END", "NEW_SPLIT_START", "NEW_SPLIT_END", "STAGE_ARRIVAL_TIME", "STATION_ARRIVAL_TIME",
-      "STATION_EXIT_TIME", "MISSING_TIME", "APPROVED_TIME"]);
-    this.proof = [Object.entries(stationTables).flatMap(([tableName, names]) => names.map(columnName => ({
+      "STATION_EXIT_TIME", "MISSING_TIME", "APPROVED_TIME", "STAGE_ARRIVAL_TIME_P2"]);
+    // Historical attendance names are independent of stationTables, so a
+    // misspelled production requirement cannot silently rewrite this catalog.
+    const fixtureTables = { ...stationTables, SHF_ATTENDANCE: [
+      "SHF_EMPLOYEE_DAY_ID", "LATE_MINUTES", "LATE_REASON_ID", "LATE_REMARK", "MISSING_REMARK", "MISSING_TIME",
+      "MISS_REASON_ID", "OPTIONAL1", "STAGE_ARRIVAL_TIME", "STAGE_ARRIVAL_USER", "STATION_ARRIVAL_TIME",
+      "STATION_ARRIVAL_USER", "STATION_EXIT_TIME", "STATION_EXIT_USER", "STAGE_LATE_REMARK", "STAGE_LATE_MINUTES",
+      "STAGE_LATE_REASON_ID", "TADREECH", "LATE_FLAG_P2", "STAGE_ARRIVAL_TIME_P2", "STAGE_ARRIVAL_USER_P2", "TADREECH_P2",
+    ] };
+    this.proof = [Object.entries(fixtureTables).flatMap(([tableName, names]) => names.map(columnName => ({
       tableName, columnName, dataType: number.has(columnName) ? "NUMBER" : date.has(columnName) ? "DATE" : "VARCHAR2",
       dataLength: 100, charUsed: "B", nullable: "Y", virtualColumn: "NO",
     }))), [{ tableName: "SHF_ATTENDANCE", name: "SYNTHETIC_PK", kind: "P", status: "ENABLED", validated: "VALIDATED",
@@ -65,7 +73,7 @@ export class StationOracleDouble {
     [{ tableName: "SHF_ATTENDANCE", name: "SYNTHETIC_PK", columnName: "SHF_EMPLOYEE_DAY_ID", position: 1 }],
     [], [], [], [], [], []];
     this.certify();
-    this.rows = Object.fromEntries(Object.entries(stationTables).map(([table, names]) =>
+    this.rows = Object.fromEntries(Object.entries(fixtureTables).map(([table, names]) =>
       [table, Object.fromEntries(names.map(name => [name, null]))]));
     Object.assign(this.rows.SHF_EMPLOYEES!, { EMPLOYEE_ID: "9001", EMP_ID_NUMBER: "999999991", FIRST_NAME: nativeMarker,
       LAST_NAME: "Synthetic", ORG_UNIT_ID: "T001", SHF_LOCKED: "0" });

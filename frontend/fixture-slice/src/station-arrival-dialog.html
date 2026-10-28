@@ -1,6 +1,21 @@
 <h2 mat-dialog-title>{{ labels.title }}</h2>
 <mat-dialog-content dir="rtl">
-  @if (data.kind === 'native-confirmation') {
+  @if (data.kind === 'native-exit-confirmation') {
+    <p><strong>כתיבה בפועל למסד TEST</strong> — שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור. ללא CTI או הפעלת שותף חיצוני.</p>
+    <p>מנהל מערכת סינתטי אינו העובד/ת שנבחר/ה; לא בוצע אימות סיסמה אמיתית.</p>
+    <p>{{ data.selection.name }} · עובד/ת <bdi dir="ltr">{{ data.selection.employeeId }}</bdi>
+      · יום <bdi dir="ltr">{{ data.selection.shiftDayId }}</bdi> · צוות <bdi dir="ltr">{{ data.selection.orgUnitId }}</bdi></p>
+    <p>ישתנו בדיוק שני שדות: זמן יציאה מעמדה וחותמת מפעיל, שניהם נקבעים בשרת.
+      ההגעה לעמדה, ההגעה לבמה, התדריך וכל שאר שדות הנוכחות יישמרו ללא שינוי.</p>
+    <p>הגעה לעמדה: <bdi dir="ltr">{{ time(data.context.recorded.stationArrivalLocal) }}</bdi>.
+      במה: {{ data.context.recorded.stageArrivalLocal === null ? 'לא נרשמה הגעה לבמה' : time(data.context.recorded.stageArrivalLocal) }}.
+      תדריך: {{ data.context.recorded.briefing === null ? 'לא ידוע — NULL' : data.context.recorded.briefing ? 'כן' : 'לא' }}.</p>
+    <p>זמן שרת שנבדק: <bdi dir="ltr">{{ time(data.validation.evaluatedLocal) }}</bdi> ·
+      <bdi dir="ltr">{{ data.validation.evaluatedAt }}</bdi> · <bdi>{{ data.validation.businessTimeZone }}</bdi>.
+      הזמן הסופי ייקבע בשרת. אין סיבה, שעה לבחירה או עקיפת מנהל.</p>
+    <p>לאחר שליחה אין לשלוח שוב. עזיבה אינה ביטול. תוצאה לא ידועה מחייבת בדיקת מפעיל ידנית.
+      הצלחה רק לאחר אישור COMMIT ובדיקה חוזרת עצמאית תואמת; אין קבלה מתמשכת.</p>
+  } @else if (data.kind === 'native-confirmation') {
     <p><strong>כתיבה בפועל למסד TEST</strong> — שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור.</p>
     <p>מנהל מערכת סינתטי אינו העובד/ת שנבחר/ה; לא בוצע אימות סיסמה אמיתית.</p>
     <p>{{ data.selection.name }} · עובד/ת <bdi dir="ltr">{{ data.selection.employeeId }}</bdi>
