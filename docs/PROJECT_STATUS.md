@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, TNS target proof PASS; hybrid metadata QA PASS; scoped publication ready.
+Last updated: 2026-10-28, hybrid metadata fix and section47 proposal published; two dictionary views block live certification.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -76,7 +76,22 @@ informational. Fresh owner/independent QA outcomes below are not rerun here:
 no compiler/application test/build, DNS/DB, application startup, allowance,
 grant, DDL or dependency operation is part of publication.
 
-Normal exact-nine-path commit/push and staged closure checks are pending.
+**Publication DONE:** feature
+`0c5475ed9de561823ec46751456abd886688de15` contains exactly the nine
+assigned paths and was normally pushed to origin/main. Direct remote main
+SHA equals local HEAD, tracking ahead/behind is 0/0, index empty, conflicts
+zero and all nine scoped working-copy paths match publication.
+Staged privacy/whitespace and HEAD-plus-staged closure checks PASS:
+46 imports, 395 local documentation links, all 20 historical capture hashes
+unchanged and append-only section47 still explicitly approval-required.
+The 23 unrelated user paths remain outside the commit, inspected by name
+only; no content read/hash or unrelated stage. No hooks/signing were bypassed.
+No application/compiler/test or operational checks were rerun by publication.
+
+This status-only follow-up records the already verified feature publication.
+Its own normal commit/push and direct remote verification follow this edit;
+the checkpoint SHA is returned in the handoff without a self-hash loop.
+Parent checkpoint ownership resumes on that handoff.
 Current live blocker is runtime visibility of DBA_TRIGGERS/DBA_ROLE_PRIVS,
 not the historical wire-DNS error. Next safe action after publication is
 operator/DBA resolution of those two read sources and current fail-closed
