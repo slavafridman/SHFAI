@@ -1,7 +1,7 @@
 import { basename } from "node:path";
 import { exact } from "./stage-arrival-validation.mts";
 import { record } from "./contract-validation.mts";
-import { nativeBinding, nativeEnvironment, metadataBindingProvenance, checkedNativeWriter } from "./native-stage-arrival-config.mts";
+import { nativeBinding, nativeEnvironment, metadataBindingProvenance, checkedNativeWriter, daySourceBindingProvenance } from "./native-stage-arrival-config.mts";
 import type { NativeBindingWithoutDigest, NativeConfiguration } from "./native-stage-arrival-config.mts";
 import { requireLimitedMetadataEnvironment } from "./native-metadata-limited.mts";
 import { oracleEnvironment } from "./runtime-config.mts";
@@ -18,8 +18,9 @@ const keys = ["marker", "employeeId", "shiftDayId", "orgUnitId", "readIdentity",
 export function stationBinding(value: unknown): StationBinding {
   const hasProvider = record(value) && Object.hasOwn(value, "metadataProvider");
   const limited = record(value) && value.metadataProvider === "owner-test-limited-v1";
+  const hasDaySource = record(value) && Object.hasOwn(value, "expectedDaySource");
   if (!exact(value, [...keys, ...(limited ? ["metadataCoverageWaiver"] : ["noExternalEffectsConfirmed"]),
-    ...(hasProvider ? ["metadataProvider"] : [])]) || value.operation !== "native-station-arrival-v0.1")
+    ...(hasProvider ? ["metadataProvider"] : []), ...(hasDaySource ? ["expectedDaySource"] : [])]) || value.operation !== "native-station-arrival-v0.1")
     throw Error("Exact private station operation binding required");
   const { operation: _operation, stationMetadataDigest, ...common } = value;
   const parsed = nativeBinding({ ...common, metadataDigest: stationMetadataDigest });
@@ -31,7 +32,7 @@ export function stationBinding(value: unknown): StationBinding {
   return Object.freeze({ ...binding, operation: "native-station-arrival-v0.1", stationMetadataDigest: metadataDigest });
 }
 export function stationIdentityReference(b: StationBinding) {
-  return fingerprint({ operation: b.operation, read: b.readIdentity, write: b.writeIdentity,
+  return fingerprint({ ...daySourceBindingProvenance(b), operation: b.operation, read: b.readIdentity, write: b.writeIdentity,
     metadata: { ...metadataBindingProvenance(b), digest: b.stationMetadataDigest } });
 }
 // Does not resolve DNS or weaken the shared immutable identity/proof parser.

@@ -58,7 +58,8 @@ export class NativeOracleDouble {
       "STATION_EXIT_TIME", "MISSING_TIME", "APPROVED_TIME"]);
     const columns = Object.entries(nativeTables).flatMap(([tableName, names]) => names.map(columnName => ({
       tableName, columnName, dataType: numeric.has(columnName) ? "NUMBER" : dates.has(columnName) ? "DATE" : "VARCHAR2",
-      dataLength: 100, charUsed: null, nullable: "Y", virtualColumn: "NO",
+      dataLength: columnName === "EMP_ID_NUMBER" ? 9 : 100,
+      charUsed: columnName === "EMP_ID_NUMBER" ? "B" : null, nullable: "Y", virtualColumn: "NO",
     })));
     this.proof = [columns, [{ tableName: "SHF_ATTENDANCE", name: "SYNTHETIC_PK",
       kind: "P", status: "ENABLED", validated: "VALIDATED", referencedOwner: null, referencedConstraint: null }],

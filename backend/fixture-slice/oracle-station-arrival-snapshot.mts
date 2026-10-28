@@ -3,7 +3,7 @@ import { decimalId, localDateTime, record } from "./contract-validation.mts";
 import { numberText } from "./oracle-readers.mts";
 import { fingerprint, instantFor } from "./stage-arrival-domain.mts";
 import { stageFail } from "./stage-arrival-errors.mts";
-import { nativeMarker, selectedMetadataProvider } from "./native-stage-arrival-config.mts";
+import { nativeMarker, selectedMetadataProvider, expectedNativeDaySource } from "./native-stage-arrival-config.mts";
 import type { StationBinding } from "./native-station-arrival-config.mts";
 import { nativeIdentity, nativeMetadataQueries, nativeMetadataDigest, collectNativeMetadata, nativeTables, one, expression } from "./oracle-stage-arrival-snapshot.mts";
 import type { NativeQuery, NativeRow, NativeSchema, NativeColumn } from "./oracle-stage-arrival-snapshot.mts";
@@ -11,6 +11,7 @@ import { stationBlockers, stationOverlap } from "./oracle-station-arrival-domain
 import type { StationCandidate } from "./oracle-station-arrival-domain.mts";
 import type { StationArrivalBlockerV1 } from "./station-arrival-contracts.mts";
 import { checkStageBudget } from "./stage-arrival-memory.mts";
+import { pilotEmployeeNumber, pilotEmployeePrefix, pilotEmployeeNumberColumn } from "./native-pilot-identity.mts";
 
 // Separate F2 certification scope, not the F1 digest or NativeSnapshot.
 export const stationTables = {
@@ -47,6 +48,8 @@ export async function stationSafety(q: NativeQuery, b: StationBinding): Promise<
         stageFail("LIVE_WRITES_DISABLED");
       if (table === "SHF_EMPLOYEES" && r.columnName === "SHF_LOCKED" && kind !== "text")
         stageFail("LIVE_WRITES_DISABLED");
+      if (table === "SHF_EMPLOYEES" && r.columnName === "EMP_ID_NUMBER" && !pilotEmployeeNumberColumn({
+        dataType: r.dataType, dataLength: r.dataLength, charUsed: r.charUsed })) stageFail("LIVE_WRITES_DISABLED");
       if (table === "SHF_ATTENDANCE" && (
         ["STAGE_ARRIVAL_TIME", "STATION_ARRIVAL_TIME", "STATION_EXIT_TIME"].includes(r.columnName) && kind !== "date" ||
         ["SHF_EMPLOYEE_DAY_ID", "TADREECH", "LATE_REASON_ID", "LATE_MINUTES"].includes(r.columnName) && kind !== "number" ||
@@ -116,8 +119,17 @@ function parseCandidate(row: unknown, schema: NativeSchema): StationCandidate {
   if (change.SHF_EMPLOYEE_DAY_ID === null && Object.values(change).some(v => v !== null)) stageFail("INVALID_SOURCE_DATA");
   return { day, change: change.SHF_EMPLOYEE_DAY_ID === null ? null : change };
 }
-export async function stationSnapshot(q: NativeQuery, schema: NativeSchema, b: StationBinding, zone: string,
+export function stationSnapshot(q: NativeQuery, schema: NativeSchema, b: StationBinding, zone: string,
   signal?: AbortSignal): Promise<StationSnapshot> {
+  return readStationSnapshot(q, schema, b, zone, signal);
+}
+export function stationPreparedSnapshot(q: NativeQuery, schema: NativeSchema, b: StationBinding, zone: string,
+  before: StationSnapshot, signal?: AbortSignal): Promise<StationSnapshot> {
+  return readStationSnapshot(q, schema, b, zone, signal, before);
+}
+// Only the UoW locked reader supplies this private preparation context.
+async function readStationSnapshot(q: NativeQuery, schema: NativeSchema, b: StationBinding, zone: string,
+  signal?: AbortSignal, prepared?: StationSnapshot): Promise<StationSnapshot> {
   const deadline = performance.now() + 5000;
   const assertActive = () => {
     checkStageBudget(signal);
@@ -126,8 +138,9 @@ export async function stationSnapshot(q: NativeQuery, schema: NativeSchema, b: S
   assertActive();
   const e = await one(q, schema, "SHF_EMPLOYEES", "EMPLOYEE_ID=TO_NUMBER(:employeeId)", { employeeId: b.employeeId });
   if (!e || e.EMPLOYEE_ID !== b.employeeId || e.ORG_UNIT_ID !== b.orgUnitId ||
-      e.FIRST_NAME !== nativeMarker && e.LAST_NAME !== nativeMarker ||
-      !/^[0-9]{8,}$/.test(e.EMP_ID_NUMBER ?? "")) stageFail("SHIFT_DAY_NOT_FOUND");
+      e.FIRST_NAME !== nativeMarker && e.LAST_NAME !== nativeMarker) stageFail("SHIFT_DAY_NOT_FOUND");
+  if (prepared && e.EMP_ID_NUMBER !== prepared.rows.SHF_EMPLOYEES?.EMP_ID_NUMBER) stageFail("STALE_PREPARATION");
+  if (!pilotEmployeeNumber(e.EMP_ID_NUMBER)) stageFail("SHIFT_DAY_NOT_FOUND");
   const prefix = e.EMP_ID_NUMBER!.slice(0, 8);
   for (const [tag, predicate, binds] of [
     ["marker", "(FIRST_NAME=:marker OR LAST_NAME=:marker)", { marker: nativeMarker }],
@@ -140,8 +153,14 @@ export async function stationSnapshot(q: NativeQuery, schema: NativeSchema, b: S
   const d = await one(q, schema, "SHF_EMPLOYEE_DAY", "SHF_EMPLOYEE_DAY_ID=TO_NUMBER(:dayId)", { dayId: b.shiftDayId });
   const c = await one(q, schema, "SHF_DAY_CHANGES", "SHF_EMPLOYEE_DAY_ID=TO_NUMBER(:dayId)", { dayId: b.shiftDayId }, true);
   const a = await one(q, schema, "SHF_ATTENDANCE", "SHF_EMPLOYEE_DAY_ID=TO_NUMBER(:dayId)", { dayId: b.shiftDayId }, true);
-  if (!d || d.SHF_EMPLOYEE_DAY_ID !== b.shiftDayId || (c?.NEW_EMPLOYEE_ID ?? d.EMP_ID_NUMBER) !== prefix ||
-      d.SOURCE !== "SYNTHETIC_DAYS") stageFail("SHIFT_DAY_NOT_FOUND");
+  if (!d || d.SHF_EMPLOYEE_DAY_ID !== b.shiftDayId) stageFail("SHIFT_DAY_NOT_FOUND");
+  if (prepared && (d.SOURCE !== prepared.rows.SHF_EMPLOYEE_DAY?.SOURCE ||
+      d.EMP_ID_NUMBER !== prepared.rows.SHF_EMPLOYEE_DAY?.EMP_ID_NUMBER ||
+      (c?.NEW_EMPLOYEE_ID ?? null) !== (prepared.rows.SHF_DAY_CHANGES?.NEW_EMPLOYEE_ID ?? null))) stageFail("STALE_PREPARATION");
+  if (!pilotEmployeePrefix(d.EMP_ID_NUMBER) ||
+      c?.NEW_EMPLOYEE_ID != null && !pilotEmployeePrefix(c.NEW_EMPLOYEE_ID) ||
+      (c?.NEW_EMPLOYEE_ID ?? d.EMP_ID_NUMBER) !== prefix ||
+      d.SOURCE !== expectedNativeDaySource(b)) stageFail("SHIFT_DAY_NOT_FOUND");
   const team = await one(q, schema, "SHF_ORG_UNIT", "ORG_UNIT_ID=:unit", { unit: b.orgUnitId });
   if (!team || team.UNIT_TYPE_ID !== "J01" || !team.PARENT_UNIT) stageFail("INVALID_SOURCE_DATA");
   const parent = await one(q, schema, "SHF_ORG_UNIT", "ORG_UNIT_ID=:unit", { unit: team.PARENT_UNIT });

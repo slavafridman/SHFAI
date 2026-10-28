@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, approved limited TEST metadata policy published; real metadata PASS, source diagnostic remains next.
+Last updated: 2026-10-28, SOURCE/private-ID fix independently verified; real setup committed; publication ready.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -27,7 +27,7 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-TEST-METADATA-WAIVER-28 — current resume checkpoint
 
-**State: IMPLEMENTATION/QA PASS / real limited metadata PASS / source diagnostic RUNNING.** At 11:59 +02:00 the user explicitly requested ignoring
+**State: LIMITED PROVIDER PUBLISHED / real setup COMMITTED / SOURCE-ID QA PASS, publication READY.** At 11:59 +02:00 the user explicitly requested ignoring
 unavailable DBA_TRIGGERS and DBA_ROLE_PRIVS and continuing. This changes those
 two former mandatory visibility gates for the controlled TEST scope only.
 It is not a claim that triggers/roles are absent, grants were provisioned,
@@ -41,6 +41,81 @@ known-trigger/VPD checks, identity, business validation, original predicates,
 allowance, confirmation and UNKNOWN/readback rules remain in force.
 Coverage and certificate provenance must label waived checks unverified,
 reject interchange with strict certificates, and surface a fixed safe warning.
+
+Latest SOURCE/private-ID handoff is SOURCE-STABLE across16 backend paths:
+focused293/293, impacted787/787, strict typecheck and full1579/1579 naturally
+exit0 (no skips). Six prepared drift cases now return STALE_PREPARATION
+before DML; initial private404/missing whole-row semantics remain.
+Independent QA passed focused293/293, impacted865/865, independent257/257
+historical-schema SOURCE/ID cases and strict TSC, all naturally exit0.
+No product defect was confirmed; owner full1579/1579 remains source-stable
+evidence, not an independently repeated count. Exact source/null/byte matching,
+physical alphanumeric prefix ownership, prepared stale/private404 distinction,
+construction drift, bound SQL originals and unchanged numeric public IDs/
+metadata/transaction behavior were checked. No public/frontend/canonical/
+dependency changes. No QA helper remains running. Counts overlap, not additive.
+
+The real synthetic day setup UPDATE/COMMIT and independent preservation
+readback are complete, as recorded below; no arrival command has run.
+First allowance issuance/trusted directory and truthful exclusion of other
+eligibility/policy/metadata writers are being resolved separately. Existing
+setup locks have been released; unique synthetic marker/CAS alone is not
+proof of that operational exclusion. No writerFreezeConfirmed attestation
+may be invented from these facts.
+
+First allowance path is now issued and fixed privately (not consumed):
+one new operation subdirectory was created with protected operator/SYSTEM/
+Administrators ACL; native physical-path guard passes and fuse file is absent.
+Existing parent ACL was not changed. Its other named/unclassified writer has
+parent delete-child/change-DACL/take-ownership capability, so child ACL alone
+does not prove a trusted stable namespace. Operator must classify that trust;
+no private principal/SID/path is published here.
+Known session history still has no native arrival command/UNKNOWN or consumed
+fuse. No alternate path may be issued to retry after an uncertain command.
+Operational writer exclusion remains unconfirmed and writerFreezeConfirmed
+is false. A real named TEST maintenance/exclusion window covering synthetic_B
+and overlay/report/hierarchy/policy/metadata dependencies through independent
+readback is needed; no unrelated process/job is stopped automatically.
+No new Oracle/app/command/DML/fuse action occurred during allowance preparation.
+
+#### SHF-NATIVE-SOURCE-ID-PUBLISH-28 — current publication step
+
+All application owners are stopped and source-stable. Publication operator
+temporarily owns this checkpoint until handoff. Fresh main and fetched
+origin/main both equal `cd8cc60c493de34973e21c7bb5182d87a52efa76`,
+ahead/behind 0/0, empty index and no conflicts before staging.
+
+The explicit manifest exactly matches 17 assigned paths: 16 backend SOURCE/
+private-ID paths (including two new helper/test files) and this checkpoint.
+All 23 unrelated user paths remain excluded and inspected by name only,
+without content reads/hashes. Canonical/frontend/design/verifier artifacts
+are unchanged from HEAD; no structural-verifier refresh/run is needed.
+No operational packet, frozen SOURCE value, private reference/allowance path,
+real business keys, credentials or runtime evidence capture is selected.
+
+Fresh bounded added-content/new-file privacy/credential/private-key/token/
+private-row/DDL and synthetic-fixture review PASS; scoped whitespace PASS.
+HEAD-plus-publication closure PASS: 169 relative imports and four local
+documentation links. No session-only QA/TEMP or unpublished dependency.
+Staged closure and working-copy equality are checked again before commit.
+
+Owner293/787/full1579/TSC and independent293/865/257/TSC results above
+are source-stable owner/QA evidence, not tests rerun by this publisher.
+The unchanged frontend621 result remains earlier evidence. Publication runs
+no application/compiler/test/build, DNS/DB, allowance, DML/grant/DDL,
+dependency or infrastructure operation; only normal Git fetch/push/remote
+verification uses network access.
+
+Exact-17-path staged checks, normal commit/push and direct remote verification
+are pending. The completed one-UPDATE/six-day-field setup with acknowledged
+COMMIT/readback is operator-reported actual setup, not an arrival command.
+First allowance path is fixed privately but unconsumed; parent namespace
+trust and a truthful named eligibility/policy/metadata writer-exclusion
+window remain unresolved, with writerFreezeConfirmed=false. No app/arrival
+GO follows publication. Next safe action is that single operational
+window/trusted-namespace decision and current readiness, not a new host/
+SOURCE approval or the two explicitly waived DBA checks. No full-project
+or native-arrival completion is claimed. Parent ownership returns on handoff.
 
 Operator may now read the seven available owner metadata scopes, owner-only
 trigger evidence and the exact known synthetic marker under frozen identity.
@@ -167,7 +242,85 @@ No application start, DML, COMMIT or allowance action occurred; cleanup passed.
 Section48 code/design/checkpoint is ready for scoped publication; source
 diagnostic is independent and does not authorize business effects.
 
-#### SHF-TEST-METADATA-LIMITED-PUBLISH-28 — current publication step
+Section48 publication verified: feature656218a/checkpointcd8cc60, exactly14
+assigned paths, remote=HEAD/ahead-behind0/0/index empty, scoped checkout
+matches. Privacy/whitespace/134-import/395-link checks and standard verifier
+PASS; all20 historical capture hashes unchanged.23 unrelated paths preserved
+by names only; canonical/frontend unchanged. No operational action at publication.
+
+Actual SOURCE trace confirms a business extra-shift code, not NULL/padding/
+case and not either inferred synthetic literal; old SYNTHETIC_DAYS=1 wording
+was an aggregate-property count, not stored provenance. Exact synthetic
+employee/prefix/day/attendance1/1/1/1, no overlay/cancel, all8 actual arrival/
+user/exit/P2 fields NULL, late/missing/optional NULL, briefing flags0.
+Plan expired; current parent policy15min. Parent admits the reviewed private
+actual SOURCE expectation for this exact synthetic tuple only, without
+changing data or expanding source-family admission to other records.
+Backend is implementing exact private expectedDaySource across all3 modes;
+omitted packets retain the old literal, explicit values compare without
+trim/case/prefix normalization and bind preparations/original predicates.
+No new public contract or user approval is needed for this private guard fix.
+
+Two other concrete facts require classification before setup: the synthetic
+employee-number is alphanumeric but an internal numeric guard rejects it;
+daytype4 activity is nonnull/nonzero, exceptionNULL. Architect is distinguishing
+an unsupported identifier restriction from conservative activity-policy scope.
+Operator prepares only a narrow synthetic TODAY/future-plan setup proposal,
+preserving SOURCE and actual attendance fields; no effects are approved yet.
+No historical tamper-proof private-key artifact is claimed; current exact-marker
+admission is scoped and privately reviewed, not a real-employee authorization.
+
+Architect confirmed the internal employee-number numeric restriction is a
+mapping defect: physical EMP_ID_NUMBER is VARCHAR2(9), legacy matches its
+first8 characters. Backend is applying bounded exact ASCII-alphanumeric
+8/9-character/full and8-character-prefix validation across three snapshots
+and F2 overlap; public numeric employeeId/dayId stay unchanged. No identifier
+data will be rewritten. Nonnull activity remains a genuine conservative
+pilot exclusion; domain policy is not being widened.
+
+Parent issued one conditional synthetic setup GO to operator, separate from
+any attendance command. Only the exact known synthetic SHF_EMPLOYEE_DAY may
+change: current WM_DATE, four coherent ordinary start/end endpoints (fresh
+real server time +45min lead, preserving verified positive duration/work-minute
+consistency), and activity-data=NULL. Six fields only; SOURCE, employee/prefix,
+keys/org/site/type/exception, paid/work minutes and every attendance value
+remain unchanged. Fresh identity/limited metadata/marker/ownership/no-overlay/
+cancel/all-arrival-NULL checks and short exact-row transaction/readback are
+mandatory; any inconsistency stops before effect. One UPDATE/COMMIT at most;
+ambiguity stops without retry. No operational command fuse or application
+start is authorized. This is TEST dataset preparation, not registered arrival,
+and does not certify unknown external/autonomous effects or global writer freeze.
+
+SOURCE/private-ID fix is implemented but not source-stable: focused278 cases
+currently272 PASS/6 FAIL, all six prepared SOURCE/prefix drift cases return
+private404 instead of STALE_PREPARATION. Strict typecheck and other787
+native/limited/identity/HTTP/physical regressions pass; full suite deferred.
+Parent authorized the exact three operation UoW files to pass a trusted
+prepared-read context to locked snapshot checks. Initial context/validation
+privacy404 remains; no broad error remapping or public flag is allowed.
+Every current failing case stops before DML with the spent fuse retained.
+Backend owner is repairing this coupled phase distinction, then must rerun
+focused/full checks before independent QA or actual application startup.
+
+The separately authorized real TEST setup is now COMMITTED and independently
+READBACK VERIFIED: one exact synthetic day UPDATE attempt/ACK, rowsAffected1,
+and one COMMIT attempt/ACK. Only the six approved setup fields changed.
+SOURCE/identifiers/other day and attendance values/paid-work minutes preserved;
+positive original duration and endpoint consistency verified. Short NOWAIT
+day+attendance locks released at COMMIT. Separate guarded readback verified
+all six after-fields and complete preservation, policy/hierarchy/employee
+binding; actual arrival fields remain NULL. At12:53:39+02 readback reported
+30min on-time margin; this is historical and must be rechecked before command.
+All owned leases/pools closed; application/arrival command/fuse/INSERT/
+sequence/DDL remained zero. Metadata coverage LIMITED with waived uncertainty.
+An operator missing import was repaired before effect with zero mutations,
+using the same journal; this was not a mutation retry.
+This is actual Oracle fixture setup, NOT native F1/F2 registration.
+Application code QA/publication, original allowance state and a truthful named
+writer/policy-exclusion decision still precede any arrival GO; no global freeze
+or hidden-effect absence is asserted.
+
+#### SHF-TEST-METADATA-LIMITED-PUBLISH-28 — prior publication step
 
 Backend/design owners are stopped and source-stable. Architect/operator source
 diagnostic is read-only and independent; publication operator temporarily owns

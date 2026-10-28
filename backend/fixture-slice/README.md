@@ -2412,3 +2412,86 @@ No actual Oracle/DNS, grants, schema, broker, real allowance or real DML operati
 is included. The two waived DBA views are **not a limited-provider blocker**.
 Actual required owner evidence/reviewed certificate and unchanged operational
 eligibility/window/freeze/allowance/GO remain parent/operator responsibilities.
+
+## Private day-source and employee-number mapping correction
+
+The approved native F1/F2/exit private packets accept optional
+`expectedDaySource`. SOURCE is business provenance, **not proof of synthetic
+ownership**. The parent/operator must independently admit the exact observed
+value for the already allowlisted `_B` employee/day/attendance tuple before
+supplying the operational packet. No application code learns an expectation
+from a row, discovers another worker, or retags SOURCE/employee identifiers.
+
+- Omitted field retains the exact legacy expectation `"SYNTHETIC_DAYS"`.
+- An explicit nonempty well-formed string is limited to **15 UTF-8 bytes**;
+  controls/format controls are rejected. No trimming, case folding, prefix
+  matching, wildcard interpretation or numeric conversion occurs.
+- Explicit `null` means **exact SQL NULL**, not an empty string or “any source”.
+  Empty strings and present `undefined` are rejected, not converted to NULL.
+- All three parsers, strict/hybrid/limited provider paths and environment
+  translations preserve the field. Omitted and explicit legacy values retain
+  the old construction-reference formula. Other literals and NULL are bound
+  distinctly into the private reference; they cannot be swapped behind a
+  prepared application/UoW.
+
+Synthetic-only example: `expectedDaySource:"SYNTHETIC_DAYS1"` is a fifteen-byte
+literal used by isolated tests, not the current operator's source value.
+Its exact row value must match; a case/padding/prefix difference still denies.
+An independently reviewed NULL is representable without a second nullable
+acknowledgement field. Provider waiver/coverage requirements remain unchanged.
+
+The metadata certificate continues to describe metadata, not this business-row
+SOURCE value. The full actual SOURCE before-image remains in snapshot hashes
+and individually bound null-safe UPDATE predicates. Neither SOURCE nor employee
+identifiers appear in application SET clauses.
+
+The three UoWs use a distinct backend-private locked snapshot entrypoint with
+the owned preparation before-image. Only its unexported reader implementation
+receives preparation context; no request/config flag selects this phase.
+SOURCE/employee-number/day-or-overlay-prefix drift after a known preparation
+is stale before DML and keeps the conservatively spent operation fuse. Initial
+context/validation mismatches remain private404. Missing whole employee/day
+rows at a lock or reread also keep their existing private404 contract: there
+is no blanket conversion of every404 into stale. Readback, native promise
+ownership/cancellation and UNKNOWN rules are unchanged.
+
+### Private employee identifiers versus public IDs
+
+`native-pilot-identity.mts` defines the bounded synthetic TEST syntax:
+
+- Full SHF_EMPLOYEES.EMP_ID_NUMBER: exactly **8 or9 ASCII letters/digits**.
+- SHF_EMPLOYEE_DAY.EMP_ID_NUMBER / nonnull NEW_EMPLOYEE_ID: exactly **8 ASCII
+  letters/digits**.
+- The full field requires certified VARCHAR2 BYTE capacity sufficient for all
+  nine admitted ASCII bytes. Unknown/insufficient/character-length metadata
+  is not treated as equivalent.
+
+Legacy ownership uses the exact first eight characters of the employee number,
+then the independently validated overlay prefix when present, otherwise the
+day prefix. Preserve case and leading zeros; no numeric parsing, coercion,
+trimming or punctuation acceptance. F2/exit overlap candidates use the same
+private prefix grammar, retaining multiplicity checks before scope filtering.
+Employee prefix/marker uniqueness, exact numeric employee/day keys, hierarchy
+and grants remain mandatory even with matching SOURCE.
+
+Public `employeeId` and `shiftDayId` remain the unchanged numeric canonical
+identifiers. The employee number is not the selected public ID or actor ID.
+No new public DTO, capability or frontend mode is introduced.
+
+Activity exclusions are unchanged: any nonnull effective activity payload,
+including a technical-looking `"0"`, remains outside the conservative native
+pilot. This fix does not clear activity, refresh a shift, rewrite identifiers
+or perform operational synthetic setup.
+
+### Isolated verification
+
+```powershell
+node --test test/native-day-source-binding.test.mts
+npm run typecheck
+node --test test/native-metadata-limited.test.mts test/native-metadata-provider.test.mts test/oracle-stage-arrival.test.mts test/oracle-station-arrival.test.mts test/oracle-station-exit.test.mts test/native-stage-arrival-http.test.mts test/native-station-arrival-http.test.mts test/native-station-exit-http.test.mts
+npm test
+```
+
+Tests use independently supplied synthetic source and alphanumeric identifier
+observations. They do not prove current operational source/ownership/readiness.
+Parent/operator retains actual packet admission and all operational GO gates.

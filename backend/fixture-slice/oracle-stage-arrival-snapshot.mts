@@ -5,12 +5,13 @@ import { fingerprint, same } from "./stage-arrival-domain.mts";
 import { stageFail } from "./stage-arrival-errors.mts";
 import type { NativeBinding, NativeIdentity, NativeMetadataProvider } from "./native-stage-arrival-config.mts";
 import { nativeMarker, parseNativeIdentity, nativeTargetReference, nativeEndpointHostMatches, parseMetadataProvider,
-  selectedMetadataProvider, metadataBindingProvenance } from "./native-stage-arrival-config.mts";
+  selectedMetadataProvider, metadataBindingProvenance, expectedNativeDaySource } from "./native-stage-arrival-config.mts";
 import { limitedMetadataCoverage, limitedCollectorMethod, metadataWaiverId, limitedMetadataDigest,
   parseLimitedMetadataEvidence, limitedObservationNames } from "./native-metadata-limited.mts";
 import type { LimitedOperation, LimitedMetadataEvidence } from "./native-metadata-limited.mts";
 import type { StageArrivalBlockerV1 } from "./stage-arrival-contracts.mts";
 import { nativeBlockers } from "./oracle-stage-arrival-domain.mts";
+import { pilotEmployeeNumber, pilotEmployeePrefix, pilotEmployeeNumberColumn } from "./native-pilot-identity.mts";
 
 // Internal SQL/query seam, not an architect-owned public contract.
 export type NativeQuery = (sql: string, binds: BindParameters, bound: number) => Promise<unknown[]>;
@@ -232,6 +233,8 @@ export async function nativeSafety(q: NativeQuery, b: NativeBinding): Promise<Na
       if (kind === null || r.virtualColumn !== "NO" || columns.some(c => c.name === r.columnName))
         stageFail("LIVE_WRITES_DISABLED");
       if (nativeDateColumns.has(r.columnName) && kind !== "date") stageFail("LIVE_WRITES_DISABLED");
+      if (table === "SHF_EMPLOYEES" && r.columnName === "EMP_ID_NUMBER" && !pilotEmployeeNumberColumn({
+        dataType: r.dataType, dataLength: r.dataLength, charUsed: r.charUsed })) stageFail("LIVE_WRITES_DISABLED");
       if (table === "SHF_ATTENDANCE" &&
           (["SHF_EMPLOYEE_DAY_ID", "TADREECH"].includes(r.columnName) && kind !== "number" ||
            r.columnName === "STAGE_ARRIVAL_USER" && kind !== "text")) stageFail("LIVE_WRITES_DISABLED");
@@ -289,11 +292,22 @@ export async function one(q: NativeQuery, schema: NativeSchema, table: string, w
   }
   return result;
 }
-export async function nativeSnapshot(q: NativeQuery, schema: NativeSchema, b: NativeBinding): Promise<NativeSnapshot> {
+export function nativeSnapshot(q: NativeQuery, schema: NativeSchema, b: NativeBinding): Promise<NativeSnapshot> {
+  return readNativeSnapshot(q, schema, b);
+}
+// Backend-private locked reader; before comes only from the owned preparation.
+// The phase parameter itself is unexported and is never accepted from HTTP.
+export function nativePreparedSnapshot(q: NativeQuery, schema: NativeSchema, b: NativeBinding,
+  before: NativeSnapshot): Promise<NativeSnapshot> {
+  return readNativeSnapshot(q, schema, b, before);
+}
+async function readNativeSnapshot(q: NativeQuery, schema: NativeSchema, b: NativeBinding,
+  prepared?: NativeSnapshot): Promise<NativeSnapshot> {
   const e = await one(q, schema, "SHF_EMPLOYEES", "EMPLOYEE_ID=TO_NUMBER(:employeeId)", { employeeId: b.employeeId });
   if (!e || e.EMPLOYEE_ID !== b.employeeId || e.ORG_UNIT_ID !== b.orgUnitId ||
-      e.FIRST_NAME !== nativeMarker && e.LAST_NAME !== nativeMarker ||
-      !/^[0-9]{8,}$/.test(e.EMP_ID_NUMBER ?? "")) stageFail("SHIFT_DAY_NOT_FOUND");
+      e.FIRST_NAME !== nativeMarker && e.LAST_NAME !== nativeMarker) stageFail("SHIFT_DAY_NOT_FOUND");
+  if (prepared && e.EMP_ID_NUMBER !== prepared.rows.SHF_EMPLOYEES?.EMP_ID_NUMBER) stageFail("STALE_PREPARATION");
+  if (!pilotEmployeeNumber(e.EMP_ID_NUMBER)) stageFail("SHIFT_DAY_NOT_FOUND");
   const marker = await q(`/* native:marker */ SELECT ${numberText("EMPLOYEE_ID")} AS "employeeId"
     FROM SHIFTER.SHF_EMPLOYEES WHERE (FIRST_NAME=:marker OR LAST_NAME=:marker) AND ROWNUM<=2`, { marker: nativeMarker }, 2);
   if (marker.length !== 1 || !record(marker[0]) || marker[0].employeeId !== b.employeeId) stageFail("INVALID_SOURCE_DATA");
@@ -304,8 +318,13 @@ export async function nativeSnapshot(q: NativeQuery, schema: NativeSchema, b: Na
   const d = await one(q, schema, "SHF_EMPLOYEE_DAY", "SHF_EMPLOYEE_DAY_ID=TO_NUMBER(:dayId)", { dayId: b.shiftDayId });
   const c = await one(q, schema, "SHF_DAY_CHANGES", "SHF_EMPLOYEE_DAY_ID=TO_NUMBER(:dayId)", { dayId: b.shiftDayId }, true);
   const a = await one(q, schema, "SHF_ATTENDANCE", "SHF_EMPLOYEE_DAY_ID=TO_NUMBER(:dayId)", { dayId: b.shiftDayId }, true);
-  if (!d || d.SHF_EMPLOYEE_DAY_ID !== b.shiftDayId || d.EMP_ID_NUMBER !== prefix ||
-      (c?.NEW_EMPLOYEE_ID ?? prefix) !== prefix || d.SOURCE !== "SYNTHETIC_DAYS") stageFail("SHIFT_DAY_NOT_FOUND");
+  if (!d || d.SHF_EMPLOYEE_DAY_ID !== b.shiftDayId) stageFail("SHIFT_DAY_NOT_FOUND");
+  if (prepared && (d.SOURCE !== prepared.rows.SHF_EMPLOYEE_DAY?.SOURCE ||
+      d.EMP_ID_NUMBER !== prepared.rows.SHF_EMPLOYEE_DAY?.EMP_ID_NUMBER ||
+      (c?.NEW_EMPLOYEE_ID ?? null) !== (prepared.rows.SHF_DAY_CHANGES?.NEW_EMPLOYEE_ID ?? null))) stageFail("STALE_PREPARATION");
+  if (!pilotEmployeePrefix(d.EMP_ID_NUMBER) ||
+      c?.NEW_EMPLOYEE_ID != null && !pilotEmployeePrefix(c.NEW_EMPLOYEE_ID) ||
+      (c?.NEW_EMPLOYEE_ID ?? d.EMP_ID_NUMBER) !== prefix || d.SOURCE !== expectedNativeDaySource(b)) stageFail("SHIFT_DAY_NOT_FOUND");
   const team = await one(q, schema, "SHF_ORG_UNIT", "ORG_UNIT_ID=:unit", { unit: b.orgUnitId });
   if (!team || team.UNIT_TYPE_ID !== "J01" || !team.PARENT_UNIT) stageFail("INVALID_SOURCE_DATA");
   const parent = await one(q, schema, "SHF_ORG_UNIT", "ORG_UNIT_ID=:unit", { unit: team.PARENT_UNIT });

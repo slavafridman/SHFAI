@@ -5,7 +5,7 @@ import type { NativeQuery, NativeSchema } from "./oracle-stage-arrival-snapshot.
 import { nativeIdentity } from "./oracle-stage-arrival-snapshot.mts";
 import { stationBinding, stationIdentityReference } from "./native-station-arrival-config.mts";
 import type { StationBinding } from "./native-station-arrival-config.mts";
-import { stationSafety, stationSnapshot, stationUpdate } from "./oracle-station-arrival-snapshot.mts";
+import { stationSafety, stationSnapshot, stationPreparedSnapshot, stationUpdate } from "./oracle-station-arrival-snapshot.mts";
 import type { StationSnapshot } from "./oracle-station-arrival-snapshot.mts";
 import { currentRequestBudget } from "./request-budget-context.mts";
 import { checkStageBudget } from "./stage-arrival-memory.mts";
@@ -160,7 +160,7 @@ export class OracleStationArrivalUow {
         if (r.length > 1) stageFail("AMBIGUOUS_ATTENDANCE");
         if (r.length !== 1) stageFail("SHIFT_DAY_NOT_FOUND");
       }
-      const current = await stationSnapshot(tx.query, schema, this.binding, this.zone, signal);
+      const current = await stationPreparedSnapshot(tx.query, schema, this.binding, this.zone, before, signal);
       if (!same(before, current)) stageFail("STALE_PREPARATION");
       const next = decide(current);
       const update = stationUpdate(schema, current, this.binding, next.local, next.actor);

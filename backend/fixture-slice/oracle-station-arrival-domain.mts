@@ -3,6 +3,7 @@ import { decimalId, localDateTime } from "./contract-validation.mts";
 import { stageFail } from "./stage-arrival-errors.mts";
 import type { NativeRow } from "./oracle-stage-arrival-snapshot.mts";
 import type { StationArrivalBlockerV1 } from "./station-arrival-contracts.mts";
+import { pilotEmployeePrefix } from "./native-pilot-identity.mts";
 
 // §46 station offset is ZERO; F1's unit offset is deliberately not consulted.
 export function stationOnTime(f: { planned: { startLocal: string; endLocal: string } }, now: Date, zone: string) {
@@ -19,7 +20,7 @@ export interface StationCandidate { day: NativeRow; change: NativeRow | null }
 export function stationOverlap(candidates: StationCandidate[], selected: string,
   planned: { startLocal: string; endLocal: string }, zone: string, prefix: string, assertActive: () => void): boolean {
   if (candidates.length > 1000) stageFail("INVALID_SOURCE_DATA");
-  if (!/^[0-9]{8}$/.test(prefix)) stageFail("INVALID_SOURCE_DATA");
+  if (!pilotEmployeePrefix(prefix)) stageFail("INVALID_SOURCE_DATA");
   const ids = new Set<string>();
   const instants = new Map<string, number>();
   const instant = (local: string) => {
@@ -41,8 +42,9 @@ export function stationOverlap(candidates: StationCandidate[], selected: string,
     if (!localDateTime(start) || !localDateTime(end) || end < start) stageFail("INVALID_SOURCE_DATA");
     const candidateStart = instant(start), candidateEnd = instant(end);
     if (candidateEnd < candidateStart) stageFail("INVALID_SOURCE_DATA");
+    if (!pilotEmployeePrefix(d.EMP_ID_NUMBER) || c?.NEW_EMPLOYEE_ID != null && !pilotEmployeePrefix(c.NEW_EMPLOYEE_ID))
+      stageFail("INVALID_SOURCE_DATA");
     const effectiveEmployee = c?.NEW_EMPLOYEE_ID ?? d.EMP_ID_NUMBER;
-    if (typeof effectiveEmployee !== "string" || !/^[0-9]{8}$/.test(effectiveEmployee)) stageFail("INVALID_SOURCE_DATA");
     // Multiplicity, ownership and endpoint validity are established before
     // scope/cancellation filters. Every overlay for a candidate day was read.
     if (effectiveEmployee !== prefix) continue;

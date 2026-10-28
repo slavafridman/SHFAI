@@ -45,6 +45,22 @@ interface NativeBindingCommon {
   writerFreezeConfirmed: true; singleExecutorConfirmed: true;
   windowStart: string; windowEnd: string;
   allowanceFile: string;
+  expectedDaySource?: string | null;
+}
+export function parseExpectedDaySource(value: unknown): string | null {
+  if (value === null) return null;
+  if (typeof value !== "string" || value.length === 0 || !value.isWellFormed() ||
+      Buffer.byteLength(value, "utf8") > 15 || /[\p{Cc}\p{Cf}]/u.test(value))
+    throw Error("Exact private day source must be NULL or a nonempty control-free string of at most15 bytes");
+  return value;
+}
+export function expectedNativeDaySource(binding: { expectedDaySource?: unknown }): string | null {
+  return Object.hasOwn(binding, "expectedDaySource") ? parseExpectedDaySource(binding.expectedDaySource) : "SYNTHETIC_DAYS";
+}
+export function daySourceBindingProvenance(binding: { expectedDaySource?: unknown }) {
+  const expectedDaySource = expectedNativeDaySource(binding);
+  // Preserve the original reference for omitted AND explicit legacy values.
+  return expectedDaySource === "SYNTHETIC_DAYS" ? {} : { expectedDaySource };
 }
 export type NativeBinding = NativeBindingCommon & (
   { metadataProvider?: "dba-v1" | "owner-hybrid-v1"; noExternalEffectsConfirmed: true; metadataCoverageWaiver?: never } |
@@ -233,6 +249,7 @@ export function nativeTargetReference(identity: NativeIdentity) {
 }
 export function nativeIdentityBindingReference(binding: NativeBinding) {
   return fingerprint({
+    ...daySourceBindingProvenance(binding),
     read: { ...nativeTargetReference(binding.readIdentity), user: binding.readIdentity.user, schema: binding.readIdentity.schema },
     write: { ...nativeTargetReference(binding.writeIdentity), user: binding.writeIdentity.user, schema: binding.writeIdentity.schema },
     metadata: { ...metadataBindingProvenance(binding), operation: "native-stage-arrival-v0.1",
@@ -243,10 +260,12 @@ export function nativeBinding(v: unknown): NativeBinding {
   const hasProvider = record(v) && Object.hasOwn(v, "metadataProvider");
   const metadataProvider = hasProvider ? parseMetadataProvider(v.metadataProvider) : undefined;
   const limited = metadataProvider === "owner-test-limited-v1";
+  const hasDaySource = record(v) && Object.hasOwn(v, "expectedDaySource");
+  const expectedDaySource = hasDaySource ? parseExpectedDaySource(v.expectedDaySource) : undefined;
   if (!exact(v, ["marker", "employeeId", "shiftDayId", "orgUnitId", "readIdentity", "writeIdentity",
     "metadataDigest", "approval", "freezeOwner", "recoveryOwner", "windowStart", "windowEnd", "allowanceFile",
     "writerFreezeConfirmed", ...(limited ? ["metadataCoverageWaiver"] : ["noExternalEffectsConfirmed"]), "singleExecutorConfirmed",
-    ...(hasProvider ? ["metadataProvider"] : [])]) ||
+    ...(hasProvider ? ["metadataProvider"] : []), ...(hasDaySource ? ["expectedDaySource"] : [])]) ||
       v.marker !== nativeMarker || !decimalId(v.employeeId) || !decimalId(v.shiftDayId, 10) ||
       !unitCode(v.orgUnitId) || typeof v.metadataDigest !== "string" || !/^[a-f0-9]{64}$/.test(v.metadataDigest) ||
       !text(v.approval, 128, 1) || !text(v.freezeOwner, 128, 1) || !text(v.recoveryOwner, 128, 1) ||
@@ -268,7 +287,8 @@ export function nativeBinding(v: unknown): NativeBinding {
     orgUnitId: v.orgUnitId, readIdentity, writeIdentity, metadataDigest: v.metadataDigest,
     approval: v.approval, freezeOwner: v.freezeOwner, recoveryOwner: v.recoveryOwner,
     writerFreezeConfirmed: true, singleExecutorConfirmed: true,
-    windowStart: v.windowStart, windowEnd: v.windowEnd, allowanceFile: path };
+    windowStart: v.windowStart, windowEnd: v.windowEnd, allowanceFile: path,
+    ...(hasDaySource ? { expectedDaySource } : {}) };
   if (limited && waiver) return Object.freeze({ ...common, metadataProvider: "owner-test-limited-v1", metadataCoverageWaiver: waiver });
   if (metadataProvider === "owner-test-limited-v1") throw Error("Limited waiver required");
   return Object.freeze({ ...common, ...(metadataProvider === undefined ? {} : { metadataProvider }), noExternalEffectsConfirmed: true });

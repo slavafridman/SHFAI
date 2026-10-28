@@ -5,7 +5,7 @@ import type { NativeQuery, NativeSchema } from "./oracle-stage-arrival-snapshot.
 import { nativeIdentity } from "./oracle-stage-arrival-snapshot.mts";
 import { exitBinding, exitIdentityReference } from "./native-station-exit-config.mts";
 import type { ExitBinding } from "./native-station-exit-config.mts";
-import { exitSafety, exitSnapshot, exitUpdate } from "./oracle-station-exit-snapshot.mts";
+import { exitSafety, exitSnapshot, exitPreparedSnapshot, exitUpdate } from "./oracle-station-exit-snapshot.mts";
 import type { ExitSnapshot } from "./oracle-station-exit-snapshot.mts";
 import { currentRequestBudget } from "./request-budget-context.mts";
 import { checkStageBudget } from "./stage-arrival-memory.mts";
@@ -157,7 +157,7 @@ export class OracleStationExitUow {
         if (r.length > 1) stageFail("AMBIGUOUS_ATTENDANCE");
         if (r.length !== 1) stageFail("SHIFT_DAY_NOT_FOUND");
       }
-      const current = await exitSnapshot(tx.query, schema, this.binding, this.zone, signal);
+      const current = await exitPreparedSnapshot(tx.query, schema, this.binding, this.zone, before, signal);
       if (!same(before, current)) stageFail("STALE_PREPARATION");
       const next = decide(current);
       const update = exitUpdate(schema, current, this.binding, next.local, next.actor);

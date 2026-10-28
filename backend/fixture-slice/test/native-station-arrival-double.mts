@@ -67,7 +67,7 @@ export class StationOracleDouble {
     ] };
     this.proof = [Object.entries(fixtureTables).flatMap(([tableName, names]) => names.map(columnName => ({
       tableName, columnName, dataType: number.has(columnName) ? "NUMBER" : date.has(columnName) ? "DATE" : "VARCHAR2",
-      dataLength: 100, charUsed: "B", nullable: "Y", virtualColumn: "NO",
+      dataLength: columnName === "EMP_ID_NUMBER" ? 9 : 100, charUsed: "B", nullable: "Y", virtualColumn: "NO",
     }))), [{ tableName: "SHF_ATTENDANCE", name: "SYNTHETIC_PK", kind: "P", status: "ENABLED", validated: "VALIDATED",
       referencedOwner: null, referencedConstraint: null }],
     [{ tableName: "SHF_ATTENDANCE", name: "SYNTHETIC_PK", columnName: "SHF_EMPLOYEE_DAY_ID", position: 1 }],

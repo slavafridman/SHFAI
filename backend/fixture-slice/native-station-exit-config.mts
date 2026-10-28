@@ -1,7 +1,7 @@
 import { basename } from "node:path";
 import { exact } from "./stage-arrival-validation.mts";
 import { record } from "./contract-validation.mts";
-import { nativeBinding, nativeEnvironment, metadataBindingProvenance, checkedNativeWriter } from "./native-stage-arrival-config.mts";
+import { nativeBinding, nativeEnvironment, metadataBindingProvenance, checkedNativeWriter, daySourceBindingProvenance } from "./native-stage-arrival-config.mts";
 import type { NativeBindingWithoutDigest, NativeConfiguration } from "./native-stage-arrival-config.mts";
 import { requireLimitedMetadataEnvironment } from "./native-metadata-limited.mts";
 import { oracleEnvironment } from "./runtime-config.mts";
@@ -15,10 +15,11 @@ export type ExitBinding = NativeBindingWithoutDigest & {
 export function exitBinding(v: unknown): ExitBinding {
   const provider = record(v) && Object.hasOwn(v, "metadataProvider");
   const limited = record(v) && v.metadataProvider === "owner-test-limited-v1";
+  const hasDaySource = record(v) && Object.hasOwn(v, "expectedDaySource");
   if (!exact(v, ["marker", "employeeId", "shiftDayId", "orgUnitId", "readIdentity", "writeIdentity",
     "exitMetadataDigest", "operation", "approval", "freezeOwner", "recoveryOwner", "windowStart", "windowEnd",
     "allowanceFile", "writerFreezeConfirmed", ...(limited ? ["metadataCoverageWaiver"] : ["noExternalEffectsConfirmed"]), "singleExecutorConfirmed",
-    ...(provider ? ["metadataProvider"] : [])]) || v.operation !== "native-station-exit-v0.1")
+    ...(provider ? ["metadataProvider"] : []), ...(hasDaySource ? ["expectedDaySource"] : [])]) || v.operation !== "native-station-exit-v0.1")
     throw Error("Exact private exit binding required");
   const { operation: _operation, exitMetadataDigest, ...common } = v;
   const { metadataDigest, ...b } = nativeBinding({ ...common, metadataDigest: exitMetadataDigest });
@@ -28,7 +29,7 @@ export function exitBinding(v: unknown): ExitBinding {
   return Object.freeze({ ...b, operation: "native-station-exit-v0.1", exitMetadataDigest: metadataDigest });
 }
 export function exitIdentityReference(b: ExitBinding) {
-  return fingerprint({ operation: b.operation, read: b.readIdentity, write: b.writeIdentity,
+  return fingerprint({ ...daySourceBindingProvenance(b), operation: b.operation, read: b.readIdentity, write: b.writeIdentity,
     metadata: { ...metadataBindingProvenance(b), digest: b.exitMetadataDigest } });
 }
 export function stationExitMode(v: unknown): StationExitModeV1 {

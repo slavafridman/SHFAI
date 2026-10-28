@@ -5,7 +5,7 @@ import type { OracleEnvironment } from "./runtime-config.mts";
 import type { OracleReadSession } from "./oracle-session.mts";
 import type { NativeBinding } from "./native-stage-arrival-config.mts";
 import { nativeBinding, nativeIdentityBindingReference } from "./native-stage-arrival-config.mts";
-import { nativeIdentity, nativeSafety, nativeSnapshot, nativeUpdate } from "./oracle-stage-arrival-snapshot.mts";
+import { nativeIdentity, nativeSafety, nativeSnapshot, nativePreparedSnapshot, nativeUpdate } from "./oracle-stage-arrival-snapshot.mts";
 import type { NativeQuery, NativeSchema, NativeSnapshot } from "./oracle-stage-arrival-snapshot.mts";
 import { checkStageBudget } from "./stage-arrival-memory.mts";
 import { currentRequestBudget } from "./request-budget-context.mts";
@@ -212,7 +212,7 @@ export class OracleStageArrivalUow {
         if (rows.length > 1) stageFail("AMBIGUOUS_ATTENDANCE");
         if (rows.length !== 1) stageFail("SHIFT_DAY_NOT_FOUND");
       }
-      const current = await nativeSnapshot(tx.query, schema, this.binding);
+      const current = await nativePreparedSnapshot(tx.query, schema, this.binding, before);
       const next = decide(current);
       if (!same(before, current)) stageFail("STALE_PREPARATION");
       checkStageBudget(signal);
