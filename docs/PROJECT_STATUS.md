@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, limited TEST metadata policy independently verified; real metadata PASS, synthetic source diagnostic running.
+Last updated: 2026-10-28, approved limited TEST metadata policy published; real metadata PASS, source diagnostic remains next.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -202,8 +202,24 @@ fetch/push/remote verification uses network access. The known DATE13 guard
 enhancement and CHECK NULL preservation are independently closed fixes,
 not new physical-schema or full hidden-effect certification.
 
-Exact-14-path staged checks, normal commit/push and direct remote verification
-are pending. Next safe action after publication is the bounded read-only
+**Limited-provider publication DONE:** feature
+`656218aa1f0d17aae07e1e0bdbe748c1999edc6c` contains exactly the 14
+assigned paths (11 backend, two docs and standard verifier refresh) and was
+normally pushed to origin/main. Direct remote main SHA equals local HEAD,
+tracking ahead/behind is 0/0, index empty, conflicts zero and all 14 scoped
+working-copy paths match publication.
+Staged privacy/whitespace and HEAD-plus-staged closure checks PASS:
+134 imports, 395 local documentation links, all 20 historical capture hashes
+unchanged and append-only section48 explicitly APPROVED. No unpublished/
+session-only QA module is needed. All 23 unrelated user paths remain
+outside the commit, inspected by name only, without content reads/hashes.
+Canonical/frontend artifacts remain unchanged. No hooks/signing were
+bypassed; no publication check failed.
+
+This status-only follow-up records the already verified feature publication.
+Its own normal commit/push and direct remote verification follow this edit;
+the checkpoint SHA is returned in the handoff without a self-hash loop.
+Next safe action after publication is the bounded read-only
 SOURCE-discriminator diagnostic on the already found synthetic fixture.
 Do not retag data, start the app or consume admission to satisfy a potentially
 incorrect predicate. The two DBA views are explicitly waived for this limited
