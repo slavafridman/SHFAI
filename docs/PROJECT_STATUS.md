@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, SOURCE/private-ID fix independently verified; real setup committed; publication ready.
+Last updated: 2026-10-28, verified SOURCE/private-ID fix published; setup committed, arrival operational gates unresolved.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -27,7 +27,7 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-TEST-METADATA-WAIVER-28 — current resume checkpoint
 
-**State: LIMITED PROVIDER PUBLISHED / real setup COMMITTED / SOURCE-ID QA PASS, publication READY.** At 11:59 +02:00 the user explicitly requested ignoring
+**State: LIMITED PROVIDER and SOURCE-ID fix PUBLISHED / real setup COMMITTED / arrival operationally BLOCKED.** At 11:59 +02:00 the user explicitly requested ignoring
 unavailable DBA_TRIGGERS and DBA_ROLE_PRIVS and continuing. This changes those
 two former mandatory visibility gates for the controlled TEST scope only.
 It is not a claim that triggers/roles are absent, grants were provisioned,
@@ -106,8 +106,23 @@ no application/compiler/test/build, DNS/DB, allowance, DML/grant/DDL,
 dependency or infrastructure operation; only normal Git fetch/push/remote
 verification uses network access.
 
-Exact-17-path staged checks, normal commit/push and direct remote verification
-are pending. The completed one-UPDATE/six-day-field setup with acknowledged
+**SOURCE/private-ID publication DONE:** feature
+`cfcb0dbb454e347ff4662c33e647ce65618aed25` contains exactly the 17
+assigned paths (16 backend and this checkpoint) and was normally pushed to
+origin/main. Direct remote main SHA equals local HEAD, tracking ahead/behind
+is 0/0, index empty, conflicts zero and all 17 scoped working-copy paths
+match publication.
+Staged privacy/whitespace and HEAD-plus-staged closure checks PASS:
+169 imports and four local documentation links; no unpublished/session-only
+dependency. All 23 unrelated user paths remain outside the commit, inspected
+by name only, without content reads/hashes. Canonical/frontend/design/verifier
+remain unchanged; no verifier refresh/run. No hooks/signing were bypassed
+and no publication check failed.
+
+This status-only follow-up records the already verified feature publication.
+Its own normal commit/push and direct remote verification follow this edit;
+the checkpoint SHA is returned in the handoff without a self-hash loop.
+The completed one-UPDATE/six-day-field setup with acknowledged
 COMMIT/readback is operator-reported actual setup, not an arrival command.
 First allowance path is fixed privately but unconsumed; parent namespace
 trust and a truthful named eligibility/policy/metadata writer-exclusion
