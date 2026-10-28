@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, diagnostic/design verified; scoped publication in progress.
+Last updated: 2026-10-28, diagnostic/design verified and published; approvals pending.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -27,7 +27,7 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-RESUME-PUBLISH-28 — current resume checkpoint
 
-**State: documentation review PASS / scoped publication pending.** The current
+**State: documentation review PASS / scoped publication DONE.** The current
 step records the completed identity-only diagnostic and source-backed proposed
 section 46 v0.1, with its separate section 46.1-bootstrap v0.1 approval gate.
 Neither proposal is approved by publication. No application changes were made.
@@ -48,19 +48,34 @@ Publication scope is exactly three paths: this checkpoint,
 privacy/secret/private-key/token/DDL and whitespace checks PASS; local-link
 closure PASS (395 links across the two documents), verifier relative-import
 closure PASS (one import). These checks covered only assigned paths;
-publication is not yet asserted here. Git reported only the normal
+the feature publication is verified below. Git reported only the normal
 verification JSON LF-to-CRLF conversion warning, not a check failure.
 No application typecheck, unit/UI/browser tests, database or DNS operations
 are run for this documentation-only step. Earlier backend639/frontend477
 totals are historical, not current verification. No dependencies or
 infrastructure were changed.
 
-**Next safe action:** finish scoped checks, commit and normally push only the
-three assigned paths, then verify direct remote SHA, ahead/behind 0/0,
-empty index and scoped published working-copy equality. Record the resulting
-feature SHA in a follow-up checkpoint commit without a self-hash loop.
-After publication, stop for the two explicit user decisions below; broad
-TEST permissions are already settled and are not requested again.
+Feature documentation commit
+`f6398b35eee3f7d051314a61c644b83022c6ce1b` contains exactly those three
+assigned paths and was normally pushed to origin/main. Direct
+`git ls-remote origin refs/heads/main` matched local HEAD; tracking
+ahead/behind was 0/0, index empty, no conflicts, and all three scoped
+working-copy paths matched the published commit. The 23 unrelated dirty
+paths remained outside the commit, inspected by name only. No hooks or
+signing were bypassed. No check failed; the documented historical duplicate
+route anomaly is unchanged.
+
+This status-only follow-up records the already verified feature publication;
+its own normal commit/push and direct remote verification follow this edit.
+Its SHA is reported in the handoff, not recursively embedded here.
+
+**Next safe action after that checkpoint publication:** stop for the two
+explicit user decisions below: section 46.1-bootstrap v0.1 host-reference
+trust promotion and section 46 v0.1 native F2 implementation baseline.
+Owner: user through parent. Broad TEST permissions are already settled and
+are not requested again. No host-trust promotion, native F2 source,
+capability, persistence or operational application/Oracle action follows
+from this publication.
 
 ### SHF-NATIVE-RESUME-28 — diagnostic/design evidence
 
