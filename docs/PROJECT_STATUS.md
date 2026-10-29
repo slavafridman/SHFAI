@@ -27,7 +27,37 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-RESUME-29 — current resume checkpoint
 
-**State: C49 gate PASS / full developer pipeline and independent artifact QA PASS / publication READY.**
+**State: FOUNDATION PUBLISHED / approved B49 and U49 IMPLEMENTATION RUNNING.**
+
+#### SHF-FOUNDATION-PUBLISHED-29 — verified handoff
+
+Feature30f318e published exactly22 foundation paths. Direct remote main
+matches HEAD, ahead/behind0/0, index empty and no conflicts were verified.
+Privacy/whitespace and56 imports/442 links/13 tooling references passed.
+Standard verifier passed31 CSVs/10000 references/454 source hashes/
+430 links/288 anchors; all20 historical captures unchanged.
+Approved Vitest4.0.9 patch has nine changed lock records/565 unchanged.
+This publication includes C49 types/tests, not implemented CRUD/CSV consumers.
+The local developer ZIP remains the independently checked foundation snapshot,
+not the unfinished management implementation being written next.
+
+An external writer added a management-report note/link and a Last-updated
+prefix after feature publication. Those additive, nonconflicting worktree
+changes and the separate untracked report are preserved and not included
+in the parent's follow-up staging. No unrelated report content was read.
+
+#### SHF-B49-U49-IMPLEMENTATION-29 — active owners
+
+Approved49-v0.1 canonical gate and both consumer handshakes are complete.
+B49 owner exclusively implements noncanonical backend CRUD/CSV rules,
+parser/admission, Oracle snapshots/UoW, policy/config/HTTP wiring and tests.
+U49 owner exclusively implements the frontend forms/CSV/guards/history/
+interlocks/dialog and tests. Canonical changes return to the architect;
+test/dependency/tooling pins remain frozen. No new user approval is needed.
+UI uses typed HTTP doubles while backend changes; actual protocol integration
+waits for source-stable handoffs. No live O49 writes are authorized here.
+Parent serializes its checkpoint hunks without overwriting external edits.
+
 At08:40+02 the user requested continuation. Both outstanding independent
 packaging QA and single Oracle probe agents failed with agent-service401
 organization/API authorization before their first turn; zero QA commands
