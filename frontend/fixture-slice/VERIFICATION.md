@@ -3818,3 +3818,170 @@ src/workspace-shell.html
 src/workspace-shell.spec.ts
 src/workspace-shell.ts
 ```
+
+## U49 §49-v0.1 — 29 October 2026 frontend source-stable handoff
+
+### Authority and implementation classification
+
+Approved baseline: §49-v0.1, §49.10 bounded package decision, §49.11 “Agree 49”
+approval record and §49.12 uppercase-X/full-nine private CSV clarification.
+Caller supplied UX16040 READY and C49/B49a989 compiler/four-module gate PASS.
+Those prior gates were acknowledged, not rerun or relabelled as U49 evidence.
+Canonical owner remains architect; no canonical/backend/legacy/tooling edits.
+
+Actual UI implementation includes scoped HTTP client, strict runtime guards,
+create/change/logical-cancel/whole CSV preview/apply, source/identity handling,
+single external-template/stylesheet Material review, warning/whole consent,
+quarantine/native interlocks, selected-row navigation and history restoration.
+Only fixture modules/checks fabricate responses; no application fallback does.
+The UI never reconstructs a receipt from an already visible/cancelled day.
+
+Evidence read: design §§49.4–49.9/49.11–49.12 and canonical management DTOs/ports;
+existing identity/API/routes, history/native sessions, Material dialog/calendar/
+minute controls and blue theme. Controlling legacy
+`old/SHF/src/bzq/shf/model/ShiftDataModel.java:7645–7665,7827–7832` was read for
+uppercase-X normalization and full-ID resolution. The source contract catalog
+is absent. No legacy execution/build, schema/DB/DNS/EMS/credentials access.
+
+### Exact executed checks and observed outcomes
+
+Commands below ran from `frontend/fixture-slice`. Tests use the established
+Vitest **4.0.9** configuration, with no manifest/runner/worker changes.
+
+| Command | Observed result |
+|---|---|
+| `npm test -- --include=src/shift-management-contract.spec.ts` | First RED: 1 failed, 2 passed; approved exact read7+management7 rejected by old identity allowlist. Fixed additively; rerun 3/3 PASS. |
+| `npm test -- --include=src/shift-management-contract.spec.ts --include=src/shift-management-api.spec.ts` | Initial TS narrowing error in new guard fixed; rerun 15/15 PASS. |
+| `npm test -- --include=src/shift-management*.spec.ts` | Intermediate 40 PASS/3 CSV failures: test TextEncoder buffer was from a different jsdom realm, not browser File's ArrayBuffer. Synthetic test reader fixed to return a realm-native byte-identical ArrayBuffer. Subsequent 43/43, then 58/58 PASS as suites expanded. |
+| `npm test -- --include=src/shift-management*.spec.ts --include=src/native-read-views.spec.ts --include=src/*session.spec.ts` | 135/135 PASS across 10 files at that checkpoint. |
+| `npm run typecheck` | Final app TSC exit 0. |
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.spec.json` | Final full-spec TSC exit 0. |
+| `npm test` | **Final 698/698 PASS, 50 files, natural exit 0**. Original 621 plus 63 new M3 tests and 14 management-family cases in existing seven-read matrix. 22.15s Vitest duration. Earlier complete checkpoint was697/697 before the final volatile-review-expiry test. |
+| `npm run build:dev -- --output-path=.angular/u49-dev` | Final PASS, exit 0. |
+| `npm run check:profile -- dev .angular/u49-dev/browser` | PASS: exact public keys `appEnv,apiBasePath`; `/api`. |
+| `npm run build:test -- --output-path=.angular/u49-test` | Final PASS, exit 0. |
+| `npm run check:profile -- test .angular/u49-test/browser` | PASS: same exact public object. |
+| `npm run build:production -- --output-path=.angular/u49-production` | Final PASS, exit 0; existing budgets unchanged. |
+| `npm run check:profile -- production .angular/u49-production/browser` | PASS: same exact public object. |
+| `node --check checks/shift-management-browser-check.mjs` | PASS, exit 0. |
+| `node node_modules/typescript/bin/tsc --allowJs --checkJs --noEmit --strictNullChecks --target es2023 --module nodenext --skipLibCheck --allowImportingTsExtensions --typeRoots ../../backend/fixture-slice/node_modules/@types --types node checks/shift-management-browser-check.mjs` | PASS, exit 0, using already installed Node declarations only; no backend runtime. Initial optional check without explicit Node type roots failed (frontend has no Node typings), then three driver nullability diagnostics were fixed. No dependency installed. |
+| `node checks/shift-management-browser-check.mjs` | Final real Chrome / typed HTTP DOUBLE PASS, exit 0; owned servers/browser/profile cleaned. No backend runtime or database. |
+
+One intermediate focused run also found a missing type-only `ShiftDraftV1`
+test import after adding negative cases; fixed before final app/spec/full checks.
+Full suite emits existing jsdom `scrollTo` “not implemented” warnings; real
+scroll/focus verification is classified separately below.
+
+### Browser scope and measured subset
+
+Owned Chrome, production UI artifact, loopback typed HTTP doubles only:
+
+- Create, activity-only change with null time reasons, logical cancel and
+  two-row CSV whole-command receipt-shape journeys.
+- Raw-byte upload equality, explicit charset, invalid CSV cannot apply,
+  no personal ID echo or untrusted-filename HTML interpretation.
+- Review initially unchecked; keyboard focus trap, Escape zero commands,
+  opener restoration, first syntax-error focus, pending duplicate suppression.
+  The new form's Material calendar opens/closes by keyboard and restores its
+  toggle focus; the review comparison/dialog reflows at320px without horizontal
+  overflow and its visible action buttons meet the sampled24px target minimum.
+- Page25 current inquiry → cancel → browser Back: exact submitted query/page/
+  sort restored; absent row announces missing opener and focuses results heading.
+  Forward obtains fresh already-cancelled context, no receipt/token restore or
+  autosubmission.
+- Lost response → UNKNOWN; reload remains quarantined. Switching to each
+  native F1/F2/exit identity yields recovery with **zero native context,
+  preparation or command requests**.
+- Separate synthetic identity notice and native-looking TEST versus isolated
+  simulation copy; native-looking DTOs here remain **test doubles**.
+
+Measured no page overflow: at CSS viewport widths 1440/390/320, document widths
+were 1425/375/305 respectively; visible management buttons minimum49px.
+Additional 720px viewport with CSS zoom2 subset had document width705px.
+RTL direction and reduced-motion preference were observed. CSV alone uses a
+labelled keyboard-focusable horizontal table region.
+
+Computed sRGB contrast subset: primary-button text **5.0006:1**, body text
+**14.8763:1**, focus indicator **13.1701:1** against the sampled white surface.
+Not a comprehensive contrast audit, browser-native zoom400% test, screen-reader
+walkthrough, visual screenshot review or WCAG-conformance certification.
+
+Browser-driver defects corrected during verification: full-page typed list
+double incorrectly asserted `hasMore` with one row (corrected to25); cancel
+reason selection lacked render synchronization; live-announcement assertion
+needed signal-render synchronization. One run stalled on an unbounded CDP wait;
+the owned session was explicitly stopped and its unique generated profile
+removed. Driver now bounds CDP calls, uses specific UNKNOWN copy rather than
+the pending “do not resend” phrase, and subsequent complete runs passed.
+Node emits the existing typeless-package-module warning for the shared TS
+browser driver; no frozen manifest was altered to silence it.
+
+### Boundaries, pending checks and owners
+
+- **Parent/B49:** backend remains a parallel implementation until parent
+  SOURCE-STABLE. Actual Node HTTP/protocol-double integration, pure-preview
+  zero-sequence/zero-write spies and real application/UoW CSV rollback/readback
+  proof are **NOT RUN by U49**. UI HTTP mocks cannot prove backend atomicity.
+- **Parent/operator/DBA:** O49 native effects/allowance/metadata packet and GO
+  remain separate; no Oracle mutation/readback acceptance claimed.
+- **Parent:** full Windows delivery pipeline, packaging/publication/status and
+  release acceptance not run/touched by U49. Isolated output paths avoid
+  overwriting the foundation snapshot.
+- Existing complete F1/F2/exit browser command journeys were not rerun against
+  foundation outputs and misrepresented as current-source proof. Current-source
+  unit regressions/full suite and targeted real-Chrome uncertainty interlocks
+  passed instead.
+- All helpers used here are stopped; no detached server/watch process,
+  SQL promise, screenshot output or raw CSV/result log is retained.
+
+### Exact U49 changed source/document paths
+
+Relative to `frontend/fixture-slice/`; generated `.angular/u49-*` build/cache
+outputs are not source deliverables. No root status/report or package/lock/
+Vitest/environment-checker files changed.
+
+```text
+README.md
+VERIFICATION.md
+checks/shift-management-browser-check.mjs
+src/shift-management-contract.ts
+src/shift-management-contract.spec.ts
+src/shift-management-api.ts
+src/shift-management-api.spec.ts
+src/shift-management-fixtures.ts
+src/shift-management-session.ts
+src/shift-management-session.spec.ts
+src/shift-management-page.ts
+src/shift-management-page.html
+src/shift-management-page.scss
+src/shift-management-page.spec.ts
+src/shift-management-dialog.ts
+src/shift-management-dialog.html
+src/shift-management-dialog.scss
+src/shift-management-dialog.spec.ts
+src/shift-management-history.spec.ts
+src/shift-management-readviews.spec.ts
+src/shift-management-native-interlock.spec.ts
+src/contract.ts
+src/routes.ts
+src/view-history.ts
+src/workspace-shell.ts
+src/workspace-shell.html
+src/current-shifts-page.ts
+src/current-shifts-page.html
+src/shift-search-page.ts
+src/shift-search-page.html
+src/my-shifts-page.ts
+src/my-shifts-page.html
+src/employee-card-page.html
+src/attendance-page.ts
+src/attendance-page.html
+src/shift-day-page.html
+src/stage-arrival-session.ts
+src/station-arrival-session.ts
+src/station-exit-session.ts
+src/stage-arrival-page.ts
+src/station-arrival-page.ts
+src/station-exit-page.ts
+src/native-read-views.spec.ts
+```

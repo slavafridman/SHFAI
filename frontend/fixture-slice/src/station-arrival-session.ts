@@ -59,6 +59,12 @@ export class StationArrivalSession {
       return b[1] === s.employeeId && b[2] === s.shiftDayId;
     });
   }
+  affectsEmployee(employeeId: string | null) {
+    return [...this.unresolved].some(attempt => {
+      const raw = this.bindings.get(attempt);
+      return !raw || !employeeId || (JSON.parse(raw) as string[])[1] === employeeId;
+    });
+  }
   affects(s: ArrivalSelection | null) {
     return !!s && [...this.unresolved].some(attempt =>
       !this.bindings.has(attempt) || this.bindings.get(attempt) === this.key(s));

@@ -167,7 +167,7 @@ export class MyShiftsPage {
           }, gen);
           if (this.saved.request) { this.fetch(this.saved.request, true); return; }
           this.state.set('dirty'); this.message.set('התאריכים נשמרו. יש להחיל מחדש.');
-          this.defer(() => this.journey.restore(this.host.nativeElement), gen); return;
+          this.defer(() => this.restoreJourney(), gen); return;
         }
         this.apply(false);
       },
@@ -204,7 +204,7 @@ export class MyShiftsPage {
             if (technical) technical.open = this.saved.technical;
             this.focus(`#${this.saved.opener}`, true); window.scrollTo(0, this.saved.scroll);
           } else if (focus) this.focus('#schedule-results');
-          this.journey.restore(this.host.nativeElement);
+          this.restoreJourney();
         }, gen);
       },
       error: error => { if (this.active(gen)) this.handleError(error); },
@@ -240,20 +240,28 @@ export class MyShiftsPage {
   }
   canReadItems(): boolean { const caps = this.principal()?.principal.capabilities;
     return !!caps?.includes('shift-items:read') && caps.includes('shift-day:read'); }
+  private restoreJourney() {
+    return this.journey.restore(this.host.nativeElement, { selector: '#schedule-results',
+      onMissing: () => this.message.set(`${this.message()} הרשומה המקורית אינה מופיעה בעמוד המעודכן. לא נבחר עובד/ת אחר/ת.`) });
+  }
   openItems(row: MyShiftRowV1, event: MouseEvent) { this.openDetail(row, event, true); }
-  openDetail(row: MyShiftRowV1, event: MouseEvent, items = false) {
+  openDetail(row: MyShiftRowV1, event: MouseEvent, items = false, management = false) {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
     event.preventDefault();
     if (!this.result() || !this.principal()?.principal.capabilities.includes('shift-day:read')) return;
     if (items && !this.canReadItems()) return;
+    if (management && !this.principal()?.principal.capabilities.includes('shift-management:prepare')) return;
     this.remember();
-    this.pendingOpener = `schedule-${items ? 'items' : 'detail'}-${row.shiftDayId}`;
+    this.pendingOpener = `schedule-${management ? 'management' : items ? 'items' : 'detail'}-${row.shiftDayId}`;
     this.navigation.schedule!.opener = this.pendingOpener;
     const unit = this.context()!.actor.employee!.unit;
     this.navigation.scheduleDetail = { employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId,
       unit: { code: unit.code, label: unit.label, parentLabel: unit.moked.label },
       dataSource: this.principal()!.dataSource };
     this.navigation.detailOrigin = 'my-shifts'; this.navigation.returning = true;
+    if (management) {
+      void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'manage']); return;
+    }
     if (items) {
       void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'breaks-and-exceptions']); return;
     }

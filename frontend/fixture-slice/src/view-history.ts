@@ -4,6 +4,7 @@ import { ListNavigation } from './list-navigation';
 import { StageArrivalSession } from './stage-arrival-session';
 import { StationArrivalSession } from './station-arrival-session';
 import { StationExitSession } from './station-exit-session';
+import { ShiftManagementSession } from './shift-management-session';
 
 type Slots = Pick<ListNavigation, 'origin' | 'searchOrigin' | 'attendanceOrigin' | 'schedule' | 'scheduleDetail' |
   'detailOrigin' | 'scheduleUpstream'>;
@@ -24,6 +25,7 @@ export class ViewHistory {
   private readonly arrival = inject(StageArrivalSession);
   private readonly station = inject(StationArrivalSession);
   private readonly exit = inject(StationExitSession);
+  private readonly management = inject(ShiftManagementSession);
   private readonly entries = new Map<string, Entry>();
   private current: string | null = null;
   private target: string | null = null;
@@ -37,6 +39,7 @@ export class ViewHistory {
         this.arrival.merge(event.restoredState);
         this.station.merge(event.restoredState);
         this.exit.merge(event.restoredState);
+        this.management.merge(event.restoredState);
         this.save();
         this.popping = event.navigationTrigger === 'popstate';
         const token: unknown = event.restoredState?.['shfView'];
@@ -49,13 +52,13 @@ export class ViewHistory {
       if (event instanceof NavigationEnd) {
         const token = this.target ?? crypto.randomUUID();
         if (!this.entries.has(token)) this.entries.set(token, {
-          itemsJourney: event.urlAfterRedirects === '/attendance' || /\/(breaks-and-exceptions|operational-card)$/.test(event.urlAfterRedirects) ||
+          itemsJourney: event.urlAfterRedirects === '/attendance' || /\/(breaks-and-exceptions|operational-card|manage|shift-management)$/.test(event.urlAfterRedirects) ||
             !!(this.current && this.entries.get(this.current)?.itemsJourney),
           path: event.urlAfterRedirects, parent: this.popping ? null : this.current,
           slots: this.slots(), view: null, local: null,
         });
         this.current = token; this.target = null;
-        if (/\/(breaks-and-exceptions|operational-card)$/.test(event.urlAfterRedirects)) {
+        if (/\/(breaks-and-exceptions|operational-card|manage|shift-management)$/.test(event.urlAfterRedirects)) {
           let ancestor: string | null = token;
           while (ancestor) {
             const e: Entry | undefined = this.entries.get(ancestor);
@@ -69,7 +72,7 @@ export class ViewHistory {
         const provenance = typeof origin === 'string' &&
           ['current-shifts', 'shift-search', 'my-shifts', 'attendance', 'shift-day-diagnostic'].includes(origin) ? { origin } : {};
         history.replaceState({ ...provenance, navigationId: event.id, shfView: token,
-          ...this.arrival.marker(), ...this.station.marker(), ...this.exit.marker() }, '');
+          ...this.arrival.marker(), ...this.station.marker(), ...this.exit.marker(), ...this.management.marker() }, '');
       }
     });
   }

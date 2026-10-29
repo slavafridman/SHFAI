@@ -1,0 +1,224 @@
+<shf-workspace-shell [pinned]="true" [persistentIdentity]="true" [principal]="principal()" [identityState]="identityState()"
+  [identityMessage]="identityMessage()" active="management" (recheck)="recheckIdentity()">
+  <nav class="breadcrumbs" aria-label="נתיב ניווט">
+    <button id="management-back" mat-button type="button" (click)="journey.back()">חזרה לבירור המקורי</button>
+    <span aria-current="page">ניהול משמרות</span>
+  </nav>
+  <header class="heading"><div><p class="eyebrow">עובד/ת נבחר/ת · פעילות פשוטה עתידית בלבד</p><h1 tabindex="-1">ניהול משמרות</h1></div>
+    @if (state() !== 'unknown' && state() !== 'submitting' && state() !== 'committed') {
+      <button id="management-reload" mat-stroked-button type="button" (click)="recheckIdentity()" [disabled]="busy()">טעינת הקשר מחדש</button>
+    }
+  </header>
+  <p id="management-status" tabindex="-1" role="status" aria-live="polite"
+    [attr.aria-describedby]="parameterErrors().length ? 'management-parameter-errors' : ruleErrors().length ? 'management-rule-errors' : null"
+    [class.error]="['unknown','error','invalid','denied'].includes(state())">{{ message() }}</p>
+  @if (reference()) { <p>מזהה פנייה: <bdi dir="ltr">{{ reference() }}</bdi></p> }
+  @if (parameterErrors().length) {
+    <ul id="management-parameter-errors" class="error" aria-label="פרטים הדורשים תיקון">
+      @for (error of parameterErrors(); track $index) {
+        <li>{{ fieldLabel(error.name) }}: {{ error.reason === 'required' ? 'נדרש ערך' : error.reason === 'unsupported' ? 'הערך אינו נתמך' : 'הפורמט אינו תקף' }}</li>
+      }
+    </ul>
+  }
+  @if (state() === 'loading' || state() === 'preparing' || state() === 'submitting' || fileReading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="הבקשה בטיפול" />
+  }
+  @if (ruleErrors().length) {
+    <ul id="management-rule-errors" class="error" aria-label="שגיאות מהשרת">
+      @for (error of ruleErrors(); track $index) {
+        <li>{{ error.row !== null ? 'שורה ' + error.row + ': ' : '' }}{{ ruleLabel(error.code) }}
+          @if (error.field) { <bdi dir="ltr">({{ error.field }})</bdi> }
+          <small><bdi dir="ltr">{{ error.code }}</bdi></small>
+        </li>
+      }
+    </ul>
+  }
+  @if (context(); as c) {
+    <section class="context" aria-label="העובד או העובדת הנבחרים ומקור ההקשר">
+      <h2><bdi dir="auto">{{ c.employee.firstName }} {{ c.employee.lastName }}</bdi></h2>
+      <p>העובד/ת הנבחר/ת אינו/ה זהות היישום. אין שימוש בזהות המנהל כעובד/ת.</p>
+      <p class="environment"><strong>{{ c.dataSource === 'oracle-test' ? 'מסד TEST — שינוי אמיתי מבוקר, לא ייצור' : 'סימולציה מבודדת — ללא כתיבה ל־Oracle' }}</strong></p>
+      <p>אזור זמן עסקי: <bdi dir="ltr">{{ c.businessTimeZone }}</bdi> · אתר נגזר מהעובד/ת: <bdi dir="ltr">{{ c.siteId }}</bdi></p>
+      <details id="management-technical"><summary>מזהים פנימיים ומקור API</summary>
+        <p>עובד/ת: <bdi dir="ltr">{{ c.employeeId }}</bdi> · מקור API: <bdi dir="ltr">{{ c.dataSource }}</bdi></p>
+        @if (c.selected) { <p>משמרת: <bdi dir="ltr">{{ c.selected.shiftDayId }}</bdi></p> }
+      </details>
+    </section>
+    @if (c.blockers.length) {
+      <section class="blocked" aria-label="סיבות חסימה"><h2>לא ניתן לבצע עדכון בתהליך זה</h2>
+        <ul>@for (code of c.blockers; track code) { <li>{{ ruleLabel(code) }} <small><bdi dir="ltr">{{ code }}</bdi></small></li> }</ul>
+      </section>
+    }
+    @if (c.selected; as selected) {
+      <section class="original" aria-label="המשמרת המקורית האפקטיבית לקריאה בלבד">
+        <h2>מצב מקורי אפקטיבי — לקריאה בלבד</h2>
+        <dl>
+          <div><dt>מצב</dt><dd>{{ selected.status === 'cancelled' ? 'מבוטלת לוגית' : 'מתוכננת' }}</dd></div>
+          <div><dt>תחילה</dt><dd><bdi dir="ltr">{{ time(selected.startLocal) }}</bdi></dd></div>
+          <div><dt>סיום</dt><dd><bdi dir="ltr">{{ time(selected.endLocal) }}</bdi></dd></div>
+          <div><dt>פעילות / אתר</dt><dd><bdi dir="ltr">{{ selected.activityCode }} / {{ selected.siteId }}</bdi></dd></div>
+          <div><dt>מיקום</dt><dd>{{ selected.workLocation === 'home' ? 'בית' : 'אתר' }}</dd></div>
+          <div><dt>דקות תשלום / עבודה</dt><dd><bdi dir="ltr">{{ selected.paidMinutes }} / {{ selected.workMinutes }}</bdi></dd></div>
+          <div><dt>מקור עסקי — אינו מקור API</dt><dd><bdi dir="ltr">{{ selected.source }}</bdi></dd></div>
+        </dl>
+      </section>
+    }
+    @if (c.eligibility === 'supported' && state() !== 'committed' && state() !== 'unknown') {
+      <nav class="actions" aria-label="בחירת פעולת ניהול">
+        @if (dayId) {
+          <button id="management-change" mat-stroked-button type="button" [disabled]="!allowedKind('change')" [attr.aria-pressed]="kind() === 'change'" (click)="chooseKind('change')">שינוי משמרת</button>
+          <button id="management-cancel" mat-stroked-button type="button" [disabled]="!allowedKind('cancel')" [attr.aria-pressed]="kind() === 'cancel'" (click)="chooseKind('cancel')">ביטול משמרת</button>
+        } @else {
+          <button id="management-create" mat-stroked-button type="button" [disabled]="!allowedKind('create')" [attr.aria-pressed]="kind() === 'create'" (click)="chooseKind('create')">יצירת משמרת</button>
+          <button id="management-import" mat-stroked-button type="button" [disabled]="!allowedKind('csv-create')" [attr.aria-pressed]="kind() === 'csv-create'" (click)="chooseKind('csv-create')">ייבוא מקובץ CSV</button>
+        }
+      </nav>
+      @if (kind() !== 'csv-create') {
+        <form [formGroup]="form" (ngSubmit)="prepare()" novalidate aria-describedby="management-policy">
+          <h2>{{ kind() === 'cancel' ? 'ביטול משמרת' : kind() === 'change' ? 'שינוי משמרת' : 'יצירת משמרת' }}</h2>
+          <p id="management-policy">השרת בלבד קובע כשירות, מדיניות, שבוע, מרווחים ותלות בנוכחות. אין עקיפת כללים. אתר ודקות תשלום/עבודה נגזרים בשרת ואינם ניתנים לעריכה.</p>
+          @if (kind() !== 'cancel') {
+            <div class="form-grid">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>תאריך התחלה</mat-label>
+                <input id="management-startDate" matInput [matDatepicker]="startPicker" formControlName="startDate" dir="ltr" [min]="minDate" [max]="maxDate" required>
+                <mat-datepicker-toggle matIconSuffix [for]="startPicker" /><mat-datepicker #startPicker />
+                <mat-hint>יום/חודש/שנה</mat-hint><mat-error>יש להזין תאריך התחלה תקף</mat-error>
+              </mat-form-field>
+              <div class="time-field">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>שעת התחלה</mat-label>
+                  <input id="management-startTime" matInput formControlName="startTime" dir="ltr" inputmode="numeric" placeholder="HH:mm" required pattern="([01][0-9]|2[0-3]):[0-5][0-9]">
+                  <mat-hint>24 שעות, דיוק דקה</mat-hint><mat-error>נדרשת שעה בטווח 00:00–23:59</mat-error>
+                </mat-form-field><button mat-stroked-button type="button" (click)="pickTime('start')" [disabled]="!editable()" aria-label="בחירת שעת התחלה">בחירת שעה</button>
+              </div>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>תאריך סיום מפורש</mat-label>
+                <input id="management-endDate" matInput [matDatepicker]="endPicker" formControlName="endDate" dir="ltr" [min]="minDate" [max]="maxDate" required>
+                <mat-datepicker-toggle matIconSuffix [for]="endPicker" /><mat-datepicker #endPicker />
+                <mat-hint>במשמרת לילה יש לבחור את תאריך הסיום הבא</mat-hint><mat-error>יש להזין תאריך סיום תקף</mat-error>
+              </mat-form-field>
+              <div class="time-field">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>שעת סיום</mat-label>
+                  <input id="management-endTime" matInput formControlName="endTime" dir="ltr" inputmode="numeric" placeholder="HH:mm" required pattern="([01][0-9]|2[0-3]):[0-5][0-9]">
+                  <mat-hint>24 שעות, דיוק דקה</mat-hint><mat-error>נדרשת שעה בטווח 00:00–23:59</mat-error>
+                </mat-form-field><button mat-stroked-button type="button" (click)="pickTime('end')" [disabled]="!editable()" aria-label="בחירת שעת סיום">בחירת שעה</button>
+              </div>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>פעילות</mat-label>
+                <mat-select id="management-activityCode" formControlName="activityCode" required>
+                  @for (option of c.activityOptions; track option.code) {
+                    <mat-option [value]="option.code">{{ option.label === null ? 'תיאור לא זמין' : option.label }} (<bdi dir="ltr">{{ option.code }}</bdi>)</mat-option>
+                  }
+                </mat-select><mat-error>יש לבחור פעילות מורשית</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>מיקום עבודה</mat-label>
+                <mat-select id="management-workLocation" formControlName="workLocation" required>
+                  @for (location of c.workLocationOptions; track location) { <mat-option [value]="location">{{ location === 'home' ? 'בית' : 'אתר' }}</mat-option> }
+                </mat-select><mat-error>יש לבחור מיקום מותר</mat-error>
+              </mat-form-field>
+              @if (kind() === 'change' && startChanged()) {
+                <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>סיבת שינוי התחלה</mat-label>
+                  <mat-select id="management-startReasonCode" formControlName="startReasonCode" required>
+                    @for (option of c.startEndReasonOptions; track option.code) { <mat-option [value]="option.code">{{ option.label ?? 'תיאור לא זמין' }} (<bdi dir="ltr">{{ option.code }}</bdi>)</mat-option> }
+                  </mat-select><mat-error>נדרשת סיבה כאשר זמן ההתחלה משתנה</mat-error>
+                </mat-form-field>
+              }
+              @if (kind() === 'change' && endChanged()) {
+                <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>סיבת שינוי סיום</mat-label>
+                  <mat-select id="management-endReasonCode" formControlName="endReasonCode" required>
+                    @for (option of c.startEndReasonOptions; track option.code) { <mat-option [value]="option.code">{{ option.label ?? 'תיאור לא זמין' }} (<bdi dir="ltr">{{ option.code }}</bdi>)</mat-option> }
+                  </mat-select><mat-error>נדרשת סיבה כאשר זמן הסיום משתנה</mat-error>
+                </mat-form-field>
+              }
+            </div>
+          } @else {
+            <p>ביטול לוגי בלבד — פרטי המשמרת נשמרים להיסטוריה. אין מחיקה, שחזור או ביטול נוכחות.</p>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>סיבת ביטול</mat-label>
+              <mat-select id="management-reasonCode" formControlName="reasonCode" required>
+                @for (option of c.cancelReasonOptions; track option.code) { <mat-option [value]="option.code">{{ option.label ?? 'תיאור לא זמין' }} (<bdi dir="ltr">{{ option.code }}</bdi>)</mat-option> }
+              </mat-select><mat-error>נדרשת סיבת ביטול</mat-error>
+            </mat-form-field>
+          }
+          @if (kind() === 'create' || kind() === 'cancel') {
+            <mat-form-field class="remark" appearance="outline" subscriptSizing="dynamic"><mat-label>הערה — רשות</mat-label>
+              <textarea id="management-remark" matInput formControlName="remark" rows="2" aria-describedby="remark-hint"></textarea>
+              <mat-hint id="remark-hint">עד 500 תווים ללא תווי בקרה; השרת יבדוק גם התאמה לקידוד המסד</mat-hint>
+              <mat-error>יש לבדוק את אורך ההערה והתווים שהוזנו</mat-error>
+            </mat-form-field>
+          }
+          <button id="management-prepare" mat-flat-button type="submit" [disabled]="!canPrepare()">בדיקה ותצוגה מקדימה</button>
+        </form>
+      } @else {
+        <section class="csv" aria-labelledby="csv-heading">
+          <h2 id="csv-heading">ייבוא משמרות מקובץ CSV</h2>
+          <p>יצירה בלבד לעובד/ת הנבחר/ת · עד 1 MiB ו־100 שורות · ללא הפסקות · כל השורות בעסקה אחת.</p>
+          <p>מזהה אישי בקובץ: תשע ספרות, או X גדול אחד ואחריו תשע ספרות; אפסים מובילים נשמרים. אין להזין פרטים של עובד/ת אחר/ת.</p>
+          <button id="management-template" mat-stroked-button type="button" (click)="downloadTemplate()">הורדת תבנית UTF-8 ריקה</button>
+          <dl class="legend" aria-label="מקרא שש עמודות הקובץ">
+            <div><dt><bdi dir="ltr">personalId</bdi></dt><dd>מזהה אישי — נבדק בשרת ואינו מוצג בתצוגה המקדימה</dd></div>
+            <div><dt><bdi dir="ltr">activityCode</bdi></dt><dd>קוד פעילות</dd></div>
+            <div><dt><bdi dir="ltr">date</bdi></dt><dd>תאריך בפורמט <bdi dir="ltr">dd/MM/yyyy</bdi></dd></div>
+            <div><dt><bdi dir="ltr">location</bdi></dt><dd>בית h; אתר m או ריק</dd></div>
+            <div><dt><bdi dir="ltr">startTime</bdi></dt><dd>שעת התחלה <bdi dir="ltr">HH:mm</bdi></dd></div>
+            <div><dt><bdi dir="ltr">endTime</bdi></dt><dd>שעת סיום <bdi dir="ltr">HH:mm</bdi></dd></div>
+          </dl>
+          <div class="form-grid">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>קידוד הקובץ — בחירה מפורשת</mat-label>
+              <mat-select id="management-encoding" [formControl]="encoding" required>
+                <mat-option value="utf-8">UTF-8</mat-option><mat-option value="windows-1255">Windows-1255</mat-option>
+              </mat-select><mat-hint>אין ניחוש או המרה של הקידוד</mat-hint><mat-error>יש לבחור את קידוד הקובץ</mat-error>
+            </mat-form-field>
+            <div class="file-field"><label for="management-file">בחירת קובץ לבדיקה בלבד</label>
+              <input id="management-file" type="file" accept=".csv,text/csv" (change)="selectFile($event)" [disabled]="!editable() || busy()">
+              @if (filename()) { <span>נבחר: <bdi dir="auto">{{ filename() }}</bdi></span> }
+            </div>
+          </div>
+          <button id="management-prepare" mat-flat-button type="button" [disabled]="!canPrepare()" (click)="prepare()">בדיקה ותצוגה מקדימה</button>
+          @if (preview(); as csv) {
+            <p>שורות תקפות: {{ validRows() }} · שורות עם שגיאות: {{ csv.rows.length - validRows() }} · טרם הוחלה אף שורה.</p>
+            <div class="table-wrap" role="region" aria-label="תצוגה מקדימה של שורות CSV ושגיאות" tabindex="0">
+              <table><caption>בדיקת כל השורות — ללא מזהים אישיים</caption>
+                <thead><tr><th scope="col">שורה</th><th scope="col">פעילות</th><th scope="col">תחילה</th><th scope="col">סיום</th><th scope="col">מיקום</th><th scope="col">מצב ושגיאות לפי עמודה</th></tr></thead>
+                <tbody>@for (row of csv.rows; track row.line) {
+                  <tr><th scope="row" [id]="'csv-line-' + row.line">{{ row.line }}</th>
+                    <td [attr.aria-describedby]="csvErrorIds(row.line, ['activityCode'])"><bdi dir="ltr">{{ row.effect?.after?.activityCode ?? '—' }}</bdi></td>
+                    <td [attr.aria-describedby]="csvErrorIds(row.line, ['date','startTime'])"><bdi dir="ltr">{{ row.effect ? time(row.effect.after.startLocal) : '—' }}</bdi></td>
+                    <td [attr.aria-describedby]="csvErrorIds(row.line, ['endTime'])"><bdi dir="ltr">{{ row.effect ? time(row.effect.after.endLocal) : '—' }}</bdi></td>
+                    <td [attr.aria-describedby]="csvErrorIds(row.line, ['location'])">{{ row.effect ? row.effect.after.workLocation === 'home' ? 'בית' : 'אתר' : '—' }}</td>
+                    <td [attr.aria-describedby]="'csv-line-' + row.line">
+                      @if (!row.errors.length && row.effect) { <span>תקינה לבדיקה — לא הוחלה</span> }
+                      @for (error of row.errors; track $index) {
+                        <p class="error" [id]="'csv-error-' + row.line + '-' + $index">שורה {{ row.line }}, עמודה {{ fieldLabel(error.column) }} <bdi dir="ltr">({{ error.column }})</bdi>: {{ ruleLabel(error.code) }} <small><bdi dir="ltr">{{ error.code }}</bdi></small></p>
+                      }
+                    </td>
+                  </tr>
+                }</tbody>
+              </table>
+            </div>
+          }
+        </section>
+      }
+      @if (state() === 'review') {
+        <section class="review-ready" aria-label="מוכן לסקירה">
+          <h2>מוכן לסקירה — אין שינוי עדיין</h2>
+          <p>מספר משמרות: {{ effects().length }}. אתר, מקור עסקי ודקות מחושבות יוצגו לפני האישור.</p>
+          @if (kind() === 'csv-create') { <p>החלת כל השורות יחד — ללא בחירת שורות וללא הצלחה חלקית.</p> }
+          <button id="management-review" mat-flat-button type="button" (click)="reviewOperation()">סקירת השינוי ואישור מפורש</button>
+        </section>
+      }
+    }
+    @if (receipt(); as r) {
+      <section class="success" aria-label="תוצאה מאומתת">
+        <h2>{{ r.dataSource === 'oracle-test' ? 'השינוי נשמר ואומת' : 'הסימולציה הושלמה בלבד' }}</h2>
+        <p>מספר משמרות: {{ r.effects.length }} · פעולה: {{ r.kind === 'csv-create' ? 'ייבוא יצירה' : r.kind === 'create' ? 'יצירה' : r.kind === 'change' ? 'שינוי' : 'ביטול לוגי' }}</p>
+        <p>לא הופעל שותף חיצוני. הבירור המקורי יתבצע מחדש עם אותם מסננים; משמרת חדשה או מבוטלת עשויה לא להופיע בו. לא ייבחר עובד/ת אחר/ת.</p>
+        <ul>@for (effect of r.effects; track effect.after.shiftDayId) {
+          <li><a [routerLink]="['/employees', r.employeeId, 'shift-days', effect.after.shiftDayId, 'manage']">הקשר המשמרת <bdi dir="ltr">{{ effect.after.shiftDayId }}</bdi></a></li>
+        }</ul>
+      </section>
+    }
+    @if (dayId) {
+      <nav class="read-links" aria-label="פרטי המשמרת לקריאה בלבד">
+        <a [routerLink]="['/employees', c.employeeId, 'shift-days', dayId]">פרטי משמרת — קריאה בלבד</a>
+        <a [routerLink]="['/employees', c.employeeId, 'shift-days', dayId, 'breaks-and-exceptions']">הפסקות וחריגים — קריאה בלבד</a>
+      </nav>
+    }
+  }
+</shf-workspace-shell>

@@ -68,6 +68,14 @@ export class StageArrivalSession {
         ({ commandId, kind: 'stage-arrival', mode: 'test-oracle-controlled' })) } : {}) };
   }
   uncertain() { return this.unresolved.size > 0; }
+  affectsEmployee(employeeId: string | null) {
+    return [...this.unresolved].some(attempt => {
+      const raw = this.attemptBindings.get(attempt);
+      if (!raw || !employeeId) return true;
+      const b: string[] = JSON.parse(raw);
+      return b[b[0] === 'oracle-test' ? 1 : 2] === employeeId;
+    });
+  }
   nativeUncertain() { return this.native.size > 0; }
   crossAffects(s: ArrivalSelection | null) {
     return [...this.unresolved].some(attempt => {

@@ -22,6 +22,10 @@ import { handleStageArrival, isStageArrivalRoute, stageArrivalParserProblem, val
 import type { StageArrivalHttpOptions } from "./stage-arrival-http.mts";
 import { BackendLifecycle, linkBackendShutdown, registerBackendLifecycle } from "./backend-lifecycle.mts";
 import { StageArrivalError, stageProblem } from "./stage-arrival-errors.mts";
+import { handleShiftManagement, isShiftManagementRoute, shiftManagementParserProblem,
+  validateShiftManagementHttpOptions } from "./shift-management-http.mts";
+import type { ShiftManagementHttpOptions } from "./shift-management-http.mts";
+import { ShiftManagementError, shiftProblem } from "./shift-management-errors.mts";
 
 export const REQUEST_BUDGET_MS = 5000;
 export const RESPONSE_LIMIT_BYTES = 16 * 1024;
@@ -137,8 +141,9 @@ function send(response: ServerResponse, status: number, contentType: string, pay
   });
   response.end(payload);
 }
-export function createLoopbackServer(runtime: SliceRuntime, options: StageArrivalHttpOptions = {}) {
+export function createLoopbackServer(runtime: SliceRuntime, options: StageArrivalHttpOptions & ShiftManagementHttpOptions = {}) {
   validateStageArrivalHttpOptions(options);
+  validateShiftManagementHttpOptions(options);
   const lifecycle = new BackendLifecycle();
   const inFlight = new WeakMap<Duplex, number>();
   // Leave room for the F1 application-level 16KiB header problem response.
@@ -152,6 +157,9 @@ export function createLoopbackServer(runtime: SliceRuntime, options: StageArriva
       inFlight.set(socket, Math.max(0, (inFlight.get(socket) ?? 1) - 1));
     };
     response.once("finish", release); response.once("close", release);
+    if (isShiftManagementRoute(request.url ?? "")) {
+      await handleShiftManagement(request, response, runtime, options); return;
+    }
     if (isStageArrivalRoute(request.url ?? "")) {
       await handleStageArrival(request, response, runtime, options); return;
     }
@@ -257,7 +265,9 @@ export function createLoopbackServer(runtime: SliceRuntime, options: StageArriva
   const server = createServer({ maxHeaderSize: 32 * 1024 }, (request, response) => {
     if (lifecycle.stopping) {
       // Never authenticate/admit a pipelined request once shutdown starts.
-      const problem = isStageArrivalRoute(request.url ?? "")
+      const problem = isShiftManagementRoute(request.url ?? "") ?
+        shiftProblem(new ShiftManagementError({ status: 503, code: "DEPENDENCY_UNAVAILABLE",
+          effect: "none", nextAction: "stop" }), randomUUID()) : isStageArrivalRoute(request.url ?? "")
         ? stageProblem(new StageArrivalError("DEPENDENCY_UNAVAILABLE"), randomUUID())
         : toProblem(new SliceError("DEPENDENCY_UNAVAILABLE"), randomUUID());
       response.setHeader("Connection", "close");
@@ -272,6 +282,7 @@ export function createLoopbackServer(runtime: SliceRuntime, options: StageArriva
     // response: that earlier command may already have installed an effect.
     if ((inFlight.get(socket) ?? 0) > 0) { socket.destroy(); return; }
     if (stageArrivalParserProblem(error, socket)) return;
+    if (shiftManagementParserProblem(error, socket)) return;
     // Preserve native non-F1 parser rejection semantics. An incomplete/split
     // request-line is not assigned a fabricated business route or outcome.
     if (!socket.writable || socket.destroyed) { socket.destroy(); return; }

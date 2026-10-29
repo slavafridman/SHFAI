@@ -15,6 +15,7 @@ import { actorBinding, arrivalContext, arrivalValidation, arrivalReceipt, arriva
   arrivalIdentity, arrivalSource, type ArrivalContext, type ArrivalValidation,
   type ArrivalReceipt, type ArrivalCommand, type StageArrivalValidationDraftV1, type ArrivalSelection } from './stage-arrival-contract';
 import { StageArrivalSession } from './stage-arrival-session';
+import { ShiftManagementSession } from './shift-management-session';
 import { WorkspaceShell } from './workspace-shell';
 import { ViewHistory } from './view-history';
 import { StationArrivalSession } from './station-arrival-session';
@@ -112,6 +113,7 @@ export class StageArrivalPage {
   readonly exit = inject(StationExitSession);
   private readonly router = inject(Router);
   readonly session = inject(StageArrivalSession);
+  readonly management = inject(ShiftManagementSession);
   readonly journey = inject(ViewHistory);
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(SliceApi);
@@ -214,7 +216,8 @@ export class StageArrivalPage {
         if (!this.active(gen) || this.identityState() !== 'loading') return;
         if (!identity(v)) { this.identityState.set('error'); this.state.set('denied'); this.message.set('אין זהות תקפה. אין כניסה חלופית כמנהל מערכת.'); return; }
         this.principal.set(v); this.identityState.set('ready');
-        if (this.station.affects(this.selection()) || this.exit.affects(this.selection())) { this.recovery(); return; }
+        if (this.management.affectsEmployee(this.selection()?.employeeId ?? null) ||
+          this.station.affects(this.selection()) || this.exit.affects(this.selection())) { this.recovery(); return; }
         if (!this.allowed()) { this.state.set('denied'); this.message.set('קריאה בלבד או מקור/הרשאות לא תואמים: נדרשת תצורה מפורשת. אין מעבר אוטומטי לסימולציה.'); return; }
         if (this.session.uncertain()) { this.recovery(); return; }
         const s = this.selection();
@@ -271,6 +274,7 @@ export class StageArrivalPage {
   }
   canValidate() {
     return this.allowed() && !this.halted() && !!this.context() && this.context()!.eligibility === 'eligible' &&
+      !this.management.affectsEmployee(this.selection()?.employeeId ?? null) &&
       !this.session.blocked(this.selection()) && !this.station.affects(this.selection()) && !this.exit.affects(this.selection()) &&
       ['ready', 'error', 'expired'].includes(this.state());
   }
@@ -362,7 +366,8 @@ export class StageArrivalPage {
   }
   confirm(nativeAccepted = false) {
     if (this.state() !== 'review') return;
-    if (!this.allowed() || this.session.blocked(this.selection()) || this.station.affects(this.selection()) || this.exit.affects(this.selection())) {
+    if (!this.allowed() || this.management.affectsEmployee(this.selection()?.employeeId ?? null) ||
+      this.session.blocked(this.selection()) || this.station.affects(this.selection()) || this.exit.affects(this.selection())) {
       this.invalidate(); this.context.set(null); this.reason.reset(null, { emitEvent: false });
       if (this.session.uncertain()) this.recovery();
       else if (this.selection() && this.session.recorded(this.selection()!))

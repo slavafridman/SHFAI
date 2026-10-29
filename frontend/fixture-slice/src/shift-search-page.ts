@@ -171,7 +171,7 @@ export class ShiftSearchPage {
             this.defer(() => {
               const input = this.host.nativeElement.querySelector<HTMLInputElement>('#search-date');
               if (input) input.value = draft.dateText;
-              this.journey.restore(this.host.nativeElement);
+              this.restoreJourney();
             }, gen);
           } else this.fetch(draft.request, false, saved);
           return;
@@ -250,7 +250,7 @@ export class ShiftSearchPage {
           window.scrollTo(0, origin.scroll);
         }, gen);
         else if (focus) this.defer(() => this.focus('#search-results'), gen);
-        this.defer(() => this.journey.restore(this.host.nativeElement), gen);
+        this.defer(() => this.restoreJourney(), gen);
       },
       error: e => { if (this.active(gen)) this.handleError(e); },
     });
@@ -308,19 +308,27 @@ export class ShiftSearchPage {
       `הקצאת שלוחה: ${i.extensionAllocated === null ? 'לא ישים' : i.extensionAllocated ? 'כן' : 'לא'}`];
   }
   openSchedule(row: ShiftSearchRowV1, event: MouseEvent): void { this.openDetail(row, event, true); }
+  private restoreJourney() {
+    return this.journey.restore(this.host.nativeElement, { selector: '#search-results',
+      onMissing: () => this.announcement.set(`${this.message()} הרשומה המקורית אינה מופיעה בעמוד המעודכן. לא נבחר עובד/ת אחר/ת.`) });
+  }
   canReadItems(): boolean { const caps = this.principal()?.principal.capabilities;
     return !!caps?.includes('shift-items:read') && caps.includes('shift-day:read'); }
   openItems(row: ShiftSearchRowV1, event: MouseEvent): void { this.openDetail(row, event, false, true); }
-  openDetail(row: ShiftSearchRowV1, event: MouseEvent, schedule = false, items = false): void {
+  openDetail(row: ShiftSearchRowV1, event: MouseEvent, schedule = false, items = false, management = false): void {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
     event.preventDefault();
     if (!this.result() || !this.lastRequest || !this.principal()?.principal.capabilities.includes(schedule ? 'my-shifts:read' : 'shift-day:read')) return;
     if (items && !this.canReadItems()) return;
+    if (management && !this.principal()?.principal.capabilities.includes('shift-management:prepare')) return;
     this.navigation.searchOrigin = { dataSource: this.principal()!.dataSource, request: structuredClone(this.lastRequest), scroll: window.scrollY,
       tableScroll: this.host.nativeElement.querySelector<HTMLElement>('.table-wrap')?.scrollLeft ?? 0,
-      opener: `search-${items ? 'items' : schedule ? 'schedule' : 'detail'}-${row.shiftDayId}`, employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId,
+      opener: `search-${management ? 'management' : items ? 'items' : schedule ? 'schedule' : 'detail'}-${row.shiftDayId}`, employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId,
       unit: { code: row.employee.unit.code, label: row.employee.unit.label, parentLabel: row.employee.unit.moked.label } };
     this.navigation.detailOrigin = 'shift-search'; this.navigation.returning = true;
+    if (management) {
+      void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'manage']); return;
+    }
     if (items) {
       void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'breaks-and-exceptions']); return;
     }

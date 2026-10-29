@@ -1481,3 +1481,76 @@ Legacy was read only, never built/executed.
 This implements the approved **search + current inquiry + detail**, not the whole SHF
 migration: my-shifts, employee cards, editing, exports, totals, EMS and
 batch remain outside this frontend slice.
+
+## U49 — approved selected-employee management, §49-v0.1
+
+The historical inquiry-only scope above is extended by the approved 29 October
+2026 “Agree 49” package (§49.10–49.12), with UX16040 review READY. This is the
+bounded future/simple/single-employee subset, **not full M3 parity**.
+
+Entry points:
+
+- Selected employee schedule/card → `/employees/:employeeId/shift-management`
+  for create or CSV-create.
+- Current/search/schedule/attendance row or day detail →
+  `/employees/:employeeId/shift-days/:shiftDayId/manage` for change/logical cancel.
+
+`ShiftManagementApi` is a real Angular HTTP consumer of the six approved methods,
+not an application fixture fallback. Runtime guards consume architect-owned
+`backend/fixture-slice/shift-management-contracts.mts` through erased type imports.
+The new synthetic identity is exactly ordered read7 + management7. Old ordered
+identity families and all seven read semantics remain; management rights do not
+enable stage/station arrival or exit commands.
+
+The server owns eligibility, future/policy/week/spacing/dependency/home decisions,
+site and paid/work minutes. UI forms validate presentation syntax, require full
+overnight end dates and conditional time-change reasons, and never submit
+site/source/paid-minute/actor fields. Cancellation is logical, not DELETE or
+attendance cancellation. Review has separate initially unchecked warning and
+whole-operation consents; edits invalidate the entire prepared review.
+
+CSV uses original `File.arrayBuffer()` bytes and explicit UTF-8/Windows-1255
+`text/csv` charset, never multipart, JSON or client re-encoding. The template is
+ASCII headers only, generated in memory without identities. Bounds are 1 MiB,
+100 rows and one selected employee. The private full-nine-digit/one-uppercase-X
+normalization belongs to the backend (§49.12); the browser does not rewrite it.
+Invalid previews cannot apply a valid-row subset; a ready command submits the
+whole preview token, not rows or CSV again.
+
+An unproved command result is UNKNOWN, not success inferred from inquiry rows.
+One employee quarantine spans create/change/cancel/import and interlocks native
+attendance uncertainty. Only opaque unresolved-attempt UUIDs survive reload;
+CSV, filenames, tokens, fingerprints, receipts and actor/employee bindings never
+enter browser storage/history. No reset/retry/reconcile transport was invented.
+Backend/operator admission is authoritative; browser markers are not authorization.
+
+### U49 isolated checks
+
+From `frontend/fixture-slice`:
+
+```powershell
+npm test -- --include=src/shift-management*.spec.ts
+npm run typecheck
+node node_modules/typescript/bin/tsc --noEmit -p tsconfig.spec.json
+npm test
+npm run build:dev -- --output-path=.angular/u49-dev
+npm run check:profile -- dev .angular/u49-dev/browser
+npm run build:test -- --output-path=.angular/u49-test
+npm run check:profile -- test .angular/u49-test/browser
+npm run build:production -- --output-path=.angular/u49-production
+npm run check:profile -- production .angular/u49-production/browser
+node checks/shift-management-browser-check.mjs
+```
+
+The output-path overrides isolate verification from published foundation/delivery
+artifacts; no dependency, test-runner, worker or budget overrides are used.
+The browser check owns loopback port0 servers/Chrome/profile and closes them.
+It reuses pure typed synthetic fixtures; **it does not import/run backend runtime
+or prove database atomicity, commit acknowledgment or independent readback**.
+It saves no screenshots or CSV/body logs. See `VERIFICATION.md` for actual
+outcomes, initial failures/fixes, measurements and pending integration.
+
+B49 real HTTP/protocol-double integration requires parent **backend SOURCE-STABLE**
+and remains separate from this UI-double verification. Oracle/O49 execution,
+partner transports, production enablement, full delivery pipeline and release
+approval are not provided here.

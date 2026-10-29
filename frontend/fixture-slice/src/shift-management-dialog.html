@@ -1,0 +1,59 @@
+<h2 mat-dialog-title id="management-review-heading" tabindex="-1">סקירה ואישור {{ action }}</h2>
+<mat-dialog-content>
+  <p class="environment">{{ data.native ? 'שינוי נתוני TEST אמיתי — לא ייצור ולא סימולציה' : 'סימולציה מבודדת בלבד — אין כתיבה ל־Oracle' }}</p>
+  <p>טרם בוצע שינוי. מספר משמרות בפעולה: <bdi dir="ltr">{{ data.effects.length }}</bdi>.</p>
+  @if (data.kind === 'csv-create') { <p><strong>כל השורות יחד בעסקה אחת — הכול או לא כלום. אין החלה חלקית.</strong></p> }
+  @for (effect of data.effects; track effect.row) {
+    <section class="effect" [attr.aria-label]="'השוואת שורה ' + effect.row">
+      <h3>שורה <bdi dir="ltr">{{ effect.row }}</bdi></h3>
+      <div class="comparison">
+        <article>
+          <h4>לפני — מצב אפקטיבי מהשרת</h4>
+          @if (effect.before; as state) {
+            <dl>
+              <div><dt>מצב</dt><dd>{{ state.status === 'cancelled' ? 'מבוטלת' : 'מתוכננת' }}</dd></div>
+              <div><dt>תחילה</dt><dd><bdi dir="ltr">{{ time(state.startLocal) }}</bdi></dd></div>
+              <div><dt>סיום</dt><dd><bdi dir="ltr">{{ time(state.endLocal) }}</bdi></dd></div>
+              <div><dt>פעילות</dt><dd><bdi dir="ltr">{{ state.activityCode }}</bdi></dd></div>
+              <div><dt>אתר נגזר</dt><dd><bdi dir="ltr">{{ state.siteId }}</bdi></dd></div>
+              <div><dt>מיקום</dt><dd>{{ state.workLocation === 'home' ? 'בית' : 'אתר' }}</dd></div>
+              <div><dt>דקות תשלום / עבודה</dt><dd><bdi dir="ltr">{{ state.paidMinutes }} / {{ state.workMinutes }}</bdi></dd></div>
+              <div><dt>מקור עסקי</dt><dd><bdi dir="ltr">{{ state.source }}</bdi></dd></div>
+            </dl>
+          } @else { <p>משמרת חדשה — אין רשומה קודמת.</p> }
+        </article>
+        <article>
+          <h4>אחרי — תוצאה מוצעת מהשרת</h4>
+          <dl>
+            <div><dt>מצב</dt><dd>{{ effect.after.status === 'cancelled' ? 'מבוטלת לוגית — היסטוריה נשמרת' : 'מתוכננת — פעילות' }}</dd></div>
+            <div><dt>תחילה</dt><dd><bdi dir="ltr">{{ time(effect.after.startLocal) }}</bdi></dd></div>
+            <div><dt>סיום</dt><dd><bdi dir="ltr">{{ time(effect.after.endLocal) }}</bdi></dd></div>
+            <div><dt>פעילות</dt><dd><bdi dir="ltr">{{ effect.after.activityCode }}</bdi></dd></div>
+            <div><dt>אתר נגזר</dt><dd><bdi dir="ltr">{{ effect.after.siteId }}</bdi></dd></div>
+            <div><dt>מיקום</dt><dd>{{ effect.after.workLocation === 'home' ? 'בית' : 'אתר' }}</dd></div>
+            <div><dt>דקות תשלום / עבודה</dt><dd><bdi dir="ltr">{{ effect.after.paidMinutes }} / {{ effect.after.workMinutes }}</bdi></dd></div>
+            <div><dt>מקור עסקי</dt><dd><bdi dir="ltr">{{ effect.after.source }}</bdi></dd></div>
+          </dl>
+        </article>
+      </div>
+    </section>
+  }
+  <fieldset class="consents">
+    <legend>נדרש אישור מפורש לכל אזהרה ולכל הפעולה</legend>
+    @for (warning of warnings; track warning) {
+      <mat-checkbox [id]="'management-warning-' + warning" [formControl]="checks.get(warning)!">
+        קראתי ואישרתי: {{ labels[warning] }}
+      </mat-checkbox>
+    }
+    <mat-checkbox id="management-operation-ack" [formControl]="operation">
+      {{ data.native ? 'קראתי ואני מאשר/ת את כל פעולת הכתיבה למסד TEST' : 'קראתי ואני מאשר/ת את כל פעולת הסימולציה המבודדת' }}
+    </mat-checkbox>
+  </fieldset>
+  <p>ללא הפעלת שותף חיצוני. סגירה או Escape לפני האישור אינם שולחים פקודה ואינם מבטלים משמרת.</p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button id="management-review-dismiss" mat-stroked-button type="button" mat-dialog-close>חזרה לעריכה — ללא עדכון</button>
+  <button id="management-review-confirm" mat-flat-button type="button" [disabled]="!canConfirm()" (click)="confirm()">
+    אישור {{ action }} {{ data.native ? 'במסד TEST' : 'בסימולציה בלבד' }}
+  </button>
+</mat-dialog-actions>

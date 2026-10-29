@@ -21,7 +21,7 @@ export class WorkspaceShell {
   readonly principal = input<IdentityResponseV1 | null>(null);
   readonly identityState = input<'loading' | 'ready' | 'error'>('loading');
   readonly identityMessage = input('');
-  readonly active = input<'detail' | 'list' | 'search' | 'schedule' | 'card' | 'attendance'>('detail');
+  readonly active = input<'detail' | 'list' | 'search' | 'schedule' | 'card' | 'attendance' | 'management'>('detail');
   readonly recheck = output<void>();
   readonly menu = viewChild.required<ElementRef<HTMLDialogElement>>('menu');
   readonly opener = viewChild.required<unknown, ElementRef<HTMLButtonElement>>('opener', { read: ElementRef });

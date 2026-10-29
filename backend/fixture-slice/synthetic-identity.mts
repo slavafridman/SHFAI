@@ -45,6 +45,9 @@ import type { StationArrivalReceiptV1 } from "./station-arrival-contracts.mts";
 import type { NativeStationArrivalReceiptV1 } from "./oracle-station-arrival-contracts.mts";
 import { stationExitMode } from "./native-station-exit-config.mts";
 import type { OracleStationExitApplication } from "./oracle-station-exit-application.mts";
+import { shiftManagementMode } from "./shift-management-config.mts";
+import { shiftManagementActorCapabilities } from "./shift-management-capabilities.mts";
+import { ShiftManagementApplication } from "./shift-management-application.mts";
 
 export interface CurrentRuntimeOptions {
   reader: CurrentShiftReadPort;
@@ -58,6 +61,7 @@ export interface CurrentRuntimeOptions {
   nativeStageArrival?: OracleStageArrivalApplication;
   nativeStationArrival?: OracleStationArrivalApplication;
   nativeStationExit?: OracleStationExitApplication;
+  shiftManagement?: ShiftManagementApplication;
 }
 
 export class SyntheticAdministratorProvider implements AuthenticationProvider {
@@ -67,6 +71,7 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
   private readonly stationArrivalEnabled: boolean;
   private readonly nativeStationArrivalEnabled: boolean;
   private readonly nativeExitEnabled: boolean;
+  private readonly managementEnabled: boolean;
   constructor(configuration: unknown) {
     const config = validateRuntimeConfig(configuration);
     if (config.authenticationMode !== "synthetic") throw new Error("Synthetic provider disabled");
@@ -76,6 +81,7 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
     this.stationArrivalEnabled = stationMode(configuration) === "isolated-fixture";
     this.nativeStationArrivalEnabled = stationMode(configuration) === "test-oracle-controlled";
     this.nativeExitEnabled = stationExitMode(configuration) === "test-oracle-controlled";
+    this.managementEnabled = shiftManagementMode(configuration) !== "disabled";
   }
   async authenticate(_request: AuthenticationRequest): Promise<PrincipalV1> {
     // No password collection, token parsing, credential verification or secret logging.
@@ -83,7 +89,8 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
       subject: "synthetic:administrator",
       displayName: "Synthetic Administrator (local/isolated only)",
       provider: "synthetic", synthetic: true, roles: ["Administrator"],
-      capabilities: ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read", "attendance:read",
+      capabilities: this.managementEnabled ? [...shiftManagementActorCapabilities] :
+        ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read", "shift-items:read", "employee:read", "attendance:read",
         ...(this.stageArrivalEnabled || this.nativeStageArrivalEnabled ? ["attendance-stage-arrival:prepare" as const, "attendance-stage-arrival:commit" as const] : []),
         ...(this.nativeStageArrivalEnabled ? ["attendance-stage-arrival:test-oracle-write" as const] : []),
         ...(this.stationArrivalEnabled || this.nativeStationArrivalEnabled ? ["attendance-station-arrival:prepare" as const, "attendance-station-arrival:commit" as const] : []),
@@ -104,8 +111,17 @@ export async function createRuntime(
   const stageMode = validateStageArrivalMode(configuration);
   const station = stationMode(configuration);
   const exitMode = stationExitMode(configuration);
+  const managementMode = shiftManagementMode(configuration);
+  if (managementMode === "test-oracle-controlled")
+    throw Error("Native shift-management factory not installed");
+  if (managementMode === "isolated-fixture" && (!(currentOptions?.shiftManagement instanceof ShiftManagementApplication) ||
+      currentOptions.shiftManagement.reference.mode !== "isolated-fixture" ||
+      currentOptions.shiftManagement.reference.dataSource !== "isolated-fixture"))
+    throw Error("Explicit isolated management application required");
+  if (managementMode === "disabled" && currentOptions?.shiftManagement)
+    throw Error("Management application requires explicit mode");
   if (currentOptions && Object.keys(currentOptions).some(k => !["reader", "clock", "searchReader", "myShiftsReader",
-    "shiftItemsReader", "employeeCardReader", "attendanceReader", "stageArrivalStore", "nativeStageArrival", "nativeStationArrival", "nativeStationExit"].includes(k)))
+    "shiftItemsReader", "employeeCardReader", "attendanceReader", "stageArrivalStore", "nativeStageArrival", "nativeStationArrival", "nativeStationExit", "shiftManagement"].includes(k)))
     throw new Error("Unsupported backend adapter");
   if (currentOptions?.stageArrivalStore && stageMode !== "isolated-fixture")
     throw new Error("Stage-arrival store requires explicit isolated mode");
@@ -219,7 +235,8 @@ export async function createRuntime(
       ].includes(error.code)) throw error;
       throw new SliceError("DEPENDENCY_UNAVAILABLE");
     }
-    validatePrincipal(principal, exitMode === "test-oracle-controlled" ? "native-exit" :
+    validatePrincipal(principal, managementMode !== "disabled" ? "shift-management" :
+      exitMode === "test-oracle-controlled" ? "native-exit" :
       station === "test-oracle-controlled" ? "native-station" : station === "isolated-fixture" ? "joint-fixture" : stageMode);
     if (principal.provider !== config.authenticationMode) throw new SliceError("UNAUTHENTICATED");
     if (config.authenticationMode === "synthetic" &&
@@ -235,6 +252,7 @@ export async function createRuntime(
     };
   }
   return Object.freeze({
+    shiftManagement: currentOptions?.shiftManagement,
     attendanceStationExitMode: exitMode,
     stationExitContext: (p: unknown, target: unknown, signal?: AbortSignal) => {
       if (!currentOptions?.nativeStationExit) stageFail("LIVE_WRITES_DISABLED");

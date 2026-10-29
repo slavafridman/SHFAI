@@ -182,7 +182,7 @@ export class CurrentShiftsPage {
             this.defer(() => {
               const input = this.host.nativeElement.querySelector<HTMLInputElement>('#filter-date');
               if (input) input.value = draft.dateText;
-              this.journey.restore(this.host.nativeElement);
+              this.restoreJourney();
             }, gen);
           } else this.fetch(draft.request, false, true);
           this.restore = null; return;
@@ -264,7 +264,7 @@ export class CurrentShiftsPage {
             window.scrollTo(0, origin.scroll);
           }, gen);
         } else if (focus) this.defer(() => this.focus('#results-heading', true), gen);
-        this.defer(() => this.journey.restore(this.host.nativeElement), gen);
+        this.defer(() => this.restoreJourney(), gen);
       },
       error: error => { if (this.active(gen)) this.handleError(error, focus); },
     });
@@ -319,27 +319,35 @@ export class CurrentShiftsPage {
     return new Intl.DateTimeFormat('he-IL', { weekday: 'long' }).format(dateFromWire(row.startLocal.slice(0, 10)));
   }
   openSchedule(row: CurrentShiftRowV1, event: MouseEvent): void { this.openDetail(row, event, true); }
+  private restoreJourney() {
+    return this.journey.restore(this.host.nativeElement, { selector: '#results-heading',
+      onMissing: () => this.announcement.set(`${this.message()} הרשומה המקורית אינה מופיעה בעמוד המעודכן. לא נבחר עובד/ת אחר/ת.`) });
+  }
   canReadItems(): boolean { const caps = this.principal()?.principal.capabilities;
     return !!caps?.includes('shift-items:read') && caps.includes('shift-day:read'); }
   openItems(row: CurrentShiftRowV1, event: MouseEvent): void { this.openDetail(row, event, false, true); }
-  openDetail(row: CurrentShiftRowV1, event: MouseEvent, schedule = false, items = false): void {
+  openDetail(row: CurrentShiftRowV1, event: MouseEvent, schedule = false, items = false, management = false): void {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
     event.preventDefault();
     const result = this.result();
     if (!result || !this.principal()?.principal.capabilities.includes(schedule ? 'my-shifts:read' : 'shift-day:read')) return;
     if (items && !this.canReadItems()) return;
+    if (management && !this.principal()?.principal.capabilities.includes('shift-management:prepare')) return;
     const a = result.applied;
     this.navigation.origin = {
       dataSource: this.principal()!.dataSource,
       request: { mode: 'at', attendanceDate: a.attendanceDate, currentTime: a.currentTime,
         ...(a.mokedCode ? { mokedCode: a.mokedCode } : {}), limit: result.page.limit, offset: result.page.offset, sort: a.sort },
-      evaluatedCurrent: this.evaluatedCurrent(), scroll: window.scrollY, opener: `${items ? 'items' : schedule ? 'schedule' : 'detail'}-${row.shiftDayId}`,
+      evaluatedCurrent: this.evaluatedCurrent(), scroll: window.scrollY, opener: `${management ? 'management' : items ? 'items' : schedule ? 'schedule' : 'detail'}-${row.shiftDayId}`,
       tableScroll: this.host.nativeElement.querySelector<HTMLElement>('.table-wrap')?.scrollLeft ?? 0,
       employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId,
       unit: { code: row.employee.unit.code, label: row.employee.unit.label, parentLabel: row.employee.unit.moked.label },
     };
     this.navigation.returning = true;
     this.navigation.detailOrigin = 'current-shifts';
+    if (management) {
+      void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'manage']); return;
+    }
     if (items) {
       void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'breaks-and-exceptions']);
       return;

@@ -53,6 +53,10 @@
       </div>
     }
     @if (row(); as data) {
+      @if (principal()?.principal?.capabilities?.includes('shift-management:prepare')) {
+        <a id="detail-management" mat-stroked-button
+          [routerLink]="['/employees', data.employeeId, 'shift-days', data.shiftDayId, 'manage']">ניהול משמרת — בדיקת כשירות</a>
+      }
       @if (canReadItems()) {
         <a id="detail-items" class="row-link" [href]="'/employees/' + data.employeeId + '/shift-days/' + data.shiftDayId + '/breaks-and-exceptions'"
           (click)="openItems($event)">הפסקות וחריגות חלקיות</a>

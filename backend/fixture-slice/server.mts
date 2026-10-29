@@ -28,6 +28,7 @@ import { createStationArrivalFixture } from "./station-arrival-fixture.mts";
 import { stationEnvironment } from "./native-station-arrival-config.mts";
 import { validateLimitedMetadataStartup, limitedMetadataWarning } from "./native-metadata-limited.mts";
 import { stationExitMode, exitEnvironment } from "./native-station-exit-config.mts";
+import { shiftManagementMode } from "./shift-management-config.mts";
 
 const resources = new WeakMap<Server, Array<OraclePool | NativePool>>();
 const shutdowns = new WeakMap<Server, Promise<void>>();
@@ -70,6 +71,10 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
   factories?: BackendPoolFactories) {
   const oracleMode = environment.SHF_ORACLE_CONFIG !== undefined;
   const config = loadEnvironmentConfig(environment);
+  // No partially wired native factory may open a read/write pool or fuse.
+  // Replaced by the actual factory in the next B49 integration subphase.
+  if (shiftManagementMode(config) !== "disabled")
+    throw Error("Management executable factory integration pending");
   const limitedMetadata = validateLimitedMetadataStartup(environment, config);
   if (config.deploymentClass === "production" || config.authenticationMode !== "synthetic")
     throw new Error("Executable backend requires explicit isolated synthetic mode");

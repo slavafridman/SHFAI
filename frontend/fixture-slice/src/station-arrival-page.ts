@@ -15,6 +15,7 @@ import { stationIdentity, stationSource, stationContext, stationValidation, stat
   type StationContext, type StationValidation, type StationReceipt, type StationCommand,
   type StationArrivalValidationV1 } from './station-arrival-contract';
 import { StationArrivalSession } from './station-arrival-session';
+import { ShiftManagementSession } from './shift-management-session';
 import { StageArrivalSession } from './stage-arrival-session';
 import { StationExitSession } from './station-exit-session';
 import { WorkspaceShell } from './workspace-shell';
@@ -99,10 +100,13 @@ export class StationArrivalPage {
     });
   }
   allowed() { return this.identityState() === 'ready' && stationIdentity(this.principal()); }
-  blocked() { return this.session.blocked(this.selection()) || this.stage.affects(this.selection()) || this.exit.affects(this.selection()); }
+  readonly management = inject(ShiftManagementSession);
+  blocked() { return this.management.affectsEmployee(this.selection()?.employeeId ?? null) ||
+    this.session.blocked(this.selection()) || this.stage.affects(this.selection()) || this.exit.affects(this.selection()); }
   private unresolved() {
     const s = this.selection();
-    return (s ? this.session.affects(s) : this.session.uncertain()) || this.stage.affects(s) || this.exit.affects(s);
+    return this.management.affectsEmployee(s?.employeeId ?? null) ||
+      (s ? this.session.affects(s) : this.session.uncertain()) || this.stage.affects(s) || this.exit.affects(s);
   }
   private active(gen: number) { return this.alive && gen === this.generation; }
   private invalidate() {

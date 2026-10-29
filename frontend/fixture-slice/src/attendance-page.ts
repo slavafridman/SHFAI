@@ -337,13 +337,14 @@ export class AttendancePage {
     void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'stage-arrival'],
       { state: { origin: 'attendance' } });
   }
-  open(row: AttendanceRowV1, event: MouseEvent, target: 'detail' | 'items' | 'schedule') {
+  open(row: AttendanceRowV1, event: MouseEvent, target: 'detail' | 'items' | 'schedule' | 'management') {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
     event.preventDefault();
     const caps = this.principal()?.principal.capabilities;
     if (!this.result() || !this.lastRequest || !row.shiftDayId ||
         !caps?.includes(target === 'schedule' ? 'my-shifts:read' : 'shift-day:read') ||
         (target === 'items' && !this.canReadItems())) return;
+    if (target === 'management' && !caps.includes('shift-management:prepare')) return;
     this.navigation.attendanceOrigin = { dataSource: this.principal()!.dataSource, request: structuredClone(this.lastRequest),
       scroll: window.scrollY, tableScroll: this.host.nativeElement.querySelector<HTMLElement>('.table-wrap')?.scrollLeft ?? 0,
       opener: `attendance-${target}-${row.shiftDayId}`, employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId,
@@ -353,6 +354,6 @@ export class AttendancePage {
       this.navigation.scheduleUpstream = 'attendance'; this.navigation.schedule = null;
       void this.router.navigate(['/my-shifts/selected', row.employee.employeeId], { state: { origin: 'attendance' } });
     } else void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId,
-      ...(target === 'items' ? ['breaks-and-exceptions'] : [])], { state: { origin: 'attendance' } });
+      ...(target === 'items' ? ['breaks-and-exceptions'] : target === 'management' ? ['manage'] : [])], { state: { origin: 'attendance' } });
   }
 }

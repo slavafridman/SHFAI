@@ -124,6 +124,11 @@
                     @for (indicator of indicators(row); track $index) { <li>{{ indicator }}</li> }
                   </ul></td>
                   <td role="cell" data-label="פרטים">
+                    @if (principal()?.principal?.capabilities?.includes('shift-management:prepare')) {
+                      <a class="row-link" [id]="'search-management-' + row.shiftDayId"
+                        [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'manage']"
+                        (click)="openDetail(row, $event, false, false, true)" [attr.aria-label]="'ניהול המשמרת של ' + row.employee.firstName + ' ' + row.employee.lastName">ניהול משמרת — בדיקת כשירות</a>
+                    }
                     @if (principal()?.principal?.capabilities?.includes('shift-day:read')) {
                       <a class="row-link" [id]="'search-detail-' + row.shiftDayId"
                         [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId]"

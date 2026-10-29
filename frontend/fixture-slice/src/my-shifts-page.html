@@ -10,6 +10,9 @@
       <shf-employee-name [principal]="principal()" [employeeId]="employee.employeeId"
         [firstName]="employee.firstName" [lastName]="employee.lastName" opener="card-schedule-header" />
       <span>{{ employee.unit.label }} · {{ employee.unit.moked.label }}</span>
+      @if (principal()?.principal?.capabilities?.includes('shift-management:prepare')) {
+        <a id="schedule-management-create" mat-stroked-button [routerLink]="['/employees', employee.employeeId, 'shift-management']">יצירה או ייבוא משמרות לעובד/ת הנבחר/ת</a>
+      }
       <span>{{ upstream() === 'attendance' ? 'מקור: בירור נוכחות' : upstream() === 'shift-search' ? 'מקור: תוצאת חיפוש' : upstream() === 'current-shifts' ? 'מקור: משמרות נוכחיות' : selector.mode === 'self' ? 'מקור: קישור עובד/ת מאומת בשירות' : 'מקור: קישור ישיר — בחירה שנבדקה בשירות' }}</span>
     </section>
     <form [formGroup]="form" (ngSubmit)="apply()">
@@ -92,6 +95,11 @@
                       @if (!row.activities.length) { <span>אין נתוני פעילות</span> }
                     </td>
                     <td data-label="פרטים">
+                      @if (principal()?.principal?.capabilities?.includes('shift-management:prepare')) {
+                        <a class="row-link" [id]="'schedule-management-' + row.shiftDayId"
+                          [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'manage']"
+                          (click)="openDetail(row, $event, false, true)" [attr.aria-label]="'ניהול משמרת ' + time(row.startLocal)">ניהול משמרת — בדיקת כשירות</a>
+                      }
                       @if (principal()?.principal?.capabilities?.includes('shift-day:read')) {
                         <a mat-stroked-button [id]="'schedule-detail-' + row.shiftDayId"
                           [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId]"

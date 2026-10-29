@@ -2,6 +2,7 @@ import { record } from "./contract-validation.mts";
 import { validateRuntimeConfig } from "./runtime-config.mts";
 import type { RuntimeConfig } from "./runtime-config.mts";
 import { validateLimitedMetadataStartup } from "./native-metadata-limited.mts";
+import { validateShiftManagementEnvironment } from "./shift-management-config.mts";
 
 export type AppEnvironment = "dev" | "test" | "production";
 export const deploymentClasses = Object.freeze({
@@ -25,6 +26,7 @@ export function appEnvironment(value: string | undefined): AppEnvironment | unde
 
 /** Server-only gate, before driver imports, pool creation or native allowance IO. */
 export function validateEnvironmentProfile(value: unknown, env: NodeJS.ProcessEnv): void {
+  validateShiftManagementEnvironment(value, env);
   const profile = appEnvironment(env.SHF_APP_ENV);
   const limitedFlag = env.SHF_TEST_ORACLE_METADATA_LIMITED_ENABLED;
   if (limitedFlag !== undefined && limitedFlag !== "true" && limitedFlag !== "false")

@@ -18,6 +18,9 @@
   <section id="card-region" class="card-region" aria-label="כרטיס תפעולי לקריאה בלבד" [attr.aria-busy]="state() === 'loading'">
     @if (state() === 'loading') { <mat-progress-bar mode="indeterminate" aria-label="טוענים כרטיס עובד/ת" /> }
     @if (result(); as data) {
+      @if (principal()?.principal?.capabilities?.includes('shift-management:prepare')) {
+        <a id="card-management-create" mat-stroked-button [routerLink]="['/employees', data.employeeId, 'shift-management']">יצירה או ייבוא משמרות לעובד/ת הנבחר/ת</a>
+      }
       <article class="operational-card">
         <header class="person-heading">
           <p class="eyebrow">עובד/ת נבחר/ת — לא זהות היישום</p>

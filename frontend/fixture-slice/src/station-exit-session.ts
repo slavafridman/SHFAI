@@ -41,6 +41,12 @@ export class StationExitSession {
       ({ commandId, kind: 'station-exit', mode: 'test-oracle-controlled' })) } : {};
   }
   uncertain() { return this.unresolved.size > 0; }
+  affectsEmployee(employeeId: string | null) {
+    return [...this.unresolved].some(attempt => {
+      const raw = this.bindings.get(attempt);
+      return !raw || !employeeId || (JSON.parse(raw) as string[])[0] === employeeId;
+    });
+  }
   affects(s: ArrivalSelection | null) {
     return [...this.unresolved].some(attempt => !s || !this.bindings.has(attempt) || this.bindings.get(attempt) === this.key(s));
   }

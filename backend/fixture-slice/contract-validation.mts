@@ -1,5 +1,6 @@
 import type { PrincipalV1, RawShiftDay, StartupConfig } from "./contracts.mts";
 import { SliceError } from "./errors.mts";
+import { shiftManagementActorCapabilities } from "./shift-management-capabilities.mts";
 
 export function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -50,8 +51,30 @@ export function validateConfig(value: unknown): StartupConfig {
       value.realProviderId.trim().length === 0 || value.syntheticOrgUnitIds !== undefined) return fail();
   return structuredClone(value) as StartupConfig;
 }
-export function validatePrincipal(value: unknown, stageMode?: "disabled" | "isolated-fixture" | "test-oracle-controlled" | "joint-fixture" | "native-station" | "native-exit"): asserts value is PrincipalV1 {
+export function validatePrincipal(value: unknown, stageMode?: "disabled" | "isolated-fixture" | "test-oracle-controlled" | "joint-fixture" | "native-station" | "native-exit" | "shift-management"): asserts value is PrincipalV1 {
   const fail = (): never => { throw new SliceError("UNAUTHENTICATED"); };
+  const management = stageMode === "shift-management" || record(value) && Array.isArray(value.capabilities) &&
+    value.capabilities.some(c => typeof c === "string" && c.startsWith("shift-management:"));
+  if (management) {
+    if (stageMode !== undefined && stageMode !== "shift-management" || !record(value) ||
+        !text(value.subject, 128, 1) || !text(value.displayName, 128) ||
+        !["synthetic", "real"].includes(String(value.provider)) ||
+        typeof value.synthetic !== "boolean" || value.synthetic !== (value.provider === "synthetic") ||
+        !Array.isArray(value.roles) || value.roles.some(role => role !== "Administrator") ||
+        new Set(value.roles).size !== value.roles.length || !Array.isArray(value.capabilities) ||
+        value.capabilities.some(c => !shiftManagementActorCapabilities.some(allowed => allowed === c)) ||
+        new Set(value.capabilities).size !== value.capabilities.length ||
+        !(value.employeeId === null || decimalId(value.employeeId)) ||
+        !record(value.resourceScope) || !units(value.resourceScope.orgUnitIds, false) ||
+        value.resourceScope.orgUnitIds.length > 100) return fail();
+    if (value.synthetic && (value.subject !== "synthetic:administrator" ||
+        value.displayName !== "Synthetic Administrator (local/isolated only)" ||
+        value.employeeId !== null || value.roles.length !== 1 || value.roles[0] !== "Administrator" ||
+        value.capabilities.length !== shiftManagementActorCapabilities.length ||
+        value.capabilities.some((c, i) => c !== shiftManagementActorCapabilities[i]) ||
+        value.resourceScope.orgUnitIds.length === 0)) return fail();
+    return;
+  }
   if (!record(value) || !text(value.subject, 128, 1) || !text(value.displayName, 128) ||
       typeof value.provider !== "string" || !["synthetic", "real"].includes(value.provider) ||
       typeof value.synthetic !== "boolean" || value.synthetic !== (value.provider === "synthetic") ||

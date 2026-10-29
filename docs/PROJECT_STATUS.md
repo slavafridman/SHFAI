@@ -58,6 +58,149 @@ UI uses typed HTTP doubles while backend changes; actual protocol integration
 waits for source-stable handoffs. No live O49 writes are authorized here.
 Parent serializes its checkpoint hunks without overwriting external edits.
 
+B49 checkpoint1 is implemented and tested but not the complete feature:
+four pure modules cover bounded CSV decoding/framing/normalization, civil-time/
+duration/week/interval rules, strict drafts/commands/consent and safe problems.
+Three focused suites pass59/59; strict TSC and full backend1660/1660 pass.
+Uppercase-X/full9 identity, duplicate/containment boundaries and UTF8/
+Windows1255 byte rules are tested without sequence/lock/business effects.
+No HTTP/runtime grants, shared admission, native snapshots/UoW or atomic
+apply/ACK-readback receipt are claimed at this checkpoint.
+Parent resumed the same backend owner on the remaining approved application,
+admission, fixture/native/HTTP integration; U49 continues independently against
+frozen contracts. Both are incomplete until full package verification.
+
+The old actual read-navigation gap is closed: independent QA used the
+foundation ZIP backend/browser with real Oracle/TNS via the typed read-pool
+factory seam (not fake responses).27 successful assertions cover historical
+28October attendance200/one exact synthetic row -> detail200/same resource ->
+Chrome Enter/Back exact opener, filters/page/RTL and scroll496->496.
+All attempts together13 GETs/65 SELECTs/19 READ ONLY+rollback/released leases;
+nonGET/native factory/DML/DDL/sequence/COMMIT0. Two harness readiness/port
+issues were corrected without application changes. Final F1/station/exit
+values preserved, owned pools/listeners/browser/temp junction safely closed.
+This proves only the selected navigation, not all seven live views or UAT.
+
+QA reporting incident: prerequisite inspection from the brief insufficiently
+redacted a TEST connection secret/internal identifiers into a tool response
+and owned temporary output. Values are not reproduced here. Temporary output
+was removed; retained journal, Git and ZIP exclude secrets. No public upload
+was performed or is known; this is not evidence of an application API leak.
+Tool/session history cannot be retracted. Account owner should rotate the
+affected TEST credential and update only approved private configuration before
+future live use; do not send new secrets in chat or commit them. No automatic
+credential change/DDL was authorized or performed; excluded environment file
+was not read. Backend/UI development uses isolated doubles and can continue.
+
+B49 checkpoint2 is SOURCE-STABLE for the isolated application/HTTP layer:
+all six methods/routes, one employee-wide admission namespace, exact consent,
+plan/reference drift, overlay/source/logical-cancel rules, dependency blockers,
+whole-file ordinary rollback/UNKNOWN and independent preservation readback.
+Focused111/111, strict TSC and full backend1712/1712 pass naturally.
+Native executable startup still explicitly rejects before pools/listening;
+no native persistence, metadata/sequence certification or live success is
+claimed yet. Parent resumed the same owner on that required native subphase.
+
+U49 is SOURCE-STABLE across43 frontend paths: all approved forms/CSV/APIs,
+strict identities/sources/receipts, warning+whole consent, history/quarantine/
+native interlocks and Hebrew/RTL. Owner full698/698 in50 files, app/spec
+TSC, all three isolated build/profile pairs and Chrome typed-HTTP checks pass.
+All four mocked workflows, invalid CSV, byte-preserving upload, focus/Escape,
+Back/Forward/reload and320px reflow are covered; measurements are bounded,
+not full WCAG/UAT. No actual backend/native integration has run yet.
+Independent Q49 frontend-only phase is now running while native B49 source
+changes; it must not import or launch unfinished backend modules.
+
+Independent UI phase is PARTIAL PASS:155/155 focused tests, app/spec TSC,
+the existing real Chrome typed-HTTP journey and430 independent guard
+assertions pass. Supplemental QA browser helper stopped at a source-seam
+preflight error before any server/browser; Q49-H01 is a verification blocker,
+not a product defect or request for application changes. Parent authorized
+one QA-owned temporary helper correction and bounded supplemental run for
+Windows1255 bytes, source/route denial, computed focus/error contrast and
+unchanged-row exact scroll/focus restoration. Full frontend acceptance and
+actual backend protocol integration are not yet claimed.
+The corrected helper also stopped before browser/server/HTTP: Q49-H02
+counted six runtime imports plus two JSDoc type references as eight runtime
+imports. This remains a QA harness blocker, not an observed product defect.
+Both owned temporary helpers were removed. At that checkpoint all supplemental
+assertion groups were NOT RUN. Parent resumed QA with the changed prerequisite:
+use the already installed TypeScript parser to distinguish actual runtime
+import nodes from comments/types, preserve strict seam assertions, then run
+one supplemental browser journey. No application edits, assertion weakening,
+new dependencies or live access are authorized by that correction.
+The AST preflight subsequently passed and one supplemental Chrome run
+executed. Nine identity/route/context-source denial cases passed with zero
+preparation/preview/command/native-attendance requests; synthetic HTML-shaped
+context text stayed literal. Five reflow samples and computed error/body
+contrast thresholds of at least4.5:1 passed; numeric ratios were not emitted.
+Keyboard focus and center hit-testing passed, but Q49-H03 stopped the run:
+the helper incorrectly required the input itself to have a solid outline,
+whereas installed Material paints an alternate focused field boundary.
+This does not demonstrate a missing focus indicator or application defect.
+Actual rendered focus contrast/pixel proof remains incomplete; Windows1255
+byte/charset and unchanged-row exact Back restoration remain NOT RUN.
+Owned server/browser/profile/helpers were cleaned, with no repository edits
+or new credential reads. Parent authorized only those three remaining groups,
+using the actual rendered Material focus mechanism rather than a prescribed
+CSS property. At that checkpoint Phase A remained PARTIAL.
+
+Q49-UI-PHASE-A subsequently completed with bounded frontend PASS against
+unchanged U49/49-v0.1. The HTTP double received all89 original Windows1255
+bytes unchanged with the explicit charset; the deliberately invalid
+non-ASCII personal-ID field produced an invalid preview and zero commands.
+Unchanged-row Back restored the exact filter/page/sort query at offset25,
+vertical scroll370->370, RTL scroll-80->-80 and the original opener focus.
+The sampled invalid-date field's actual Material notched borders changed
+1px->2px on keyboard focus. Computed and in-memory screenshot-pixel contrast
+was6.4606:1 against both adjacent backgrounds, with visibility/hit-testing.
+Three AST/syntax preflights passed. Two initial browser setups failed before
+CSV dispatch (encoding selection and missing control readiness wait);
+TEMP-only setup corrections preserved the semantic assertions. The final
+three-group browser run exited0 naturally. Owned servers/browser/profiles/
+helpers were removed; no screenshot file, repository edit or new secret read.
+H01/H02/H03 remain historical harness failures, not product defects.
+This closes frontend Phase A only: HTTP doubles are not actual parser,
+backend protocol, Oracle persistence, full WCAG/AT/UAT or release evidence.
+
+B49 checkpoint3 is SOURCE-STABLE for the native Oracle COMPONENT only:
+parameterized physical snapshot collector, bounded full-interval membership,
+exact baseline/overlay/SOURCE SQL and six-callback native transaction kernel.
+NOWAIT ordered locks, locked reread, real affected rows, admitted sequence
+allocation, atomic file commit/rollback, static-default rejection before
+NEXTVAL, thirteen DATE guards and cancellation/drain/UNKNOWN are exercised
+with isolated protocol doubles. The prior TS2571 WIP diagnostic is repaired
+by value narrowing; final TSC passed. Native45/45, combined management156/156
+and full backend1757/1757 passed naturally with zero skipped.
+Changed native component paths are the oracle-shift-management snapshot,
+SQL and UoW modules, their double/test, management errors and backend README.
+No live Oracle, usable certificate, capacity proof or native receipt is claimed.
+The kernel supplies COMMIT acknowledgment only. Remaining B49 implementation:
+policy/catalog/site/dependency/partner evidence assembly; operation-separated
+metadata/default/sequence certification; restart-surviving shared allowance/
+UNKNOWN quarantine; fixture/native loaders, independent readback integration
+and executable/server factories. Existing startup guards still reject the
+unfinished native path; native integration must wait for final source-stable.
+
+Current action is a short publication hold on these verified source-stable
+components: collect exact cumulative B49/U49 manifests, publish only assigned
+feature files and the parent's checkpoint hunks, then immediately resume the
+remaining approved B49 adapters. No new user approval is needed for that coding.
+Preserve external Docker preparation, user report/status hunks and original
+unrelated changes; do not stage the entire checkpoint blindly. The developer
+ZIP still represents foundation30f318e, not this unintegrated component work.
+Local Git reconciliation after that handoff: branch main, HEAD8d05f2d,
+empty index, no conflict paths and cached origin/main ahead/behind0/0.
+Remote was not queried; this is not fresh publication verification. Original
+unrelated dirty paths, the user report, Docker preparation and B49/U49 work
+remain untouched. No staging, commit, fetch/push or build was performed;
+scoped publication waits for the active implementation/verification handoffs.
+The QA prerequisite brief read also repeated the prior sensitive-output
+handling issue; offline work must not reread connection-reference sections.
+The existing credential-rotation advisory covers affected session history;
+no values are repeated or placed in Git/ZIP/journals, and future live use
+remains separate from isolated development.
+
 At08:40+02 the user requested continuation. Both outstanding independent
 packaging QA and single Oracle probe agents failed with agent-service401
 organization/API authorization before their first turn; zero QA commands

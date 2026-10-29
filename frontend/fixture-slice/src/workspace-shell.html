@@ -29,6 +29,9 @@
       @if (identity.dataSource === 'oracle' && identity.principal.capabilities.includes('attendance-station-exit:test-oracle-write')) {
         <strong class="source-label"> · כתיבה בפועל למסד TEST. Controlled TEST Oracle write — יציאה רגילה מעמדה בלבד; שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור. ללא CTI או הפעלת שותף חיצוני. שבעת הבירורים נשארים לקריאה בלבד; שתי פקודות ההגעה מושבתות.</strong>
       }
+      @if (identity.principal.capabilities.includes('shift-management:prepare')) {
+        <strong class="source-label">{{ identity.dataSource === 'oracle' ? ' · ניהול משמרות: כתיבה מבוקרת במסד TEST בלבד, כפוף להקשר ואישור. שבעת הבירורים נשארים לקריאה בלבד; פקודות נוכחות אינן מופעלות אוטומטית.' : ' · ניהול משמרות בסימולציה מבודדת בלבד — אין כתיבה ל־Oracle.' }}</strong>
+      }
     } @else {
       <strong id="identity-heading" tabindex="-1">
         {{ identityState() === 'loading' ? 'טוען את פרטי מצב ההדגמה…' : 'זהות הדגמה לא זמינה — אין הנחת מנהל מערכת.' }}
@@ -59,6 +62,7 @@
           [attr.aria-current]="active() === 'schedule' ? 'page' : null">המשמרות שלי</a>
       } @else { <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>אין הרשאה זמינה</small></span> }
       @if (active() === 'detail') { <span class="nav-item active" aria-current="page">פרטי משמרת</span> }
+      @if (active() === 'management') { <span class="nav-item active" aria-current="page">ניהול משמרות — עובד/ת נבחר/ת</span> }
       @if (principal()?.principal?.capabilities?.includes('employee:read')) {
         <a class="nav-item" routerLink="/employee-card" [class.active]="active() === 'card'"
           [attr.aria-current]="active() === 'card' ? 'page' : null">כרטיס עובד/ת</a>
@@ -93,6 +97,7 @@
         [attr.aria-current]="active() === 'schedule' ? 'page' : null">המשמרות שלי</a>
     } @else { <span class="nav-item unavailable" aria-disabled="true">המשמרות שלי <small>אין הרשאה זמינה</small></span> }
     @if (active() === 'detail') { <span class="nav-item active" aria-current="page">פרטי משמרת</span> }
+    @if (active() === 'management') { <span class="nav-item active" aria-current="page">ניהול משמרות — עובד/ת נבחר/ת</span> }
     @if (principal()?.principal?.capabilities?.includes('employee:read')) {
       <a class="nav-item" routerLink="/employee-card" (click)="closeMenu()" [class.active]="active() === 'card'"
         [attr.aria-current]="active() === 'card' ? 'page' : null">כרטיס עובד/ת</a>

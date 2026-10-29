@@ -1,0 +1,20 @@
+:host { display: block; min-width: 0; color: var(--navy); }
+.environment { border-inline-start: 4px solid var(--primary); padding-inline-start: 12px; font-weight: 600; }
+.effect { border-block-start: 1px solid var(--border); padding-block: 8px; }
+h3, h4 { margin-block: 8px; }
+.comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+article { background: var(--soft); border-radius: 8px; padding: 12px; min-width: 0; }
+dl { margin: 0; }
+dl > div { padding-block: 5px; border-block-end: 1px solid var(--border); }
+dt { font-weight: 600; }
+dd { margin: 0; overflow-wrap: anywhere; }
+.consents { display: grid; gap: 12px; border: 1px solid var(--border); margin-block: 16px; padding: 12px; min-width: 0; }
+mat-checkbox { min-height: 48px; }
+mat-dialog-content { overflow-wrap: anywhere; }
+mat-dialog-actions { gap: 8px; padding: 16px; }
+button { white-space: normal; height: auto; padding-block: 10px; }
+:focus-visible, [tabindex="-1"]:focus { outline: 3px solid #002f65; outline-offset: -3px; }
+@media (max-width: 600px) {
+  .comparison { grid-template-columns: minmax(0, 1fr); }
+  mat-dialog-actions { flex-direction: column; align-items: stretch; }
+}

@@ -11,6 +11,47 @@ import type { StageArrivalAccessPolicy } from "./stage-arrival-contracts.mts";
 import { stageFail } from "./stage-arrival-errors.mts";
 import { unitCode } from "./current-shifts-validation.mts";
 import type { StationArrivalAccessPolicy } from "./station-arrival-contracts.mts";
+import type { ShiftManagementAccessPolicy, ShiftManagementModeV1 } from "./shift-management-contracts.mts";
+import { validatePrincipal } from "./contract-validation.mts";
+import { shiftFail } from "./shift-management-errors.mts";
+
+export function shiftManagementAccessPolicy(mode: ShiftManagementModeV1): ShiftManagementAccessPolicy {
+  const validate = (p: import("./contracts.mts").PrincipalV1) => {
+    if (mode === "disabled") shiftFail("LIVE_WRITES_DISABLED");
+    try { validatePrincipal(p, "shift-management"); }
+    catch { shiftFail("UNAUTHENTICATED"); }
+  };
+  const requirePrepare = (p: import("./contracts.mts").PrincipalV1) => {
+    validate(p);
+    if (!p.capabilities.includes("shift-management:prepare")) shiftFail("FORBIDDEN");
+    if (mode === "test-oracle-controlled" && (!p.synthetic || p.provider !== "synthetic" ||
+        !p.capabilities.includes("shift-management:test-oracle-write"))) shiftFail("FORBIDDEN");
+  };
+  return {
+    requirePrepare,
+    requireCommand(p, kind) {
+      requirePrepare(p);
+      if (kind === "csv-create") {
+        this.requireCsvPreview(p);
+        if (!p.capabilities.includes("shift-management:csv-apply")) shiftFail("FORBIDDEN");
+      } else {
+        const capability = kind === "create" ? "shift-management:create" :
+          kind === "change" ? "shift-management:change" : "shift-management:cancel";
+        if (!p.capabilities.includes(capability)) shiftFail("FORBIDDEN");
+      }
+    },
+    requireCsvPreview(p) {
+      requirePrepare(p);
+      if (!p.capabilities.includes("shift-management:csv-preview") ||
+          !p.capabilities.includes("shift-management:create")) shiftFail("FORBIDDEN");
+    },
+    authorizedTeamIds(p) {
+      validate(p);
+      if (p.resourceScope.orgUnitIds.some(id => !unitCode(id))) shiftFail("UNAUTHENTICATED");
+      return [...p.resourceScope.orgUnitIds];
+    },
+  };
+}
 
 export const stationArrivalAccessPolicy: StationArrivalAccessPolicy = {
   requirePrepare(p) {

@@ -12,6 +12,7 @@ import { exitIdentity, exitContext, exitValidation, exitCommand, exitReceipt, ex
   type StationExitContextV1, type StationExitValidationV1, type StationExitReceiptV1,
   type StationExitCommitV1 } from './station-exit-contract';
 import { StationExitSession } from './station-exit-session';
+import { ShiftManagementSession } from './shift-management-session';
 import { StageArrivalSession } from './stage-arrival-session';
 import { StationArrivalSession } from './station-arrival-session';
 import { StationArrivalDialog, type StationArrivalDialogData } from './station-arrival-dialog';
@@ -81,11 +82,14 @@ export class StationExitPage {
     });
   }
   allowed() { return this.identityState() === 'ready' && exitIdentity(this.principal()); }
+  readonly management = inject(ShiftManagementSession);
   private unresolved() {
     const s = this.selection();
-    return this.session.affects(s) || this.stage.crossAffects(s) || this.station.crossAffects(s);
+    return this.management.affectsEmployee(s?.employeeId ?? null) ||
+      this.session.affects(s) || this.stage.crossAffects(s) || this.station.crossAffects(s);
   }
-  blocked() { return this.session.blocked(this.selection()) || this.stage.crossAffects(this.selection()) || this.station.crossAffects(this.selection()); }
+  blocked() { return this.management.affectsEmployee(this.selection()?.employeeId ?? null) ||
+    this.session.blocked(this.selection()) || this.stage.crossAffects(this.selection()) || this.station.crossAffects(this.selection()); }
   private active(gen: number) { return this.alive && gen === this.generation; }
   private invalidate() {
     this.generation++; this.work?.unsubscribe();
