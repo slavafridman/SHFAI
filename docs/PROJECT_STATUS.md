@@ -182,13 +182,23 @@ UNKNOWN quarantine; fixture/native loaders, independent readback integration
 and executable/server factories. Existing startup guards still reject the
 unfinished native path; native integration must wait for final source-stable.
 
-Current action is a short publication hold on these verified source-stable
-components: collect exact cumulative B49/U49 manifests, publish only assigned
-feature files and the parent's checkpoint hunks, then immediately resume the
-remaining approved B49 adapters. No new user approval is needed for that coding.
-Preserve external Docker preparation, user report/status hunks and original
-unrelated changes; do not stage the entire checkpoint blindly. The developer
-ZIP still represents foundation30f318e, not this unintegrated component work.
+Component milestone7d20dd38050c96f3f8ae1d6757d4076da5094d29 is published:
+exactly78 paths (34 backend,43 frontend, parent-only checkpoint additions).
+Privacy/whitespace and scoped closure518 imports/20 template-style references/
+12 links passed. Standard verifier passed31 CSVs/10000 references/454 hashes/
+430 links/288 anchors, with20 historical captures unchanged. Actual remote
+matched HEAD, ahead/behind0/0, empty index and no conflicts were verified.
+All32 unrelated dirty paths were preserved, including Docker/root README,
+the unread user report and three external checkpoint hunks (+133/-2).
+Full suites/builds were not repeated during publication; the source-stable
+owner/QA results above are the applicable evidence. This is an incremental
+component commit, not completed native integration or release approval.
+Publication hold is lifted. Next safe action is the same B49 owner's remaining
+approved evidence/certification/persistent-authority/loaders/server/readback
+implementation, followed by independent actual-protocol verification. No new
+user approval is needed for that coding. Keep canonical49-v0.1 and existing
+attendance behavior unchanged; no live Oracle before the rotation prerequisite.
+The developer ZIP still represents foundation30f318e, not this component work.
 Local Git reconciliation after that handoff: branch main, HEAD8d05f2d,
 empty index, no conflict paths and cached origin/main ahead/behind0/0.
 Remote was not queried; this is not fresh publication verification. Original
