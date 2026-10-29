@@ -1,5 +1,546 @@
 # SHF-STATION-EXIT-UI-28 — frontend verification (28 October 2026)
 
+## Approved Vitest4.0.9 patch — 29 October, SOURCE-STABLE / delivery PASS
+
+**State: approved dependency patch and two actual delivery validations PASS;
+SOURCE-STABLE for parent final artifact QA/publication.** This supersedes the
+unresolved delivery status in historical investigations below. It does not
+erase their failures or claim that all Windows/IPC scheduling causes are
+known. No more frontend source changes are planned in this handoff.
+
+The user explicitly approved **Vitest4.0.8→4.0.9** on29October. This is a
+test-tool patch only. `package.json` now pins exactly4.0.9; no Angular,
+Material/CDK, TypeScript, Vite, Node/npm or backend driver version is selected
+or upgraded. Existing threads/maxWorkers1 configuration and Angular test target
+remain unchanged. Earlier failed thread/fork experiments below remain
+historical failed evidence, not passing retries.
+
+### Upstream boundary and installed compatibility
+
+Caller-provided official evidence: Vitest
+[`#9027`](https://github.com/vitest-dev/vitest/pull/9027), commit
+`5e750f4ba829700120a865db6f2b72fa59ca6f0b`, published in4.0.9, changes the
+outer startup deadline which previously enclosed a longer inner deadline.
+Direct inspection of installed4.0.9 `cli-api.D48wY175.js` confirms
+`WORKER_START_TIMEOUT=9e4`, `START_TIMEOUT=6e4`, `STOP_TIMEOUT=6e4`.
+These are **upstream published defaults**, not a local timer patch, raised
+workspace timeout or disabled failure gate. No claim is made that every
+possible Windows scheduling/IPC issue has been diagnosed.
+
+Direct resolved package-file reads confirm vitest and all seven installed
+`@vitest/{expect,mocker,pretty-format,runner,snapshot,spy,utils}` packages4.0.9.
+Angular build/CLI21.2.27, core21.2.25, Material/CDK21.2.14, TypeScript5.9.3
+and Vite7.3.6 remain unchanged. Installed Angular build peer range is
+`vitest:^4.0.8`; installed Vitest supports Node24 and Vite7. Node24.21.0 /
+npm11.19.0 remain the approved installed runtime/tooling.
+
+### Installation integrity findings
+
+Manifest pin was changed with apply_patch. Npm generated the lockfile with
+`npm install --package-lock-only --ignore-scripts`; the first semantic review
+showed exactly nine changed records: root pin plus eight Vitest-family package
+entries, no unrelated resolutions. Standard `npm install` and then explicit
+`npm install --save-dev --save-exact vitest@4.0.9` reported up-to-date, but direct
+file reads still found4.0.8. No runtime test was counted against those stale
+files. `npm ls` alone was not treated as sufficient installed-version proof.
+
+The generated npm hidden metadata incorrectly described4.0.9 while package
+files remained4.0.8. Targeted `npm config get package-lock-only` and `dry-run`
+both returnedfalse; no npmrc or general environment dump was read. Using the
+**already installed npm Arborist API**, `loadActual({forceActual:true})`
+read the actual filesystem and normal `reify()` installed the eight approved
+family packages. `ignoreScripts:true` avoided running unrelated native install
+scripts; no peer-force, vendor code edit, dependency override, node_modules
+reset, npm ci or manual versioned-lock edit was used.
+
+That cache-refresh reification caused transient normalization differences for
+three optional `@emnapi/{core,runtime,wasi-threads}` records. A broad unchanged-
+lock assertion failed, prompting a cold baseline review rather than accepting
+an unreviewed lock change. This was an installation-review failure, not a
+product test failure.
+
+The parent explicitly authorized read-only
+`git show ef1554718eb49e894a53d8148cf74f5d1a3f9ee3:frontend/fixture-slice/package-lock.json`
+into a unique owned temporary directory. Current approved package.json plus
+that published lock were copied there; normal
+`npm install --package-lock-only --ignore-scripts --include=optional` generated
+the cold lock without node_modules. Every package record was compared against
+the baseline. **Final scope: nine changed records (root pin + eight Vitest
+family entries),565 unrelated records unchanged.** No new transitive package
+or unrelated resolution change is present.
+
+The authoritative baseline actually contains **none** of the three @emnapi
+records, and neither does the cold result. The first cold review's guard
+incorrectly assumed they had to be present and failed after showing the
+correct nine-record diff. Corrected comparison accepts identical absence;
+the generated lock was copied whole, not edited by JSON surgery. It also
+confirmed that the preceding CLI-normalized root lock already semantically
+matched the cold result. Both exact owned cold directories/files were removed;
+neither cold resolution created node_modules or changed installed dependencies.
+No manual optional-record restoration or wholesale install was performed.
+
+Npm's unchanged audit summary reports9 vulnerabilities
+(3moderate/5high/1critical); no automatic audit fix or out-of-scope upgrade
+was attempted.
+
+The initial PowerShell5 ConvertFrom-Json helper could not parse npm's empty
+root-package key and stopped before running npm; the equivalent Node JSON
+review was used. Subsequent metadata-review helpers failed closed when
+observing the unrelated normalization. None were hidden or counted as PASS.
+
+### First-attempt actual Angular checks on verified4.0.9
+
+All commands from `frontend/fixture-slice`, existing threads/maxWorkers1:
+
+| Command | Result |
+|---|---|
+| `npm test -- --include src/environment.spec.ts` |3/3 PASS,1 file, natural exit0,7.92s |
+| `npm test` |621/621 PASS,42 files, natural exit0,25.57s |
+| `npm run typecheck` |Strict app TSC natural exit0,1.88s |
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.spec.json` |Strict spec TSC natural exit0,2.22s |
+
+No failed test startup or test retry occurred after actual4.0.9 files and vendor
+deadlines were verified. No tests were removed/added, assertions weakened,
+isolation changed or success-shaped forced exit used. Normal frontend dist
+was not rebuilt by these checks. Canonical C49 was reported source-stable by
+the parent before the checks.
+
+### Two actual delivery-context validations and final artifact
+
+Devop SOURCE-STABLE acknowledgement for all six tool/doc files and C49
+canonical/source stability were received before delivery execution. Source
+and templates remained frozen. The sole executor then ran this **actual
+entrypoint twice sequentially**, not an isolated worker proxy:
+
+```powershell
+powershell.exe -NoProfile -File scripts/Build-Shifter.ps1 -Profile test -Validation
+```
+
+| First-attempt invocation | Result |
+|---|---|
+| Delivery run1 |Natural exit0,62.18s; backend1601/1601,fail0; frontend621/621,42 files |
+| Delivery run2 |Natural exit0,62.07s; backend1601/1601,fail0; frontend621/621,42 files |
+
+Both runs retained all installed-version, backend/frontend TSC, full test,
+isolated TEST build/profile, runtime import-closure, canonical ZIP whitelist
+and production refusal gates. The packaged missing-real-provider and
+synthetic-production checks passed with **zero pool/service factory calls**.
+No retry, timeout-as-success, skipped assertion or forced command termination
+was used. The runtime patch's published90/60s defaults remained unmodified.
+
+Both produced the owned canonical developer snapshot:
+
+```text
+.shifter-developer-delivery/test/shifter-developer-test.zip
+files127; ZIP bytes570729; expanded bytes2016442; runtime closure92
+```
+
+Final ZIP SHA256:
+`FF6ABF3510365B284EC83EEA31F011E0D971A8760E20CEED1C55A1B3272F2614`.
+Independent read-only review of the final raw entry names found **zero
+backslashes**, traversal/absolute paths, duplicates or case collisions.
+All127 entry contents matched both staging and their current authoritative
+source: backend runtime/manifests/examples, isolated browser build, license
+notice, root BUILD README and the developer distribution README template.
+Thus the new artifact includes the frozen current tool documentation rather
+than the old compile-only snapshot's documentation.
+
+`npm run check:profile -- test ../../.shifter-developer-delivery/test/stage/frontend/browser`
+passed on the staged payload, preserving exact public keys
+`{appEnv,apiBasePath}` and `/api`.
+
+The normal/pilot-owned frontend dist was not used as build output. Its29-file
+tree hash was identical before/after both pipelines:
+`0bf4fa8e6eed98ab4c61ac502a3d0afcf4cbf69f5bb303c5b09bddc6d497e336`.
+After each pipeline and final review, **zero newly retained owned runner/
+esbuild services** were observed. Unrelated existing PIDs23452/9152 remained
+untouched and present. No helper is left running by this owner.
+
+### Final changed paths and limitations
+
+Exactly four source paths for this approved patch:
+
+```text
+frontend/fixture-slice/package.json
+frontend/fixture-slice/package-lock.json
+frontend/fixture-slice/README.md
+frontend/fixture-slice/VERIFICATION.md
+```
+
+The existing test configuration stays threads/maxWorkers1 with no net change.
+No app component/API, backend source, canonical, root/delivery-tool/profile
+checker, dependency override, vendor patch or Git write was made. Only the
+explicitly authorized read-only Git lock-baseline operation was performed.
+Generated staging/ZIP outputs are the standard delivery script's owned
+artifacts, not extra application source edits.
+
+Parent final artifact QA/publication remains separate. These results validate
+the approved upstream patch in the observed standalone and actual Windows
+delivery contexts; they do not establish an OS scheduling root cause,
+performance SLA or all-future-startup guarantee. No DB/DNS/fuse, production
+asset server, real authentication provider, deployment, actual live pilot,
+manual AT, UAT or full WCAG claim is part of this test-tool patch.
+
+## QA28B-02 actual Angular forks invocation — 29 October, SESSION627
+
+**State: actual supported alternative FAILED; diagnostic evidence
+SOURCE-STABLE, packaging/tooling gate BLOCKED.** The parent separately
+authorized one complete Angular caller/RPC invocation to remove the isolated
+probe's fidelity limitation. No isolated worker probe was run in this step.
+
+The existing supported config was temporarily changed to forks/maxWorkers1,
+with no timeout, test-selection, isolation, assertion, dependency or error-gate
+weakening. The one actual command, from `frontend/fixture-slice`, was:
+
+```powershell
+npm test -- --include src/environment.spec.ts
+```
+
+It invoked the unchanged package script:
+
+```text
+ng test --watch=false --include src/environment.spec.ts
+```
+
+Actual Angular build21.2.27 loaded `vitest.config.ts` and completed the selected
+test bundle in16.534s. Vitest4.0.8 then reported:
+
+```text
+Error: [vitest-pool]: Timeout starting forks runner.
+node_modules/vitest/dist/chunks/cli-api.BQ-bjcRi.js:7235:65
+Test Files  no tests
+Tests       no tests
+Errors      1 error
+Start at    09:13:10
+Duration    5.02s
+transform/setup/collect/tests/environment/prepare: all0ms
+```
+
+**FAIL: zero tests collected, one unhandled startup error.** This is evidence
+from the real Angular/Vitest caller including its parent RPC routing, not
+from the limited standalone probe. It does not diagnose the OS cause or mean
+that forks is an unsupported API. No `ERR_INPUT_TYPE_NOT_ALLOWED` was printed.
+The installed five-second worker deadline remained unchanged.
+
+The command remained alive after its failure summary; it did **not** return
+a natural exit code. The wrapper's planned natural-exit marker was never
+reached. Its failed owned subtree was observed as:
+
+```text
+node runner16816 → esbuild11224
+node runner16816 → node worker24632
+```
+
+The owned SESSION627 process tree was stopped for failure cleanup only.
+That cleanup is not counted as a passing command or natural exit0.
+Pre-existing unrelated Angular/esbuild PIDs23452/9152 were not targeted.
+
+Config was restored to its original threads/maxWorkers1 content. Per the
+first-failure rule, no further focused run, full621 run, app/spec TSC or
+Build-Shifter execution followed. There is no validated forks mitigation
+and no two-run delivery comparison result. Canonical C49 work was not tested
+or packaged during its concurrent writing window.
+
+Net follow-up changes are only frontend README/VERIFICATION; the candidate
+config edit was restored. No application, API, backend, canonical, dependency,
+vendor, delivery script, profile checker, normal dist, DB/DNS or live-write
+change is included. Parent should route this concrete real-harness startup
+failure to the Windows/Node/Vitest tooling investigation; neither an incomplete
+probe nor the old duplicate-CSS issue explains away this observed failure.
+No retry, package PASS or release approval is implied.
+
+## QA28B-02 narrow harness diagnosis — 29 October, SESSION625
+
+**State: BLOCKED with failure-path evidence; no corrected-probe authorization
+condition established.** This is the one additional harness diagnosis
+authorized by the parent, not a retry of the full suite/delivery pipeline.
+The restored threads/maxWorkers1 source config was not edited.
+
+The earlier probe explicitly provided `execArgv:[]` to the installed exported
+`ForksPoolWorker`. Read-only inspection confirms its `start()` forwards that
+array to `child_process.fork(fileEntrypoint, [], {execArgv:this.execArgv,...})`.
+Thus the proposed accidental default inheritance of the invoking
+`--input-type=module` flag is not established by this harness.
+
+This diagnostic used the same explicit empty child execArgv, emitted events
+immediately and captured child stderr **codes only**. Native stderr bytes
+were counted, not printed. The installed Angular plugin's root and generated
+project resolved forks/maxWorkers1 via an in-memory override; source config
+remained untouched. Its complete safe event output was:
+
+```json
+{"event":"configuration","ms":0,"rootPool":"forks","rootWorkers":1,"projectPool":"forks","projectWorkers":1,"explicitExecArgvCount":0,"childFileEntry":true}
+{"event":"start-sent","ms":15}
+{"event":"spawn","ms":16}
+{"event":"deadline","ms":5018,"budgetMs":5000,"messages":0,"stderrBytes":0}
+{"event":"probe-failed","ms":5018,"classification":"installed-budget-exceeded"}
+{"event":"exit","ms":5028,"code":null,"signal":"SIGTERM"}
+{"event":"worker-cleaned","ms":5028}
+{"event":"context-closed","ms":5029,"messages":0,"stderrBytes":0,"stderrCodes":[]}
+```
+
+Command returned **exit1**. The exit signal shown is from normal pool-worker
+cleanup after failure, not a pre-deadline child crash. No
+`ERR_INPUT_TYPE_NOT_ALLOWED` or other stderr code was emitted. There were
+zero native response/RPC messages before the unchanged5000ms deadline.
+Spawn at16ms proves child creation, not successful JS entry/environment setup.
+
+### Exact retained probe and API-context limitations
+
+Executed probe: **SESSION625**, an in-memory ESM script supplied to
+`node --input-type=module -` from `frontend/fixture-slice`.
+An equivalent review copy is retained at
+`frontend/fixture-slice/.angular/qa28b02-forks-diagnostic.mjs` (ignored temporary
+artifact, not a new suite/test source). Only its relative installed-plugin
+import is adjusted for the file's `.angular` location. **That file was not
+executed again.** The parent should not rerun it without a new bounded
+diagnostic decision after this failure.
+
+Public APIs: `createVitest`, `ForksPoolWorker`, `distDir` from `vitest/node`;
+installed Angular `createVitestConfigPlugin`. The worker received the actual
+project and its serialized config, installed dist path, method run,
+environment jsdom, explicit `execArgv:[]`, inherited environment (not logged),
+then the native `start` message with reportMemory=false.
+
+The actual installed `PoolRunner.start()` performs worker.start(), attaches
+error/exit/message routing, then sends that same native start message.
+`ForksPoolWorker` itself has no extra initialize method. The real parent pool
+also installs a bidirectional RPC router; this isolated probe does not service
+arbitrary RPC requests. **No RPC request/message was observed in this run**.
+Its absence from the probe is still a fidelity limitation, not proof that the
+full Angular delivery path would fail with forks. The parent's root/project
+comparison and the failure event stream are not an actual delivery-context
+operational mitigation result.
+
+No concrete harness defect was confirmed that authorizes the one corrected
+probe. Therefore the sequence stopped at this diagnostic failure: no further
+probe, focused/full tests, app/spec typechecks or Build-Shifter execution.
+The pre-existing unrelated runner/esbuild PIDs23452/9152 remained untouched;
+the post-failure observation found only those two, zero newly retained owned
+runner/fork/esbuild processes. TEST delivery ZIP remained absent.
+
+**Handoff:** parent may give this retained probe and its exact unsupported
+fidelity boundary (parent RPC routing / pre-ready child progress) to the
+different-context tooling specialist. No OS/root-cause attribution, forks
+capability rejection, automatic retry or package PASS is claimed. Next work
+must establish a concrete harness/transport distinction before another
+experiment, not loop until green.
+
+## QA28B-02 process-pool comparison — 29 October, stopped at first failure
+
+**State: BLOCKED, no validated mitigation; diagnostic documentation
+SOURCE-STABLE.** The parent's29Oct08:59 delivery thread-start failure
+(5.04s, zero tests, one unhandled error) is accepted as the before-change
+RED evidence. It is not retried here. The parent authorized one-worker forks
+comparison and two sequential delivery validations only after prerequisite
+checks passed.
+
+The candidate changed only `test.pool` from threads to forks in the existing
+`vitest.config.ts`; maxWorkers1, Angular runnerConfig and existing isolation
+semantics were unchanged. Read-only installed-source inspection confirmed
+Vitest4.0.8 implements `ForksPoolWorker` with child-process IPC and Angular
+build21.2.27 merges the configured pool into its generated project.
+
+### First candidate probe — FAIL, exit1
+
+One in-memory Node ESM probe used the existing installed
+`createVitestConfigPlugin`, public `createVitest`, `ForksPoolWorker` and
+`distDir` APIs. It did not patch a vendor or application file.
+
+Runtime assertions passed and emitted:
+
+```json
+{"kind":"effective-angular-runner","rootPool":"forks","rootMaxWorkers":1,"projectPool":"forks","projectMaxWorkers":1,"isolate":false,"environment":"jsdom"}
+```
+
+The probe then started the actual installed `workers/forks.js` worker with
+that project's serialized configuration and sent native `start`/jsdom setup.
+It did **not receive `started` within the unchanged5000ms budget**:
+
+```text
+FAIL actual process worker started exceeded unchanged 5000ms budget
+Node.js v24.21.0
+process exit1
+```
+
+This is a failed isolated worker-readiness probe, not a product assertion
+failure or a completed Angular/full delivery-context comparison. Zero tests
+were intentionally requested by the probe; they are not counted as a passing
+suite. The probe did not increase the startup deadline or report success on
+timeout. Its finally blocks called the standard pool worker stop and
+`ctx.close()`, and the controlling command returned exit1.
+
+**Trace limitation:** resolved budgets and the actual worker readiness
+deadline/failure were emitted. The probe recorded spawn/exit event timings
+only in memory and printed them on the success path; those timings were not
+emitted on this failure. Therefore there is no retained spawn-to-ready trace
+to attribute this failure to OS scheduling, IPC, module import or jsdom.
+No claim of a fully diagnosed OS root or unsupported forks capability is made.
+
+The first failure stopped the sequence, as instructed. No focused test,
+full621 suite, app/spec TSC or delivery validation command was subsequently
+run. In particular **zero** invocations of
+`scripts/Build-Shifter.ps1 -Profile test -Validation` were made in this
+comparison. No retry loop, timeout adjustment, forced command-success exit,
+dependency upgrade or additional pool variant was attempted.
+
+### Cleanup, source disposition and handoff
+
+Pre-existing unrelated Angular/esbuild PIDs23452/9152 were recorded before
+the probe and left untouched. The post-failure process observation showed
+those same two processes and **zero newly retained runner/esbuild/fork-worker
+services**. No unrelated process was killed.
+
+Because the candidate failed its first readiness gate, the config was restored
+exactly to the prior threads/maxWorkers1 content rather than leaving an
+unvalidated forks default for the paused delivery owner. Net changes for this
+follow-up are only:
+
+```text
+frontend/fixture-slice/README.md
+frontend/fixture-slice/VERIFICATION.md
+```
+
+No application, API, backend, canonical, dependency/lock, Angular target,
+delivery script, root/profile checker, database/DNS, operational fuse,
+normal frontend dist or staging/ZIP writer changes are included. The two
+actual delivery validations and ZIP raw-name/closure counts remain **NOT RUN**.
+No artifact or publication PASS is inferred.
+
+**Next owner action:** parent/QA/devop must decide the next bounded diagnostic
+after this first failure. A permitted follow-up should emit fork spawn,
+message-ready, error/exit and deadline events immediately on the failure
+path, then distinguish this isolated API probe from the actual Angular/
+delivery command before claiming a supported pool mitigation. This handoff
+does not authorize automatic retries or resumption of packaging as fixed.
+The older CSS-context fix remains unchanged and is not conflated with either
+startup failure.
+
+## QA28B-02 recurrence — worker-start investigation, not resolved
+
+**State: diagnostic evidence SOURCE-STABLE; recurring delivery-worker defect
+BLOCKED / NOT FIXED.** The parent's delivery validation reported zero collected
+tests, one `[vitest-pool]: Timeout starting threads runner` error, retained
+runner/esbuild processes, propagated failure and no ZIP. That remains a failed
+delivery gate. Passing observations below do not replace or negate it.
+This investigation changes only this document and README; no application,
+test configuration, test script, Angular target, versions, lockfiles, backend,
+delivery scripts or devop-owned profile checker was changed.
+
+### Installed source and effective budget
+
+Read-only inspection used the actual installed Angular build21.2.27 unit-test
+schema and `runners/vitest/{executor,plugins}.js`, Vitest4.0.8 pool/startup
+implementation/types, and the workspace `angular.json`, `vitest.config.ts`,
+package scripts and app/spec TS configs.
+
+* `angular.json` already uses the supported `runnerConfig:"vitest.config.ts"`.
+  The existing config already specifies `pool:"threads", maxWorkers:1`.
+  The Angular adapter merges that test configuration into its generated
+  project, not just the root.
+* An isolated **runtime resolution using the installed Angular configuration
+  plugin and public `createVitest` API** confirmed root pool=threads/maxWorkers1
+  and project `fixture-slice` pool=threads/maxWorkers1/environment=jsdom.
+  The installed adapter's existing `isolate:false` default was observed, not
+  changed. The installed scheduler selects project maxWorkers before root or
+  CPU-count defaults. Therefore “the existing one-worker setting is ignored”
+  or “this workspace defaults to19 test workers” is not supported.
+* In this process `VITEST_MAX_WORKERS` was absent; NODE_OPTIONS/NODE_PATH and
+  NG_BUILD_MAX_WORKERS overrides were also absent (only presence was checked,
+  not general environment contents). The failed delivery process's effective
+  overrides/budget have not been captured by this owner.
+* Aggregate host observation: availableParallelism20/logical CPUs20,
+  total memory32437MiB, free memory initially13182MiB and later13245/13114MiB,
+  Node heap limit4288MiB. These are current observations, **not evidence of
+  resource pressure or its absence at the failed delivery startup**.
+* Vitest4.0.8 `cli-api.BQ-bjcRi.js:7174,7235` has a hardcoded outer
+  `WORKER_START_TIMEOUT=5000`; `:6641` has a separate inner
+  `START_TIMEOUT=10000`. Worker creation/entry-module import and the
+  `setupEnvironment`/jsdom handshake occur before `"started"` and before test
+  collection. A zero-test failure at this boundary is not a product assertion
+  failure. These deadlines are not changed here. The Angular schema does not
+  expose worker-limit CLI flags; existing `runnerConfig` is the appropriate
+  supported configuration seam. Installed Vitest4 types do not declare a
+  `minWorkers`/`initTimeout` setting that would repair this boundary.
+
+No evidence justifies pretending that setting maxWorkers1 again, renaming
+the working config to `.mts`, or switching to forks fixes this recurrence.
+Forks are implemented by this toolchain, but no comparative failure evidence
+justifies changing pool semantics/transport. No pool switch, retry, increased
+timeout, disabled error gate, vendor patch or dependency upgrade was made.
+The previously fixed duplicate-dialog CSS/BundlerContext leak remains a
+separate issue; its source fix was not reverted or conflated with startup.
+
+### Bounded probes and exact results
+
+All commands ran from `frontend/fixture-slice`; no backend pipeline or normal
+frontend build/output generation was run.
+
+| Command/probe | Result |
+|---|---|
+| `node --version`; `npm --version` |24.21.0 /11.19.0, unchanged |
+| `npm test` — one pre-change observation |621/621,42 files, natural exit0,27.93s; recurrence did not reproduce |
+| Isolated installed Angular plugin + `createVitest('test', {config:resolve('vitest.config.ts'),root:process.cwd(),watch:false}, {plugins:[plugin],server:{watch:null}})` | Natural exit0; both resolved worker budgets1, threads/jsdom; `await ctx.close()` |
+| One actual exported `ThreadsPoolWorker` using that project/serialized config and installed `distDir` | Worker `"online"`30ms, native `"started"`/jsdom ready870ms, within unchanged5000ms deadline; zero tests intentionally run; stop handshake and normal worker/context cleanup completed; natural exit0 |
+| `npm run typecheck` | Strict app TSC natural exit0,1.85s |
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.spec.json` | Strict spec TSC natural exit0,2.26s |
+| `npm test` — planned unchanged-config observation2 |621/621,42 files, natural exit0,30.67s |
+| `npm test` — planned unchanged-config observation3 |621/621,42 files, natural exit0,24.98s |
+
+The two later observations were a predefined sequential diagnostic loop,
+stopping on any nonzero code or retained service, **not retries after a
+failed startup**. There were no failed commands, zero-test *test-suite* runs,
+unhandled startup errors or forced stops in these current observations.
+The isolated handshake intentionally runs no tests and is not counted as a
+passing suite. Three clean runs on **unchanged configuration are not a fix**,
+a performance guarantee or a clean-package result.
+
+Each npm command was timed from invocation until its natural return with a
+PowerShell Stopwatch and its actual `$LASTEXITCODE`. The full-test command
+remains exactly `ng test --watch=false`. Checks after the sequential
+observations and at the end found zero retained frontend esbuild/Angular
+runner services; no owned process required forced cleanup.
+
+The budget/handshake probes were in-memory Node ESM scripts, not new files
+or installed packages. They imported the installed
+`@angular/build/src/builders/unit-test/runners/vitest/plugins.js`
+`createVitestConfigPlugin` and `vitest/node`
+`createVitest`, `ThreadsPoolWorker`, `distDir`. Plugin options retained
+`projectName:"fixture-slice"`, `projectSourceRoot:resolve("src")`, no test
+includes/setup files or application plugins, watch=false and coverage disabled
+for this isolated configuration probe only. No suite's coverage/setup/error
+or test discovery was altered. The worker probe sent the installed protocol's
+`start` with environment jsdom and the project's serialized config, required
+`started` within the installed5000ms budget, then sent `stop`, awaited
+`stopped`, called the standard worker `stop()` and `ctx.close()`. This locates
+the native bootstrap phase but is not the full Angular compiled-suite pipeline.
+
+### Specific residual and handoff
+
+**Root of intermittent startup delay remains UNKNOWN.** Evidence rules out
+an unbounded/default test-worker budget in this current configuration, not
+every possible inherited override or transient delivery-host condition.
+The concrete installed-version boundary is the unconfigurable5s pool startup
+deadline covering module/bootstrap/jsdom work; the failed run has no captured
+online/ready/error/exit timings to distinguish those stages.
+
+Parent/QA + devop/Windows tooling owner should capture those stage timings
+and resolved root/project worker budgets **inside the failed delivery command
+context**, using a bounded diagnostic trace with no secret/general environment
+dump. In particular retain whether the thread reached `online`, when
+`started` was sent/received, any worker error/exit, and aggregate resource/
+event-loop delay during that5s interval. No blind retry or timeout-as-success.
+If that identifies an installed Vitest/Node compatibility defect requiring
+a different version, return a version-verified dependency proposal through
+the parent; this owner has no automatic upgrade authority.
+
+The delivery/package publication gate is not cleared by this investigation.
+App/browser behavior is unchanged; browser tests are not rerun for these
+documentation-only findings. The three isolated-output build/profile pairs
+and complete backend/package pipeline remain devop-owned/not run here.
+No actual Oracle/DNS/readiness/write/fuse, production asset server, deployment,
+manual AT, UAT or full WCAG claim is included.
+
 **State: frontend SOURCE-STABLE / parent independent QA pending.** Approved
 UI/API/identity/persistence baseline **§47 v0.1**, user acceptance
 28Oct11:08+02 recorded in **§47.7**; exact architect-owned

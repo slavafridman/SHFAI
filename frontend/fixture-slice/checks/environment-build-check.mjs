@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 // Bounded public-module/compiled-object inspection, not a whole-bundle secret
 // certification (business copy legitimately mentions Oracle and synthetic mode).
@@ -19,7 +19,11 @@ for (const [name, file] of [
   assert.deepEqual(match.slice(1), [name, '/api']);
   assert.doesNotMatch(source, /process\.env|import\.meta\.env|SHF_|password|credential|nativeBinding|syntheticAdministratorEnabled/);
 }
-const directory = join(root, 'dist/fixture-slice/browser');
+// Optional explicit browser output for isolated developer packaging. The default
+// remains unchanged for existing callers; never rebuild or modify either path.
+const directory = process.argv[3]
+  ? resolve(process.argv[3])
+  : join(root, 'dist/fixture-slice/browser');
 const js = readdirSync(directory).filter(name => /^(?:main|chunk)(?:-.*)?\.js$/.test(name));
 assert.equal(js.filter(name => /^main(?:-.*)?\.js$/.test(name)).length, 1, 'One current main bundle required');
 const objects = js.flatMap(file => {

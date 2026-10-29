@@ -99,11 +99,22 @@ async function count(q: NativeQuery, tag: string, table: string, where: string, 
   return r[0].count;
 }
 export function stationCandidateSql(schema: NativeSchema) {
+  // Disjoint day-row branches offer separate access paths, not a timing claim.
+  // UNION ALL preserves duplicate/NULL-key baseline rows; deduplicate ONLY the
+  // changed-owner keys, then join ALL overlays outside both branches.
+  const dayColumns = schema.SHF_EMPLOYEE_DAY.map(c => `d.${c.name}`).join(",");
   return `SELECT ${[["SHF_EMPLOYEE_DAY", "d"], ["SHF_DAY_CHANGES", "c"]].flatMap(([table, alias]) =>
     schema[table].map(col => `${expression(col, alias + ".")} AS "${alias}_${col.name}"`)).join(",")}
-    FROM SHIFTER.SHF_EMPLOYEE_DAY d LEFT JOIN SHIFTER.SHF_DAY_CHANGES c
-    ON c.SHF_EMPLOYEE_DAY_ID=d.SHF_EMPLOYEE_DAY_ID
-    WHERE ${stationCandidateScope}`;
+    FROM (
+      SELECT ${dayColumns} FROM SHIFTER.SHF_EMPLOYEE_DAY d WHERE d.EMP_ID_NUMBER=:prefix
+      UNION ALL
+      SELECT ${dayColumns} FROM SHIFTER.SHF_EMPLOYEE_DAY d JOIN (
+        SELECT DISTINCT candidate_owner.SHF_EMPLOYEE_DAY_ID
+        FROM SHIFTER.SHF_DAY_CHANGES candidate_owner WHERE candidate_owner.NEW_EMPLOYEE_ID=:prefix
+      ) candidate_keys ON candidate_keys.SHF_EMPLOYEE_DAY_ID=d.SHF_EMPLOYEE_DAY_ID
+      WHERE (d.EMP_ID_NUMBER<>:prefix OR d.EMP_ID_NUMBER IS NULL)
+    ) d LEFT JOIN SHIFTER.SHF_DAY_CHANGES c
+    ON c.SHF_EMPLOYEE_DAY_ID=d.SHF_EMPLOYEE_DAY_ID`;
 }
 function parseCandidate(row: unknown, schema: NativeSchema): StationCandidate {
   if (!record(row) || Object.keys(row).length !== schema.SHF_EMPLOYEE_DAY.length + schema.SHF_DAY_CHANGES.length)

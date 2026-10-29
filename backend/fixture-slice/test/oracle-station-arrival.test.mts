@@ -8,7 +8,9 @@ import { StageArrivalError } from "../stage-arrival-errors.mts";
 import { same } from "../stage-arrival-domain.mts";
 import { record } from "../contract-validation.mts";
 import { withRequestBudget } from "../request-budget-context.mts";
-import { stationTables } from "../oracle-station-arrival-snapshot.mts";
+import { stationTables, stationCandidateSql, stationCandidateScope } from "../oracle-station-arrival-snapshot.mts";
+import type { NativeSchema } from "../oracle-stage-arrival-snapshot.mts";
+import { ExitOracleDouble } from "./native-station-exit-double.mts";
 import { OracleStationArrivalApplication } from "../oracle-station-arrival-application.mts";
 import type { StationCandidate } from "../oracle-station-arrival-domain.mts";
 import type { NativeStationArrivalValidationV1 } from "../oracle-station-arrival-contracts.mts";
@@ -20,6 +22,142 @@ async function prepared(d: StationOracleDouble) {
   const v = await app.validate(principal, selection, draft);
   return { app, principal, uow, cmd: command(v) };
 }
+const independentCandidateSchema: NativeSchema = {
+  SHF_EMPLOYEE_DAY: [
+    { name: "SHF_EMPLOYEE_DAY_ID", kind: "number" }, { name: "EMP_ID_NUMBER", kind: "text" },
+    { name: "WM_SHIFT_START_DATETIME", kind: "date" }, { name: "WM_SHIFT_END_DATETIME", kind: "date" },
+    { name: "SOURCE", kind: "text" }, { name: "WM_SITE_ID", kind: "number" },
+  ],
+  SHF_DAY_CHANGES: [
+    { name: "SHF_EMPLOYEE_DAY_ID", kind: "number" }, { name: "NEW_EMPLOYEE_ID", kind: "text" },
+    { name: "NEW_SHIFT_START", kind: "date" }, { name: "NEW_SHIFT_END", kind: "date" },
+    { name: "NEW_ACTIVITY", kind: "text" }, { name: "NEW_SITE_ID", kind: "number" },
+  ],
+};
+test("candidate SELECT uses disjoint day-row UNION ALL and distinct changed-owner keys before the unfiltered all-overlay join", () => {
+  const sql = stationCandidateSql(independentCandidateSchema);
+  assert.equal((sql.match(/\bUNION ALL\b/g) ?? []).length, 1);
+  assert.match(sql, /SELECT DISTINCT candidate_owner.SHF_EMPLOYEE_DAY_ID/);
+  assert.match(sql, /candidate_owner.NEW_EMPLOYEE_ID=:prefix/);
+  assert.match(sql, /d.EMP_ID_NUMBER=:prefix/);
+  assert.match(sql, /\(d.EMP_ID_NUMBER<>:prefix OR d.EMP_ID_NUMBER IS NULL\)/);
+  assert.doesNotMatch(sql, /\bEXISTS\b|\bCOALESCE\b|\bROWNUM\b|\bFETCH FIRST\b|\bROWID\b/);
+  const outer = /\)\s+d\s+LEFT JOIN SHIFTER.SHF_DAY_CHANGES c\s+ON c.SHF_EMPLOYEE_DAY_ID=d.SHF_EMPLOYEE_DAY_ID\s*$/;
+  assert.match(sql, outer);
+  assert.doesNotMatch(sql, /c.NEW_EMPLOYEE_ID\s*(?:=|<>|IN\b)/);
+  const rawColumns = independentCandidateSchema.SHF_EMPLOYEE_DAY.map(c => `d.${c.name}`).join(",");
+  assert.equal(sql.split(`SELECT ${rawColumns} FROM SHIFTER.SHF_EMPLOYEE_DAY d`).length - 1, 2);
+  for (const [table, alias] of [["SHF_EMPLOYEE_DAY", "d"], ["SHF_DAY_CHANGES", "c"]])
+    for (const column of independentCandidateSchema[table]) assert.ok(sql.includes(`AS "${alias}_${column.name}"`));
+  // The command-side old-value/count scope is deliberately NOT rewritten.
+  assert.equal(stationCandidateScope, `(d.EMP_ID_NUMBER=:prefix OR EXISTS
+  (SELECT 1 FROM SHIFTER.SHF_DAY_CHANGES candidate_owner
+   WHERE candidate_owner.SHF_EMPLOYEE_DAY_ID=d.SHF_EMPLOYEE_DAY_ID AND candidate_owner.NEW_EMPLOYEE_ID=:prefix))`);
+});
+
+type ModelDay = { id: number | null; employee: string | null; payload: string };
+type ModelChange = { id: number | null; employee: string | null; payload: string };
+// Independent relational model of SQL equality/inequality in WHERE/ON:
+// comparisons with NULL are UNKNOWN (not JavaScript NULL===NULL).
+const sqlEqual = <T,>(a: T | null, b: T | null) => a !== null && b !== null && a === b;
+const sqlUnequal = <T,>(a: T | null, b: T | null) => a !== null && b !== null && a !== b;
+function modelJoinedBag(days: ModelDay[], changes: ModelChange[]): string[] {
+  return days.flatMap(d => {
+    const matches = changes.filter(c => sqlEqual(c.id, d.id));
+    const joined: Array<ModelChange | null> = matches.length ? matches : [null];
+    return joined.map(c => JSON.stringify([d.id, d.employee, d.payload, c?.id ?? null, c?.employee ?? null, c?.payload ?? null]));
+  }).sort();
+}
+function oldCandidateBag(days: ModelDay[], changes: ModelChange[], prefix: string | null) {
+  return modelJoinedBag(days.filter(d => sqlEqual(d.employee, prefix) ||
+    changes.some(c => sqlEqual(c.id, d.id) && sqlEqual(c.employee, prefix))), changes);
+}
+function disjointCandidateBag(days: ModelDay[], changes: ModelChange[], prefix: string | null) {
+  const keys = [...new Set(changes.filter(c => sqlEqual(c.employee, prefix)).map(c => c.id))];
+  const baseline = days.filter(d => sqlEqual(d.employee, prefix));
+  const changedOnly = days.filter(d => (sqlUnequal(d.employee, prefix) || d.employee === null) &&
+    keys.some(key => sqlEqual(d.id, key)));
+  return modelJoinedBag([...baseline, ...changedOnly], changes);
+}
+function unsafePlainKeyBag(days: ModelDay[], changes: ModelChange[], prefix: string | null) {
+  const keys = [...new Set([...days.filter(d => sqlEqual(d.employee, prefix)).map(d => d.id),
+    ...changes.filter(c => sqlEqual(c.employee, prefix)).map(c => c.id)])];
+  return modelJoinedBag(days.filter(d => keys.some(key => sqlEqual(d.id, key))), changes);
+}
+test("independent 25,434-case bag matrix preserves old OR/EXISTS with NULL keys/prefixes, duplicate rows/overlays and orphans", () => {
+  const p = "PREFIX01", other = "OTHER001";
+  const alternatives: Array<{ id: number | null; employee: string | null }> = [];
+  for (const id of [1, 2, 3, null]) for (const employee of [p, other, null]) alternatives.push({ id, employee });
+  const overlays: ModelChange[][] = [[], ...alternatives.map(c => [{ ...c, payload: "c0" }])];
+  for (const a of alternatives) for (const b of alternatives)
+    overlays.push([{ ...a, payload: "c0" }, { ...b, payload: "c1" }]);
+  let cases = 0;
+  for (const prefix of [p, null]) for (const firstId of [1, 2, null]) for (const secondId of [1, 2, null])
+    for (const firstOwner of [p, other, null]) for (const secondOwner of [p, other, null]) for (const changes of overlays) {
+      const days = [{ id: firstId, employee: firstOwner, payload: "d0" },
+        { id: secondId, employee: secondOwner, payload: "d1" }];
+      assert.deepEqual(disjointCandidateBag(days, changes, prefix), oldCandidateBag(days, changes, prefix));
+      cases++;
+    }
+  assert.equal(cases, 25434); // One node:test case; no Oracle timing/plan claim.
+});
+test("plain key UNION counterexamples stay visible; UNION ALL retains physically identical malformed day rows", () => {
+  const p = "PREFIX01";
+  for (const days of [
+    [{ id: null, employee: p, payload: "null-key" }],
+    [{ id: 1, employee: p, payload: "owned" }, { id: 1, employee: "OTHER001", payload: "other-owner" }],
+  ]) {
+    assert.notDeepEqual(unsafePlainKeyBag(days, [], p), oldCandidateBag(days, [], p));
+    assert.deepEqual(disjointCandidateBag(days, [], p), oldCandidateBag(days, [], p));
+  }
+  const duplicate = { id: 1, employee: p, payload: "identical" };
+  assert.equal(disjointCandidateBag([duplicate, { ...duplicate }], [], p).length, 2);
+});
+test("changed-only and moved-away membership never hides another overlay or converts prefix case", () => {
+  const p = "PREFIX01";
+  const days = [
+    { id: 1, employee: p, payload: "baseline-moved-away" },
+    { id: 2, employee: "OTHER001", payload: "changed-only" },
+    { id: 3, employee: null, payload: "NULL-baseline-changed-only" },
+    { id: 4, employee: "OTHER001", payload: "unrelated" },
+    { id: 5, employee: "prefix01", payload: "different-case" },
+  ];
+  const changes = [
+    { id: 1, employee: "OTHER001", payload: "moved" },
+    { id: 2, employee: p, payload: "matching" }, { id: 2, employee: "OTHER001", payload: "duplicate-other-owner" },
+    { id: 2, employee: null, payload: "duplicate-NULL-owner" }, { id: 3, employee: p, payload: "changed" },
+    { id: 99, employee: p, payload: "orphan" }, { id: null, employee: p, payload: "NULL-key-orphan" },
+  ];
+  const bag = disjointCandidateBag(days, changes, p);
+  assert.deepEqual(bag, oldCandidateBag(days, changes, p));
+  assert.equal(bag.length, 5);
+  assert.ok(bag.some(r => r.includes("duplicate-other-owner")) && bag.some(r => r.includes("duplicate-NULL-owner")));
+  assert.ok(!bag.some(r => /unrelated|different-case|orphan/.test(r)));
+});
+test("candidate bag retains >1000 raw overlays so only the existing outer1001 overflow lookahead applies", () => {
+  const p = "PREFIX01", days = [{ id: 1, employee: "OTHER001", payload: "changed-only" }];
+  const changes = Array.from({ length: 1002 }, (_, i) => ({ id: 1, employee: i === 0 ? p : "OTHER001", payload: `c${i}` }));
+  const bag = disjointCandidateBag(days, changes, p);
+  assert.deepEqual(bag, oldCandidateBag(days, changes, p));
+  assert.equal(bag.length, 1002);
+  assert.equal(bag.slice(0, 1001).length, 1001);
+  assert.doesNotMatch(stationCandidateSql(independentCandidateSchema), /\bROWNUM\b|\bFETCH FIRST\b/);
+});
+for (const source of ["station", "exit"] as const)
+  test(`shared ${source} reader retains final ORDER and outer ROWNUM1001 around the candidate SELECT`, async () => {
+    const d = source === "station" ? new StationOracleDouble() : new ExitOracleDouble();
+    try {
+      const { app, principal } = await d.application();
+      await app.validate(principal, selection, source === "station" ? draft : {});
+      const query = d.sql.find(q => q.sql.includes(`${source}:candidates`)); assert.ok(query);
+      assert.match(query.sql, /UNION ALL/);
+      assert.match(query.sql, /ORDER BY d.SHF_EMPLOYEE_DAY_ID,c.SHF_EMPLOYEE_DAY_ID\) WHERE ROWNUM<=1001/);
+      assert.equal((query.sql.match(/\bROWNUM\b/g) ?? []).length, 1);
+      assert.doesNotMatch(query.sql, /c.NEW_EMPLOYEE_ID\s*=/);
+      assert.equal(existsSync(d.binding.allowanceFile), false);
+      assert.equal(d.events.includes("write:update"), false);
+    } finally { d.dispose(); }
+  });
 for (const briefing of [null, "0", "1"]) for (const stage of [null, "2026-10-28T11:00:00"])
   test(`F2 Oracle preserves EVERY original: briefing=${briefing}, stage=${stage}`, async () => {
     const d = new StationOracleDouble();
@@ -175,7 +313,8 @@ test("F2 changed-employee overlay uses effective ownership, never baseline-only 
     const { app, principal, cmd } = await prepared(d);
     assert.equal((await app.commit(principal, selection, cmd)).outcome, "oracle-test-committed");
     const query = d.sql.find(s => s.sql.includes("station:candidates")); assert.ok(query);
-    assert.match(query.sql, /d.EMP_ID_NUMBER=:prefix OR EXISTS/);
+    assert.match(query.sql, /UNION ALL/);
+    assert.match(query.sql, /\(d.EMP_ID_NUMBER<>:prefix OR d.EMP_ID_NUMBER IS NULL\)/);
     assert.match(query.sql, /candidate_owner.NEW_EMPLOYEE_ID=:prefix/);
     assert.doesNotMatch(query.sql, /WHERE COALESCE/);
     assert.doesNotMatch(query.sql, /TRUNC|SYSDATE|BETWEEN/);

@@ -1,6 +1,6 @@
 # Shifter project state
 
-Last updated: 2026-10-28, first real Angular/native Oracle TEST F1 committed and independently readback-verified.
+Last updated: 2026-10-29, C49 foundation and approved Vitest patch independently verified; source/package publication ready.
 
 This is the resumable project checkpoint, not an approval, deployment record,
 credential store or replacement for the source-backed design.
@@ -23,7 +23,497 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 5. Record the next result here and include this file in the step's scoped
    commit/push. Obtain any missing approval before dependent implementation.
 
-## Current priority: preserve verified real F1 outcome and separate next-operation gates
+## Current priority: complete approved workflows and remaining development delivery
+
+### SHF-RESUME-29 — current resume checkpoint
+
+**State: C49 gate PASS / full developer pipeline and independent artifact QA PASS / publication READY.**
+At08:40+02 the user requested continuation. Both outstanding independent
+packaging QA and single Oracle probe agents failed with agent-service401
+organization/API authorization before their first turn; zero QA commands
+and zero probe queries ran. This is not an Oracle failure or a product test
+failure. No credentials, organization settings, models or denied paths are
+changed to work around that access error.
+
+Parent read the assigned PowerShell build/test scripts, distribution README
+and profile checker directly for a bounded static review. This does not
+replace a fresh executable artifact check or an independent QA result.
+The existing successful DevOps owner has one newly requested capability
+recheck followed, only if execution is available, by read-only Git state,
+focused tooling checks and current ZIP closure/whitelist verification.
+No new Oracle/app/allowance/setup/DML is assigned in this resume step.
+If agent authorization is still unavailable, stop delegation and retain the
+precise infrastructure blocker; no repeated model/credential/tool workarounds.
+
+All28 October windows, runtime/artifact results and remote synchronization
+below are historical until specifically rechecked. F1 committed state and
+consumed fuse remain preserved. Section49 is a new bounded shift-management
+proposal, not approved by the generic continuation request. Parent owns this
+checkpoint; unrelated user changes must be preserved before publication.
+
+The current successful DevOps owner did regain execution on29October:
+Node24.21/npm11.19 and direct PowerShell/Git work. Main HEAD remains
+ef1554718eb49e894a53d8148cf74f5d1a3f9ee3, staged paths0, dirty entries35
+by names/status only; remote was not freshly fetched in that read-only check.
+Focused tooling22/22 and current ZIP verification naturally exit0.
+The unchanged570050-byte ZIP has127 entries/2014814 expanded bytes;92 runtime
+modules and97 backend file comparisons match current source,27 browser
+assets match isolated output, exact TEST/api object and whitelist pass.
+No traversal/absolute/duplicate/case-collision entries; no stale artifact found.
+This is parent-directed owner verification, not the failed independent QA.
+
+Because execution capability changed and the user requested continuation,
+one new independent bounded packaging QA and one new single-SELECT Oracle
+diagnostic are assigned. They do not modify app/source/DB state, install
+dependencies, change API credentials/org/model settings or repeat a native
+command. Any new401 stops that task rather than selecting another credential
+or trying to bypass the denial. Windows/source snapshots remain stable.
+
+29October Oracle probe completed successfully under the frozen target:
+exactly one new production candidate SELECT, actual elapsed242.9311ms,
+one row, projection/shape PASS, no overflow/error codes. Existing global
+order/outer1001 bound, callTimeout5000/maxRows1001/fetchArray100 unchanged.
+Supplemental8 metadata/8 zero-row privilege/2 identity/1 calendar/3 ownership
+queries passed; rollback acknowledged, lease released and pool closed.
+Commands/DML/DDL/sequence0; F1 and consumed fuse untouched.
+Parent inspected the sanitized aggregate journal. This proves current Oracle
+parsing/completion, not comparison speed, NJS-500 root cause or F2 eligibility.
+The old28October command/window remains expired and is not reset.
+
+Independent packaging QA completed:22 existing and15 extra negative checks,
+97 source-byte comparisons,92 native syntax/AST closure modules,27 browser
+assets and packaged production2 rejections/zero pools PASS.
+QA29-01 (Medium) is OPEN: Windows ZIP creation emits124 raw backslash entry
+names; normalizing separators during validation hides the noncanonical format.
+No traversal/duplicate/private content was found, but raw canonical-name gate
+fails. DevOps owner is correcting ZIP creation to explicit slash-named entries
+and raw-name checks, adding a direct nested-entry regression and regenerating
+through the full validated entrypoint. Existing ZIP remains a known-defective
+packaging artifact until corrected; scoped publication waits for independent
+closure. No other owner is changing application source.
+
+User explicitly approved "Agree49" on29October: section49v0.1 bounded
+create/change/logical-cancel/CSV package is approved for implementation.
+Architect records49.11 and prepares canonical ownership; only design writes
+are allowed until the current delivery snapshot is validated/published.
+This is a source-consistency dependency, not a repeated user approval gate.
+Designer read-only review is running; live operation remains separately scoped.
+
+QA29-01 owner correction is SOURCE-STABLE: explicit canonical ZIP entry writer
+and raw-name checks, with31/31 focused tests (nine added). However the required
+full build correctly failed3 backend tests before ZIP assembly:1583/1586 PASS,
+natural exit1. No replacement ZIP exists; stale ZIP/stage/build were removed.
+Do not present the old570050-byte artifact/link as currently available.
+
+Parent source inspection identifies a test-only clock defect: ExitOracleDouble
+realClock mode uses actual now/end+10s but hardcodes planned start and station
+arrival at08:00UTC. Morning execution before08UTC makes end<start; production
+snapshot correctly rejects INVALID_SOURCE_DATA. A backend owner is correcting
+only that fixture and deterministic early/midnight clock regressions.
+Production time/data/validation guards remain unchanged. After test-source
+stability, DevOps reruns the full entrypoint to regenerate the canonical ZIP;
+independent QA must close raw-entry names against the actual rebuilt artifact.
+
+Architect appended49.11 with the explicit29October "Agree49" approval.
+Canonical handoff is prepared: shift-management type-only contracts, seven
+capability additions, canonical tests and one exhaustive union-test update.
+No canonical source changed during the delivery freeze. Designer U49-REVIEW
+is READY with no material missing decision: compact selected-employee
+create/change/logical-cancel forms, CSV original bytes/explicit charset/
+line-column preview, whole-operation and exact warning acknowledgments,
+native TEST receipt/UNKNOWN/history and Hebrew/RTL focus/reflow reuse.
+These copy/state refinements implement the approved package, not a new
+approval gate. Source C49 starts after the stable package is published.
+
+The test-only clock repair is now SOURCE-STABLE across exactly two test
+files. Real-clock start/arrival=max(UTC midnight,now-1h), end=min(now+10s,
+today23:59:59UTC); fixed-clock fixtures remain unchanged.14 controlled
+regressions cover morning/leap-day/midnight edges and preserve the separate
+unsupported next-day case. Focused14/14, original three failing cases3/3,
+strict TSC and full backend1600/1600 naturally exit0 with cleanup PASS.
+Production guards, runtime clock/API, dependencies and contracts unchanged.
+DevOps now has GO for one complete validated rebuild with the canonical
+ZIP writer; runtime92 closure stays frozen until package QA/publication.
+
+That rebuild passed backend1600 and both typechecks but again failed frontend
+thread startup before any tests (5.04s). The run propagated failure after only
+its owned runner cleanup; no ZIP/stage/build remains. One unrelated Angular
+runner was observed and left untouched; no causal claim or permission to stop
+it follows.
+Parent now assigns the frontend tooling owner one supported process-pool
+alternative evaluation at unchanged one-worker/isolation/timeout settings.
+The installed Angular root/generated project must honor the configuration;
+all621 tests and two first-attempt complete delivery-context runs must pass
+naturally before calling it a validated mitigation. No dependency/vendor
+patch, test relaxation, automatic retry or proof of the underlying OS cause.
+This owner alone may execute the stable packaging script while DevOps holds;
+DevOps' six tool files remain frozen. If the alternative fails, retain bounded
+startup trace and stop rather than repeatedly running until green.
+
+The first standalone forks readiness probe resolved the supported root/project
+forks1 configuration but did not observe a started acknowledgment within5s.
+No application suite/build ran and the candidate config was restored to
+threads1; no mitigation or artifact success is claimed. Its failure path
+omitted spawn/exit timings. Parent requests one bounded probe-harness check:
+verify fork execArgv/entrypoint and actual initialization match the installed
+Vitest caller, capture failure-path events/code-only stderr before re-evaluation.
+Inherited stdin/eval flags or incomplete probe setup must not be mistaken for
+an Angular runtime failure. Only a specifically corrected harness permits
+one corrected probe; no timeout increase or repeated execution until green.
+
+The bounded failure-path probe observed spawn/start then0 messages/stderr and
+cleanup at5s; execArgv was empty, so inherited input-type flags were not the
+cause. Its isolated caller does not service arbitrary parent RPC, limiting
+fidelity. Parent now authorizes one actual installed Angular focused invocation
+under supported forks1, rather than treating an incomplete isolated probe as
+an application result. Failure stops/restores the candidate; a natural pass
+may widen to the unchanged full suite. No further standalone probes/retries.
+
+Dependency update: because no delivery ZIP currently exists and no packaging
+command is running, approved C49 materialization now proceeds in parallel with
+frontend-only tooling diagnostics. Architect has exclusive canonical4-file
+source GO; DevOps/full delivery execution waits for canonical SOURCE-STABLE
+and executable checks, so the next artifact validates one coherent updated
+type-source baseline. This replaces the earlier wait-for-package-before-types
+ordering, not user scope/approval or a weakening of tests. Runtime application
+consumers still wait for canonical checks. No unimplemented M3 feature is
+advertised by type-only materialization.
+
+C49 initial executable gate found a syntax defect in its new compiler-test
+type expression at line103;3 older canonical tests passed, new one failed
+parsing and TSC failed. Architect owns the repair; backend did not edit shared
+types or start consumers. This is not a new approval gate.
+
+The actual supported Angular forks1 focused test also failed worker startup
+before collection at5.02s and required failed-owned-run cleanup. Config is
+restored to threads1; no full suites or delivery runs followed. No validated
+mitigation or OS root cause is claimed. A bounded public upstream-source
+research task checks a compatible published fix without installing/changing
+dependencies or requesting private credentials.
+
+To avoid blocking approved application work indefinitely, parent will generate
+the compiled developer snapshot through the existing optional-validation-OFF
+build only after C49 source/type checks are stable. That still requires real
+typecheck/profile compile/production guards/canonical ZIP/closure success.
+It is explicitly NOT a passing -Validation run: unit-runner failure remains
+a separate open tooling risk with historical suite results distinguished.
+No tests, errors or script exit codes are suppressed. Package QA/publication
+then releases C49 consumers; no production/release/full-project claim.
+
+Bounded official upstream research identified a real candidate tool fix:
+Vitest4.0.9 release / vitest-dev/vitest PR9027 corrects the startup timeout
+hierarchy in4.0.8 (outer5s incorrectly enclosing inner10s operations).
+Vendor patch changes outer startup to90s and inner/start-stop to60s;
+this is not a local timer patch and does not prove a zero-message worker
+will initialize. Published package engines support Node>=24; installed
+Angular build peer^4.0.8 permits4.0.9 and installed Vite7.3.6 fits.
+Runtime compatibility is not yet tested and no dependency/config was changed.
+An explicit test-tool patch approval is requested separately from the already
+approved C49 business package; it must not block backend type/domain work.
+Official references: https://github.com/vitest-dev/vitest/releases/tag/v4.0.9
+and https://github.com/vitest-dev/vitest/pull/9027 . If approved, use package
+manager lock resolution and actual Angular tests/delivery context; never
+claim the source research alone fixed the runner.
+
+C49 syntax repair now passes all4 runtime canonical module tests, but TSC
+still identifies five semantic assertions: two in the new shift contract
+test and three in the prior exit capability-exhaustiveness test. Architect
+owns the conformance repair and is authorized to extend the canonical test
+scope to that exit test; new capability membership must not weaken old
+runtime grant sets or remove assertions. No consumer implementation begins
+on a runtime type-erasure PASS while compiler checks fail.
+
+C49 repaired gate now PASS: backend TSC exit0 and four canonical module tests
+exit0, no diagnostics. Shared type/source revision49-v0.1 is frozen.
+The backend owner may acknowledge/read the approved ports and source only;
+actual consumer writes follow foundation publication. DevOps now executes
+the supported compile-only TEST snapshot command without -Validation against
+this checked source. Typecheck/compile/profile/production guard/ZIP gates
+remain mandatory; no full-unit-runner success is implied or reported.
+
+The compile-only command now naturally exits0 with current C49 backend and
+frontend typechecks, isolated TEST build/profile, packaged production2
+rejections/zero pools and whitelist/import gates. Actual rebuilt canonical
+ZIP:570094 bytes,127 files/2015039 expanded bytes;92 runtime modules,
+97 backend source comparisons,27 browser assets,0 raw backslashes.
+Owner checks all127 payload files against current inputs and native syntax
+92/92; no secrets/deps/Oracle Client/operator/Git/legacy/test payload.
+Focused ZIP tooling31/31 pass. All owned compile services closed.
+Independent QA is retesting QA29-01 against this actual replacement artifact.
+The normal build deliberately did not run -Validation; that option remains
+blocked by the separately recorded frontend worker-start failure.
+
+B49 backend owner acknowledged49-v0.1 canonical application/access/admission
+and snapshot/UoW handshake, one namespace across create/change/cancel/CSV.
+It has exclusive new management modules and bounded wiring/tests planned,
+but no consumer source writes until this foundation publication completes.
+Pure CSV normalization/duplicate and full-interval containment cases are its
+first failing tests; no new user gate or operational permission is inferred.
+
+User explicitly approved "Vitest4.0.8 ->4.0.9" on29October. The frontend
+tooling owner alone updates that exact test dependency and lockfile using npm,
+retaining Node/Angular/Material/Vite/backend versions, threads1 and isolation.
+No local timeout/vendor edit or automatic retry is authorized. It must prove
+actual Angular focused/full tests and two real -Validation delivery-context
+runs, naturally exit0, before any full-validation PASS.
+DevOps updated the installed-version check and root/distribution README
+wording for the approved vendor budget correction, without preclaiming
+runtime success. Focused tooling31/31, syntax and whitespace pass; those six
+tooling paths are frozen for the frontend owner's sole pipeline execution.
+Existing compile-only ZIP predates the new documentation and is not the final
+patch-validated artifact; fresh regeneration and bounded independent QA follow.
+
+Approved Vitest4.0.9 is installed and actual first-attempt Angular focused3/3,
+full621/621 and app/spec TSC naturally pass with unchanged threads1.
+Installed seven Vitest family packages, peer tree, Angular/Material/TS and
+Vite7.3.6 versions are verified; published vendor budgets apply, no local timer
+patch. Full delivery runs have not yet started.
+Npm filesystem refresh also pruned three unrelated optional @emnapi lock
+records. The frontend owner is restoring task scope through a cold lock-only
+resolution from the authoritative pre-patch Git lock baseline in an owned
+temporary directory, not manually copying individual lock records or removing
+shared node_modules. Only whole npm-generated lock output may replace the
+task-owned lock after diff review; unrelated package resolutions must be
+preserved or the exact genuine dependency-graph change reported.
+
+Approved test patch is now SOURCE-STABLE and runtime PASS. Actual Vitest
+and seven family packages are4.0.9; peer tree passes and unrelated installed
+framework/Vite/Node versions plus threads1/isolation remain unchanged.
+Authoritative cold-generated lock diff has9 changed records and565 unrelated
+records unchanged; no new transitives. The questioned optional records were
+absent from both authoritative baseline and final lock, not a remaining
+unrelated prune. No manual lock surgery/vendor/local timer override.
+First-attempt Angular focused3/3, full621/621 and app/spec TSC pass.
+Both actual -Validation delivery-context commands now naturally exit0:
+62.18s/62.07s, each backend1601/frontend621 plus types, isolated build/profile,
+production2 refusal/zero factories and canonical ZIP/closure gates.
+These are real full-validation results after the approved published fix,
+not relabeled compile-only or retries after failures.
+
+Final current artifact is127 files/570729 ZIP bytes/2016442 expanded bytes,
+0 raw backslashes,92 backend closure/27 browser assets; all127 entries match
+staging/current inputs. Normal production frontend output unchanged;
+owned runner services0/unrelated processes untouched. Earlier failures and
+residual OS-startup/SLA uncertainty remain historical evidence.
+Independent final patch/artifact QA and read-only DevOps verification are
+running; no further application/canonical/tooling writers remain active.
+Foundation publication then releases approved B49/U49 implementation.
+
+Final independent QA now PASS: actual first-attempt Angular focused3/3,
+16 version and10 peer assertions, exact9-record lock diff/565 unchanged,
+vendor startup budgets and unchanged local threads1/configs confirmed.
+Tooling31/31 plus15 independent negative cases, raw canonical ZIP names,
+97 source and127 stage byte comparisons,92-module AST/native syntax closure,
+browser references/profile and production2 refusal/zero factories pass.
+QA29-01 remains CLOSED; test-tool correction is PATCH VALIDATED in the observed
+pipeline, not a universal OS cause/SLA/production assurance.
+No new product defect found; QA changed only its temporary harness and closed
+all owned resources. It did not rerun or claim the owner's two full1601/621
+delivery runs as its own.
+
+Current canonical ZIP is570729 bytes/127 files/2016442 expanded bytes.
+Six tooling paths, two query paths, two clock-test paths, five C49 paths,
+four frontend patch/docs paths and design/status/verifier are the intended
+foundation publication scope. Artifact remains ignored/local and is not
+committed. B49/U49 source writes remain frozen only until normal scoped
+publication/synchronization; user49 approval already covers implementation.
+
+#### SHF-FOUNDATION-C49-PUBLISH-29 — current publication step
+
+All application, canonical and tooling owners are stopped and source-stable.
+Publication operator temporarily owns this checkpoint until handoff.
+Fresh main and fetched origin/main both equal
+`ef1554718eb49e894a53d8148cf74f5d1a3f9ee3`, ahead/behind
+0/0, empty index and no conflicts before staging.
+
+The explicit manifest exactly matches 22 assigned paths: six tooling,
+two candidate-query, two clock-test, five C49 canonical, four frontend
+Vitest patch/docs, and design/status/standard verifier refresh. Seven paths
+are new. All 23 unrelated user paths remain excluded and inspected by name
+only, without content reads/hashes; no artifact ZIP/stage/browser output,
+private operator journal, environment file or real row/receipt is selected.
+Frontend threads1/isolation/config remain unchanged and outside staging.
+
+Fresh `node docs\reverse-engineering\verify-evidence.mjs` PASS:
+31 CSVs, 10,000 inventory references, 454 source hashes, 430 design-local
+links and 288 line anchors. All 20 historical capture hashes remain unchanged;
+the known duplicate legacy route remains a documented source anomaly.
+Bounded assigned added-content/new-file privacy/credential/private-key/token/
+private-row/DDL and synthetic-fixture review PASS; scoped whitespace PASS.
+HEAD-plus-publication closure PASS: 56 relative imports, 442 local document
+links and 13 explicit tooling input references. No unpublished/session-only
+dependency is required. Lock comparison independently confirms exactly nine
+changed records, 565 unchanged and zero new transitives; Vitest is4.0.9.
+Normal verifier JSON LF-to-CRLF warning only. A bounded design-diff display
+pipeline ended early; the corrected non-pipelined read completed normally,
+without changing source or any application check.
+
+The two owner full Windows test-profile -Validation runs (each backend1601/
+frontend621/types/profile/production-zero-factory/ZIP) and independent QA
+above are source-stable owner/QA evidence, not tests rerun by publisher.
+The approved patch is validated in those observed runs, not universal
+OS/Worker/SLA proof. Publication runs no application/compiler/test/build,
+dependency installation, DNS/Oracle, allowance, grant, DDL or infrastructure
+operation; only normal Git fetch/push/remote verification uses network access.
+
+Current ignored local developer artifact:
+`.shifter-developer-delivery\test\shifter-developer-test.zip`,
+570729 ZIP bytes, 127 entries, 2016442 expanded bytes. It is the verified
+foundation/developer TEST snapshot, not committed, production-ready or
+feature-complete. Once B49/U49 changes source, this snapshot is not the latest
+application until rebuilt and revalidated.
+
+Exact-22-path staged checks, normal commit/push and direct remote verification
+are pending. Next safe action after publication: implement already-approved
+B49/U49 consumers against C49 revision49-v0.1 with focused failing tests and
+disjoint ownership; no further user baseline gate. C49 types/capability union
+alone do not implement M3 or authorize live CRUD. Preserve committed F1/fuse;
+F2/exit actual writes remain unperformed. The one29October read-only candidate
+query proves parsing/current completion only, not the older NJS-500 root cause,
+performance comparison or write readiness. Section48 unknown coverage persists.
+No full-project/release completion is claimed. Parent ownership returns on handoff.
+
+### SHF-COMPLETION-CONTINUE-28 — prior workstream checkpoint
+
+**State: RUNNING.** At15:24+02 the user requested all work needed to finish
+development. Real F1 success is published in checkpointef15547; its committed
+arrival and consumed fuse must remain intact. Three disjoint tasks are active:
+
+1. Operator runs a fresh bounded F2-only TEST readiness/pilot on the same
+   admitted synthetic tuple, preserving F1 and all other fields. Parent GO
+   permits one actual UI station-arrival command only if current metadata,
+   on-time Clock, operation-bound unused F2 allowance and operational conditions
+   still hold. No day-plan refresh, F1 replay or exit command is authorized.
+   The broader continuation is not independently verified global freeze;
+   unresolved maintenance conditions still stop before effect. Use LIMITED
+   coverage with accepted unknown scopes, not a copied F1 certificate.
+2. Architect prepares one source-backed section49v0.1 package for M3 shift
+   create/change/cancel and interactive CSV, rather than a new isolated mock.
+   It is a coherent next implementation baseline; new material contracts
+   require explicit approval before canonical/code consumers. No schema,
+   production, batch or live EMS/CTI expansion is implied.
+3. DevOps owner implements reproducible Windows build/developer packaging for
+   the existing delivered application, reusing current tooling and explicit
+   dev/test/production build profiles. No runtime/auth redesign, infrastructure,
+   dependency upgrades or deployment. Builds must use isolated owned output
+   while the real F2 pilot reads existing production assets.
+
+Parent owns this checkpoint; architect owns the new design append, DevOps
+owns only build tooling/docs/ignored output, and operator owns private runtime
+artifacts. A compiled developer snapshot is not the feature-complete rewrite
+or production release. Preserve unrelated user edits; reconcile Git before
+every scoped publication.
+
+Windows tooling handoff is ready across six assigned paths: PowerShell build/
+test scripts, developer-distribution README, root README/ignore and optional
+output-directory support in the profile artifact checker. Focused script
+validation22 checks, JavaScript syntax, whitespace and ignored-output checks
+PASS. Child exit37/unsafe paths/stale ZIP/profile/import negatives are covered.
+No ZIP was produced in that initial focused handoff.
+Parent now confirmed all application source is stable: only this tooling owner
+and design-only architect write files; operator does not edit app source.
+The owner is executing the full test-profile validation/package entrypoint,
+including actual tests/types, isolated compile and ZIP closure checks.
+Normal frontend production output remains untouched for the ongoing pilot.
+
+F2 readiness stopped before application/command on NJS-500 in the READ ONLY
+connection, traced by deterministic source order to station:candidates.
+Fresh identity/OS proof and F2-specific8 limited observations passed
+(154 columns,47 constraints,48 members,owner triggers/policies0), plus8
+zero-row privileges. No station certificate/F2 allowance packet was issued.
+F2 UPDATE/COMMIT/command/setup/exit counts zero; F1 and consumed F1 fuse
+preserved. Broken-connection rollback is unconfirmed; unsafe lease/pool
+closed and never reused. This is not UNKNOWN arrival because none was sent.
+Cause remains unknown; offline driver timeout/lifecycle facts and scoped
+candidate-query cost are being investigated without blind retry or plan change.
+No application code changes occur while the build owner validates/packages
+the current stable source. The F2 on-time window must not be extended by
+changing an already attended day.
+
+Frontend investigation found the installed effective root/project runner is
+already threads/maxWorkers1. Three unchanged-config full621/621 observations
+and app/spec typechecks naturally pass; actual worker/jsdom handshake ready
+870ms. No evidence supports the oversubscription hypothesis; no test config,
+dependency, timeout, pool or application change was fabricated. Only frontend
+README/verification notes changed. Intermittent startup cause remains unknown.
+
+Candidate SELECT optimization is SOURCE-STABLE in exactly two backend files:
+disjoint candidate day-row UNION ALL followed by every overlay, preserving
+NULL/duplicate malformed baseline behavior, projection/order/global bound.
+Command-side predicates, budgets/certificates and business rules unchanged.
+Owner focused71/affected837/TSC and full1586/1586 naturally pass. Seven new
+runner cases include25,434 independent bag-equivalence combinations as one
+case; not an Oracle execution-plan/performance or NJS-500 cause claim.
+Independent bounded SQL-equivalence/exit QA is running.
+
+All application sources are again stable. DevOps is rerunning the complete
+entrypoint against this new backend version, with bounded non-forcing startup
+trace in the delivery context. If successful, one final clean uninstrumented
+validation must establish the actual developer command/artifact; no automatic
+retry loop or claim the worker defect is fixed. Existing production assets
+remain isolated from packaging output.
+
+Windows owner now completed both the observed and final clean entrypoint
+runs naturally with exit0: each backend1586/frontend621, both typechecks,
+isolated TEST build/profile check, packaged production rejection and ZIP
+closure pass. Focused tooling22/22 also pass.
+The local developer ZIP exists at
+`.shifter-developer-delivery/test/shifter-developer-test.zip`:570050 bytes,
+127 files/2014814 expanded bytes,92 backend .mts closure members,27 compiled
+browser files, unchanged manifest/lock, three sanitized examples and notices.
+No secrets/env files/node_modules/Oracle Client/Git/legacy/test drivers/
+operator state/screenshots are included. Artifact remains ignored, not source
+publication. The earlier startup failure remains unresolved diagnostic risk;
+current passes are not presented as a worker-root fix. Owner resources closed.
+Independent bounded packaging QA is now running, not another full-suite rerun.
+
+Candidate SQL independent QA PASS:71 within230 impacted cases,24 separate
+checks (32768 seeded bag comparisons counted as one), and strict TSC.
+No correctness defect found; actual Oracle parsing/timing and NJS-500 cause
+remain unknown. Old operator agent became unavailable with an agent-service
+401 before accepting the next query instruction, not an Oracle error.
+A new bounded read-only probe task owns exactly one instrumented candidate
+SELECT, unchanged5000ms callTimeout and1001 row limit, no command/plan refresh.
+If tool authentication is unavailable it must stop without credential changes.
+The old optional live navigation task is not claimed complete.
+
+Section49v0.1 M3 proposal is source-backed and READY FOR APPROVAL. It unifies
+create/change/logical cancel and interactive CSV preview/atomic apply, but its
+first subset is future simple dependency-free shifts for one employee, not
+full M3 parity. Preview allocates no sequence/mutation. Proposed command
+receipts remain limited single-attempt TEST with UNKNOWN/no retry because
+durable receipt storage is not evidenced. New canonical/application/UI code
+waits for the one bundled section49 approval; production, DDL/new storage,
+batch and live partner transport are not inferred from a request to finish.
+
+Offline F2 failure isolation confirms operator callTimeout5000ms per driver
+round-trip, no ALS/HTTP budget, no application break call and awaited execute
+rejection before cleanup. Total run12.528s is not a measured final-statement
+duration. Only NJS-500 was retained; cause chain/per-statement timings were
+not captured. No premature lease release is evidenced.
+The OR-prefix/correlated-EXISTS candidate shape is a performance hypothesis,
+not a verified Oracle execution plan or proven cause. Backend analysis is
+read-only until Windows full validation/package finishes; no blind retry,
+raised timeout, schema/index change or claim of network repair is authorized.
+
+The full Windows entrypoint now actually ran: installed-version checks,
+both typechecks and backend1579/1579 passed, then frontend test worker startup
+failed before collection (one unhandled timeout). Its identified runner/
+esbuild stayed alive and were stopped only for failed-run cleanup; entrypoint
+propagated failure, removed owned output and produced no ZIP.
+This is not a successful build or dependency/version change.
+Frontend tooling owner is fixing the recurring worker-start reliability issue
+through supported installed runner configuration, not raising timeouts,
+weakening assertions, vendor patches or retries-as-success.
+
+With that full run stopped, backend owner may implement the candidate SELECT
+rewrite in its two assigned files. Use independently characterized disjoint
+row UNION ALL with all overlays retained, preserving malformed-row behavior,
+scope/multiplicity/ordering/1001 bounds and command predicates. This is a
+semantics-preserving query optimization hypothesis; Oracle performance and
+NJS-500 causation remain unproven. No live retry, schema/index change or clock/
+plan extension is authorized. DevOps waits for both source-stable handoffs
+before rerunning the complete validation/package against one coherent source.
 
 ### SHF-REAL-F1-OPERATIONAL-GO-28 — current resume checkpoint
 

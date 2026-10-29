@@ -40,8 +40,8 @@ export class ExitOracleDouble {
   duplicateTable?: string;
   hook?: (event: string) => Promise<void> | void;
   async point(event: string) { this.events.push(event); await this.hook?.(event); }
-  constructor(realClock = false) {
-    if (realClock) this.clockMs = Date.now();
+  constructor(realClock = false, fixtureClockMs?: number) {
+    if (realClock) this.clockMs = fixtureClockMs ?? Date.now();
     this.binding = { marker: nativeMarker, ...exitSelection, orgUnitId: "T001",
       operation: "native-station-exit-v0.1", exitMetadataDigest: "0".repeat(64),
       readIdentity: { ...this.observations.read }, writeIdentity: { ...this.observations.write },
@@ -69,13 +69,20 @@ export class ExitOracleDouble {
     Object.assign(this.rows.SHF_EMPLOYEES!, { EMPLOYEE_ID: "9001", EMP_ID_NUMBER: "999999991", FIRST_NAME: nativeMarker,
       LAST_NAME: "Synthetic", ORG_UNIT_ID: "T001", SHF_LOCKED: "0" });
     const day = new Date(this.clockMs).toISOString().slice(0, 10);
+    // Real-clock entrypoints may run before 08:00 UTC; keep synthetic arrival/start
+    // on today's UTC date and no later than the same captured clock.
+    const start = realClock ? new Date(Math.max(Date.parse(day + "T00:00:00Z"),
+      this.clockMs - 3600000)).toISOString().slice(0, 19) : day + "T08:00:00";
+    // Keep the plan on today's date; A10 admits the fractional final second
+    // after this whole-second end without changing the production midnight guard.
+    const end = realClock ? new Date(Math.min(this.clockMs + 10000,
+      Date.parse(day + "T23:59:59Z"))).toISOString().slice(0, 19) : day + "T16:00:00";
     Object.assign(this.rows.SHF_EMPLOYEE_DAY!, { SHF_EMPLOYEE_DAY_ID: "6201", EMP_ID_NUMBER: "99999999", WM_DAY_TYPE: "4",
-      WM_SHIFT_START_DATETIME: day + "T08:00:00", WM_SHIFT_END_DATETIME: realClock
-        ? new Date(this.clockMs + 10000).toISOString().slice(0, 19) : day + "T16:00:00",
+      WM_SHIFT_START_DATETIME: start, WM_SHIFT_END_DATETIME: end,
       WM_SITE_ID: "7001", SPLIT_SHIFT: "N", SOURCE: "SYNTHETIC_DAYS" });
     this.rows.SHF_DAY_CHANGES = null;
     Object.assign(this.rows.SHF_ATTENDANCE!, { SHF_EMPLOYEE_DAY_ID: "6201", TADREECH: "0",
-      STATION_ARRIVAL_TIME: day + "T08:00:00", STATION_ARRIVAL_USER: "synthetic-original" });
+      STATION_ARRIVAL_TIME: start, STATION_ARRIVAL_USER: "synthetic-original" });
     this.rows.team = { ORG_UNIT_ID: "T001", UNIT_TYPE_ID: "J01", PARENT_UNIT: "M001" };
     this.rows.parent = { ORG_UNIT_ID: "M001", UNIT_TYPE_ID: "G01", PARENT_UNIT: null };
     this.rows.mapping = { SS_SITE_ID: "7001", SOU_ORG_UNIT_ID: "M001" };

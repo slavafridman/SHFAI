@@ -2,7 +2,10 @@
 export type DecimalId = string;
 export type ShiftDayId = string;
 export type LocalDateTime = string;
-export type CapabilityV1 = "shift-day:read" | "current-shifts:read" | "shift-search:read" | "my-shifts:read" | "shift-items:read" | "employee:read" | "attendance:read" | "attendance-stage-arrival:prepare" | "attendance-stage-arrival:commit" | "attendance-stage-arrival:test-oracle-write" | "attendance-station-arrival:prepare" | "attendance-station-arrival:commit" | "attendance-station-arrival:test-oracle-write" | "attendance-station-exit:prepare" | "attendance-station-exit:commit" | "attendance-station-exit:test-oracle-write";
+export type CapabilityV1 = "shift-day:read" | "current-shifts:read" | "shift-search:read" | "my-shifts:read" | "shift-items:read" | "employee:read" | "attendance:read" | "attendance-stage-arrival:prepare" | "attendance-stage-arrival:commit" | "attendance-stage-arrival:test-oracle-write" | "attendance-station-arrival:prepare" | "attendance-station-arrival:commit" | "attendance-station-arrival:test-oracle-write" | "attendance-station-exit:prepare" | "attendance-station-exit:commit" | "attendance-station-exit:test-oracle-write"
+  | "shift-management:prepare" | "shift-management:create" | "shift-management:change"
+  | "shift-management:cancel" | "shift-management:csv-preview"
+  | "shift-management:csv-apply" | "shift-management:test-oracle-write";
 export interface PrincipalV1 {
   subject: string;
   provider: "synthetic" | "real";

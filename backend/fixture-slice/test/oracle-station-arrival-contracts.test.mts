@@ -36,7 +36,7 @@ type ContractChecks = [
   Assert<Equal<Extract<CapabilityV1, `attendance-stage-arrival:${string}`>,
     "attendance-stage-arrival:prepare" | "attendance-stage-arrival:commit"
     | NativeStageArrivalCapabilityV1>>,
-  Assert<Equal<Exclude<CapabilityV1, `attendance-${string}`>,
+  Assert<Equal<Exclude<CapabilityV1, `attendance-${string}` | `shift-management:${string}`>,
     "shift-day:read" | "current-shifts:read" | "shift-search:read"
     | "my-shifts:read" | "shift-items:read" | "employee:read" | "attendance:read">>,
   Assert<Equal<Extract<CapabilityV1, "attendance:read">, "attendance:read">>,

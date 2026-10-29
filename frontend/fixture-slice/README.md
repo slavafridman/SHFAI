@@ -7,6 +7,98 @@ Implements approved **§47 v0.1 / §47.7**, user acceptance 28 October 2026
 dependency, manifest, lock, public environment or backend source changes.
 Installed Node24.21.0 / Angular21.2.25 / Material+CDK21.2.14 / TS5.9.3 retained.
 
+### QA28B-02: approved upstream Vitest4.0.9 patch validated
+
+**SOURCE-STABLE for parent final artifact QA/publication.** The explicit
+29October approval pins Vitest exactly4.0.9. Direct package-file reads and
+peer-tree checks confirm the consistent4.0.9 family, unchanged Angular/
+Material/TypeScript/Vite/runtime versions and supported Angular peer range.
+Threads/maxWorkers1 is unchanged. Upstream PR9027 supplies outer startup90s
+and inner start/stop60s defaults; there is no local timer hack.
+
+First-attempt actual Angular focused3/3, full621/621 and strict app/spec TSC
+passed naturally. After the frozen tool/C49 source acknowledgements, the
+actual `Build-Shifter.ps1 -Profile test -Validation` entrypoint passed **twice
+sequentially**, natural exit0 in62.18s/62.07s. Each run passed backend1601/
+frontend621, isolated TEST build/profile, runtime closure92, production refusal
+with zero factories and canonical ZIP checks.
+
+Final developer ZIP has127 files/570729 bytes, zero raw backslashes, and all
+127 payload entries match staging and current source/build bytes. Normal
+frontend dist is unchanged; zero newly retained owned runner services remain.
+The existing unrelated Angular processes were not touched.
+
+Cold npm resolution against the explicitly authorized published baseline
+verified only nine changed lock records (root pin + eight Vitest family
+entries), with565 unrelated records unchanged. No optional records were
+manually edited, no new transitive package was introduced and no vendor/
+dependency override was used. Exact commands, temporary install-state issues,
+artifact hash and scope are in `VERIFICATION.md`.
+
+This is observed delivery validation of an approved vendor patch, not an
+all-OS root-cause explanation, startup SLA, real-provider readiness or
+production/live-pilot approval. Parent final artifact review and publication
+remain separate.
+
+### Historical startup investigations — superseded by validated patch above
+
+**29October approved patch progress:** the user approved exact Vitest4.0.9.
+Actual installed Vitest-family files now report4.0.9 and published upstream
+PR9027 defaults (outer startup90s, inner start/stop60s); no local timer override.
+Threads/maxWorkers1 and application code are unchanged. First actual Angular
+focused3/3, full621/621 and strict app/spec TSC pass naturally on that patch.
+Npm hidden installed-state metadata required a filesystem refresh; the
+resulting unrelated optional lock-record normalization is being repaired
+against a parent-supplied baseline before delivery validation. Two full
+delivery runs are not yet claimed. See the latest `VERIFICATION.md` section.
+
+**Actual Angular harness result (29 October, SESSION627):** the separately
+authorized single invocation of
+`npm test -- --include src/environment.spec.ts` with forks/maxWorkers1
+failed before collection: `Timeout starting forks runner`, zero tests,
+one unhandled error,5.02s runner duration. This complete caller/RPC result is
+independent of the earlier standalone probe limitation. The command lingered
+after failure and its owned subtree was stopped as failed cleanup, not PASS.
+Config was restored; no full suite/typecheck or delivery invocation followed.
+The actual supported alternative is not validated; packaging remains blocked.
+
+The subsequent one permitted harness diagnosis (SESSION625) also failed its
+unchanged5000ms readiness budget: spawn16ms, zero messages/stderr bytes,
+deadline5018ms, then normal cleanup/exit1. The child explicitly used empty
+execArgv; inherited `--input-type=module` was not demonstrated, and no
+`ERR_INPUT_TYPE_NOT_ALLOWED` appeared. Source config remains restored.
+Immediate failure-path events and the retained ignored temporary probe path
+are recorded at the top of `VERIFICATION.md`. No corrected probe or delivery
+run followed because no concrete harness defect was confirmed.
+
+**29 October comparison stopped at its first failure:** the authorized forks
+candidate resolved correctly at root/generated-project level (forks,
+maxWorkers1, unchanged Angular isolation), but the actual installed process
+worker did not acknowledge `started` within the unchanged5000ms readiness
+budget. The probe returned exit1 and cleaned its owned worker/context.
+No focused/full suite or delivery-script run followed; no candidate mitigation
+or package PASS is claimed. Config was restored to its prior contents.
+The unrelated existing Angular/esbuild processes were left untouched.
+`VERIFICATION.md` records the failure, missing failure-path event-timing detail
+and the parent-owned next diagnostic decision.
+
+The delivery pipeline's reported zero-test Vitest thread-start timeout is a
+failed package gate, separate from the already fixed duplicate-dialog CSS
+context leak. The current supported runner config **already limits threads to
+one**, and runtime resolution through the installed Angular plugin confirms
+that limit at both root and generated project. Reapplying that setting is
+not a demonstrated fix. No test config, pool, script, dependency, timeout or
+error gate was changed during this investigation.
+
+Three sequential unchanged-config full-suite observations passed621/621
+with natural exit0 (27.93/30.67/24.98s); app/spec strict TSC passed. An actual
+Vitest worker handshake probe became online in30ms/ready in870ms under the
+installed5000ms deadline. The intermittent failure did not reproduce, so its
+cause is **not declared fixed** and publication is not cleared by those passes.
+See `VERIFICATION.md` for installed-source evidence, effective budget,
+cleanup and the specific delivery-context trace needed from parent/QA/devop.
+No browser/application changes or backend/package pipeline run are included.
+
 **Frontend SOURCE-STABLE; parent independent QA/release remains separate.**
 The final frontend suite passes **621/621** (existing531 +90), strict app/spec
 typing and all three build/profile pairs return naturally with exit0. Public
