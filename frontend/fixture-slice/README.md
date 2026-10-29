@@ -1554,3 +1554,66 @@ B49 real HTTP/protocol-double integration requires parent **backend SOURCE-STABL
 and remains separate from this UI-double verification. Oracle/O49 execution,
 partner transports, production enablement, full delivery pipeline and release
 approval are not provided here.
+
+### U49 Phase B — actual application over explicit protocol doubles
+
+The focused persistent checker is now available after the caller's B49
+SOURCE-STABLE handoff. From `frontend/fixture-slice`, using the existing isolated
+production assets (no rebuild or normal `dist` overwrite):
+
+```powershell
+node checks/shift-management-protocol-browser-check.mjs
+```
+
+This is separate from the unchanged `shift-management-browser-check.mjs` typed
+HTTP-double check. It drives actual Angular controls in owned installed Chrome
+through a byte-forwarding proxy into `startFromEnvironment` with all read/native/
+endpoint factories explicitly injected. Four fresh synthetic worlds and TEMP
+authority namespaces cover create, activity-only change, logical cancellation,
+and two-row CSV preview/apply. It compares displayed before/after fields and
+receipt links with actual responses, asserts pure preview, one command/commit,
+physical double rows, writer-close-before-independent-readback, and consumed
+authority. SQL is briefly gated to verify pending/disabled/no-premature-success.
+No manual command POST or canned successful API response is used.
+
+Only the Oracle/OS protocol boundary is doubled; this is **not live Oracle proof**,
+full rollback certification, EMS completion, full WCAG/UAT or release readiness.
+The helper retains optional backend-fault/restart assertions, but the browser
+command runs the four successful flows only. Adversarial rollback remains the
+independent backend QA boundary. All owned listeners/pools/Chrome/profiles and
+TEMP namespaces are cleaned in `finally`; CSV stays in memory and no screenshots
+are written. Exact results and limitations are in `VERIFICATION.md`.
+
+#### TEST49-H04 / TEST49-H05 focused harness regression
+
+The protocol observer now reuses the actual frontend identity/context,
+preparation/CSV-preview and receipt guards. Receipt binding comes from the
+observed request and validated preparation, not a cast or receipt self-binding.
+The narrow extensionless-import bridge follows the existing U49 checker and is
+removed after loading the pure guards; no Angular services are loaded in Node.
+
+The owned-browser helper awaits Chrome spawn before readiness polling, skips
+kill/exit waiting for an unspawned process, and attempts profile removal in
+cleanup `finally` even if process closing fails. The small negative test uses
+an isolated worker and a real spawn of a guaranteed-missing executable inside
+its owned profile. It neither launches installed Chrome nor simulates CDP.
+The parent also removes the captured profile on a failing historical run.
+
+From `frontend/fixture-slice`, without rebuilding:
+
+```powershell
+node --test checks/owned-protocol-browser.test.mjs
+node node_modules/typescript/bin/tsc --noEmit --strict --target ES2024 --module Preserve --moduleResolution Bundler --typeRoots ../../backend/fixture-slice/node_modules/@types --types node --allowImportingTsExtensions --verbatimModuleSyntax --erasableSyntaxOnly checks/shift-management-protocol-backend.mts
+node --check checks/shift-management-protocol-backend.mts
+node --check checks/shift-management-protocol-browser-check.mjs
+node --check checks/owned-protocol-browser.mjs
+node --check checks/owned-protocol-browser.test.mjs
+node checks/shift-management-protocol-browser-check.mjs
+```
+
+Strict helper checking now includes the frontend guard graph, so it uses
+frontend-compatible Preserve/Bundler resolution rather than interpreting those
+unchanged `.ts` exports as CommonJS under NodeNext/verbatim syntax. Strictness
+and the full helper import graph are retained. The historical optional mixed
+checkJs probe is **not a passing gate**; see its exact disposition and the
+separate NodeNext failure in `VERIFICATION.md`.

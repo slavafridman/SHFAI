@@ -3985,3 +3985,302 @@ src/station-arrival-page.ts
 src/station-exit-page.ts
 src/native-read-views.spec.ts
 ```
+
+## U49 Phase B — resumed actual-protocol browser integration (29 October 2026)
+
+**Status: PASS for the four requested successful browser/native protocol flows.**
+Approved UI/shared API baseline remains `49-v0.1`, including §49.10–49.12;
+no public contract, product, dependency, schema or design changes.
+The caller authorized the backend SOURCE-STABLE integration. Product inputs were
+compared with published `133e8c5af1ed2166cc2cc6f87ced9f584863d724`:
+
+```powershell
+git --no-pager diff --name-only 133e8c5af1ed2166cc2cc6f87ced9f584863d724 -- frontend/fixture-slice/src backend/fixture-slice
+```
+
+Result: exit 0, no changed paths. Existing `.angular/u49-production/browser`
+assets were reused, not rebuilt. Current worktree HEAD was later than the
+requested publication; the product-source comparison, not HEAD equality, is
+the basis for using those assets. Node `24.21.0`, installed Angular `21.2.25`
+and Material `21.2.14` were inspected; no tooling selection/install occurred.
+
+### Persisted checker and evidence boundary
+
+Changed manifest, relative to `frontend/fixture-slice`:
+
+- `checks/shift-management-protocol-browser-check.mjs` — new focused browser flows.
+- `checks/owned-protocol-browser.mjs` — small owned CDP helper, reusing
+  `physicalInput` and `waitForKeyboardModalReady` and existing Chrome patterns.
+- `checks/shift-management-protocol-backend.mts` — integrated the cancelled
+  worker's untracked helper; fixed zero-argument fixture factory typing, added a
+  receipt accessor and protected physical-row assertions from dumping row data.
+- `README.md`, `VERIFICATION.md` — execution/results/limits only.
+
+The original typed HTTP-double management checker remains unchanged.
+Source evidence: actual `server.mts` factory seam and shutdown;
+pure `test/native-shift-management-runtime-double.mts` and
+`test/oracle-shift-management-source-double.mts`; runtime `.test.mts` setup
+read as text only (never imported); approved frontend API guards, templates,
+dialog and shared contracts. Reverse-engineering baseline inspected; legacy
+`old/SHF/src/bzq/shf/model/ShiftDataModel.java:7645–7665` read only for full-nine/
+uppercase-X CSV behavior. Source contract catalog absent. No forbidden agent
+brief/private configuration/environment publication/operator files read.
+
+**Actual:** installed owned Windows Chrome, existing Angular production bundle,
+user controls, actual HTTP/Node application, native admission/persistent
+authority, 18-table source assembler, metadata/certificate validation,
+locked UoW/snapshot, physical SQL double state, independent post-commit readback.
+**Doubled:** Oracle/catalog/endpoint/OS operator packets, exclusively synthetic
+through explicit read/native/resolveEndpoint factories. Environment is a
+synthetic-only whitelist, not inherited process ENV. Native system clock used;
+no fixture-clock override. Each operation has a fresh TEMP authority namespace
+and browser profile; no consumed authority is reset.
+
+The proxy preserves actual API bytes/status/security headers and Origin; it
+never substitutes successful effects. No manually POSTed command is used.
+The CSV file input receives synthetic in-memory bytes; all other editing,
+selection, review/consents and command activation use keyboard/CDP interactions.
+
+### Exact checks and results
+
+All commands below except the Git comparison run from `frontend/fixture-slice`.
+
+```powershell
+node checks/shift-management-protocol-browser-check.mjs
+```
+
+Final saved-source execution: **PASS, exit 0**.
+
+| UI operation | Commands | Commits | Sequence | Locks | Read leases | Physical days / overlays |
+|---|---:|---:|---:|---:|---:|---:|
+| Create | 1 | 1 | 1 | 1 | 6 | 1 / 0 |
+| Activity-only change | 1 | 1 | 0 | 2 | 6 | 1 / 1 |
+| Logical cancel | 1 | 1 | 0 | 2 | 6 | 1 / 1 |
+| CSV two-row preview + whole apply | 1 | 1 | 2 | 1 | 7 | 2 / 0 |
+
+Each world: two writer/probe leases, zero active SQL at completion, writer
+closed before separate readback acquired/closed, consumed authority verified.
+The one reported rollback per world is startup/probe cleanup, **not an
+adversarial rollback test**. Preview/context/review/Escape preserved all rows
+with zero sequence/locks/commits. Actual preparation before/after fields matched
+every displayed review field. Confirmed unchecked consents, initial heading
+focus, Escape focus restoration, Hebrew synthetic Administrator/no-credential-
+verification label, separate employee context and RTL direction.
+During an explicitly held native SQL call: no commit, no success, repeat
+submission disabled. Final displayed verified receipt count and links matched
+actual receipts; native `oracle-test-committed`, not replayed, no partner
+invocation; base/source/overlay/minute/attendance semantics verified directly
+against double committed state. CSV preview showed two valid rows before one
+whole two-row commit; no partial apply UI or command was used.
+
+```powershell
+node node_modules/typescript/bin/tsc --noEmit --strict --target ES2024 --module NodeNext --moduleResolution NodeNext --typeRoots ../../backend/fixture-slice/node_modules/@types --types node --allowImportingTsExtensions --verbatimModuleSyntax --erasableSyntaxOnly checks/shift-management-protocol-backend.mts
+node --check checks/owned-protocol-browser.mjs
+node --check checks/shift-management-protocol-browser-check.mjs
+node --check checks/shift-management-protocol-backend.mts
+```
+
+Final strict helper TSC and all syntax checks: **PASS, exit 0**.
+Initial resumed helper TSC found three fixture-factory argument arity errors;
+corrected inside the owned helper without touching backend code.
+
+Optional mixed JS/backend compiler probe:
+
+```powershell
+node node_modules/typescript/bin/tsc --allowJs --checkJs --noEmit --strictNullChecks --target ES2024 --module nodenext --skipLibCheck --allowImportingTsExtensions --typeRoots ../../backend/fixture-slice/node_modules/@types --types node checks/shift-management-protocol-browser-check.mjs checks/owned-protocol-browser.mjs
+```
+
+**FAIL, exit 2; not a passing gate.** Initial checker nullability/shape errors
+were repaired; the probe also traverses unchanged backend modules under flags
+different from their strict owner configuration, reporting seven inference
+diagnostics in `attendance-errors.mts`, `attendance-fixture.mts`,
+`my-shifts-errors.mts`, `native-stage-arrival-config.mts`,
+`oracle-attendance-reader.mts`, `shift-management-application.mts` and
+`shift-search-errors.mts`. The last local nullable response-header assignment
+was fixed afterward; this optional probe was not rerun afterward. Do not edit
+backend files to satisfy this auxiliary command. Parent owns disposition;
+the strict helper/import graph check above passes.
+
+### Failures, exclusions and cleanup
+
+Harness-only initial failures were fixed without relaxing business assertions:
+proxy omitted upstream `nosniff` (UI correctly rejected it); identity assertion
+expected English rather than approved Hebrew; ordinary preparation was tested
+with CSV-only `state`; immediate selection raced a dynamically mounted cancel
+reason control. The helper now condition-waits for a visible enabled control.
+Final complete run passed; no product defect identified.
+
+Expected warnings: Node's existing typeless `.ts` helper warning; explicit
+TEST LIMITED METADATA COVERAGE waiver. Cross-owner triggers and role/PUBLIC
+grants remain UNKNOWN: this does not certify database safety/full rollback.
+
+Not rerun: unchanged 698 UI tests/full three-profile builds, prior Phase A
+guards/geometry/Back checks, backend 225/1826 suites. Not covered by this
+browser command: adversarial rollback, UNKNOWN/restart faults, absent/failed
+identity matrix, full actor navigation, Windows-1255/reflow matrix (prior
+Phase A evidence only), live Oracle/EMS, full project/delivery/UAT/WCAG or
+release readiness. The inherited helper's optional fault/restart methods are
+not invoked and are not claimed as executed evidence. Independent backend QA
+owns rollback/adversarial coverage; parent owns aggregation/release decisions.
+
+Every attempt ran `finally` cleanup. Final four worlds confirmed all owned
+Chrome processes/profiles, loopback static/proxy and Node listeners, read/native
+pools and TEMP authority directories closed/deleted; all leased connections
+closed. No shared process/listener termination, raw CSV/body/credential logs,
+screenshots, live driver/DNS/Oracle, legacy execution, EMS, schema or Git/lock
+edits. Next action: parent review/aggregate this bounded Phase B evidence with
+independent backend QA, not a native-live or production GO claim.
+
+## TEST49-H04 / TEST49-H05 — bounded §49 harness repair (29 October 2026)
+
+**Status: done, for parent review.** These are checker defects, not product
+business defects. Caller-provided held product baseline `133e8c5` and status
+follow-up HEAD reference `19c42a2` were not independently inspected with Git.
+Approved UI/shared API baseline remains §49-v0.1, with §49.10/§49.11 “Agree 49”
+and §49.12 clarification as recorded above; no contract changes.
+Installed runtime was Node 24.21.0; existing Angular 21.2/TypeScript 5.9.3
+tooling/declarations were reused without dependency or configuration changes.
+
+### Exact changed manifest and source evidence
+
+All paths below are under `frontend/fixture-slice/`:
+
+- `checks/shift-management-protocol-backend.mts`: remove unsafe receipt
+  double-cast. Reuse actual `src/shift-management-contract.ts`
+  `managementIdentity`, `managementContext`, `draft`, `preparation`, `csvPreview`,
+  `command` and `receipt` guards; keep typed validated observations. Receipt
+  binding uses the actual command ID, context observation time and preparation
+  effects, not fields taken on trust from the receipt. The narrow temporary
+  `registerHooks` bridge follows `checks/shift-management-browser-check.mjs`.
+- `checks/shift-management-protocol-browser-check.mjs`: forward observed JSON
+  request/content-type to the observer without changing upstream bytes; replace
+  the preparation JSDoc cast with the guard-validated typed return. All existing
+  physical effects, displayed before/after, purity and readback assertions remain.
+- `checks/owned-protocol-browser.mjs`: await `once(chrome, 'spawn')` inside the
+  existing try; do not kill/wait for a missing PID or an already-signalled exit;
+  put owned-profile removal in cleanup `finally`.
+- `checks/owned-protocol-browser.test.mjs` (new): built-in Node test and isolated
+  worker; replace only the worker's builtin spawn export using
+  `syncBuiltinESMExports`, then call original spawn on a guaranteed-missing
+  executable under the captured owned profile. Require ENOENT rejection,
+  profile absence and natural worker exit. Parent bounds the historical failure
+  and cleans the captured profile even when the worker fails.
+- `README.md`: focused commands, guard reuse and isolated negative-test scope.
+- `VERIFICATION.md`: this evidence/disposition.
+
+No application/backend/shared-contract/dependency/tooling/Git/Docker edits.
+Business behavior/legacy evidence is unchanged from the approved U49 baseline;
+this follow-up's controlling implementation evidence is the existing frontend
+guards and the owned-browser lifecycle, not new business-rule interpretation.
+The reverse-engineering v1.0 baseline remains background evidence; the source
+contract catalog is absent. No legacy execution or new live permission.
+
+### Cheap negative check, static checks and exact failures
+
+All commands below ran from `D:\AIProjects\SHFAI\frontend\fixture-slice`.
+
+1. `node --test checks/owned-protocol-browser.test.mjs`
+   - Before the H05 helper edit: **FAIL, exit 1**, 1 test / 0 pass / 1 fail,
+     8119.5348 ms overall. The isolated worker failed to finish within its
+     8-second bound and was terminated with SIGTERM; the assertion requiring
+     natural exit failed. Parent cleanup removed the captured profile. This
+     demonstrates a safely failing prior behavior, not a real-CDP result.
+   - After the H05 edit: **PASS, exit 0**, 1 test / 1 pass / 0 fail,
+     241.5494 ms overall; missing executable rejects ENOENT, profile absent,
+     worker exits naturally without timer termination. No real Chrome launched.
+   - Root cause: spawn errors lacked an early listener; unspawned-child exit
+     waiting could stall and profile removal was skipped on close failure.
+     The close-timeout branch is structurally protected by `finally`; a
+     force-stuck real Chrome/locked-profile scenario was not separately induced.
+
+2. Established strict command attempted with the newly imported frontend graph:
+
+   ```powershell
+   node node_modules/typescript/bin/tsc --noEmit --strict --target ES2024 --module NodeNext --moduleResolution NodeNext --typeRoots ../../backend/fixture-slice/node_modules/@types --types node --allowImportingTsExtensions --verbatimModuleSyntax --erasableSyntaxOnly checks/shift-management-protocol-backend.mts
+   ```
+
+   **FAIL, exit 2**: 85 module-format diagnostics (67 TS1287, 18 TS1295) in
+   unchanged `src/contract.ts`, `src/current-shifts-contract.ts`,
+   `src/shift-management-contract.ts` and `src/stage-arrival-contract.ts`.
+   NodeNext/verbatim interprets these frontend `.ts` files as CommonJS, whereas
+   the frontend uses bundler resolution and Node's existing checker bridge
+   loads their ES syntax. No application/package changes made to silence this.
+
+3. Strict targeted helper **and full imported guard/backend graph**:
+
+   ```powershell
+   node node_modules/typescript/bin/tsc --noEmit --strict --target ES2024 --module Preserve --moduleResolution Bundler --typeRoots ../../backend/fixture-slice/node_modules/@types --types node --allowImportingTsExtensions --verbatimModuleSyntax --erasableSyntaxOnly checks/shift-management-protocol-backend.mts
+   ```
+
+   **PASS, exit 0**. Only module/resolution flags differ from step 2; no
+   strictness reduction, skipLibCheck, partial guard duplication or contract
+   weakening. H04 root cause was receipt shape/outcome being treated as proof
+   of the entire DTO via a double-cast, plus an unnecessary preparation cast.
+
+4. Syntax checks, each **PASS, exit 0** (executed sequentially with success gates):
+
+   ```powershell
+   node --check checks/shift-management-protocol-backend.mts
+   node --check checks/shift-management-protocol-browser-check.mjs
+   node --check checks/owned-protocol-browser.mjs
+   node --check checks/owned-protocol-browser.test.mjs
+   ```
+
+**Exact optional mixed-checkJs disposition:** the historical command recorded
+above (`--allowJs --checkJs --noEmit --strictNullChecks --target ES2024 --module
+nodenext --skipLibCheck --allowImportingTsExtensions --typeRoots
+../../backend/fixture-slice/node_modules/@types --types node` on the protocol
+browser and owned-browser `.mjs` files) previously **FAILED, exit 2**, including
+the seven unchanged backend inference diagnostics named above under different
+flags. It was not rerun after the prior final header correction, and was
+**not rerun in H04/H05**. It is not claimed passed; no broad established-helper
+repair attempted. Parent owns disposition of that optional auxiliary probe.
+This is separate from step 2's newly observed NodeNext module-format failure.
+
+### Exactly one actual four-flow browser regression
+
+```powershell
+node checks/shift-management-protocol-browser-check.mjs
+```
+
+**PASS, natural final exit 0**, using existing
+`.angular/u49-production/browser`; no rebuild, manual command POST or canned
+HTTP success. Actual Angular controls -> loopback byte-forwarding proxy ->
+actual Node HTTP/application/native UoW -> independent guarded readback;
+only injected Oracle/OS/endpoint protocol boundaries are synthetic doubles.
+
+| Flow | UI commands | Commits | Sequence | Locks | Read leases | Write/probe leases | Physical days / overlays |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Create | 1 | 1 | 1 | 1 | 6 | 2 | 1 / 0 |
+| Activity-only change | 1 | 1 | 0 | 2 | 6 | 2 | 1 / 1 |
+| Logical cancel | 1 | 1 | 0 | 2 | 6 | 2 | 1 / 1 |
+| CSV two-row preview/apply | 1 | 1 | 2 | 1 | 7 | 2 | 2 / 0 |
+
+Each world: `fault=none`, `active=0`, `rollbacks=1` (probe/cleanup counter,
+not adversarial rollback certification), independent readback true.
+All four canonical preparation/receipt guard paths passed without weakening
+the physical-row/before-after/purity assertions. Browser assertions also
+verified Hebrew synthetic Administrator/no-credential-verification indication,
+TEST marker, employee/identity separation, RTL, keyboard review/Escape focus
+return, acknowledgments, pending/disabled/no-premature-success and receipt links.
+
+Synthetic-only environment whitelist and **all** read/native/resolveEndpoint
+factories remained explicitly injected. Native clock stayed real; no fixture
+clock injection. Each world owned a fresh TEMP authority namespace; no consumed
+namespace reset or real F1 fuse operation. All four cleanup messages completed:
+owned Chrome/profile removal, loopback proxy/Node listener closure, read/native
+pool and lease closure, authority TEMP deletion (helper asserts absence).
+The negative test also confirmed profile absence. No retained service or
+background browser work; successful regression exited without external kill.
+
+Expected warnings only: existing Node typeless-helper reparsing and explicit
+TEST LIMITED METADATA COVERAGE waiver. Cross-owner triggers/role/PUBLIC grants
+remain UNKNOWN; no database-safety/full-rollback claim.
+
+Not rerun: unchanged 698 frontend/1826 backend suites, full builds/profile
+checks/ZIP, earlier Phase A matrix or full project checks. Not covered here:
+absent/failed identity matrix, full actor navigation, adversarial faults,
+native-live/Oracle/DNS/broker/EMS, full WCAG/UAT, release readiness. No private
+config/publication ENV or credentials used for execution. No new product defect
+or implementation blocker found. Parent owns review/aggregation and optional
+probe disposition; next action is review these two bounded harness fixes.

@@ -48,6 +48,11 @@ in the parent's follow-up staging. No unrelated report content was read.
 
 #### SHF-B49-U49-IMPLEMENTATION-29 — active owners
 
+Current resume: approved49-v0.1 implementation and bounded offline integration
+verification are complete; final scoped tooling/checker publication is pending.
+This is not full-project, live Oracle, UAT, WCAG conformance or release approval.
+The chronological component checkpoints below retain their original limits.
+
 Approved49-v0.1 canonical gate and both consumer handshakes are complete.
 B49 owner exclusively implements noncanonical backend CRUD/CSV rules,
 parser/admission, Oracle snapshots/UoW, policy/config/HTTP wiring and tests.
@@ -297,10 +302,58 @@ historical captures unchanged. Actual remote matched HEAD, ahead/behind0/0,
 index empty and no conflicts; scoped sources matched publication. All32
 previous unrelated dirty paths and external status payload (+133/-2) were
 preserved. Full suites/builds and operational checks were not repeated.
-Independent Q49 native assembler/runtime QA and U49 actual-browser protocol
-verification are now running against this held stable source, using actual
-Node application/HTTP/UoW with explicitly isolated Oracle protocol doubles.
-Their results are pending; no passing integration outcome is inferred.
+The attempted Q49 native integration, U49 protocol verification, developer
+build and status-only publication workers were subsequently found CANCELLED
+after interruption. Their unfinished work is not accepted as passing evidence;
+the last confirmed feature publication remains133e8c5. The status-only
+follow-up's Git outcome needs reconciliation before any further staging.
+Resume these remaining checks as bounded foreground jobs against the held
+source, using actual Node application/HTTP/UoW with isolated Oracle protocol
+doubles. Reconcile actual Git first, preserve unrelated edits, and inspect any
+owned partial artifacts before reuse. No source defect is inferred from worker
+cancellation; implementation-owner1826 tests and earlier bounded QA evidence
+remain distinct from these unfinished final checks.
+The resumed foreground jobs subsequently completed. Independent native
+integration passed33/33 focused tests and36/36 adversarial cases. Actual
+application/HTTP/UoW checks cover full18-table witnesses, locked drift with
+zero effects, two-row atomic rollback with two spent sequence IDs, ACK/writer
+release/separate identity-checked readback, UNKNOWN/restart fencing and
+startup/cancellation guards. Intermediate matrix assumptions were corrected
+in TEMP; no product defect or application-source change was required.
+U49 actual browser integration passed create/change/cancel/two-row CSV through
+Angular -> forwarding proxy -> actual Node/native UoW -> independent readback.
+Each flow issued one command/commit; no canned HTTP effects/manual command POST.
+Parent review found two checker-only defects: unsafe DTO casts and missing-
+Chrome spawn/cleanup handling. Actual frontend guards now replace the casts.
+The isolated spawn-failure regression failed before repair and passed after;
+strict helper checking, four syntax checks and one four-flow browser rerun
+passed. Preserve/Bundler strict compilation is the valid frontend-import mode.
+The NodeNext compatibility probe and optional mixed-checkJs probe failed;
+they are documented non-gates, not passing checks or application defects.
+No strictness reduction or broad unrelated helper repair was accepted.
+Windows delivery ran one actual TEST Validation: backend1826/1826,
+frontend698/698, profile33/33, TSC and all dev/test/production public builds
+passed. Updated packaging verifies ZIP bytes/provenance and actual extracted
+startup, not source fallback. Independent final artifact QA also passed:
+31 focused tooling checks,152 entries/116 runtime modules/28 browser assets,
+151 payload hash records,9 index references and145 browser import edges.
+The688665-byte ZIP expands to2424769 bytes; its payload matches current
+runtime sources and isolated TEST assets. SHA256:
+8BF9707328D3CC8160FDC2058EE20C5C7ADAC737BCF2A020650C02C2E1DAD10A.
+Artifact: ../.shifter-developer-delivery/test/shifter-developer-test.zip.
+Extracted DEV synthetic labeling and production/malformed-config rejection
+passed with zero instrumented driver/pool/startup IO calls. All three public
+profiles contain only the approved environment/API keys. No live Oracle,
+capacity100, Hebrew driver roundtrip, partner completion or release is proved.
+Actual reconciliation confirmed HEAD19c42a2483b26e39d8caa2f0134d6bb0b45a217a
+also matched direct remote main, cached0/0 and empty index; backend/runtime UI
+sources were unchanged from133e8c5. The previously interrupted status-only
+publication therefore completed; its result was not inferred from cancellation.
+Next safe action: publish only six frontend checker/doc paths, two packaging
+paths and parent checkpoint hunks, preserving all other user/Docker/report
+changes. Then record the verified feature publication and close this bounded
+development milestone. Broader legacy workflows still require their approved
+versioned contracts; do not report the whole rewrite complete.
 Next action: collect those precise integration results, route reproduced
 defects to their artifact owners, and verify/rebuild the developer delivery
 against the resulting stable source. Password rotation is not a user gate.

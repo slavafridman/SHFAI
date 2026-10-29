@@ -43,10 +43,11 @@ function Invoke-ShifterCommand([string]$File, [string[]]$Arguments, [string]$Dir
 }
 
 function Remove-ShifterOwned([string]$Path, [string]$ProfileRoot) {
-    # Only three exact, resolved outputs can ever be recursively removed.
+    # Only these exact, resolved outputs can ever be recursively removed.
     $allowed = @(
         (Join-Path $ProfileRoot 'frontend-build'),
         (Join-Path $ProfileRoot 'stage'),
+        (Join-Path $ProfileRoot 'extracted-check'),
         (Join-Path $ProfileRoot "shifter-developer-$Profile.zip")
     )
     $full = [IO.Path]::GetFullPath($Path)
@@ -173,9 +174,10 @@ function Invoke-ShifterBuild {
     $profileRoot = Join-Path $fullOutput $Profile
     $build = Join-Path $profileRoot 'frontend-build'
     $stage = Join-Path $profileRoot 'stage'
+    $extracted = Join-Path $profileRoot 'extracted-check'
     $zip = Join-Path $profileRoot "shifter-developer-$Profile.zip"
     # A failed rerun must not leave a stale success ZIP or staged distribution.
-    foreach ($path in @($zip, $stage, $build)) { Remove-ShifterOwned $path $profileRoot }
+    foreach ($path in @($zip, $stage, $build, $extracted)) { Remove-ShifterOwned $path $profileRoot }
     New-Item -ItemType Directory -Path $profileRoot -Force | Out-Null
     try {
         # Resolve installed packages without executing the application or driver.
@@ -262,8 +264,36 @@ console.log('PASS installed approved package versions; no install or driver impo
             $null = $expected.Add('THIRD-PARTY-NOTICES.txt')
         }
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'DeveloperDistribution.README.md') -Destination (Join-Path $stage 'README.md')
-        Copy-Item -LiteralPath (Join-Path $script:Repository 'README.md') -Destination (Join-Path $stage 'BUILD.md')
         $null = $expected.Add('README.md')
+        # Record only scoped source facts; never read unrelated status/docs/config.
+        $head = & git -C $script:Repository rev-parse HEAD
+        if ($LASTEXITCODE -ne 0) { throw 'Cannot record source HEAD.' }
+        $sourceChanges = @(& git -C $script:Repository diff --name-only HEAD -- backend frontend)
+        if ($LASTEXITCODE -ne 0) { throw 'Cannot record scoped source changes.' }
+        $provenance = @(
+            '# PROVISIONAL developer artifact - not a release',
+            "Source HEAD: $head",
+            "Scoped tracked backend/frontend changes against HEAD: $($sourceChanges -join ',')",
+            'Source scope: tracked fixture-slice import closure and selected browser build; unrelated files excluded.',
+            "Profile: $Profile; full source validation requested: $Validation",
+            "Runtime modules: $($closure.Count)",
+            'Prerequisites: native Windows; Node 24.21.0; npm 11.19.0; external runtime dependencies.',
+            'Oracle driver 26.0.0 / Thick Client 19.3 / Oracle 11g require separately authorized external setup and verification.',
+            'Same-origin /api serving and any private operator packet/configuration are external prerequisites, not ZIP contents.',
+            'Production is a fail-closed developer artifact; real authentication is not implemented.',
+            'Independent QA and final closure match remain required. No deployment/native-live approval.',
+            '',
+            'Source checkout commands (no install performed):',
+            'powershell.exe -NoProfile -File scripts\Test-Build-Shifter.ps1',
+            "powershell.exe -NoProfile -File scripts\Build-Shifter.ps1 -Profile $Profile -Validation",
+            '',
+            'Payload bytes / SHA256 (excluding this self-describing BUILD.md):'
+        )
+        foreach ($name in ($expected | Sort-Object)) {
+            $payload = Join-Path $stage $name
+            $provenance += "$name`t$((Get-Item -LiteralPath $payload).Length)`t$((Get-FileHash -LiteralPath $payload -Algorithm SHA256).Hash)"
+        }
+        Set-Content -LiteralPath (Join-Path $stage 'BUILD.md') -Value $provenance -Encoding UTF8
         $null = $expected.Add('BUILD.md')
         # Validate closure again at its packaged location: no source-tree fallback.
         $packagedClosure = @(Get-ShifterClosure $backendStage)
@@ -272,8 +302,21 @@ console.log('PASS installed approved package versions; no install or driver impo
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {join} from 'node:path';
+import fs from 'node:fs';
+import fsp from 'node:fs/promises';
+import dns from 'node:dns';
+import net from 'node:net';
+import {syncBuiltinESMExports} from 'node:module';
 const {startFromEnvironment} = await import(pathToFileURL(join(process.argv[1], 'server.mts')));
 const {RealAuthenticationNotConfiguredError} = await import(pathToFileURL(join(process.argv[1], 'environment-profiles.mts')));
+let forbiddenIO = 0;
+const forbidden = () => { forbiddenIO++; throw Error('Forbidden startup IO'); };
+for (const name of ['readFile','readFileSync','open','openSync','writeFile','writeFileSync','existsSync','stat','statSync','access','accessSync'])
+  fs[name] = forbidden;
+for (const name of ['readFile','open','writeFile','stat','access']) fsp[name] = forbidden;
+dns.lookup = forbidden; dns.resolve = forbidden;
+net.connect = forbidden; net.createConnection = forbidden;
+syncBuiltinESMExports();
 const real = {deploymentClass:'production', authenticationMode:'real',
   syntheticAdministratorEnabled:false, realProviderId:'', dataSource:'oracle-read-only',
   businessTimeZone:'UTC', attendanceStageArrivalMode:'disabled'};
@@ -286,9 +329,9 @@ await assert.rejects(startFromEnvironment({SHF_APP_ENV:'production',
   SHF_ORACLE_CONFIG:JSON.stringify({...real, authenticationMode:'synthetic',
     syntheticAdministratorEnabled:true})}, undefined, factories), /Production prohibits synthetic/);
 assert.equal(calls, 0);
-console.log('PASS packaged production rejects missing real provider and synthetic mode; zero pools/services');
+assert.equal(forbiddenIO, 0);
+console.log('PASS extracted entrypoint import; production rejects missing real provider and synthetic mode; zero pools/file IO/DNS/network');
 '@
-        Invoke-ShifterCommand $node @('--input-type=module', '-e', $productionCheck, $backendStage) $script:Repository
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         Write-ShifterZip $stage $zip @($expected)
         $archive = [IO.Compression.ZipFile]::OpenRead($zip)
@@ -304,10 +347,25 @@ console.log('PASS packaged production rejects missing real provider and syntheti
                     $name -match '(?i)secret|credential|live-check|screenshot|\.env') {
                     throw "ZIP whitelist violation: $name"
                 }
+                $stream = $entry.Open()
+                $sha = [Security.Cryptography.SHA256]::Create()
+                try { $actualHash = [BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '') }
+                finally { $stream.Dispose(); $sha.Dispose() }
+                if ($actualHash -cne (Get-FileHash -LiteralPath (Join-Path $stage $name) -Algorithm SHA256).Hash) {
+                    throw "ZIP payload bytes differ from staging: $name"
+                }
                 $bytes += $entry.Length
             }
             if ($expected.Count -ne 0) { throw 'ZIP missing expected files.' }
         } finally { $archive.Dispose() }
+        # Check the real extracted artifact, not a source/staging fallback.
+        [IO.Compression.ZipFile]::ExtractToDirectory($zip, $extracted)
+        $extractedBackend = Join-Path $extracted 'backend'
+        $extractedClosure = @(Get-ShifterClosure $extractedBackend)
+        if (($closure -join ',') -cne ($extractedClosure -join ',')) { throw 'Extracted import closure mismatch.' }
+        Invoke-ShifterCommand $node @('--input-type=module', '-e', $productionCheck, $extractedBackend) $extracted
+        Invoke-ShifterCommand $npm @('run', 'check:profile', '--', $Profile, (Join-Path $extracted 'frontend/browser')) $frontend
+        Remove-ShifterOwned $extracted $profileRoot
         $files = @(Get-ChildItem -LiteralPath $stage -File -Recurse)
         Write-Host "PASS developer snapshot profile=$Profile validation=$Validation"
         Write-Host "PASS runtime closure=$($closure.Count); required manifests/index; exact ZIP whitelist; no dependencies/private files"
@@ -316,7 +374,7 @@ console.log('PASS packaged production rejects missing real provider and syntheti
         Write-Host "ZIP bytes=$((Get-Item -LiteralPath $zip).Length); files=$($files.Count); expanded bytes=$bytes"
     } catch {
         # No success artifact survives any command, closure or ZIP assertion failure.
-        foreach ($path in @($zip, $stage, $build)) { Remove-ShifterOwned $path $profileRoot }
+        foreach ($path in @($zip, $stage, $build, $extracted)) { Remove-ShifterOwned $path $profileRoot }
         throw
     }
 }
