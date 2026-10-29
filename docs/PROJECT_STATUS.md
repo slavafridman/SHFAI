@@ -289,9 +289,21 @@ startFromEnvironment with injected read/native/resolveEndpoint factories;
 stopBackendServer is the cleanup seam. Native mode uses the system Clock;
 controlled clock injection is fixture-only. Backend README contains key-only
 environment/private-packet instructions, not working credentials.
-Next action: publish the exact23 backend paths and parent-only decision/
-handoff checkpoint hunks, then independently verify actual Node HTTP/UoW
-protocol integration and U49 browser flows against that stable baseline.
+Feature133e8c5af1ed2166cc2cc6f87ced9f584863d724 is published: exactly24
+paths (23 backend plus parent-only decision/handoff checkpoint hunks).
+Privacy/whitespace and scoped300 imports/four links passed. Standard verifier
+passed31 CSVs/10000 references/454 hashes/430 links/288 anchors, with20
+historical captures unchanged. Actual remote matched HEAD, ahead/behind0/0,
+index empty and no conflicts; scoped sources matched publication. All32
+previous unrelated dirty paths and external status payload (+133/-2) were
+preserved. Full suites/builds and operational checks were not repeated.
+Independent Q49 native assembler/runtime QA and U49 actual-browser protocol
+verification are now running against this held stable source, using actual
+Node application/HTTP/UoW with explicitly isolated Oracle protocol doubles.
+Their results are pending; no passing integration outcome is inferred.
+Next action: collect those precise integration results, route reproduced
+defects to their artifact owners, and verify/rebuild the developer delivery
+against the resulting stable source. Password rotation is not a user gate.
 No live Oracle/DNS/metadata/grant/sequence/allowance operations, Hebrew driver
 roundtrip, native100-row capacity, packaging/build or release was verified
 by this handoff. Operational approvals and measured live compatibility remain
