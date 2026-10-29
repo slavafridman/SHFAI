@@ -197,7 +197,7 @@ Publication hold is lifted. Next safe action is the same B49 owner's remaining
 approved evidence/certification/persistent-authority/loaders/server/readback
 implementation, followed by independent actual-protocol verification. No new
 user approval is needed for that coding. Keep canonical49-v0.1 and existing
-attendance behavior unchanged; no live Oracle before the rotation prerequisite.
+attendance behavior unchanged; live Oracle still requires its approved scope.
 The developer ZIP still represents foundation30f318e, not this component work.
 
 B49 checkpoint4 is SOURCE-STABLE for persistent admission and operation-
@@ -254,7 +254,48 @@ Publication hold is lifted. Resume the same B49 owner's remaining evidence
 assembler and actual loaders/factories/independent-readback integration now,
 under existing49-v0.1 approval. U49 protocol integration still waits for
 final source-stable executable wiring; no live Oracle is authorized by this
-component publication or QA. The operator rotation prerequisite remains.
+component publication or QA.
+
+User decision at29October13:25+02: password rotation is not required as a
+condition for continuing the project. This supersedes earlier rotation gates
+in this checkpoint and handoffs. The prior exposure and residual risk remain
+recorded; rotation is a recommendation, not a blocking prerequisite.
+No password was changed or reverified. Existing credentials remain protected:
+do not repeat them in chat/tool output, Git, logs or artifacts, and do not read
+excluded files. This decision does not expand approved Oracle environments,
+data scope, write allowances, authentication permissions or release authority.
+Continue the current isolated implementation; separately scoped live checks
+may proceed when their other actual prerequisites and approvals are satisfied.
+
+B49 final implementation handoff is SOURCE-STABLE under49-v0.1; independent
+integration acceptance is still pending. Explicit fixture/native executable
+factories replace the pending stubs. The native assembler covers the fixed
+18-table hierarchy/site/catalog/policy/eligibility/dependency scope and
+membership/absence witnesses. Metadata certification, persistent shared
+authority and locked atomic CSV compose through actual application/HTTP.
+Native receipts require COMMIT ACK, writer release, then a separate identity-
+checked READ ONLY full-preservation readback. CSV full9 identity drift and
+whole-file partner-review binding are guarded; required/unknown partner
+obligations defer, without transport or fabricated partner completion.
+Fixture management/detail/current reads share coherent synthetic state.
+The owner's final TSC, focused225/225 and two full1826/1826 runs passed
+naturally with zero skipped. Actual native HTTP protocol-double tests cover
+four flows, rollback, ACK/readback loss, restart fencing, startup rejection,
+purity and shutdown drain. Earlier typing/resolver/review-binding failures
+were repaired without removing assertions.
+Twenty-three backend paths changed; canonical/frontend/Docker/status/user/
+lock/legacy artifacts were untouched by that owner. Startup is available via
+startFromEnvironment with injected read/native/resolveEndpoint factories;
+stopBackendServer is the cleanup seam. Native mode uses the system Clock;
+controlled clock injection is fixture-only. Backend README contains key-only
+environment/private-packet instructions, not working credentials.
+Next action: publish the exact23 backend paths and parent-only decision/
+handoff checkpoint hunks, then independently verify actual Node HTTP/UoW
+protocol integration and U49 browser flows against that stable baseline.
+No live Oracle/DNS/metadata/grant/sequence/allowance operations, Hebrew driver
+roundtrip, native100-row capacity, packaging/build or release was verified
+by this handoff. Operational approvals and measured live compatibility remain
+separate; password rotation is not a user-required gate.
 Local Git reconciliation after that handoff: branch main, HEAD8d05f2d,
 empty index, no conflict paths and cached origin/main ahead/behind0/0.
 Remote was not queried; this is not fresh publication verification. Original

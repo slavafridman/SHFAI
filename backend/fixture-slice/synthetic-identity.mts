@@ -112,8 +112,11 @@ export async function createRuntime(
   const station = stationMode(configuration);
   const exitMode = stationExitMode(configuration);
   const managementMode = shiftManagementMode(configuration);
-  if (managementMode === "test-oracle-controlled")
-    throw Error("Native shift-management factory not installed");
+  if (managementMode === "test-oracle-controlled") {
+    const { OracleShiftManagementApplication } = await import("./oracle-shift-management-application.mts");
+    if (!(currentOptions?.shiftManagement instanceof OracleShiftManagementApplication))
+      throw Error("Explicit concrete native management application required");
+  }
   if (managementMode === "isolated-fixture" && (!(currentOptions?.shiftManagement instanceof ShiftManagementApplication) ||
       currentOptions.shiftManagement.reference.mode !== "isolated-fixture" ||
       currentOptions.shiftManagement.reference.dataSource !== "isolated-fixture"))

@@ -45,7 +45,7 @@ function checkedOptions(options: ShiftManagementMetadataOptions) {
   if (options.provider === "owner-test-limited-v1") parseMetadataCoverageWaiver(options.coverageWaiver);
   return identity;
 }
-function catalogColumns(options: ShiftManagementMetadataOptions, properties: boolean) {
+function catalogColumns(options: Pick<ShiftManagementMetadataOptions, "provider" | "tables">, properties: boolean) {
   const dba = options.provider === "dba-v1", list = options.tables.map(table => `'${table}'`).join(",");
   const selected = properties ?
     `tc.data_default AS "defaultSql",tc.data_precision AS "dataPrecision",tc.data_scale AS "dataScale",
@@ -222,7 +222,8 @@ export async function observeShiftManagementMetadata(query: NativeQuery, options
       { kind: "catalog-observed", unavailable: [], externalEffectsAssessment: "catalog-scoped" };
     const proof = { version: "shf-management-metadata-v1", operation: shiftManagementMetadataOperation,
       provider: options.provider, owner: "SHIFTER", kind: options.kind, tableScope: [...options.tables],
-      identity: nativeTargetReference(identity), coverage, observations: facts, triggers: parsed.triggers,
+      identity: { ...nativeTargetReference(identity), user: identity.user, schema: identity.schema },
+      coverage, observations: facts, triggers: parsed.triggers,
       ...(limited ? {} : { roles }), properties: extended, sequence: sequenceFacts, sequencePrivileges,
       charset: charsetRow.charset };
     return { certificate: fingerprint(proof), proof, coverage, schemas, core, properties: extended,
@@ -239,4 +240,22 @@ export async function certifyShiftManagementMetadata(query: NativeQuery, options
   const observed = await observeShiftManagementMetadata(query, options, signal);
   if (observed.certificate !== expectedCertificate) shiftFail("LIVE_WRITES_DISABLED");
   return observed;
+}
+export async function verifyShiftManagementReadSchema(query: NativeQuery,
+  certified: Awaited<ReturnType<typeof observeShiftManagementMetadata>>, signal?: AbortSignal) {
+  const allView = (sql: string) => sql.replace(/\bdba_tab_cols\b/gi, "all_tab_cols").replace(/\bdba_tables\b/gi, "all_tables");
+  const options = { provider: "dba-v1" as const, tables: certified.proof.tableScope };
+  assertShiftWorkAllowed(signal);
+  const columns = await query(allView(catalogColumns(options, false))
+    .replace(/^SELECT\b/i, "SELECT /* shf49:metadata:readColumns */"), {}, 1001);
+  const rawProperties = await query(allView(catalogColumns(options, true))
+    .replace(/^SELECT\b/i, "SELECT /* shf49:metadata:readProperties */"), {}, 1001);
+  const charset = await query(`SELECT /* shf49:metadata:readCharset */ value AS "charset"
+    FROM nls_database_parameters WHERE parameter='NLS_CHARACTERSET'`, {}, 2);
+  assertShiftWorkAllowed(signal);
+  if (columns.length > 1000 || rawProperties.length > 1000 ||
+      fingerprint(columns) !== fingerprint(certified.observations.columns) ||
+      fingerprint(properties(rawProperties, options.tables)) !== fingerprint(certified.properties) ||
+      charset.length !== 1 || !exact(charset[0], ["charset"]) || charset[0].charset !== certified.charset)
+    shiftFail("INVALID_SOURCE_DATA");
 }

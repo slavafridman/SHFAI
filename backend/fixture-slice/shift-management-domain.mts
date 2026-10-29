@@ -127,14 +127,20 @@ export function validateShiftInterval(interval: ShiftInterval, policy: ShiftDura
   return { durationMinutes: String(duration), startInstant: start, endInstant: end };
 }
 
-export function shiftWithinOriginalWeek(proposed: ShiftInterval, original: ShiftInterval): boolean {
-  shiftDurationMinutes(proposed); shiftDurationMinutes(original);
+export function shiftOriginalWeek(original: ShiftInterval): ShiftInterval {
+  shiftDurationMinutes(original);
   const start = new Date(original.startLocal.slice(0, 10) + "T00:00:00Z");
   start.setUTCDate(start.getUTCDate() - start.getUTCDay());
   const end = new Date(original.endLocal.slice(0, 10) + "T00:00:00Z");
   end.setUTCDate(end.getUTCDate() + 7 - end.getUTCDay());
+  if (start.getUTCFullYear() < 1 || end.getUTCFullYear() > 9999) return rule("INVALID_TIME_RANGE");
+  return { startLocal: start.toISOString().slice(0, 19), endLocal: end.toISOString().slice(0, 19) };
+}
+export function shiftWithinOriginalWeek(proposed: ShiftInterval, original: ShiftInterval): boolean {
+  shiftDurationMinutes(proposed);
+  const bounds = shiftOriginalWeek(original);
   const proposedStart = shiftCivilMinute(proposed.startLocal) * 60000;
   const proposedEnd = shiftCivilMinute(proposed.endLocal) * 60000;
-  return proposedStart >= start.getTime() && proposedStart < end.getTime() &&
-    proposedEnd <= end.getTime();
+  const start = shiftCivilMinute(bounds.startLocal) * 60000, end = shiftCivilMinute(bounds.endLocal) * 60000;
+  return proposedStart >= start && proposedStart < end && proposedEnd <= end;
 }

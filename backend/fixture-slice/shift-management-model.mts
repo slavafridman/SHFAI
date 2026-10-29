@@ -14,7 +14,7 @@ import { same } from "./stage-arrival-domain.mts";
 export type ShiftScalar = string | number | null;
 export interface ShiftBaseline {
   shiftDayId: string; employeeNumber: string; dateLocal: string; dayType: string;
-  startLocal: string; endLocal: string; dayStartLocal: string; dayEndLocal: string;
+  startLocal: string; endLocal: string; dayStartLocal: string | null; dayEndLocal: string | null;
   activityCode: string; siteId: string; paidMinutes: string; workMinutes: string;
   workFromHome: string | null; splitShift: string | null; switchDayId: string | null;
   exceptionType: string | null; timeoffType: string | null; source: string;
@@ -32,7 +32,7 @@ export interface ShiftOverlay {
   exceptionType: string | null; timeoffType: string | null;
   startReasonCode: string | null; endReasonCode: string | null;
   cancelReasonCode: string | null; cancelRemark: string | null;
-  modificationLocal: string; modificationUser: string;
+  modificationLocal: string | null; modificationUser: string | null;
   preserved: Record<string, ShiftScalar>;
 }
 export interface ShiftDayFacts {
@@ -62,6 +62,13 @@ export interface ShiftSnapshot {
   validUntil: string;
   // Policy/catalog/identity raw originals beyond normalized fields, for drift.
   preserved: Record<string, ShiftScalar>;
+  nativeFacts?: {
+    planningStartLocal: string; planningEndLocal: string; schemaCertificate: string;
+    baselineDefaults: Record<string, string | null>; overlayDefaults: Record<string, string | null>;
+    employeeOriginal: Record<string, string | null>;
+    review: { state: "not-required" | "required" | "unknown"; effectFingerprint: string; certificate: string } | null;
+    witnesses: Array<{ table: string; columns: string[]; rows: Array<Record<string, string | null>> }>;
+  };
 }
 export interface ShiftCreatePlan { day: ShiftBaseline }
 export interface ShiftOverlayPlan { dayId: string; before: ShiftOverlay | null; after: ShiftOverlay }
@@ -93,9 +100,9 @@ function baseline(value: unknown): boolean {
     "dayStartLocal", "dayEndLocal", "activityCode", "siteId", "paidMinutes", "workMinutes", "workFromHome",
     "splitShift", "switchDayId", "exceptionType", "timeoffType", "source", "remark", "preserved"]) &&
     decimalId(value.shiftDayId, 10) && pilotEmployeePrefix(value.employeeNumber) &&
-    local(value.dateLocal) && typeof value.dateLocal === "string" && value.dateLocal.endsWith("T00:00:00") &&
+    local(value.dateLocal) &&
     typeof value.dayType === "string" && /^[0-9]+$/.test(value.dayType) &&
-    local(value.startLocal) && local(value.endLocal) && local(value.dayStartLocal) && local(value.dayEndLocal) &&
+    local(value.startLocal) && local(value.endLocal) && nullableLocal(value.dayStartLocal) && nullableLocal(value.dayEndLocal) &&
     decimalId(value.activityCode) && decimalId(value.siteId) && minutes(value.paidMinutes) && minutes(value.workMinutes) &&
     nullableText(value.workFromHome) && nullableText(value.splitShift) && nullableText(value.switchDayId) &&
     nullableText(value.exceptionType) && nullableText(value.timeoffType) &&
@@ -117,7 +124,7 @@ function overlay(value: unknown): boolean {
     nullableText(value.exceptionType) && nullableText(value.timeoffType) &&
     nullableId(value.startReasonCode) && nullableId(value.endReasonCode) &&
     nullableText(value.cancelReasonCode) && nullableText(value.cancelRemark) &&
-    local(value.modificationLocal) && text(value.modificationUser, 100, 1) && scalarMap(value.preserved);
+    nullableLocal(value.modificationLocal) && nullableText(value.modificationUser) && scalarMap(value.preserved);
 }
 function options(value: unknown, cancellation = false): boolean {
   if (!Array.isArray(value) || value.length > 100) return false;
@@ -133,7 +140,8 @@ export function validateShiftSnapshot(value: unknown, reference: Readonly<ShiftA
   employeeId: string): asserts value is ShiftSnapshot {
   const fail = (): never => shiftFail("INVALID_SOURCE_DATA");
   if (!exact(value, ["reference", "employee", "days", "dependencies", "policy", "activityOptions",
-    "startEndReasonOptions", "cancelReasonOptions", "partnerPolicy", "textStorage", "validUntil", "preserved"]) ||
+    "startEndReasonOptions", "cancelReasonOptions", "partnerPolicy", "textStorage", "validUntil", "preserved",
+    ...(record(value) && Object.hasOwn(value, "nativeFacts") ? ["nativeFacts"] : [])]) ||
       !same(value.reference, reference)) return fail();
   const e = value.employee;
   if (!exact(e, ["employeeId", "firstName", "lastName", "orgUnitId", "employeeNumber", "prefixEmployeeIds",
@@ -167,6 +175,28 @@ export function validateShiftSnapshot(value: unknown, reference: Readonly<ShiftA
       typeof value.validUntil !== "string" ||
       !/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$/.test(value.validUntil) ||
       !Number.isFinite(Date.parse(value.validUntil)) || !scalarMap(value.preserved)) return fail();
+  if (Object.hasOwn(value, "nativeFacts")) {
+    const n = value.nativeFacts;
+    const nativeMap = (v: unknown) => scalarMap(v) && record(v) &&
+      Object.values(v).every(cell => cell === null || typeof cell === "string");
+    if (reference.mode !== "test-oracle-controlled" || !exact(n, ["planningStartLocal", "planningEndLocal",
+      "schemaCertificate", "baselineDefaults", "overlayDefaults", "employeeOriginal", "review", "witnesses"]) ||
+        !local(n.planningStartLocal) || !local(n.planningEndLocal) ||
+        typeof n.planningStartLocal !== "string" || typeof n.planningEndLocal !== "string" ||
+        n.planningStartLocal >= n.planningEndLocal || n.schemaCertificate !== reference.metadata.certificate ||
+        !nativeMap(n.baselineDefaults) || !nativeMap(n.overlayDefaults) || !nativeMap(n.employeeOriginal) ||
+        !(n.review === null || exact(n.review, ["state", "effectFingerprint", "certificate"]) &&
+          ["not-required", "required", "unknown"].includes(String(n.review.state)) &&
+          typeof n.review.effectFingerprint === "string" && /^[0-9a-f]{64}$/.test(n.review.effectFingerprint) &&
+          typeof n.review.certificate === "string" && /^[0-9a-f]{64}$/.test(n.review.certificate)) ||
+        !Array.isArray(n.witnesses) || n.witnesses.length > 32 ||
+        n.witnesses.some(w => !exact(w, ["table", "columns", "rows"]) ||
+          typeof w.table !== "string" || !/^[A-Z][A-Z0-9_]{0,29}$/.test(w.table) ||
+          !Array.isArray(w.columns) || w.columns.length < 1 || w.columns.length > 1000 ||
+          new Set(w.columns).size !== w.columns.length ||
+          w.columns.some(c => typeof c !== "string" || !/^[A-Z][A-Z0-9_]{0,29}$/.test(c)) ||
+          !Array.isArray(w.rows) || w.rows.length > 1000 || w.rows.some(r => !nativeMap(r)))) return fail();
+  }
 }
 // Digests never enter HTTP/logs. Use the complete actor/grants, not role names.
 export function shiftActorBinding(principal: Readonly<PrincipalV1>, authGeneration: string) {

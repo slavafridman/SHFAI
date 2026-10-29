@@ -36,6 +36,11 @@ export function validateShiftManagementEnvironment(config: unknown, env: NodeJS.
     throw Error("Management inputs require an explicitly enabled mode");
   if (mode !== "disabled" && env.NODE_ENV === "production")
     throw Error("Production prohibits synthetic management mode");
+  if (mode !== "disabled" && (Object.keys(env).some(key => key.startsWith("SHF_NATIVE_STAGE_") ||
+      key.startsWith("SHF_NATIVE_STATION_") || key.startsWith("SHF_NATIVE_EXIT_")) ||
+      ["SHF_TEST_ORACLE_STAGE_WRITE_ENABLED", "SHF_TEST_ORACLE_STATION_WRITE_ENABLED", "SHF_TEST_ORACLE_EXIT_WRITE_ENABLED"]
+        .some(key => env[key] !== undefined && env[key] !== "false")))
+    throw Error("Management requires exclusive native/fixture operation flags");
   if (mode === "isolated-fixture" && (flag === "true" ||
       Object.keys(env).some(key => key.startsWith("SHF_NATIVE_SHIFT_"))))
     throw Error("Isolated management fixture cannot acquire native authority");

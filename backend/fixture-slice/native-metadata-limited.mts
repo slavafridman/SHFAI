@@ -149,6 +149,28 @@ export function validateLimitedMetadataStartup(env: NodeJS.ProcessEnv, config: u
   const flag = env.SHF_TEST_ORACLE_METADATA_LIMITED_ENABLED;
   if (flag !== undefined && flag !== "false" && flag !== "true") throw Error("Invalid TEST limited metadata opt-in");
   if (!record(config)) throw Error("Explicit backend configuration required");
+  if (record(config.shiftManagement) && config.shiftManagement.mode === "test-oracle-controlled") {
+    const raw = env.SHF_NATIVE_SHIFT_BINDING;
+    if (typeof raw !== "string" || Buffer.byteLength(raw) > 16384) throw Error("Explicit management metadata binding required");
+    const packet: unknown = JSON.parse(raw);
+    if (!record(packet) || !record(packet.metadata)) throw Error("Explicit management metadata binding required");
+    const selected = packet.metadata.provider === "owner-test-limited-v1";
+    if (!selected) {
+      if (flag === "true") throw Error("Limited metadata flag requires explicitly selected limited management provider");
+      return false;
+    }
+    parseMetadataCoverageWaiver(packet.metadata.coverageWaiver);
+    if (flag !== "true" || env.SHF_APP_ENV !== "test" || env.NODE_ENV === "production" ||
+        config.deploymentClass !== "isolated-test-demo" || config.dataSource !== "oracle-read-only" ||
+        config.oracleTestScopeConfirmed !== true || config.authenticationMode !== "synthetic" ||
+        config.syntheticAdministratorEnabled !== true || env.SHF_TEST_ORACLE_SHIFT_WRITE_ENABLED !== "true" ||
+        ["attendanceStageArrivalMode", "attendanceStationArrivalMode", "attendanceStationExitMode"]
+          .some(k => config[k] !== undefined && config[k] !== "disabled") ||
+        Object.keys(env).some(k => k.startsWith("SHF_NATIVE_STAGE_") || k.startsWith("SHF_NATIVE_STATION_") ||
+          k.startsWith("SHF_NATIVE_EXIT_") || k.startsWith("SHF_FIXTURE_") || k.endsWith("_FIXTURE")))
+      throw Error("Explicit exclusive TEST limited management metadata admission required");
+    return true;
+  }
   const modes = [
     ["attendanceStageArrivalMode", "SHF_NATIVE_STAGE_BINDING", "SHF_TEST_ORACLE_STAGE_WRITE_ENABLED", "SHF_NATIVE_STAGE_"],
     ["attendanceStationArrivalMode", "SHF_NATIVE_STATION_BINDING", "SHF_TEST_ORACLE_STATION_WRITE_ENABLED", "SHF_NATIVE_STATION_"],

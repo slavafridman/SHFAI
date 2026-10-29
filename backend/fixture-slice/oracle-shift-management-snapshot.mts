@@ -15,6 +15,7 @@ export interface ShiftOracleScope {
   // Operator/configured source window covers planned ranges, original weeks
   // and spacing. It is not inferred from host time or an all-history scan.
   rangeStart: string; rangeEnd: string;
+  expectedEmployeeNumber?: string;
 }
 const dateBind = (key: string) => `TO_DATE(:${key},'YYYY-MM-DD"T"HH24:MI:SS','NLS_DATE_LANGUAGE=ENGLISH')`;
 export async function readShiftOracleWindow(query: NativeQuery, schema: ShiftOracleSchema,
@@ -35,6 +36,8 @@ export async function readShiftOracleWindow(query: NativeQuery, schema: ShiftOra
   const employee = parseShiftOracleRow(employees[0], schema.SHF_EMPLOYEES);
   if (employee.EMPLOYEE_ID !== scope.employeeId || employee.ORG_UNIT_ID !== scope.orgUnitId ||
       !pilotEmployeeNumber(employee.EMP_ID_NUMBER)) shiftFail("INVALID_SOURCE_DATA");
+  if (scope.expectedEmployeeNumber !== undefined && employee.EMP_ID_NUMBER !== scope.expectedEmployeeNumber)
+    shiftFail("STALE_PREPARATION");
   const prefix = employee.EMP_ID_NUMBER.slice(0, 8);
   const owners = await query(`SELECT /* shf49:prefix */ TO_CHAR(EMPLOYEE_ID,'TM9',
     'NLS_NUMERIC_CHARACTERS=''.,''') AS "EMPLOYEE_ID" FROM SHIFTER.SHF_EMPLOYEES
@@ -48,25 +51,7 @@ export async function readShiftOracleWindow(query: NativeQuery, schema: ShiftOra
   // UNION membership avoids a correlated per-day query or an unbounded
   // employee-history OR predicate. Include hidden/moved overlay days and the
   // selected ID. Cancelled sentinel rows are NOT lost in an employee join.
-  const candidates = `WITH candidate_ids AS (
-    SELECT d.SHF_EMPLOYEE_DAY_ID FROM SHIFTER.SHF_EMPLOYEE_DAY d
-      WHERE d.EMP_ID_NUMBER=:employeeKey AND d.WM_SHIFT_START_DATETIME<${dateBind("rangeEnd")}
-        AND d.WM_SHIFT_END_DATETIME>${dateBind("rangeStart")}
-    UNION SELECT d.SHF_EMPLOYEE_DAY_ID FROM SHIFTER.SHF_EMPLOYEE_DAY d
-      JOIN SHIFTER.SHF_DAY_CHANGES c ON c.SHF_EMPLOYEE_DAY_ID=d.SHF_EMPLOYEE_DAY_ID
-      WHERE c.NEW_EMPLOYEE_ID=:employeeKey
-        AND NVL(c.NEW_SHIFT_START,d.WM_SHIFT_START_DATETIME)<${dateBind("rangeEnd")}
-        AND NVL(c.NEW_SHIFT_END,d.WM_SHIFT_END_DATETIME)>${dateBind("rangeStart")}
-    UNION SELECT d.SHF_EMPLOYEE_DAY_ID FROM SHIFTER.SHF_EMPLOYEE_DAY d
-      JOIN SHIFTER.SHF_DAY_CHANGES c ON c.SHF_EMPLOYEE_DAY_ID=d.SHF_EMPLOYEE_DAY_ID
-      WHERE d.EMP_ID_NUMBER=:employeeKey
-        AND NVL(c.NEW_SHIFT_START,d.WM_SHIFT_START_DATETIME)<${dateBind("rangeEnd")}
-        AND NVL(c.NEW_SHIFT_END,d.WM_SHIFT_END_DATETIME)>${dateBind("rangeStart")}
-    UNION SELECT d.SHF_EMPLOYEE_DAY_ID FROM SHIFTER.SHF_EMPLOYEE_DAY d
-      WHERE d.SHF_EMPLOYEE_DAY_ID=TO_NUMBER(:selectedDay) AND d.EMP_ID_NUMBER=:employeeKey
-    UNION SELECT d.SHF_EMPLOYEE_DAY_ID FROM SHIFTER.SHF_EMPLOYEE_DAY d
-      JOIN SHIFTER.SHF_DAY_CHANGES c ON c.SHF_EMPLOYEE_DAY_ID=d.SHF_EMPLOYEE_DAY_ID
-      WHERE d.SHF_EMPLOYEE_DAY_ID=TO_NUMBER(:selectedDay) AND c.NEW_EMPLOYEE_ID=:employeeKey)`;
+  const candidates = `WITH candidate_ids AS (${shiftOracleCandidateBody()})`;
   const collect = async (table: ShiftOracleTable, label: string) => {
     assertShiftWorkAllowed(signal);
     const rows = await query(`${candidates}
@@ -91,4 +76,27 @@ export async function readShiftOracleWindow(query: NativeQuery, schema: ShiftOra
   if ([...overlays, ...attendance].some(row => !ids.has(row.SHF_EMPLOYEE_DAY_ID))) shiftFail("INVALID_SOURCE_DATA");
   const prefixEmployees: ShiftOracleRow[] = [{ EMPLOYEE_ID: owner.EMPLOYEE_ID }];
   assertShiftWorkAllowed(signal); return { employee, prefixEmployees, days, overlays, attendance };
+}
+// One controlling candidate expression for reads AND command membership
+// witnesses. Prefixing affects only these four known bind names.
+export function shiftOracleCandidateBody(prefix: "" | "w_" = ""): string {
+  const body = `SELECT d.SHF_EMPLOYEE_DAY_ID FROM SHIFTER.SHF_EMPLOYEE_DAY d
+    WHERE d.EMP_ID_NUMBER=:employeeKey AND d.WM_SHIFT_START_DATETIME<${dateBind("rangeEnd")}
+      AND d.WM_SHIFT_END_DATETIME>${dateBind("rangeStart")}
+    UNION SELECT d.SHF_EMPLOYEE_DAY_ID FROM SHIFTER.SHF_EMPLOYEE_DAY d
+      JOIN SHIFTER.SHF_DAY_CHANGES c ON c.SHF_EMPLOYEE_DAY_ID=d.SHF_EMPLOYEE_DAY_ID
+      WHERE c.NEW_EMPLOYEE_ID=:employeeKey
+        AND NVL(c.NEW_SHIFT_START,d.WM_SHIFT_START_DATETIME)<${dateBind("rangeEnd")}
+        AND NVL(c.NEW_SHIFT_END,d.WM_SHIFT_END_DATETIME)>${dateBind("rangeStart")}
+    UNION SELECT d.SHF_EMPLOYEE_DAY_ID FROM SHIFTER.SHF_EMPLOYEE_DAY d
+      JOIN SHIFTER.SHF_DAY_CHANGES c ON c.SHF_EMPLOYEE_DAY_ID=d.SHF_EMPLOYEE_DAY_ID
+      WHERE d.EMP_ID_NUMBER=:employeeKey
+        AND NVL(c.NEW_SHIFT_START,d.WM_SHIFT_START_DATETIME)<${dateBind("rangeEnd")}
+        AND NVL(c.NEW_SHIFT_END,d.WM_SHIFT_END_DATETIME)>${dateBind("rangeStart")}
+    UNION SELECT d.SHF_EMPLOYEE_DAY_ID FROM SHIFTER.SHF_EMPLOYEE_DAY d
+      WHERE d.SHF_EMPLOYEE_DAY_ID=TO_NUMBER(:selectedDay) AND d.EMP_ID_NUMBER=:employeeKey
+    UNION SELECT d.SHF_EMPLOYEE_DAY_ID FROM SHIFTER.SHF_EMPLOYEE_DAY d
+      JOIN SHIFTER.SHF_DAY_CHANGES c ON c.SHF_EMPLOYEE_DAY_ID=d.SHF_EMPLOYEE_DAY_ID
+      WHERE d.SHF_EMPLOYEE_DAY_ID=TO_NUMBER(:selectedDay) AND c.NEW_EMPLOYEE_ID=:employeeKey`;
+  return body.replace(/:(employeeKey|selectedDay|rangeStart|rangeEnd)\b/g, `:${prefix}$1`);
 }

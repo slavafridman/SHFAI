@@ -306,7 +306,7 @@ export class OracleShiftManagementUow implements ShiftCommandUnitOfWork<
             !same(day.overlay, overlay.before) || plan.kind !== "change" && plan.kind !== "cancel")
           shiftFail("STALE_PREPARATION");
         const proposed = { ...day, overlay: structuredClone(overlay.after) };
-        if (overlay.after.modificationUser !== plan.principal.subject ||
+        if (overlay.after.modificationUser !== plan.principal.subject || typeof overlay.after.modificationLocal !== "string" ||
             Math.abs(Date.now() - instantFor(overlay.after.modificationLocal, executionZone)) > 5000)
           shiftFail("STALE_PREPARATION");
         requireShiftTextFits(overlay.after.modificationUser, Math.min(100, current.snapshot.textStorage.actorBytes),

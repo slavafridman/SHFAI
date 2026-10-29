@@ -1,15 +1,14 @@
 # SHF backend: seven reads, isolated arrivals, and default-off controlled native TEST arrivals
 
-## B49 application/isolated HTTP checkpoint — approved `49-v0.1`, NOT B49 complete
+## B49 selected-employee shift management — approved `49-v0.1`
 
-The approved §49 shift-management package is **partially implemented**. This
-checkpoint includes bounded CSV parsing, strict canonical draft/command/JSON
+The bounded §49 implementation includes CSV parsing, strict canonical draft/command/JSON
 validation, sanitized problems, pure interval rules, normalized private
 snapshot/plans, the five canonical application methods and six HTTP paths.
-Explicit typed runtime injection of an isolated management application supports
+Explicit fixture and native TEST executable factories support
 create/change/logical cancel and one-transaction CSV-create apply. Context,
 preparation and preview do no sequence/lock/business-write/allowance work.
-One isolated admission namespace serializes employees across all four kinds;
+One management admission namespace protects employees across all four kinds;
 wrong bindings/consent retain usable tokens, settled command IDs never replay
 success, and UNKNOWN blocks all further commands/preparations for that employee.
 Preparations expire within120s, are capped at1000, and bind full originals,
@@ -25,14 +24,14 @@ Fault hooks/revision methods are labeled isolated test seams, not HTTP/admin
 commands. The process-local fixture allowance/quarantine is NOT restart-durable
 native safety, database metadata proof or partner completion.
 
-**Still pending:** complete Oracle management read-model/evidence assembly and
-installation of the metadata/authority components into native and explicit
-fixture loaders, independent native readback and executable factories.
-Native physical collector/SQL/UoW, real metadata collection/certification and
-restart-surviving single-attempt authority components are implemented below,
-but are not yet an installed management factory. `startFromEnvironment` rejects enabled management modes before
-pools/listening; native `createRuntime` also fails explicitly. Do not describe
-this checkpoint as native write functionality or a runnable environment recipe.
+`startFromEnvironment` installs concrete source, metadata, authority, UoW and
+independent readback adapters for an explicit valid native TEST packet. There
+is no permanently unsupplied native factory or false-success fixture fallback.
+Malformed/disabled/production/missing-mock/source/identity/scope/origin inputs
+fail closed before operational work; actual observed certificate mismatches
+fail during the bounded readonly certification step, before listening or
+authority consumption. Offline protocol tests are **not live O49 acceptance**.
+The actual source assembler and native lifecycle are described below.
 Existing read7/fixture9/native F1/F2/exit10/joint-fixture11 families remain
 unchanged. Only explicit exclusive management mode constructs read7+the exact
 seven approved management rights (14); roles alone grant nothing and rights
@@ -48,13 +47,15 @@ single-byte decoder map is roundtrip-checked, not guessed. CSV Windows-1255
 decoding is **not** Oracle IW8ISO8859P8 representability verification.
 
 Selected full9 personal identity must already have been scoped/uniquely
-resolved by the future snapshot adapter. Raw9 and exactly one uppercase X+9
+resolved by the snapshot adapter. Raw9 and exactly one uppercase X+9
 normalize by removing only that marker, preserving zeros, then comparing all
 nine digits. Prefix-only equality is never accepted. This parser does not
 derive a day-owner key, discover another employee, return personal identities
 or persist input. Its private normalized draft rows are **not** a REST ready
-preview/token, authorization or command receipt. Future application preview
-must still run all current scope/catalog/dependency/policy/partner checks.
+preview/token, authorization or command receipt. Application preview runs
+current scope/catalog/dependency/policy/partner checks. Native CSV first reads
+the selected full identity without a prefix/day lookup, compares full9 cells,
+then rereads under an expected-full-identity guard before deriving first8.
 
 The pure domain helpers use configured integral-minute policy without missing
 value defaults, Gregorian arithmetic, the existing zone/civil mechanism and
@@ -79,8 +80,9 @@ whole-operation acceptance plus exact warning-set equality. Syntactic plain
 text limits do **not** certify actual Oracle charset/BYTE-column capacity.
 Application text checks distinguish AL32UTF8 from IW8ISO8859P8/ISO-8859-8 and
 reject replacement/unrepresentable text against supplied byte capacities plus
-approved500/10/100-byte maxima. Those fixture-supplied facts are not physical
-metadata/driver roundtrip evidence; native collection remains mandatory.
+approved500/10/100-byte maxima. Native facts come from current certified
+catalog observations. Fixture-supplied facts and offline tests are not physical
+metadata/driver Hebrew-roundtrip evidence.
 
 Focused offline checks, from this package directory:
 
@@ -103,19 +105,20 @@ Only raw text/csv with explicit UTF-8/Windows-1255 charset is accepted for previ
 Wrong-source/malformed command receipts become UNKNOWN, never native/fixture
 fallback. Budget/shutdown work is tracked; owned loopback tests drain/close.
 
-Private configuration names only (no working packet/secrets):
+Private configuration names only (no packet/secrets):
 `shiftManagement.mode`, runtime option `shiftManagement`, HTTP option
 `shiftManagementOrigins`, and `SHF_TEST_ORACLE_SHIFT_WRITE_ENABLED`.
 `SHF_SHIFT_MANAGEMENT_FIXTURE`, `SHF_SHIFT_MANAGEMENT_ORIGINS` and
-`SHF_NATIVE_SHIFT_*` names are reserved/detected for fail-closed stray input;
-there is not yet a loader/native factory for them. Do not set these to try to
-bypass the explicit pending-factory startup error. Production, mixed old/new
+`SHF_NATIVE_SHIFT_*` names are parsed by the installed exclusive loaders.
+Production, mixed old/new
 write modes, native DEV, missing synthetic opt-in or stray native inputs reject.
-No new operational permissions, DB/DNS calls, physical NEXTVAL/DML, broker or
-legacy execution occur in this checkpoint. Separate O49 packet/GO remains
-required; LIMITED metadata unknowns are not converted to false.
+Implementation does not grant live operational permissions. The default CLI
+native factory uses the established Oracle pool/Thick driver and complete OS
+getaddrinfo proof; developers/tests inject isolated protocol pools/resolvers.
+No live checks were performed as implementation verification. Separate O49
+packet/GO remains required; LIMITED unknowns are never converted to false.
 
-### B49 native component checkpoint — not operational admission
+### Native source, persistence and independent readback
 
 `oracle-shift-management-snapshot.mts` performs actual parameterized plain
 SELECTs for the employee/prefix-uniqueness and complete physical baseline,
@@ -124,10 +127,24 @@ membership includes whole containing intervals, nullable changed bounds,
 hidden/moved overlay days and a scoped selected ID. It does not join away
 cancellation sentinels. Source overflow, ambiguity, orphan rows, malformed
 values and missing/unexpected columns deny rather than truncate/repair.
-These are physical core facts, not yet a complete normalized native context:
-the actual policy/catalog/site/dependency/partner evidence assembler remains
-pending. Callers must establish the independent identity/Gregorian-session
-proof before using the collector.
+`oracle-shift-management-source.mts` composes those core facts with the fixed
+18-table read scope: direct J01/G01 hierarchy, unique employee-site mapping,
+site activities, source SER_TYPE change/cancel reasons, actual unit/default
+duration/gap/managed-break parameters, pending reports/events/exceptions and
+exchange/time-change/reduction dependencies. Every required observation must
+succeed. Unknown dependency state defers rather than becoming false/absent.
+Complete physical core originals and scoped side-fact/membership/absence
+witnesses bind preparation and every ordinary write. The same candidate
+expression is used for source reads and membership guards, updated after own
+SOURCE/overlay/create effects. Native planning covers the original work week;
+full interval/gap containment is not an endpoint-only test.
+
+Partner assessment is pure. Missing/required/unknown CTI or managed-break
+obligations block commands. A privately reviewed bounded CTI decision is tied
+to the whole operation's effect fingerprint; CSV row checks cannot turn that
+into a partial-file waiver. No broker or manufactured partner completion exists.
+Original nullable day bounds/modifier fields and explicit zero overlays are
+preserved rather than repaired into defaults.
 
 `oracle-shift-management-sql.mts` builds exact parameterized baseline INSERT,
 conditional WFM-to-SHF UPDATE and overlay INSERT/UPDATE statements. Existing
@@ -139,9 +156,8 @@ against its actual physical before-image, not accepted as fabricated flags.
 Thirteen required source date columns must be DATE. Omitted create/overlay
 defaults must be known NULL or reviewed static literals; unknown required,
 function/sequence/session/date expressions deny before NEXTVAL. DATA_DEFAULT
-values are not evaluated. This parser is not an actual metadata observation:
-the forthcoming metadata collector must supply the real LONG/default/type/
-byte/virtual/hidden/permanent-table facts and operation-separated certificate.
+values are not evaluated. The actual metadata collector supplies LONG/default/
+type/byte/virtual/hidden/permanent-table facts and the operation-separated certificate.
 
 `OracleShiftManagementUow` implements the canonical six-method callback with
 actual driver rowsAffected, employee-first/ordered-day NOWAIT locks, locked
@@ -156,13 +172,17 @@ a deliberately broken internal callback that fails to await its SQL.
 
 The kernel requires a matching native execution scope, consumed-authority
 implementation, and current identity/metadata/sequence plus complete source
-membership evidence adapter. The authority and metadata components below now
-provide their concrete primitives; the complete evidence assembler/factory
-still must connect them. **There is no manufactured default evidence provider.**
+membership evidence adapter. The installed native factory supplies the actual
+source assembler and certification functions. **There is no manufactured default evidence provider.**
 It returns only a transaction acknowledgment, never a successful native receipt:
 the application must still perform independent identity-checked full
-preservation readback. The existing executable's pending-factory guard remains
-until those real adapters/loaders and durable admission are integrated.
+preservation readback. `OracleShiftManagementSnapshot` obtains a separate
+identity-checked READ ONLY lease after the writer is released, rechecks actual
+ALL_TAB_COLS/default/charset structure against the certified schema, and rereads
+all changed/created and preserved core/side facts. Only full equality yields
+an oracle-test receipt. ACK loss, readback mismatch/identity/timeout, or uncertain
+cleanup yields UNKNOWN with the consumed employee fence retained; no compensation,
+receipt reconstruction or native-success replay.
 
 ```powershell
 node --test test/oracle-shift-management.test.mts
@@ -173,7 +193,7 @@ generation/transaction code, not live metadata, default, grant, TNS/OS,
 sequence, rollback or driver-Hebrew acceptance. Their synthetic certificates
 are not usable operational proofs. No existing F1/F2/exit certificate, scope,
 SQL/digest/flags or allowance is changed/reused. No actual 100-row Oracle
-capacity is claimed or enabled; scoped O49 execution and capacity evidence
+capacity is established or authorized by these tests; scoped O49 execution and capacity evidence
 remain separate from the passing isolated100-row application test.
 
 ### Native authority and operation-separated metadata components
@@ -210,7 +230,7 @@ Private option/namespace **key names only**, not a working packet:
 `expectedKind`, `expectedPlanDigest`, `expectedRows`, `windowStart`, `windowEnd`,
 `businessTimeZone`, `reference`; namespace keys `version`, `namespace`,
 `canonicalDirectory`, `employeeScope`, `identityRevision`, `state`.
-These are not yet environment loaders or new operational permissions.
+These are private authority inputs, not application actor credentials or new operational permissions.
 
 `observeShiftManagementMetadata` issues actual catalog SQL for all three
 approved providers, using COLS/visible/permanent-table facts on the new
@@ -232,8 +252,8 @@ keeps precisely the two named DBA unknowns and explicit waiver; strict/hybrid
 do not inherit that waiver. An observed hash is not an operator GO or a claim
 that unknown external effects are absent. Actual create-default admissibility
 is additionally enforced by the SQL/UoW kernel before sequence allocation.
-The complete native source-policy/catalog/dependency assembler, independent
-readback integration and executable loaders still remain necessary.
+The installed factory composes this collector with the actual source assembler,
+durable admission and independent readback. Observation alone is not admission.
 
 ```powershell
 node --test test/native-shift-management-admission.test.mts test/oracle-shift-management-metadata.test.mts
@@ -242,7 +262,63 @@ node --test test/native-shift-management-admission.test.mts test/oracle-shift-ma
 Tests use only explicitly owned temporary authority directories and isolated
 catalog/Oracle protocol doubles, including an actual new Node process restart.
 They do not touch operator allowances or establish live metadata, native100-row
-capacity, real charset roundtrip, partner completion or native feature readiness.
+capacity, real charset roundtrip, partner completion or live operational acceptance.
+
+### Executable integration and key-only operator handoff
+
+The existing CLI is unchanged: run `npm start` from this package only with an
+explicit approved environment. Library/QA seam:
+`startFromEnvironment(environment, fixtureClock?, factories?)`; factory keys
+are `read`, `native`, `resolveEndpoint`. Native mode always uses the real
+system Clock; controlled Clock injection is restricted to synthetic fixtures.
+`stopBackendServer(server)` aborts/drains underlying work before closing pools.
+
+Fixture loader keys: `SHF_FIXTURE_CONFIG`, `SHF_FIXTURE_PORT`,
+`SHF_SHIFT_MANAGEMENT_FIXTURE`, `SHF_SHIFT_MANAGEMENT_ORIGINS`.
+The management fixture envelope has `snapshot`, `catalog`; catalog keys are
+`mokedUnits`, `teams`. It is one explicit synthetic source, not a combination
+of independently stale fixture files. Management, employee/day detail and
+current-shift projections refresh from that same mutable isolated snapshot.
+Other independently optional inquiry fixture datasets are not invented.
+
+Native loader keys: existing `SHF_APP_ENV`, `NODE_ENV`, `SHF_ORACLE_CONFIG`,
+`SHF_ORACLE_PORT`, `SHF_ORACLE_CONNECT_STRING`, `SHF_ORACLE_USER`,
+`SHF_ORACLE_PASSWORD`, `SHF_ORACLE_CLIENT_LIB_DIR`; new operation keys
+`SHF_TEST_ORACLE_SHIFT_WRITE_ENABLED`, `SHF_NATIVE_SHIFT_CONNECT_STRING`,
+`SHF_NATIVE_SHIFT_USER`, `SHF_NATIVE_SHIFT_PASSWORD`,
+`SHF_NATIVE_SHIFT_CLIENT_LIB_DIR`, `SHF_NATIVE_SHIFT_BINDING`,
+`SHF_SHIFT_MANAGEMENT_ORIGINS`; explicit limited-provider opt-in
+`SHF_TEST_ORACLE_METADATA_LIMITED_ENABLED` when selected.
+Do not load protected repository environment files or copy secrets into packets.
+
+Native packet keys: `version`, `scopeRevision`, `employeeId`, `orgUnitId`,
+`selectedDayId`, `readIdentity`, `writeIdentity`, `metadata`, `operation`,
+`window`, `authorityDirectory`, `writerExclusion`, `singleExecutorConfirmed`,
+`approvalId`, `recoveryOwner`, `review`, `capacity`.
+Metadata keys: `provider`, `certificate`, `coverageWaiver` only for the limited provider.
+Operation keys: `kind`, `rows`, `planDigest`, `planningStartLocal`,
+`planningEndLocal`, `overlayWrite`. Window keys: `start`, `end`.
+Review keys: `state`, `effectFingerprint`, `certificate`.
+Capacity keys: `rows`, `requestBudgetMs`, `worstCaseMs`, `certificate`, `source`.
+A valid private packet fixes one selected employee/operation/whole-file plan,
+scope, named exclusion, time window and existing sequence effects; new UUIDs
+or process/operator epochs do not reopen the consumed namespace.
+
+Capacity fields are explicit trusted operator evidence, not measurements
+manufactured by the server or by zero-latency doubles. Real Oracle100-row
+capacity and live Hebrew roundtrip must be established separately for the
+named operational scope; no universal hidden5-row ceiling, automatic chunking
+or larger per-row deadline is introduced. Every request remains bounded by
+the existing total five-second budget. Unsupported split/site-reassignment/
+dependent/post-start variants, real provider/production, schema/broker/batch
+work remain excluded. LIMITED external effects, privileged filesystem reset
+and power-loss recovery are not certified by these tests.
+
+```powershell
+node --test test/shift-management-entrypoint.test.mts test/oracle-shift-management-source.test.mts test/native-shift-management-runtime.test.mts
+npm run typecheck
+npm test
+```
 
 ## SHF-ENV-PROFILES-20 — DEV / TEST / PRODUCTION
 

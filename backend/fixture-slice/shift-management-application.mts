@@ -8,8 +8,9 @@ import type { CsvShiftCommandV1, CsvShiftEncodingV1, CsvShiftPreviewV1, CsvShift
 import type { ShiftCreatePlan, ShiftOverlayPlan, ShiftSourcePlan, ShiftSnapshot, ShiftPlan } from "./shift-management-model.mts";
 import { freezeShift, validateShiftSnapshot } from "./shift-management-model.mts";
 import { assertShiftWorkAllowed, shiftIntervalsConflict, validateShiftDurationPolicy, validateShiftInterval } from "./shift-management-domain.mts";
-import { changedOverlay, effectiveShift, planShifts, shiftBlockers, shiftDay } from "./shift-management-rules.mts";
+import { changedOverlay, effectiveShift, planShifts, shiftBlockers, shiftDay, snapshotPartnerPort } from "./shift-management-rules.mts";
 import { parseShiftCsv } from "./shift-management-csv.mts";
+import type { ParsedShiftCsv } from "./shift-management-csv.mts";
 import { parseCsvShiftCommand, parseShiftCommand, parseShiftDraft, parseShiftSelection } from "./shift-management-validation.mts";
 import { ShiftManagementError, ShiftUowRejection, shiftFail, shiftProblem, shiftUnknown } from "./shift-management-errors.mts";
 import { civil, fingerprint, instantFor, same } from "./stage-arrival-domain.mts";
@@ -28,6 +29,11 @@ export class ShiftManagementApplication implements ShiftManagementApplicationPor
   private readonly clock: Clock;
   private readonly zone: string;
   private readonly generation: () => string;
+  private readonly selectedScope: { employeeId: string; orgUnitId: string } | undefined;
+  private readonly csvIdentity: {
+    read(p: PrincipalV1, employeeId: string, signal?: AbortSignal): Promise<string>;
+    snapshot(p: PrincipalV1, selection: ShiftSelectionV1, fullNumber: string, signal?: AbortSignal): Promise<ShiftSnapshot>;
+  } | undefined;
   private readonly preparations = new Map<string, Prepared>();
   private readonly quarantined = new Set<string>();
   private readonly commands = new Map<string, { digest: string; active: boolean }>();
@@ -37,6 +43,8 @@ export class ShiftManagementApplication implements ShiftManagementApplicationPor
   constructor(options: {
     snapshots: ShiftSnapshotPort<ShiftSnapshot>; uow: Uow; admission: ShiftCommandAdmission;
     policy: ShiftManagementAccessPolicy; clock: Clock; businessTimeZone: string; authGeneration: () => string;
+    csvIdentity?: ShiftManagementApplication["csvIdentity"];
+    selectedScope?: { employeeId: string; orgUnitId: string };
   }) {
     if (!same(options.snapshots.reference, options.uow.reference) ||
         !same(options.snapshots.reference, options.admission.reference))
@@ -46,6 +54,8 @@ export class ShiftManagementApplication implements ShiftManagementApplicationPor
     this.snapshots = options.snapshots; this.uow = options.uow; this.admission = options.admission;
     this.policy = options.policy; this.clock = options.clock; this.zone = options.businessTimeZone;
     this.generation = options.authGeneration;
+    this.csvIdentity = options.csvIdentity;
+    this.selectedScope = options.selectedScope ? Object.freeze({ ...options.selectedScope }) : undefined;
   }
   private now(signal?: AbortSignal): Date {
     assertShiftWorkAllowed(signal);
@@ -61,6 +71,8 @@ export class ShiftManagementApplication implements ShiftManagementApplicationPor
   }
   private async read(p: PrincipalV1, selection: ShiftSelectionV1, signal?: AbortSignal): Promise<ShiftSnapshot> {
     this.policy.requirePrepare(p); this.now(signal);
+    if (this.selectedScope && (selection.employeeId !== this.selectedScope.employeeId ||
+        !this.policy.authorizedTeamIds(p).includes(this.selectedScope.orgUnitId))) shiftFail("SHIFT_DAY_NOT_FOUND");
     const snapshot = await this.snapshots.read(selection, signal);
     this.now(signal); this.scoped(p, snapshot, selection.employeeId);
     return snapshot;
@@ -140,8 +152,24 @@ export class ShiftManagementApplication implements ShiftManagementApplicationPor
     this.policy.requireCsvPreview(p);
     if (this.quarantined.has(employeeId)) shiftFail("COMMAND_SCOPE_DEFERRED");
     const selection = parseShiftSelection({ employeeId, shiftDayId: null });
-    const snapshot = await this.read(p, selection, signal), now = this.now(signal);
-    const parsed = parseShiftCsv(bytes, encoding, snapshot.employee.employeeNumber, signal);
+    let snapshot: ShiftSnapshot;
+    let parsed: ParsedShiftCsv;
+    if (this.reference.mode === "test-oracle-controlled") {
+      if (!this.csvIdentity) shiftFail("LIVE_WRITES_DISABLED");
+      const number = await this.csvIdentity.read(p, employeeId, signal);
+      parsed = parseShiftCsv(bytes, encoding, number, signal);
+      if (parsed.rows.every(row => row.draft === null))
+        return { contractVersion: "49-v0.1", employeeId, encoding, dataSource: "oracle-test",
+          businessTimeZone: this.zone, state: "invalid", previewToken: null, fingerprint: null, expiresAt: null,
+          rows: parsed.rows.map(row => ({ line: row.line, effect: null, errors: row.errors })) };
+      snapshot = await this.csvIdentity.snapshot(p, selection, number, signal);
+      this.scoped(p, snapshot, employeeId);
+      if (snapshot.employee.employeeNumber !== number) shiftFail("STALE_PREPARATION");
+    } else {
+      snapshot = await this.read(p, selection, signal);
+      parsed = parseShiftCsv(bytes, encoding, snapshot.employee.employeeNumber, signal);
+    }
+    const now = this.now(signal);
     const rows: CsvShiftPreviewRowV1[] = [];
     const entries = [];
     for (const row of parsed.rows) {
@@ -150,7 +178,7 @@ export class ShiftManagementApplication implements ShiftManagementApplicationPor
       if (!row.draft) continue;
       const entry = { row: row.line, draft: row.draft, overnight: row.warningCodes.includes("OVERNIGHT_NORMALIZED") };
       entries.push(entry);
-      try { result.effect = planShifts(snapshot, [entry], p, now, this.zone, signal).effects[0]; }
+      try { result.effect = planShifts(snapshot, [entry], p, now, this.zone, signal, "csv-row").effects[0]; }
       catch (error) {
         if (!(error instanceof ShiftManagementError) || error.code !== "BUSINESS_VALIDATION_FAILED") throw error;
         result.errors.push(...(error.details.ruleViolations ?? []).map(violation =>
@@ -172,6 +200,12 @@ export class ShiftManagementApplication implements ShiftManagementApplicationPor
     }
     const effects = rows.flatMap(row => row.effect ? [row.effect] : []);
     if (effects.length !== rows.length || entries.length !== rows.length) shiftFail("INVALID_SOURCE_DATA");
+    // A privately reviewed obligation decision binds the WHOLE normalized
+    // file, never each isolated row or a partial-success subset.
+    if (snapshotPartnerPort(snapshot).assess({ kind: "csv-create", effects }).state !== "not-required") {
+      for (const row of rows) { row.effect = null; row.errors.push({ column: "row", code: "PARTNER_REQUIRED_OR_UNKNOWN" }); }
+      return { ...common, state: "invalid", previewToken: null, fingerprint: null, expiresAt: null };
+    }
     const prep = await this.retain(p, snapshot, { kind: "csv-create", entries, effects }, signal);
     return { ...common, state: "ready", previewToken: prep.validationToken,
       fingerprint: prep.fingerprint, expiresAt: prep.expiresAt };
@@ -254,7 +288,8 @@ export class ShiftManagementApplication implements ShiftManagementApplicationPor
               siteId: effect.after.siteId, paidMinutes: effect.after.paidMinutes, workMinutes: effect.after.workMinutes,
               workFromHome: draft.workLocation === "home" ? "Y" : "N", splitShift: "N",
               switchDayId: null, exceptionType: null, timeoffType: null, source: "fExtra",
-              remark: draft.remark, preserved: {} };
+              remark: draft.remark, preserved: Object.fromEntries(Object.entries(snapshot.nativeFacts?.baselineDefaults ?? {})
+                .filter(([key]) => key !== "WM_EXCEPTION_TYPE_ID" && key !== "WM_TIMEOFF_TYPE_ID")) };
             guard(); one(await locked.insertDay({ day }));
             expected.days.push({ baseline: day, overlay: null, attendance: null });
             recorded.push({ ...effect, after: { ...effect.after, shiftDayId: id } });
@@ -265,7 +300,7 @@ export class ShiftManagementApplication implements ShiftManagementApplicationPor
               guard(); one(await locked.markSource({ dayId: draft.shiftDayId, original, from: "WFM", to: "SHF" }));
               day.baseline.source = "SHF";
             }
-            const overlay = changedOverlay(day, draft, effect, p.subject, now, this.zone);
+            const overlay = changedOverlay(day, draft, effect, p.subject, now, this.zone, snapshot.nativeFacts?.overlayDefaults);
             const overlayPlan = { dayId: draft.shiftDayId, before: structuredClone(day.overlay), after: overlay };
             guard();
             one(await (day.overlay === null ? locked.insertOverlay(overlayPlan) : locked.updateOverlay(overlayPlan)));
@@ -273,6 +308,8 @@ export class ShiftManagementApplication implements ShiftManagementApplicationPor
             recorded.push({ ...effect, after: { ...effect.after, shiftDayId: draft.shiftDayId } });
           }
         }
+        expected.days.sort((a, b) => BigInt(a.baseline.shiftDayId) < BigInt(b.baseline.shiftDayId) ? -1 :
+          BigInt(a.baseline.shiftDayId) > BigInt(b.baseline.shiftDayId) ? 1 : 0);
         guard();
         return structuredClone(recorded);
       }, signal);

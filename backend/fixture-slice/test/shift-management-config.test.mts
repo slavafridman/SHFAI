@@ -38,9 +38,9 @@ test("environment rejects stray opt-in and production/native DEV before factorie
     native: async () => { pools++; throw Error("not permitted"); } };
   await assert.rejects(startFromEnvironment({
     SHF_APP_ENV: "test", SHF_ORACLE_CONFIG: JSON.stringify(native), SHF_TEST_ORACLE_SHIFT_WRITE_ENABLED: "true",
-  }, undefined, factories), /Management executable factory integration pending/);
+  }, undefined, factories), /Explicit management metadata binding required/);
   assert.equal(pools, 0);
-  await assert.rejects(createRuntime(native, new FixtureReader([])), /Native shift-management factory not installed/);
+  await assert.rejects(createRuntime(native, new FixtureReader([])), /Explicit concrete native management application required/);
 });
 test("enabled mode requires an actual matching application; no fallback or implicit provider", async () => {
   await assert.rejects(createRuntime(config, new FixtureReader([])), /Explicit isolated management application required/);

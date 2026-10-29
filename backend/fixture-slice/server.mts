@@ -63,6 +63,7 @@ export async function stopBackendServer(server: Server) {
 export interface BackendPoolFactories {
   read(env: OracleEnvironment): Promise<OraclePool>;
   native(env: OracleEnvironment): Promise<NativePool>;
+  resolveEndpoint?: import("./native-stage-arrival-config.mts").NativeEndpointResolver;
 }
 
 // No defaults: executable requires explicit source, isolated synthetic identity and port.
@@ -71,10 +72,16 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
   factories?: BackendPoolFactories) {
   const oracleMode = environment.SHF_ORACLE_CONFIG !== undefined;
   const config = loadEnvironmentConfig(environment);
-  // No partially wired native factory may open a read/write pool or fuse.
-  // Replaced by the actual factory in the next B49 integration subphase.
-  if (shiftManagementMode(config) !== "disabled")
-    throw Error("Management executable factory integration pending");
+  if (shiftManagementMode(config) === "isolated-fixture") {
+    const { startManagementFixture } = await import("./shift-management-runtime.mts");
+    return startManagementFixture(environment, config, fixtureClock);
+  }
+  if (shiftManagementMode(config) === "test-oracle-controlled") {
+    const { startNativeManagement } = await import("./oracle-shift-management-application.mts");
+    const started = await startNativeManagement(environment, config, factories);
+    resources.set(started.server, started.pools);
+    return started.server;
+  }
   const limitedMetadata = validateLimitedMetadataStartup(environment, config);
   if (config.deploymentClass === "production" || config.authenticationMode !== "synthetic")
     throw new Error("Executable backend requires explicit isolated synthetic mode");

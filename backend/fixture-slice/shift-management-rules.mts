@@ -6,7 +6,7 @@ import { assertShiftWorkAllowed, shiftDurationMinutes, shiftIntervalsConflict, s
   validateShiftDurationPolicy, validateShiftInterval } from "./shift-management-domain.mts";
 import { requireShiftTextFits } from "./shift-management-text.mts";
 import { shiftFail } from "./shift-management-errors.mts";
-import { civil, same } from "./stage-arrival-domain.mts";
+import { civil, same, fingerprint } from "./stage-arrival-domain.mts";
 
 export function shiftDay(snapshot: ShiftSnapshot, id: string): ShiftDayFacts {
   const day = snapshot.days.find(day => day.baseline.shiftDayId === id);
@@ -33,8 +33,13 @@ export function snapshotPartnerPort(snapshot: ShiftSnapshot): PartnerShiftPort {
   // to not-required; isolated fixture policy is explicitly synthetic evidence.
   return { assess(plan) {
     const managed = snapshot.partnerPolicy.managedBreaks, cti = snapshot.partnerPolicy.cti;
+    const review = snapshot.nativeFacts?.review;
+    const mismatchedReview = snapshot.nativeFacts !== undefined && plan.effects.length > 0 &&
+      (!review || review.effectFingerprint !== fingerprint({
+        employeeId: snapshot.employee.employeeId, kind: plan.kind, effects: plan.effects,
+      }));
     return {
-      state: managed === "unknown" || cti === "unknown" ? "unknown" :
+      state: mismatchedReview || managed === "unknown" || cti === "unknown" ? "unknown" :
         managed === "enabled" || cti === "required" ? "required" : "not-required",
       effects: [
         ...(managed === "enabled" ? plan.effects.map(effect => ({
@@ -66,6 +71,11 @@ export function shiftBlockers(snapshot: ShiftSnapshot, selected: ShiftDayFacts |
       result.push("UNSUPPORTED_DAY");
     if (b.switchDayId !== null || (o?.employeeNumber ?? b.employeeNumber) !== b.employeeNumber)
       result.push("EXCHANGE_PRESENT");
+    if (o?.preserved.SWITCH_DAY_ID != null) result.push("EXCHANGE_PRESENT");
+    if (["POOL_EXT_NUM", "POOL_ERR"].some(key => b.preserved[key] != null) ||
+        ["NEW_POOL_EXT_NUM", "NEW_POOL_ERR"].some(key => o?.preserved[key] != null)) result.push("POOL_DEPENDENCY_PRESENT");
+    if (["SPLIT_START", "SPLIT_END"].some(key => b.preserved[key] != null) ||
+        ["NEW_SPLIT_START", "NEW_SPLIT_END"].some(key => o?.preserved[key] != null)) result.push("UNSUPPORTED_DAY");
     if (!["WFM", "SHF", "fExtra"].includes(b.source)) result.push("UNSUPPORTED_SOURCE");
     if (state.siteId !== snapshot.employee.siteIds[0] ||
         !snapshot.activityOptions.some(option => option.code === state.activityCode))
@@ -94,7 +104,8 @@ function sourceDuration(state: ShiftStateV1): number {
   catch { return shiftFail("INVALID_SOURCE_DATA"); }
 }
 export function planShifts(snapshot: ShiftSnapshot, entries: ShiftPlanEntry[],
-  principal: PrincipalV1, now: Date, zone: string, signal?: AbortSignal): ShiftPlan {
+  principal: PrincipalV1, now: Date, zone: string, signal?: AbortSignal,
+  assessment: "complete" | "csv-row" = "complete"): ShiftPlan {
   assertShiftWorkAllowed(signal);
   validateShiftDurationPolicy(snapshot.policy);
   if (!entries.length || entries.length > 100) shiftFail("INVALID_REQUEST");
@@ -111,6 +122,9 @@ export function planShifts(snapshot: ShiftSnapshot, entries: ShiftPlanEntry[],
     if (blockers.length) shiftFail("BUSINESS_VALIDATION_FAILED", {
       ruleViolations: blockers.map(code => ({ row: entry.row, field: null, code })),
     });
+    if (selected?.overlay === null && snapshot.nativeFacts &&
+        Object.values(snapshot.nativeFacts.overlayDefaults).some(value => value !== null))
+      violation("DEPENDENT_FLOW_UNSUPPORTED", entry.row);
     requireShiftTextFits(principal.subject, Math.min(100, snapshot.textStorage.actorBytes), snapshot.textStorage.charset, null);
     if (before) validateShiftInterval(before, { minimumMinutes: 1, maximumMinutes: 9999999999,
       gapMinutes: snapshot.policy.gapMinutes }, now, zone, signal);
@@ -127,11 +141,17 @@ export function planShifts(snapshot: ShiftSnapshot, entries: ShiftPlanEntry[],
       warnings.push("LOGICAL_CANCEL_PRESERVES_HISTORY");
     } else {
       const interval = validateShiftInterval(draft, snapshot.policy, now, zone, signal);
+      if (snapshot.nativeFacts && (draft.startLocal < snapshot.nativeFacts.planningStartLocal ||
+          draft.endLocal > snapshot.nativeFacts.planningEndLocal)) shiftFail("COMMAND_SCOPE_DEFERRED");
       if (!snapshot.activityOptions.some(option => option.code === draft.activityCode))
         violation("SITE_ACTIVITY_MISMATCH", entry.row);
       if (draft.workLocation === "home" && snapshot.employee.workFromHome !== "1")
         violation("HOME_POLICY_UNAVAILABLE", entry.row);
       if (draft.kind === "create") {
+        const defaults = snapshot.nativeFacts?.baselineDefaults;
+        if (defaults && ["WM_EXCEPTION_TYPE_ID", "WM_TIMEOFF_TYPE_ID", "WM_SCHEDULE_DAY_ID", "WM_SHIFT_ID",
+          "WM_SCH_STATE_DATA", "POOL_EXT_NUM", "POOL_ERR", "SPLIT_START", "SPLIT_END"].some(key => defaults[key] != null))
+          violation("DEPENDENT_FLOW_UNSUPPORTED", entry.row);
         requireShiftTextFits(draft.remark, Math.min(500, snapshot.textStorage.remarkBytes), snapshot.textStorage.charset, "remark");
         after = { shiftDayId: null, status: "scheduled", startLocal: draft.startLocal,
           endLocal: draft.endLocal, activityCode: draft.activityCode, siteId: snapshot.employee.siteIds[0],
@@ -182,12 +202,13 @@ export function planShifts(snapshot: ShiftSnapshot, entries: ShiftPlanEntry[],
       ({ row, field: null, code: "SHIFT_OVERLAP_OR_GAP" })),
   });
   const kind = csv ? "csv-create" : entries[0].draft.kind;
-  if (snapshotPartnerPort(snapshot).assess({ kind, effects }).state !== "not-required")
+  if (assessment === "complete" && snapshotPartnerPort(snapshot).assess({ kind, effects }).state !== "not-required")
     violation("PARTNER_REQUIRED_OR_UNKNOWN", entries[0].row);
   return { kind, entries: structuredClone(entries), effects };
 }
 export function changedOverlay(day: ShiftDayFacts, draft: Exclude<ShiftDraftV1, { kind: "create" }>,
-  effect: ShiftEffectV1, actor: string, now: Date, zone: string): ShiftOverlay {
+  effect: ShiftEffectV1, actor: string, now: Date, zone: string,
+  defaults: Record<string, string | null> = {}): ShiftOverlay {
   const b = day.baseline, o = day.overlay;
   const after: ShiftOverlay = o ? structuredClone(o) : {
     employeeNumber: draft.kind === "change" ? b.employeeNumber : null,
@@ -199,7 +220,7 @@ export function changedOverlay(day: ShiftDayFacts, draft: Exclude<ShiftDraftV1, 
     exceptionType: draft.kind === "change" ? b.exceptionType : null,
     timeoffType: draft.kind === "change" ? b.timeoffType : null,
     startReasonCode: null, endReasonCode: null, cancelReasonCode: null, cancelRemark: null,
-    modificationLocal: civil(now, zone), modificationUser: actor, preserved: {},
+    modificationLocal: civil(now, zone), modificationUser: actor, preserved: structuredClone(defaults),
   };
   after.modificationLocal = civil(now, zone); after.modificationUser = actor;
   if (draft.kind === "cancel") {
