@@ -23,7 +23,8 @@ export const limitedMetadataCoverage = Object.freeze({
   ownerTriggers: "owner-only-observed" as const,
 });
 export const limitedCollectorMethod = "user-tab-cols-visible-v1";
-export type LimitedOperation = "native-stage-arrival-v0.1" | "native-station-arrival-v0.1" | "native-station-exit-v0.1";
+export type LimitedOperation = "native-stage-arrival-v0.1" | "native-station-arrival-v0.1" | "native-station-exit-v0.1"
+  | "native-shift-management-v0.1";
 export const limitedObservationNames = ["columns", "constraints", "constraintColumns", "policies",
   "tablePrivileges", "columnPrivileges", "dependencies"] as const;
 export type ParsedMetadataRow = Record<string, string | number | null>;
@@ -101,7 +102,7 @@ function validateConstraintPositions(constraints: ParsedMetadataRow[], members: 
 }
 export function parseLimitedMetadataEvidence(v: unknown, operation: LimitedOperation,
   tableScope: readonly string[]): LimitedMetadataEvidence {
-  if (!["native-stage-arrival-v0.1", "native-station-arrival-v0.1", "native-station-exit-v0.1"].includes(operation) ||
+  if (!["native-stage-arrival-v0.1", "native-station-arrival-v0.1", "native-station-exit-v0.1", "native-shift-management-v0.1"].includes(operation) ||
       !tableScope.length || new Set(tableScope).size !== tableScope.length ||
       tableScope.some(t => !/^[A-Z][A-Z0-9_]{0,29}$/.test(t)) ||
       !exact(v, ["version", "provider", "owner", "operation", "tableScope", "waiverId", "collectorMethod",
@@ -122,6 +123,23 @@ export function parseLimitedMetadataEvidence(v: unknown, operation: LimitedOpera
   return { version: "shf-owner-test-limited-proof-v1", provider: "owner-test-limited-v1", owner: "SHIFTER",
     operation, tableScope: [...tableScope], waiverId: metadataWaiverId, collectorMethod: limitedCollectorMethod,
     coverage: limitedMetadataCoverage, observations, ownerTriggers: rows(v.ownerTriggers, "ownerTriggers", tableScope) };
+}
+// Shared row-shape/cardinality validation only: no provider/coverage waiver or
+// "no external effects" assertion is manufactured for nonlimited consumers.
+export function parseScopedMetadataObservations(value: unknown, triggers: unknown,
+  tableScope: readonly string[]): { observations: LimitedObservations; triggers: ParsedMetadataRow[] } {
+  if (!exact(value, limitedObservationNames)) return fail();
+  const observations: LimitedObservations = {
+    columns: rows(value.columns, "columns", tableScope),
+    constraints: rows(value.constraints, "constraints", tableScope),
+    constraintColumns: rows(value.constraintColumns, "constraintColumns", tableScope),
+    policies: rows(value.policies, "policies", tableScope),
+    tablePrivileges: rows(value.tablePrivileges, "tablePrivileges", tableScope),
+    columnPrivileges: rows(value.columnPrivileges, "columnPrivileges", tableScope),
+    dependencies: rows(value.dependencies, "dependencies", tableScope),
+  };
+  validateConstraintPositions(observations.constraints, observations.constraintColumns);
+  return { observations, triggers: rows(triggers, "ownerTriggers", tableScope) };
 }
 export function limitedMetadataDigest(v: unknown, operation: LimitedOperation, scope: readonly string[]) {
   return fingerprint(parseLimitedMetadataEvidence(v, operation, scope));

@@ -25,11 +25,12 @@ Fault hooks/revision methods are labeled isolated test seams, not HTTP/admin
 commands. The process-local fixture allowance/quarantine is NOT restart-durable
 native safety, database metadata proof or partner completion.
 
-**Still pending:** complete Oracle management read-model/evidence integration,
-operation-scoped metadata+sequence certification, persistent native
-allowance/quarantine and executable factory integration. A native physical
-collector/SQL/UoW kernel is now implemented as described below, but is not yet
-an installed management factory. `startFromEnvironment` rejects enabled management modes before
+**Still pending:** complete Oracle management read-model/evidence assembly and
+installation of the metadata/authority components into native and explicit
+fixture loaders, independent native readback and executable factories.
+Native physical collector/SQL/UoW, real metadata collection/certification and
+restart-surviving single-attempt authority components are implemented below,
+but are not yet an installed management factory. `startFromEnvironment` rejects enabled management modes before
 pools/listening; native `createRuntime` also fails explicitly. Do not describe
 this checkpoint as native write functionality or a runnable environment recipe.
 Existing read7/fixture9/native F1/F2/exit10/joint-fixture11 families remain
@@ -94,6 +95,10 @@ HTTP uses actual canonical routes under
 `/api/v1/employees/{employeeId}/shift-management`, JSON16KiB/raw CSV1MiB and
 response2MiB bounds, no query parameters, exact methods, scoped authentication,
 no-store/nosniff, explicit allowed Origin for POST and browser-provenance checks.
+Rejected request bodies are discarded without retention within the original
+deadline and a separate bounded cleanup ceiling before closing, so ordinary
+boundary-plus-one uploads receive their413 rather than an unread-body reset.
+This does not increase either accepted input limit or authorize partial parsing.
 Only raw text/csv with explicit UTF-8/Windows-1255 charset is accepted for preview.
 Wrong-source/malformed command receipts become UNKNOWN, never native/fixture
 fallback. Budget/shutdown work is tracked; owned loopback tests drain/close.
@@ -151,7 +156,9 @@ a deliberately broken internal callback that fails to await its SQL.
 
 The kernel requires a matching native execution scope, consumed-authority
 implementation, and current identity/metadata/sequence plus complete source
-membership evidence adapter. **None has a manufactured default implementation.**
+membership evidence adapter. The authority and metadata components below now
+provide their concrete primitives; the complete evidence assembler/factory
+still must connect them. **There is no manufactured default evidence provider.**
 It returns only a transaction acknowledgment, never a successful native receipt:
 the application must still perform independent identity-checked full
 preservation readback. The existing executable's pending-factory guard remains
@@ -168,6 +175,74 @@ are not usable operational proofs. No existing F1/F2/exit certificate, scope,
 SQL/digest/flags or allowance is changed/reused. No actual 100-row Oracle
 capacity is claimed or enabled; scoped O49 execution and capacity evidence
 remain separate from the passing isolated100-row application test.
+
+### Native authority and operation-separated metadata components
+
+`NativeShiftAdmission` implements the canonical admission plus the native UoW
+owned-plan seam. It reuses the shared token/binding/consent/receipt checks with
+explicit native policy and a real external filesystem boundary, not the
+isolated store. Fingerprints use process-private HMAC keys; tokens remain
+volatile and neither key nor token is persisted. Valid preparation and wrong
+binding/consent perform zero filesystem authority IO.
+
+The operator must provision an existing trusted local external directory and
+its `namespace.json`; application code never mkdirs, provisions, unlinks,
+resets or reseeds it. The canonical directory, employee-scope commitment and
+identity revision are checked. The consumed marker filename depends only on
+the fixed management namespace and employee scope—not command UUID, process,
+kind, operator epoch or metadata certificate. Exclusive create plus fsync
+occurs before command execution. Consumption also fsyncs a spent state into
+the existing operator-provisioned namespace inode, so loss of the newly
+created marker does not look like an unused allowance. A marker of any content,
+including zero bytes after a crash, or a consumed/malformed namespace blocks a
+new instance/process. UNKNOWN, verified success and
+confirmed ordinary rollback all retain the one-attempt fence. Terminal appends
+are fixed status words only, never receipts, originals, IDs, tokens or secrets.
+Lost/changed namespace or marker evidence fails closed; copying a namespace
+cannot silently redirect it to a new directory. No public reset/status/replay
+endpoint or automatic reopening exists. External directory ACLs and manual
+operator/DBA reconciliation remain operational obligations; this is the
+approved limited TEST fuse, not production audit/idempotency storage or proof
+of power-loss recovery. Existing F1 allowance files are never consulted.
+
+Private option/namespace **key names only**, not a working packet:
+`authorityDirectory`, `employeeId`, `orgUnitId`, `authorizedTeamIds`,
+`expectedKind`, `expectedPlanDigest`, `expectedRows`, `windowStart`, `windowEnd`,
+`businessTimeZone`, `reference`; namespace keys `version`, `namespace`,
+`canonicalDirectory`, `employeeScope`, `identityRevision`, `state`.
+These are not yet environment loaders or new operational permissions.
+
+`observeShiftManagementMetadata` issues actual catalog SQL for all three
+approved providers, using COLS/visible/permanent-table facts on the new
+operation without changing old provider SQL or digests. It collects actual
+DATA_DEFAULT LONG text, precision/scale/character length, virtual/hidden flags,
+constraints/members, triggers/policies, privileges/dependencies, database
+charset and create-only existing sequence metadata/permission. It never
+evaluates defaults or selects NEXTVAL. Required observations and zero-row
+table access probes must succeed; no additional errors/views are waived.
+CHECK NULL positions are preserved, while P/U/R NULL/gaps reject. Mutable
+remark/actor/reason metadata preserves VARCHAR2 BYTE semantics; readonly
+dependency LONG metadata retains its observed size, not a fictional writable
+codec/capacity.
+
+`certifyShiftManagementMetadata` requires an independently supplied exact
+certificate matching the new operation/provider/kind/identity/table scope and
+all observations, including defaults and sequence facts. The limited provider
+keeps precisely the two named DBA unknowns and explicit waiver; strict/hybrid
+do not inherit that waiver. An observed hash is not an operator GO or a claim
+that unknown external effects are absent. Actual create-default admissibility
+is additionally enforced by the SQL/UoW kernel before sequence allocation.
+The complete native source-policy/catalog/dependency assembler, independent
+readback integration and executable loaders still remain necessary.
+
+```powershell
+node --test test/native-shift-management-admission.test.mts test/oracle-shift-management-metadata.test.mts
+```
+
+Tests use only explicitly owned temporary authority directories and isolated
+catalog/Oracle protocol doubles, including an actual new Node process restart.
+They do not touch operator allowances or establish live metadata, native100-row
+capacity, real charset roundtrip, partner completion or native feature readiness.
 
 ## SHF-ENV-PROFILES-20 — DEV / TEST / PRODUCTION
 

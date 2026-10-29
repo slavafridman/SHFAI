@@ -177,3 +177,17 @@ test("HTTP JSON16KiB and CSV1MiB bounds reject oversized bodies without state", 
     assert.equal(f.inspect().sequenceCalls, 0); assert.equal(f.inspect().commits, 0);
   } finally { await f.close(); }
 });
+test("concurrent oversized CSV uploads receive bounded413 problems instead of unread-body connection resets", async () => {
+  const f = await fixture();
+  try {
+    const body = " ".repeat(1048577);
+    await Promise.all(Array.from({ length: 3 }, async () => {
+      const response = await fetch(f.url + base + "/csv-previews", {
+        method: "POST", headers: { origin, "content-type": "text/csv; charset=utf-8" }, body,
+      });
+      assert.equal((await object(response, 413)).code, "REQUEST_TOO_LARGE");
+    }));
+    assert.equal(f.inspect().sequenceCalls, 0); assert.equal(f.inspect().commits, 0);
+    assert.equal(f.admission.inspect().preparations, 0);
+  } finally { await f.close(); }
+});

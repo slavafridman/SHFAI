@@ -1,11 +1,11 @@
-import { randomBytes } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import type { Clock } from "./current-shifts-contracts.mts";
 import type { ShiftAdmissionPlanV1, ShiftAdmissionOutcomeV1, ShiftAdmissionReferenceV1,
   ShiftCommandAdmission, ShiftCommandBindingV1, ShiftConsumedAdmissionV1 } from "./shift-management-contracts.mts";
-import { fingerprint, same } from "./stage-arrival-domain.mts";
+import { canonical, same } from "./stage-arrival-domain.mts";
 import { freezeShift } from "./shift-management-model.mts";
 import { assertShiftWorkAllowed } from "./shift-management-domain.mts";
-import { requireShiftAcknowledgments } from "./shift-management-validation.mts";
+import { requireShiftAcknowledgments, validShiftReceipt } from "./shift-management-validation.mts";
 import { shiftFail } from "./shift-management-errors.mts";
 import { decimalId, text, validatePrincipal } from "./contract-validation.mts";
 import { exact } from "./stage-arrival-validation.mts";
@@ -15,23 +15,34 @@ interface Preparation { plan: ShiftAdmissionPlanV1; fingerprint: string }
 interface Attempt { handle: ShiftConsumedAdmissionV1; binding: ShiftCommandBindingV1;
   plan: ShiftAdmissionPlanV1; settled: boolean }
 
-// Explicit isolated test/demo implementation. It cannot certify native fuse
-// durability, survive process loss, or be constructed with an Oracle reference.
-export class IsolatedShiftAdmission implements ShiftCommandAdmission {
-  readonly reference: Readonly<FixtureReference>;
+// Backend-private boundary. Native implementations must supply real persistent
+// consumption; the isolated subclass explicitly supplies no persistence.
+export interface ShiftAdmissionBoundary {
+  readonly mode: "isolated-fixture" | "test-oracle-controlled";
+  validatePlan(plan: ShiftAdmissionPlanV1): void;
+  assertAvailable(employeeId: string): void;
+  consume(attempt: ShiftConsumedAdmissionV1): void;
+  assertConsumed(attempt: ShiftConsumedAdmissionV1): void;
+  finish(attempt: ShiftConsumedAdmissionV1, outcome: ShiftAdmissionOutcomeV1): void;
+}
+export abstract class ShiftAdmissionKernel<Reference extends ShiftAdmissionReferenceV1>
+implements ShiftCommandAdmission {
+  readonly reference: Readonly<Reference>;
   private readonly tokens = new Map<string, Preparation>();
   private readonly commands = new Map<string, Attempt>();
   private readonly employees = new Set<string>();
   private readonly quarantined = new Set<string>();
   private readonly handles = new WeakMap<ShiftConsumedAdmissionV1, Attempt>();
+  private readonly fingerprintKey = randomBytes(32);
   private readonly clock: Clock;
-  constructor(reference: FixtureReference, clock: Clock) {
+  private readonly boundary: ShiftAdmissionBoundary;
+  protected constructor(reference: Reference, clock: Clock, boundary: ShiftAdmissionBoundary) {
     if (!exact(reference, ["namespace", "identityRevision", "operatorScopeRevision", "mode", "dataSource", "metadata"]) ||
-        reference.mode !== "isolated-fixture" || reference.dataSource !== "isolated-fixture" ||
-        reference.metadata !== null || reference.namespace !== "shift-management-v0.1" ||
+        reference.mode !== boundary.mode || reference.namespace !== "shift-management-v0.1" ||
         !text(reference.identityRevision, 128, 1) || !text(reference.operatorScopeRevision, 128, 1))
-      throw Error("Isolated management admission reference required");
+      throw Error("Exact management admission reference required");
     this.reference = freezeShift(structuredClone(reference)); this.clock = clock;
+    this.boundary = boundary;
   }
   private prune() {
     const now = this.clock.now().getTime();
@@ -43,6 +54,7 @@ export class IsolatedShiftAdmission implements ShiftCommandAdmission {
   private available(employeeId: string) {
     if (this.quarantined.has(employeeId)) shiftFail("COMMAND_SCOPE_DEFERRED");
     if (this.employees.has(employeeId)) shiftFail("COMMAND_IN_PROGRESS");
+    this.boundary.assertAvailable(employeeId);
   }
   async prepare(plan: ShiftAdmissionPlanV1, signal?: AbortSignal) {
     assertShiftWorkAllowed(signal);
@@ -57,12 +69,13 @@ export class IsolatedShiftAdmission implements ShiftCommandAdmission {
         !same(plan.authorizedTeamIds, plan.principal.resourceScope.orgUnitIds) ||
         !Array.isArray(plan.effects) || plan.effects.length < 1 || plan.effects.length > 100)
       shiftFail("INVALID_SOURCE_DATA");
+    this.boundary.validatePlan(plan);
     if (!same(plan.reference, this.reference) || Date.parse(plan.expiresAt) <= now ||
         Date.parse(plan.expiresAt) > now + 120000) shiftFail("STALE_PREPARATION");
     if (this.tokens.size >= 1000) shiftFail("DEPENDENCY_UNAVAILABLE");
     const token = randomBytes(32).toString("base64url");
     const owned = structuredClone(plan);
-    const digest = fingerprint(owned);
+    const digest = createHmac("sha256", this.fingerprintKey).update(canonical(owned)).digest("hex");
     this.tokens.set(token, { plan: freezeShift(owned), fingerprint: digest });
     return { validationToken: token, fingerprint: digest, expiresAt: plan.expiresAt };
   }
@@ -93,6 +106,8 @@ export class IsolatedShiftAdmission implements ShiftCommandAdmission {
       employeeId: binding.employeeId, commandId: binding.commandId, planDigest: binding.planDigest,
       attemptHandle: randomBytes(32).toString("base64url") });
     const attempt: Attempt = { handle, binding: freezeShift(structuredClone(binding)), plan, settled: false };
+    this.boundary.consume(handle);
+    assertShiftWorkAllowed(signal);
     this.tokens.delete(binding.validationToken); this.employees.add(binding.employeeId);
     this.commands.set(binding.commandId, attempt); this.handles.set(handle, attempt);
     return handle;
@@ -101,6 +116,14 @@ export class IsolatedShiftAdmission implements ShiftCommandAdmission {
     const attempt = this.handles.get(handle);
     if (!attempt || attempt.settled || !same(handle.reference, this.reference) ||
         !this.employees.has(handle.employeeId)) shiftFail("STALE_PREPARATION");
+    this.boundary.assertConsumed(handle);
+  }
+  planFor(handle: ShiftConsumedAdmissionV1): Readonly<ShiftAdmissionPlanV1> {
+    this.assertOwned(handle);
+    const attempt = this.handles.get(handle);
+    if (!attempt) shiftFail("STALE_PREPARATION");
+    this.boundary.validatePlan(attempt.plan);
+    return attempt.plan;
   }
   async finish(handle: ShiftConsumedAdmissionV1, outcome: ShiftAdmissionOutcomeV1): Promise<void> {
     this.assertOwned(handle);
@@ -112,7 +135,10 @@ export class IsolatedShiftAdmission implements ShiftCommandAdmission {
           outcome.problem.code !== "COMMAND_OUTCOME_UNKNOWN"))) shiftFail("INVALID_SOURCE_DATA");
     if (outcome.kind === "verified" && (outcome.receipt.commandId !== handle.commandId ||
         outcome.receipt.employeeId !== handle.employeeId || outcome.receipt.kind !== handle.kind ||
-        outcome.receipt.outcome !== "fixture-committed" || outcome.receipt.dataSource !== "isolated-fixture"))
+        outcome.receipt.outcome !== (this.reference.mode === "isolated-fixture" ? "fixture-committed" : "oracle-test-committed") ||
+        outcome.receipt.dataSource !== this.reference.dataSource ||
+        !validShiftReceipt(outcome.receipt, { employeeId: handle.employeeId, commandId: handle.commandId,
+          kind: handle.kind, source: this.reference.dataSource, zone: outcome.receipt.businessTimeZone })))
       shiftFail("INVALID_SOURCE_DATA");
     if (outcome.kind === "verified") {
       if (outcome.receipt.effects.length !== attempt.plan.effects.length) shiftFail("INVALID_SOURCE_DATA");
@@ -127,10 +153,24 @@ export class IsolatedShiftAdmission implements ShiftCommandAdmission {
       }
     }
     if (outcome.kind === "unknown") this.quarantined.add(handle.employeeId);
+    this.boundary.finish(handle, outcome);
     attempt.settled = true; this.employees.delete(handle.employeeId);
   }
   inspect() {
     return { preparations: this.tokens.size, retainedCommands: this.commands.size,
       active: this.employees.size, quarantined: this.quarantined.size };
+  }
+}
+
+// Explicit isolated test/demo implementation: no filesystem, native authority,
+// restart durability or real infrastructure permission is supplied by it.
+export class IsolatedShiftAdmission extends ShiftAdmissionKernel<FixtureReference> {
+  constructor(reference: FixtureReference, clock: Clock) {
+    if (reference.mode !== "isolated-fixture" || reference.dataSource !== "isolated-fixture" ||
+        reference.metadata !== null) throw Error("Isolated management admission reference required");
+    super(reference, clock, {
+      mode: "isolated-fixture", validatePlan() {}, assertAvailable() {},
+      consume() {}, assertConsumed() {}, finish() {},
+    });
   }
 }

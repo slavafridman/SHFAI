@@ -88,6 +88,30 @@ function send(response: ServerResponse, status: number, payload: string, problem
     "Content-Length": Buffer.byteLength(payload), "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
   response.end(payload);
 }
+async function discardRejectedBody(request: IncomingMessage, signal: AbortSignal): Promise<void> {
+  if (request.readableEnded || request.destroyed) return;
+  // Discard only, never parse/retain/accept. Closing while a normal boundary+1
+  // upload is still in flight can RST the socket before its 413 is received.
+  // Bound cleanup as well as accepted input; the ORIGINAL five-second timer
+  // remains active. Oversized/stalled abuse cannot force an unbounded drain.
+  const maximumDiscardBytes = 2 * 1048576;
+  const declared = request.headers["content-length"];
+  if (signal.aborted || declared !== undefined &&
+      (!/^(?:0|[1-9][0-9]{0,19})$/.test(declared) || BigInt(declared) > BigInt(maximumDiscardBytes))) {
+    request.destroy(); return;
+  }
+  const cancel = () => { request.destroy(); };
+  signal.addEventListener("abort", cancel, { once: true });
+  let discarded = 0;
+  try {
+    for await (const chunk of request.iterator({ destroyOnReturn: false })) {
+      if (signal.aborted) { request.destroy(); return; }
+      discarded += Buffer.isBuffer(chunk) ? chunk.byteLength : Buffer.byteLength(chunk);
+      if (discarded > maximumDiscardBytes) { request.destroy(); return; }
+    }
+  } catch { request.destroy(); }
+  finally { signal.removeEventListener("abort", cancel); }
+}
 export async function handleShiftManagement(request: IncomingMessage, response: ServerResponse,
   runtime: SliceRuntime, options: ShiftManagementHttpOptions) {
   const requestId = randomUUID(), abort = new AbortController(), unlink = linkBackendShutdown(abort);
@@ -164,6 +188,7 @@ export async function handleShiftManagement(request: IncomingMessage, response: 
     const problem = shiftProblem(commandAttempted && !terminalKnown && !(normalized instanceof ShiftManagementError) ?
       shiftUnknown() : normalized, requestId, commandId);
     if (problem.effect === "unknown" && employeeId) runtime.shiftManagement?.quarantineTransport(employeeId);
+    if (!commandAttempted) await discardRejectedBody(request, abort.signal);
     if (!response.destroyed && !response.headersSent) {
       response.setHeader("Connection", "close");
       send(response, problem.status, serialize(problem), true);

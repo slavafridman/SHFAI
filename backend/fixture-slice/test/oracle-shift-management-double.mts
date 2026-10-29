@@ -233,7 +233,7 @@ export function nativeProtocolFixture(kind: ShiftOperationKindV1 = "csv-create",
     writerExclusion: { confirmed: true as const, owner: "ISOLATED-PROTOCOL-DOUBLE" }, maximumRows: domainPlan.effects.length };
   const uow = new OracleShiftManagementUow(pool, evidence, authority, scope);
   const selection = { employeeId: "1", shiftDayId: kind === "change" || kind === "cancel" ? "7" : null, admission: handle };
-  const run = (signal?: AbortSignal) => uow.run(selection, async locked => {
+  const work: Parameters<OracleShiftManagementUow["run"]>[1] = async locked => {
     const current = await locked.readLockedSnapshot(), effects: ShiftRecordedEffectV1[] = [];
     for (let i = 0; i < domainPlan.entries.length; i++) {
       const entry = domainPlan.entries[i], effect = domainPlan.effects[i], draft = entry.draft;
@@ -254,8 +254,9 @@ export function nativeProtocolFixture(kind: ShiftOperationKindV1 = "csv-create",
       }
     }
     return effects;
-  }, signal);
-  return { uow, run, pool, evidence, authority, scope, handle, plan, snapshot, schema, selection, faults,
+  };
+  const run = (signal?: AbortSignal) => uow.run(selection, work, signal);
+  return { uow, run, work, pool, evidence, authority, scope, handle, plan, snapshot, schema, selection, faults,
     events, statements, pauseSql(value: typeof gate) { gate = value; }, pauseBreak(value: typeof breakGate) { breakGate = value; },
     inspect: () => ({ core: structuredClone(committedCore), commits, rollbacks, closed, breaks, sequenceCalls, active }) };
 }

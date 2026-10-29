@@ -199,6 +199,36 @@ implementation, followed by independent actual-protocol verification. No new
 user approval is needed for that coding. Keep canonical49-v0.1 and existing
 attendance behavior unchanged; no live Oracle before the rotation prerequisite.
 The developer ZIP still represents foundation30f318e, not this component work.
+
+B49 checkpoint4 is SOURCE-STABLE for persistent admission and operation-
+separated metadata components, not final native integration. Native admission
+uses the existing operator-provisioned namespace, exclusive fsynced employee
+consumption and retained spent state; wrong binding/consent performs no
+filesystem authority IO. UNKNOWN, verified settlement and confirmed rollback
+retain the controlled one-attempt fence. Actual isolated Node-process restart
+and SQL-kernel composition were tested; no receipt persistence/replay/reset.
+The metadata collector covers all three providers, actual catalog query
+shapes, LONG defaults, charset/capacity facts and create-only sequence evidence.
+An independent certificate is required; exactly the two approved limited-mode
+unknowns remain, and required-query errors still reject. Old provider queries/
+digests remain unchanged. No current Oracle observation is claimed.
+The tightly coupled oversized HTTP-body reset was repaired with bounded
+discard within the original deadline; accepted limits stay16KiB JSON/1MiB CSV.
+Final TSC passed; native admission/metadata/kernel plus old metadata suites
+485/485, combined management196/196, HTTP7/7 and full backend1797/1797 passed
+naturally with zero skipped. The earlier full1794/1795 reset failure and lost-
+journal reopening fault were repaired without removing assertions.
+Ten owned backend paths changed; frontend/canonical/attendance business/
+Docker/locks/status/user artifacts were untouched by that owner. Verification
+used isolated protocol/catalog doubles and owned temporary authority roots,
+not live Oracle, usable certificates, original allowances or capacity proof.
+Remaining B49 work is now the native policy/catalog/site/dependency/partner
+evidence assembler and actual fixture/native loaders/server factories with
+independent identity-checked preservation readback before receipt. Native
+startup is still unfinished and U49 protocol integration remains gated.
+Next action: publish this verified component checkpoint with only its ten
+backend paths and parent status hunks, then resume those remaining adapters;
+request independent focused component QA without claiming final acceptance.
 Local Git reconciliation after that handoff: branch main, HEAD8d05f2d,
 empty index, no conflict paths and cached origin/main ahead/behind0/0.
 Remote was not queried; this is not fresh publication verification. Original
