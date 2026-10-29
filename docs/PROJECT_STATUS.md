@@ -48,9 +48,12 @@ in the parent's follow-up staging. No unrelated report content was read.
 
 #### SHF-B49-U49-IMPLEMENTATION-29 — active owners
 
-Current resume: approved49-v0.1 implementation and bounded offline integration
-verification are complete; final scoped tooling/checker publication is pending.
+Current resume: approved49-v0.1 implementation, bounded offline integration
+verification and scoped tooling/checker publication are complete.
 This is not full-project, live Oracle, UAT, WCAG conformance or release approval.
+Next development gate: proposed50-v0.1 native first station arrival with
+lateness is source-backed and UI-reviewed, but BLOCKED on explicit user
+approval. No50 canonical/application implementation is authorized yet.
 The chronological component checkpoints below retain their original limits.
 
 Approved49-v0.1 canonical gate and both consumer handshakes are complete.
@@ -349,11 +352,57 @@ Actual reconciliation confirmed HEAD19c42a2483b26e39d8caa2f0134d6bb0b45a217a
 also matched direct remote main, cached0/0 and empty index; backend/runtime UI
 sources were unchanged from133e8c5. The previously interrupted status-only
 publication therefore completed; its result was not inferred from cancellation.
-Next safe action: publish only six frontend checker/doc paths, two packaging
-paths and parent checkpoint hunks, preserving all other user/Docker/report
-changes. Then record the verified feature publication and close this bounded
-development milestone. Broader legacy workflows still require their approved
-versioned contracts; do not report the whole rewrite complete.
+Final offline verification featureaea7f1f94d555b99eb68e349e94b69546dc92559
+is published: exactly nine paths (six frontend checker/docs, two packaging,
+parent-only checkpoint changes). Four syntax checks, strict Preserve/Bundler
+checking, PowerShell parsing, privacy/whitespace and14 imports/17 selectors
+passed. Standard verifier retained31 CSVs/10000 references/454 hashes/
+430 links/288 anchors/20 unchanged captures. Direct remote matched HEAD,
+cached ahead/behind0/0, index empty and no conflicts were verified.
+All31 other file statuses and external checkpoint payload (+133/-2) were
+preserved. Runtime application sources still match133e8c5; ZIP unchanged,
+with116 runtime modules/28 browser assets matching current source/build.
+Full suites/builds were not repeated during publication. The parent removed
+the owned review-diff TEMP file after review; no private/user files removed.
+This closes the approved bounded49 development milestone, not the full
+legacy rewrite or live/release acceptance. Next safe action is a source-backed
+versioned baseline for the next unimplemented workflow, with explicit user
+approval before dependent implementation. Existing production-authentication,
+operator/live-capacity and release boundaries remain; batch and real EMS
+transport are still excluded, not silently counted as implemented.
+
+SHF-F2-LATE-PROPOSAL-50 is ready for bundled user review in existing design
+sections50.1-50.8. Architecture and UI contributions are static proposals,
+not executed behavior. Scope is first station arrival after planned start
+on one eligible existing synthetic TEST row: server-derived time/minutes
+(including subminute0), exact reason, null remark only, two consents and five
+attendance SET columns. Known/unknown remark/report/mood/partner obligations
+defer; there is no correction of an attended row or actual partner transport.
+Parent review Q50-A01 clarified a material operational change before approval:
+every native F1/ordinaryF2/lateF2/exit/49 writer would require a separately
+operator-provisioned shared local-filesystem employee fence. Old native
+startup configurations without it would reject; old wire/proof/digest/fuse
+contracts and read-only profiles stay unchanged. Current49 code is not altered
+by this proposal. Privileged state loss/power-loss and uncoordinated legacy
+writers remain disclosed limitations, not magically solved by a mutex.
+Both approval sentences explicitly include this precondition/compatibility
+delta. User approval is the implementation blocker; architect canonical
+handoff follows only after that decision. Operator provisioning/reopening,
+live TEST execution, transport, schema/runtime/deployment changes are not
+authorized by coding approval. Password rotation remains a recommendation,
+not a prerequisite. Current proposal-publication static check passed using the
+existing source verifier with its evidence-output write suppressed:31 CSVs,
+10000 references,454 source hashes,430 local links,288 anchors and20 captures;
+the documented duplicate legacy route remains an anomaly, not a new failure.
+Publication scope/privacy/whitespace checks passed for exactly two documents;
+prior design sections and both identical approval sentences were preserved.
+The three external checkpoint hunks (+133/-2) remain unchanged and unstaged.
+No tests/builds/full suites, live operations or C50 materialization were run.
+The prior review-diff file deletion is complete; its empty TEMP directory was
+not accessed by this scoped publisher because of the TEMP boundary.
+Next safe action: publish the proposal and this checkpoint, then request
+explicit50-v0.1 approval; do not code against an unapproved API. This publication
+does not grant that approval; implementation remains APPROVAL BLOCKED.
 Next action: collect those precise integration results, route reproduced
 defects to their artifact owners, and verify/rebuild the developer delivery
 against the resulting stable source. Password rotation is not a user gate.
