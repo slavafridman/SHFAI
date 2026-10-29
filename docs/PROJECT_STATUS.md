@@ -226,9 +226,35 @@ Remaining B49 work is now the native policy/catalog/site/dependency/partner
 evidence assembler and actual fixture/native loaders/server factories with
 independent identity-checked preservation readback before receipt. Native
 startup is still unfinished and U49 protocol integration remains gated.
-Next action: publish this verified component checkpoint with only its ten
-backend paths and parent status hunks, then resume those remaining adapters;
-request independent focused component QA without claiming final acceptance.
+Checkpoint4 feature8c3fb951de8c545f452322da2a8fe3585288828b is published:
+exactly11 paths (ten backend plus parent-only checkpoint additions).
+Privacy/whitespace and scoped82 imports/four links passed. Standard verifier
+passed31 CSVs/10000 references/454 hashes/430 links/288 anchors, with20
+historical captures unchanged. Actual remote matched HEAD, ahead/behind0/0,
+index empty and no conflicts; scoped sources matched publication. All32
+unrelated dirty paths and the three external checkpoint hunks (+133/-2)
+were preserved. No full-suite/build or operational rerun was performed.
+Independent Q49-NATIVE-COMPONENT-A completed with bounded component PASS:
+fresh focused488/488 and13/13 independent adversarial cases, zero skipped.
+The owner's earlier485 count is historical; QA observed14 scoped files
+unchanged throughout its own verification window. Its first console filter
+missed totals, so the bounded suite was repeated with explicit TAP reporting.
+Independent checks covered competing objects and two actual Node processes
+across operation/revision changes, seven partial authority-IO faults and
+missing namespace with retained marker. No product defect was reproduced.
+All verification was isolated doubles or owned temporary filesystem/processes;
+the matrix and directories were removed. Full suite/TSC/live Oracle/capacity/
+Hebrew roundtrip and runtime/environment/UI integration were not rerun by QA.
+Power-loss durability or resistance to privileged deletion/reprovisioning of
+all external state is not proved. Supplied membership guards were exercised,
+but completeness of assembler-provided absence/membership witnesses remains
+an explicit final integration obligation. This is not native-runtime or
+release acceptance.
+Publication hold is lifted. Resume the same B49 owner's remaining evidence
+assembler and actual loaders/factories/independent-readback integration now,
+under existing49-v0.1 approval. U49 protocol integration still waits for
+final source-stable executable wiring; no live Oracle is authorized by this
+component publication or QA. The operator rotation prerequisite remains.
 Local Git reconciliation after that handoff: branch main, HEAD8d05f2d,
 empty index, no conflict paths and cached origin/main ahead/behind0/0.
 Remote was not queried; this is not fresh publication verification. Original
