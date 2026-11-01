@@ -1,4 +1,3 @@
-import oracledb from "oracledb";
 import type { BindParameters } from "oracledb";
 import { SliceError } from "./errors.mts";
 import { CurrentShiftError } from "./current-shifts-errors.mts";
@@ -26,6 +25,10 @@ export interface OraclePool {
 }
 export async function createOraclePool(env: OracleEnvironment): Promise<OraclePool> {
   try {
+    // Factory-only driver loading: importing shared projection helpers in a
+    // fixture world must not eagerly import the real driver. Native behavior,
+    // options, transactions and client verification remain unchanged.
+    const { default: oracledb } = await import("oracledb");
     oracledb.initOracleClient({ libDir: env.clientLibDir });
     if (oracledb.thin || !oracledb.oracleClientVersionString.startsWith("19.3."))
       throw new Error("Unapproved Oracle client");

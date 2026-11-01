@@ -41,7 +41,8 @@ function checkHeaders(request: IncomingMessage, post: boolean, csv: boolean, ori
       !["same-origin", "same-site"].includes(String(request.headers["sec-fetch-site"])) ||
       request.headers["sec-fetch-mode"] !== undefined &&
       !["cors", "same-origin"].includes(String(request.headers["sec-fetch-mode"])) ||
-      request.headers["sec-fetch-dest"] !== undefined && request.headers["sec-fetch-dest"] !== ""))
+      request.headers["sec-fetch-dest"] !== undefined &&
+      request.headers["sec-fetch-dest"] !== "" && request.headers["sec-fetch-dest"] !== "empty"))
     shiftFail("FORBIDDEN");
   const contentType = request.headers["content-type"];
   let encoding: CsvShiftEncodingV1 | undefined;

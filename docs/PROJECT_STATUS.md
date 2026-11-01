@@ -27,8 +27,9 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-RESUME-29 — current resume checkpoint
 
-**State: approved50 IMPLEMENTED AND PUBLISHED; local Docker demo DEPLOYED,
-verified and published under the user's2026-11-01 continuation request.**
+**State: approved52 IMPLEMENTED AND PUBLISHED; populated implemented-workflow
+TEST environments are RUNNING. M02 source publication pending; live Oracle
+is blocked by missing process configuration. Full rewrite remains incomplete.**
 
 Current approval update,2026-11-01 at13:56+02: user explicitly approved
 remainder-v0.1,52-v0.2,52-config-v0.1 and52-UI-v0.2, and requested automatic
@@ -71,7 +72,11 @@ expiry/deferral/navigation with no canned success or Origin injection.
 Native tests use actual Node/application/UoW and isolated Oracle doubles, not
 real Oracle certification. Source labels/timestamps/irreversible fences stay
 strict. The seven reads and four management/five late browser worlds passed.
-Backend38/canonical8/frontend24 source paths are held for scoped publication.
+Verified52 source was published as7ec8e729e96eca371194e5aff21aedcd830e2506:
+exactly73 paths (backend38/canonical8/frontend24/three docs), direct remote
+matched HEAD, cached0/0, empty index/conflicts. Canonical7/7, helper TSC,
+privacy/resources/doc links and standard31/10000/454/20-capture checks passed.
+Unrelated25 path statuses and external checkpoint (+131/-1) were preserved.
 Scoped52 publication preflight on2026-11-01 passed exact73 paths, canonical7/7
 (all three C52 namespaces empty), strict protocol-helper TSC, source privacy/
 654 local-resource checks,14 added-doc links and M01 row/identity/owner sums.
@@ -84,8 +89,70 @@ M02 operational53-v0.1 baseline prepares coherent populated FULLREAD and
 exclusive fixture-writer worlds using existing contracts, not an all-grants
 union or native fallback. Parent accepts its bounded existing-API composition
 within the user's full test-environment request; live lane remains blocked
-by missing process ENV/current operator facts. Next action: publish verified52,
-then implement M02 populated world/runtime and Docker test profile.
+by missing process ENV/current operator facts.
+
+M02 existing-API composition is implemented and independently exercised:
+coherent READONLY, management and cancellation worlds, exact grant families
+7/14/9, seven populated inquiry ports and four contexts, frozen fixture Clock
+2026-11-01T12:00:00.123Z/UTC. Actual bare backend2035/2035 and frontend802/802,
+TSC/all three profile builds passed. NewM02 regression45 (43 plus two readiness
+hardening regressions) and independent69
+cases passed (255 countedHTTP/147 cross-reader assertions/eight commands).
+No Oracle driver resolution occurred in targeted M02 tripwire checks;
+bare historical suite passing is not a globally instrumented zero-connect proof.
+Docker exposes READONLY at127.0.0.1:18080, management18081, cancellation18082.
+All six services are healthy; Node is internal-only, ingress ordinary-network
+egress remains disclosed. Exact Origins and synthetic TEST opt-in are explicit;
+no merged all-grants profile, native fallback or operator namespace mounts.
+SHF53-D01 duplicated nosniff proxy headers and SHF53-D02 rejection of Chrome
+Sec-Fetch-Dest literal empty blocked browser writes. Both root causes were
+fixed without weakening consumers/Origin/business checks; actual125 raw-header
+and98 direct/proxy Chrome envelopes passed. Management-only image update
+preserved READONLY/C52 containers and C52's consumed, cleared-exit state.
+Actual Chrome completed create/change/cancel/two-rowCSV management commands
+with labeled simulation and reader refresh. A subsequent verification of
+committed state passed without replay/reset after QA-only assertion failures.
+C52 browser one-command cancellation, two consents and NULL native ACK fields
+passed; its post-command context correctly denies renewed authority.
+Final three-world49 raw-header checks and seven-reader/context/identity/health
+portfolios passed. Final hardening added immutable image-purpose validation
+before configuration/spawn and a1000ms total shared readiness deadline covering
+identity/inquiry fetches and bodies. Cross-purpose/default/production rejection
+has zero config selections/spawns/imports/ports; slow probes fail around1000ms.
+Two new readiness regressions passed; no hidden timer reset or orphaned-work
+success fallback. READONLY alone was upgraded and independently reverified.
+Current READONLY image is8c891ebe; management isd1c8bda3; cancellation6b8bf5dc.
+These are deliberately mixed validated revisions; committed writer worlds
+were not reset. The final latest READONLY182 payload files/six packaging
+modules match the validated source; two host readiness/identity pairs per
+world returned200 and all six services remained healthy, zero restarts.
+old image independent re-runnability is unverified, not a retention guarantee.
+All three current ZIPs match148 runtime modules; explicit closure roots
+server.mts,populated-server.mts. TEST810960 bytes/186 entries SHA256
+EAFA50D8C2F7D80E7865E31DC36B3DD0291665123EB4077812EDC978F0EE5671.
+M01 gap follow-up resolved119 of121 structural candidates by source role;
+two owned uncertain references describe one late-form stale-submission hazard.
+Zero unclassified/ownerless inventory rows is verified discovery accounting,
+not full application parity or business acceptance. Remaining mission APIs
+and workflows are not implemented by this analysis.
+Next action: publish M02 runtime/Docker/doc and M01 evidence scopes, preserving
+existing TEST worlds and user edits. Oracle live lane remains ENV-blocked:
+no approved connection/client/current identity/operation binding is available
+to this process, so no live query/provisioning/release check is claimed.
+M02 scoped publication preflight on2026-11-01 passed Node syntax5,
+PowerShell parsing5, whitespace,31-path privacy-pattern scanning,
+146 relative/payload imports and25 added-scope local links/21 source-line
+anchors. The29 mission IDs have acyclic dependencies, including ranges;
+the119 resolved/two owned UNCERTAIN accounting remains discovery, not parity.
+Committed595-line roadmap and design-through53.5 prefixes are unchanged.
+Standard verifier passed31 CSVs/10000 references/454 source hashes/
+436 design links/293 source-line references/20 historical capture hashes
+without report writes; the documented duplicate-route anomaly remains.
+Normal fetch and direct remote check matched7ec8e729 with0/0 divergence.
+Full2035/802 tests, builds, Docker service operations and live checks were
+not repeated for publication; current source/package proof remains the
+previous parent evidence. Publication will stage exactly31 authorized paths,
+excluding the README introduction and external checkpoint residual131/-1.
 
 SHF-REMAINDER-52 historical planning step,2026-11-01: user requested a plan for
 all remaining missions and development completion. Requested

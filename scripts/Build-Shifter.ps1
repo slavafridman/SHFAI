@@ -74,12 +74,17 @@ function Remove-ShifterOwned([string]$Path, [string]$ProfileRoot) {
     }
 }
 
-function Get-ShifterClosure([string]$Backend) {
+function Get-ShifterClosure([string]$Backend, [string[]]$EntryPoints = @('server.mts')) {
     # Current application uses literal relative .mts imports (including type imports)
     # and dynamic import("oracledb"). Fail if that supported packaging scope changes.
     $queue = New-Object 'System.Collections.Generic.Queue[string]'
     $seen = New-Object 'System.Collections.Generic.HashSet[string]'
-    $queue.Enqueue('server.mts')
+    foreach ($entry in $EntryPoints) {
+        if (@('server.mts', 'populated-server.mts') -cnotcontains $entry) {
+            throw 'Unapproved runtime entrypoint.'
+        }
+        $queue.Enqueue($entry)
+    }
     $manifest = Get-Content -LiteralPath (Join-Path $Backend 'package.json') -Raw | ConvertFrom-Json
     $dependencies = @($manifest.dependencies.PSObject.Properties.Name)
     $pattern = '(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s*)["'']([^"'']+)["'']'
@@ -185,6 +190,7 @@ function Test-ShifterBrowserAsset([string]$Name, [string]$SelectedProfile) {
         'shift-day-page.css.map', 'shift-items-page.css.map', 'shift-management-dialog.css.map',
         'shift-management-page.css.map', 'shift-search-page.css.map', 'stage-arrival-page.css.map',
         'station-arrival-dialog.css.map', 'station-arrival-page.css.map', 'station-exit-page.css.map',
+        'station-exit-cancellation-dialog.css.map', 'station-exit-cancellation-page.css.map',
         'workspace-shell.css.map', 'employee-name.css.map', 'minute-picker.css.map'
     )
     return $SelectedProfile -ceq 'dev' -and $componentMaps -ccontains $Name
@@ -260,7 +266,7 @@ console.log('PASS installed approved package versions; no install or driver impo
         Invoke-ShifterCommand $npm @('run', "build:$Profile", '--', '--output-path', $build) $frontend
         $browser = Join-Path $build 'browser'
         Invoke-ShifterCommand $npm @('run', 'check:profile', '--', $Profile, $browser) $frontend
-        $closure = @(Get-ShifterClosure $backend)
+        $closure = @(Get-ShifterClosure $backend @('server.mts', 'populated-server.mts'))
         $backendStage = Join-Path $stage 'backend'
         $browserStage = Join-Path $stage 'frontend/browser'
         $configStage = Join-Path $backendStage 'config-examples'
@@ -334,6 +340,7 @@ console.log('PASS installed approved package versions; no install or driver impo
             'Source scope: current fixture-slice import closure and selected browser build; uncommitted bytes are not published source.',
             "Profile: $Profile; full source validation requested: $Validation",
             "Runtime modules: $($closure.Count)",
+            'Runtime entrypoints: server.mts,populated-server.mts (explicit approved roots; literal import closure only)',
             'Prerequisites: native Windows; Node 24.21.0; npm 11.19.0; external runtime dependencies.',
             'Oracle driver 26.0.0 / Thick Client 19.3 / Oracle 11g require separately authorized external setup and verification.',
             'Same-origin /api serving and any private operator packet/configuration are external prerequisites, not ZIP contents.',

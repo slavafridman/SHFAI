@@ -33,7 +33,9 @@ COPY --chown=101:101 browser/ /usr/share/nginx/html/
 COPY --chown=101:101 packaging/*.mjs ./packaging/
 COPY packaging/nginx.local-demo.conf /etc/nginx/nginx.conf
 ENV NODE_ENV=production
-LABEL org.shifter.scope="isolated-empty-dev-demo" \
+ARG SHF_SCOPE=synthetic-empty-dev
+RUN node -e 'const fs=require("node:fs");const scope=process.env.SHF_SCOPE;if(!["synthetic-empty-dev","synthetic-full-test"].includes(scope))process.exit(1);fs.writeFileSync("packaging-scope",scope)'
+LABEL org.shifter.scope="${SHF_SCOPE}" \
       org.shifter.state="volatile-no-native-writes" \
       org.shifter.authentication="explicit-opt-in-synthetic-not-real-login"
 USER 101:101

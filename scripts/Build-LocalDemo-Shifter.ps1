@@ -1,8 +1,10 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('synthetic-empty-dev')]
+    [ValidateSet('synthetic-empty-dev', 'synthetic-full-test')]
     [string]$DemoOptIn,
+    [ValidateSet('READONLY', 'management', 'cancellation')]
+    [string]$Mode,
     [string]$NodeImage = 'node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20',
     [string]$NginxImage = 'nginxinc/nginx-unprivileged:stable-bookworm@sha256:cd33960e98e93d4d63385790ff7f8f5bf2ca95184c581b7f42ae8aea1139fbfc',
     [switch]$ReuseValidatedPayload,
@@ -11,7 +13,11 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-. (Join-Path $PSScriptRoot 'Build-Shifter.ps1') -Profile dev
+$payloadProfile = if ($DemoOptIn -ceq 'synthetic-full-test') { 'test' } else { 'dev' }
+if ($payloadProfile -ceq 'test' -and -not $Mode) { throw 'FULL TEST requires an explicit Mode.' }
+if ($payloadProfile -ceq 'dev' -and $Mode) { throw 'Empty DEV does not accept FULL Mode.' }
+$demoImage = if ($payloadProfile -ceq 'test') { 'shifter-full-test:test' } else { 'shifter-local-demo:dev' }
+. (Join-Path $PSScriptRoot 'Build-Shifter.ps1') -Profile $payloadProfile
 . (Join-Path $PSScriptRoot 'Build-Docker-Shifter.ps1') -NodeImage $NodeImage -NginxImage $NginxImage
 
 function Assert-LocalDemoPins {
@@ -22,15 +28,15 @@ function Assert-LocalDemoPins {
     }
 }
 function Get-ValidatedDemoInputs {
-    $stage = Join-Path $root '.shifter-developer-delivery/dev/stage'
-    $zip = Join-Path $root '.shifter-developer-delivery/dev/shifter-developer-dev.zip'
+    $stage = Join-Path $root ".shifter-developer-delivery/$payloadProfile/stage"
+    $zip = Join-Path $root ".shifter-developer-delivery/$payloadProfile/shifter-developer-$payloadProfile.zip"
     Assert-ShifterNoLink $stage
     Assert-ShifterNoLink $zip
     $build = Get-Content -LiteralPath (Join-Path $stage 'BUILD.md') -Raw
     $head = & git -C $root rev-parse HEAD
     if ($LASTEXITCODE -ne 0 -or -not $build.Contains("Source HEAD: $head") -or
-        -not $build.Contains('Profile: dev; full source validation requested: True')) {
-        throw 'A current full-validation DEV payload is required.'
+        -not $build.Contains("Profile: $payloadProfile; full source validation requested: True")) {
+        throw "A current full-validation $payloadProfile payload is required."
     }
     $sourceSnapshot = @($build -split "`r?`n" | Where-Object {
         $_ -cmatch '^SOURCE\t[A-Za-z0-9][A-Za-z0-9._/-]*\t[0-9]+\t[A-F0-9]{64}$'
@@ -78,7 +84,11 @@ function Get-ValidatedDemoInputs {
         if ($seen.Count -ne $manifest.Count + 1) { throw 'Missing ZIP manifest entries.' }
     } finally { $archive.Dispose() }
     $inputs = New-Object 'System.Collections.Generic.List[object]'
-    $closure = @(Get-ShifterClosure (Join-Path $root 'backend/fixture-slice'))
+    $closure = @(Get-ShifterClosure (Join-Path $root 'backend/fixture-slice') @('server.mts', 'populated-server.mts'))
+    if (-not $build.Contains("Runtime modules: $($closure.Count)") -or
+        -not $build.Contains('Runtime entrypoints: server.mts,populated-server.mts')) {
+        throw 'Validated payload does not prove the approved explicit runtime roots/count.'
+    }
     foreach ($name in @($closure) + @('package.json', 'package-lock.json', 'config-examples/dev.example.json')) {
         $relative = "backend/$name"
         if (-not $manifest.ContainsKey($relative) -or
@@ -95,7 +105,7 @@ function Get-ValidatedDemoInputs {
     if ($manifest.ContainsKey('THIRD-PARTY-NOTICES.txt')) {
         $inputs.Add([pscustomobject]@{ Source = Join-Path $stage 'THIRD-PARTY-NOTICES.txt'; Target = 'browser/THIRD-PARTY-NOTICES.txt' })
     } else { Write-Host 'DEV build generated no third-party notices; none invented or copied from another profile.' }
-    Write-Host "PASS full-validation DEV snapshot HEAD=$head; modules=$($closure.Count); ZIP entries=$($seen.Count)"
+    Write-Host "PASS full-validation $payloadProfile snapshot HEAD=$head; modules=$($closure.Count); ZIP entries=$($seen.Count)"
     Write-Host "SOURCE SNAPSHOT files=$($sourceSnapshot.Count); SHA256=$sourceHash"
     Write-Host "ZIP SHA256=$((Get-FileHash -LiteralPath $zip).Hash)"
     return $inputs.ToArray()
@@ -105,8 +115,8 @@ function Invoke-LocalDemoBuild {
     $os = @(Invoke-ShifterDocker @('info', '--format', '{{.OSType}}'))
     if (($os -join "`n").Trim() -cne 'linux') { throw 'Approved available Linux engine required.' }
     if (-not $ReuseValidatedPayload) {
-        & powershell.exe -NoProfile -File (Join-Path $PSScriptRoot 'Build-Shifter.ps1') -Profile dev -Validation | Out-Host
-        if ($LASTEXITCODE -ne 0) { throw 'Canonical DEV validation failed.' }
+        & powershell.exe -NoProfile -File (Join-Path $PSScriptRoot 'Build-Shifter.ps1') -Profile $payloadProfile -Validation | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Canonical $payloadProfile validation failed." }
     }
     $inputs = @(Get-ValidatedDemoInputs)
     $context = Join-Path ([IO.Path]::GetTempPath()) ("shf-docker-demo-" + [guid]::NewGuid().ToString('N'))
@@ -114,7 +124,8 @@ function Invoke-LocalDemoBuild {
     New-Item -ItemType Directory -Path $context | Out-Null
     try {
         foreach ($name in @('local-demo.Dockerfile', 'nginx.local-demo.conf',
-            'local-demo-config.mjs', 'local-demo-backend.mjs', 'local-demo-supervisor.mjs')) {
+            'local-demo-config.mjs', 'local-demo-backend.mjs', 'local-demo-supervisor.mjs',
+            'full-test-config.mjs', 'full-test-backend.mjs', 'full-test-readiness.mjs')) {
             $target = if ($name -eq 'local-demo.Dockerfile') { 'Dockerfile' } else { "packaging/$name" }
             $inputs += [pscustomobject]@{ Source = Join-Path $root "docker/$name"; Target = $target }
         }
@@ -146,14 +157,19 @@ function Invoke-LocalDemoBuild {
             Write-Host ("CONTEXT MANIFEST SHA256=" + [BitConverter]::ToString($sha.ComputeHash($manifestBytes)).Replace('-', ''))
         } finally { $sha.Dispose() }
         Write-Host "CONTEXT exact files=$($inputs.Count); generated .dockerignore; no repository upload"
-        Invoke-ShifterDocker @('build', '--pull', '--platform', 'linux/amd64',
+        # Locked runtime npm dependency acquisition in the dependency stage needs
+        # registry access on a cold cache. Runtime/probe containers have no egress.
+        Invoke-ShifterDocker @('build', '--pull=false', '--platform', 'linux/amd64',
             '--build-arg', "NODE_IMAGE=$NodeImage", '--build-arg', "NGINX_IMAGE=$NginxImage",
-            '--tag', 'shifter-local-demo:dev', $context) | Out-Host
+            '--build-arg', "SHF_SCOPE=$DemoOptIn",
+            '--tag', $demoImage, $context) | Out-Host
         Invoke-ShifterDocker @('run', '--rm', '--network', 'none', '--read-only',
             '--tmpfs', '/tmp:rw,noexec,nosuid,size=32m', '--cap-drop', 'ALL',
             '--security-opt', 'no-new-privileges', '--entrypoint', 'nginx',
-            'shifter-local-demo:dev', '-t') | Out-Host
-        Invoke-ShifterDocker @('image', 'inspect', '--format', '{{.Id}}', 'shifter-local-demo:dev') | Out-Host
+            $demoImage, '-t') | Out-Host
+        Invoke-ShifterDocker @('image', 'inspect', '--format', '{{.Id}}', $demoImage) | Out-Host
+        # Detect concurrent source edits after the image build as well as before.
+        [void](Get-ValidatedDemoInputs)
         Write-Host 'PASS local demo image packaging; not deployed; production default remains rejected.'
     } finally {
         # Only the unique temporary context created by this invocation is removed.

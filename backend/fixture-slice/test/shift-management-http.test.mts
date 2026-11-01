@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { once } from "node:events";
+import { request as httpRequest } from "node:http";
 import { createLoopbackServer } from "../http-adapter.mts";
 import { createRuntime, SyntheticAdministratorProvider } from "../synthetic-identity.mts";
 import { CurrentFixtureReader } from "../current-shifts-fixture.mts";
@@ -13,9 +14,13 @@ import { managementFixtureSnapshot, managementClock, createDraft } from "./shift
 const config = { deploymentClass: "isolated-test-demo", authenticationMode: "synthetic",
   syntheticAdministratorEnabled: true, syntheticOrgUnitIds: ["J01"], dataSource: "isolated-fixture",
   businessTimeZone: "UTC", shiftManagement: { mode: "isolated-fixture" } };
-const origin = "http://localhost:16040";
+const origin = "http://127.0.0.1:8081";
 const base = "/api/v1/employees/1/shift-management";
-const jsonHeaders = { "content-type": "application/json", origin };
+// Publish the literal Chrome fetch metadata over HTTP, not Node fetch's
+// otherwise absent destination. Never strip these headers in the fixture.
+const chromeHeaders = { origin, "sec-fetch-site": "same-origin",
+  "sec-fetch-mode": "cors", "sec-fetch-dest": "empty" };
+const jsonHeaders = { "content-type": "application/json", ...chromeHeaders };
 async function fixture() {
   const clock = managementClock(), f = createIsolatedShiftManagement(managementFixtureSnapshot(), clock, "UTC");
   const current = new CurrentFixtureReader({ catalog: {
@@ -39,6 +44,23 @@ async function object(response: Response, status = 200) {
 function post(url: string, operation: string, body: unknown) {
   return fetch(url + base + "/" + operation, { method: "POST", headers: jsonHeaders, body: JSON.stringify(body) });
 }
+// Node fetch overwrites Sec-Fetch-Mode with its own request mode. Use native
+// HTTP for hostile literal metadata so the guard receives the exact test input.
+function literalPost(url: string, headers: Record<string, string> | string[], body: string): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const request = httpRequest(url, { method: "POST", headers }, async response => {
+      try {
+        const chunks: Buffer[] = [];
+        for await (const chunk of response) chunks.push(Buffer.from(chunk));
+        const headers = new Headers();
+        for (let i = 0; i < response.rawHeaders.length; i += 2)
+          headers.append(response.rawHeaders[i], response.rawHeaders[i + 1]);
+        resolve(new Response(Buffer.concat(chunks), { status: response.statusCode, headers }));
+      } catch (error) { reject(error); }
+    });
+    request.on("error", reject); request.end(body);
+  });
+}
 function command(preparation: Record<string, unknown>, draft: unknown, suffix: number) {
   assert.ok(Array.isArray(preparation.effects));
   const warningCodes = preparation.effects.flatMap(effect => {
@@ -48,6 +70,76 @@ function command(preparation: Record<string, unknown>, draft: unknown, suffix: n
     validationToken: preparation.validationToken, fingerprint: preparation.fingerprint,
     operationConfirmation: { accepted: true }, acknowledgedWarningCodes: [...new Set(warningCodes)] };
 }
+test("actual HTTP Chrome empty destination permits pure preparation and raw CSV preview, not invalid business data", async () => {
+  const f = await fixture();
+  try {
+    const before = f.inspect();
+    const prepared = await object(await post(f.url, "preparations", { draft: createDraft() }));
+    assert.equal(typeof prepared.validationToken, "string");
+    const csv = Buffer.from("personalId,activityCode,date,location,startTime,endTime\n" +
+      "001234567,1,05/01/2027,m,09:00,10:00", "utf8");
+    const preview = await object(await fetch(f.url + base + "/csv-previews", {
+      method: "POST", headers: { ...chromeHeaders, "content-type": "text/csv; charset=utf-8" }, body: csv,
+    }));
+    assert.equal(preview.state, "ready");
+    assert.equal(typeof preview.previewToken, "string");
+    const invalid = await object(await post(f.url, "preparations", {
+      draft: { ...createDraft(), endLocal: "2027-01-04T08:00:00" },
+    }), 422);
+    assert.equal(invalid.code, "BUSINESS_VALIDATION_FAILED");
+    assert.equal(invalid.effect, "none");
+    for (const destination of [undefined, ""]) {
+      const headers: Record<string, string> = { ...jsonHeaders };
+      if (destination === undefined) delete headers["sec-fetch-dest"];
+      else headers["sec-fetch-dest"] = destination;
+      await object(await literalPost(f.url + base + "/preparations", headers,
+        JSON.stringify({ draft: createDraft() })));
+    }
+    await object(await fetch(f.url + base + "/context")); // Origin remains optional on GET.
+    assert.deepEqual(f.inspect(), before);
+  } finally { await f.close(); }
+});
+test("actual HTTP Chrome metadata still denies foreign/missing Origin, wrong site/mode/destination before any port or command", async t => {
+  const f = await fixture();
+  const read = t.mock.method(f.snapshots, "read"), run = t.mock.method(f.uow, "run");
+  const prepare = t.mock.method(f.app, "prepare"), preview = t.mock.method(f.app, "previewCsv");
+  const commit = t.mock.method(f.app, "command"), commitCsv = t.mock.method(f.app, "commandCsv");
+  try {
+    const before = f.inspect();
+    const missingOrigin: Record<string, string> = { ...chromeHeaders }; delete missingOrigin.origin;
+    const denied = [
+      missingOrigin,
+      { ...chromeHeaders, origin: "http://evil.invalid" },
+      { ...chromeHeaders, origin: origin + "/" },
+      { ...chromeHeaders, "sec-fetch-site": "cross-site" },
+      { ...chromeHeaders, "sec-fetch-site": "none" },
+      { ...chromeHeaders, "sec-fetch-mode": "navigate" },
+      { ...chromeHeaders, "sec-fetch-mode": "no-cors" },
+      ...["document", "iframe", "image", "script", "Empty"].map(destination =>
+        ({ ...chromeHeaders, "sec-fetch-dest": destination })),
+    ];
+    for (const headers of denied) {
+      for (const operation of ["preparations", "csv-previews", "commands", "csv-commands"]) {
+        const csv = operation === "csv-previews";
+        const problem = await object(await literalPost(f.url + base + "/" + operation,
+          { ...headers, "content-type": csv ? "text/csv; charset=utf-8" : "application/json" },
+          csv ? "personalId,activityCode,date,location,startTime,endTime\n001234567,1,05/01/2027,m,09:00,10:00" :
+            JSON.stringify({ draft: createDraft() })), 403);
+        assert.equal(problem.code, "FORBIDDEN"); assert.equal(problem.effect, "none");
+        assert.equal(problem.commandId, null);
+      }
+    }
+    const rawHeaders = ["Host", new URL(f.url).host, ...Object.entries(jsonHeaders).flat()];
+    for (const extra of [["Origin", origin], ["Sec-Fetch-Dest", "empty"], ["x-actor", "Administrator"]]) {
+      const problem = await object(await literalPost(f.url + base + "/preparations",
+        [...rawHeaders, ...extra], JSON.stringify({ draft: createDraft() })), 400);
+      assert.equal(problem.code, "INVALID_REQUEST"); assert.equal(problem.effect, "none");
+    }
+    for (const spy of [read, run, prepare, preview, commit, commitCsv]) assert.equal(spy.mock.callCount(), 0);
+    assert.equal(f.admission.inspect().preparations, 0);
+    assert.deepEqual(f.inspect(), before);
+  } finally { await f.close(); }
+});
 test("actual canonical HTTP paths perform isolated CRUD and whole-file CSV without native claims", async () => {
   const f = await fixture();
   try {
@@ -75,7 +167,7 @@ test("actual canonical HTTP paths perform isolated CRUD and whole-file CSV witho
       "001234567,1,05/01/2027,m,09:00,10:00\nX001234567,1,06/01/2027,h,09:00,10:00";
     const beforePreview = f.inspect();
     const preview = await object(await fetch(f.url + base + "/csv-previews",
-      { method: "POST", headers: { origin, "content-type": "text/csv; charset=utf-8" }, body: csv }));
+      { method: "POST", headers: { ...chromeHeaders, "content-type": "text/csv; charset=utf-8" }, body: csv }));
     assert.equal(preview.state, "ready"); assert.deepEqual(f.inspect(), beforePreview);
     assert.ok(!JSON.stringify(preview).includes("001234567"));
     const applied = await object(await post(f.url, "csv-commands", {
@@ -94,7 +186,7 @@ test("HTTP invalid CSV returns complete non-applicable rows and all authority fi
     const body = "personalId,activityCode,date,location,startTime,endTime\n" +
       "001234568,1,05/01/2027,m,09:00,10:00\n001234567,1,31/02/2027,m,09:00,10:00";
     const preview = await object(await fetch(f.url + base + "/csv-previews", {
-      method: "POST", headers: { origin, "content-type": "text/csv; charset=windows-1255" }, body,
+      method: "POST", headers: { ...chromeHeaders, "content-type": "text/csv; charset=windows-1255" }, body,
     }));
     assert.equal(preview.state, "invalid");
     for (const key of ["previewToken", "fingerprint", "expiresAt"]) assert.equal(preview[key], null);
@@ -111,7 +203,7 @@ test("HTTP rejects provenance/media/unknown keys/query/method before effects", a
       { path: "/preparations", method: "POST", headers: { ...jsonHeaders, origin: "http://evil.invalid" }, body: "{}", status: 403 },
       { path: "/preparations", method: "POST", headers: { ...jsonHeaders, "sec-fetch-site": "cross-site" }, body: "{}", status: 403 },
       { path: "/csv-previews", method: "POST", headers: jsonHeaders, body: "{}", status: 415 },
-      { path: "/csv-previews", method: "POST", headers: { origin, "content-type": "text/csv" }, body: "", status: 415 },
+      { path: "/csv-previews", method: "POST", headers: { ...chromeHeaders, "content-type": "text/csv" }, body: "", status: 415 },
       { path: "/preparations", method: "POST", headers: { ...jsonHeaders, "content-encoding": "gzip" }, body: "{}", status: 415 },
       { path: "/preparations", method: "POST", headers: { ...jsonHeaders, "x-actor": "Administrator" }, body: "{}", status: 400 },
       { path: "/preparations", method: "POST", headers: jsonHeaders, body: '{"draft":{},"draft":{}}', status: 400 },
@@ -170,7 +262,7 @@ test("HTTP JSON16KiB and CSV1MiB bounds reject oversized bodies without state", 
       ["csv-previews", "text/csv; charset=utf-8", 1048577],
     ] as const) {
       const response = await fetch(f.url + base + "/" + operation, {
-        method: "POST", headers: { origin, "content-type": type }, body: " ".repeat(size),
+        method: "POST", headers: { ...chromeHeaders, "content-type": type }, body: " ".repeat(size),
       });
       assert.equal((await object(response, 413)).code, "REQUEST_TOO_LARGE");
     }
@@ -183,7 +275,7 @@ test("concurrent oversized CSV uploads receive bounded413 problems instead of un
     const body = " ".repeat(1048577);
     await Promise.all(Array.from({ length: 3 }, async () => {
       const response = await fetch(f.url + base + "/csv-previews", {
-        method: "POST", headers: { origin, "content-type": "text/csv; charset=utf-8" }, body,
+        method: "POST", headers: { ...chromeHeaders, "content-type": "text/csv; charset=utf-8" }, body,
       });
       assert.equal((await object(response, 413)).code, "REQUEST_TOO_LARGE");
     }));

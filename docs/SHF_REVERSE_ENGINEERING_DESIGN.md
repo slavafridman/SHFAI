@@ -7440,3 +7440,69 @@ No nonexistent FULL launcher command is claimed runnable; new mode-selection swi
 **Owners/next:** parent reviews/accepts §53-v0.1 operational bounds and freezes B52 shared sources; backend then ports/shared world/programmatic launcher; UI fixture-only Docker modes/labels; DevOps profile/entrypoint and actual deployment; QA integration evidence.
 Operator owns absent TEST ENV/client and actual identity/namespace/writer-exclusion/current evidence; M26 remains blocked, R01 separate, no whole-legacy completion claim.
 **Approval request:** parent/user review this DRAFT composition, not a new business API; approve any discovered material contract delta separately before consumers change it. Next safe implementation is M02 after that review and C52 native freeze, within the explicitly requested isolated environment.
+
+### 53.6 Accepted composition and actual populated TEST verification
+
+The parent accepted this existing-API synthetic composition within the user's
+explicit remainder-v0.1/full test-environment mandate on1November2026.
+This supersedes the historical DRAFT/NOT RUN statements for the implemented
+scope, not live Oracle readiness or approval of unwritten mission APIs.
+READONLY, management and cancellation remain separate runtime processes with
+exact7/14/9 capabilities. No native command grant union or Oracle fallback.
+The CLI is populated-server.mts; strict process configuration uses only the
+documented SHF_FULL keys, fixed fixture Clock and explicit synthetic TEST opt-in.
+Runtime-only lazy driver loading preserves native factory behavior while
+preventing fixture projection imports from resolving the driver.
+
+Actual bare backend suite2035/2035 and frontend802/802, TSC and all three
+profile builds passed. Independent M02 QA passed43 regression and69 matrix
+cases, including147 cross-reader checks and injected atomic CSV rollback.
+Independent C52 native protocol QA remains121+71 offline cases; actual native
+driver/Oracle behavior is not inferred from those doubles.
+Source-backed M01 accounting classified119 of121 earlier unresolved structural
+references; two owned uncertain references remain. Coverage accounting is
+not implemented behavior or whole-legacy parity.
+
+The initial Docker browser tests exposed two concrete transport defects:
+NGINX duplicated nosniff response headers and management rejected Chrome's
+standard Sec-Fetch-Dest literal empty. Proxy now emits exactly one nosniff,
+and management accepts that exact destination without relaxing Origin,
+mode/site, scopes, business rules, POST bounds or client guards.
+The old defects were reproduced;125 raw-header and98 direct/proxy Chrome
+envelopes passed after changes. The post-fix actual management browser issued
+create/change/cancel/two-row CSV fixture commands and verified their committed
+projections without replay/reset after QA-only assertion failures.
+C52 browser issued one two-consent simulated cancellation; both native ACK
+timestamps remain NULL. Its consumed authority and cleared exit are preserved.
+
+Running local projects:
+- shf-full-test, READONLY: http://127.0.0.1:18080
+- shf-full-test-management: http://127.0.0.1:18081
+- shf-full-test-cancellation: http://127.0.0.1:18082
+
+All six services were healthy at final verification. Node has only its own
+internal network and no default route; ingress publishes loopback only but
+its ordinary bridge permits egress. Actual Node TCP probes returned
+ENETUNREACH, not a universal firewall/zero-egress proof.
+Frozen Clock is2026-11-01T12:00:00.123Z/UTC. Empty/deferred/error responses
+remain truthful; fixture success is never native Oracle/EMS completion.
+Management alone was recreated for its HTTP fix. Later hardening validates
+the immutable packaging-scope marker before selecting configuration/spawning,
+and bounds identity plus all eleven inquiries/body reads by one1000ms deadline.
+Cross-purpose/default/production and slow-readiness negative probes passed
+without fabricated success. READONLY alone was upgraded to that final image;
+management and consumed C52 stay on their validated prior image. Mixed image
+revisions and retained writer state are explicit.
+Independent re-runnability of the old image is unverified despite running
+containers; no durable fixture-state or recovery guarantee is made.
+
+Fresh TEST archive:810960 bytes/186 entries,148 runtime modules rooted at
+server.mts and populated-server.mts. Actual182 payload comparisons passed.
+The README/technical environment document records opt-in, mode/Origin/ports,
+preflight/build/Compose and owned-project stop commands. Real TEST connection
+parameters and current identity/client/operator certificates are absent from
+the process environment; zero live connections were attempted.
+Live provisioning/release permission does not manufacture those prerequisites,
+authorize production data mutation, new DDL or bypass production authentication.
+Broader business missions, real identity, UAT, full WCAG and native live
+compatibility remain outstanding; no full-project completion is asserted.

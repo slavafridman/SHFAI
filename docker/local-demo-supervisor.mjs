@@ -1,7 +1,13 @@
 import { spawn } from 'node:child_process';
 import { createServer, get } from 'node:http';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { readFileSync } from 'node:fs';
 import { childEnvironment } from './local-demo-config.mjs';
+import { fullChildEnvironment } from './full-test-config.mjs';
+import { fullReady } from './full-test-readiness.mjs';
+
+const purposes = Object.freeze(['synthetic-empty-dev', 'synthetic-full-test']);
+let imagePurpose;
 
 export function identityReady() {
   return new Promise(resolve => {
@@ -16,6 +22,10 @@ export function identityReady() {
       response.on('error', () => finish(false));
       response.on('end', () => {
         try {
+          // Immutable image purpose prevents a TEST browser being started as empty DEV
+          // (or vice versa). Environment overrides cannot relabel the payload.
+          if (imagePurpose !== process.env.SHF_DEMO_OPT_IN)
+            throw Error('Image purpose and explicit opt-in mismatch');
           const result = JSON.parse(body), p = result.principal;
           finish(response.statusCode === 200 && result.dataSource === 'isolated-fixture'
             && p.synthetic === true && p.provider === 'synthetic'
@@ -75,28 +85,41 @@ async function shutdown(code) {
 process.once('SIGTERM', () => void shutdown(0));
 process.once('SIGINT', () => void shutdown(0));
 try {
-  const env = childEnvironment(process.env);
-  start('backend', '/usr/local/bin/node', ['/app/packaging/local-demo-backend.mjs'], env);
+  // Read the immutable build marker once, before config selection or any spawn.
+  // Neither an environment input nor a browser flag can relabel this payload.
+  imagePurpose = readFileSync('/app/packaging-scope', 'utf8');
+  const selectedPurpose = process.env.SHF_DEMO_OPT_IN;
+  if (!purposes.includes(imagePurpose) || !purposes.includes(selectedPurpose)
+    || imagePurpose !== selectedPurpose || process.env.NODE_ENV === 'production')
+    throw Error('Image purpose and explicit opt-in mismatch');
+  const full = selectedPurpose === 'synthetic-full-test';
+  const env = full ? fullChildEnvironment(process.env) : childEnvironment(process.env);
+  const probe = full ? () => fullReady(env) : identityReady;
+  start('backend', '/usr/local/bin/node', [full
+    ? '/app/packaging/full-test-backend.mjs' : '/app/packaging/local-demo-backend.mjs'], env);
   const deadline = Date.now() + 10000;
   let ready = false;
   while (!stopping && Date.now() < deadline) {
-    if (await identityReady()) { ready = true; break; }
+    if (await probe()) { ready = true; break; }
     await sleep(100);
   }
   if (!ready || stopping) throw Error('Identity readiness failed');
-  start('nginx', '/usr/sbin/nginx', ['-g', 'daemon off;'], {
+  start('nginx', '/usr/sbin/nginx', ['-e', '/dev/null', '-g', 'daemon off;'], {
     PATH: env.PATH, HOME: env.HOME, LANG: env.LANG,
   });
   readyServer = createServer(async (request, response) => {
     const nginx = children.get('nginx')?.child;
     const ok = request.url === '/readyz' && !stopping && nginx
-      && nginx.exitCode === null && nginx.signalCode === null && await identityReady();
+      && nginx.exitCode === null && nginx.signalCode === null && await probe();
     response.writeHead(ok ? 200 : 503, {
       'Content-Type': 'application/json', 'Cache-Control': 'no-store',
     });
-    response.end(JSON.stringify({ ready: Boolean(ok), profile: 'dev',
+    response.end(JSON.stringify({ ready: Boolean(ok), profile: full ? 'test' : 'dev',
       dataSource: 'isolated-fixture', authentication: 'synthetic',
-      scope: 'identity-only; empty demo; no Oracle/EMS/write readiness' }));
+      ...(full ? { mode: env.SHF_FULL_MODE, clock: 'frozen-demo',
+        clockInstant: '2026-11-01T12:00:00.123Z', nativeOracle: false, nativeEMS: false } : {}),
+      scope: full ? 'exact mode capabilities; 7 populated inquiries + 4 scoped contexts; no native readiness'
+        : 'identity-only; empty demo; no Oracle/EMS/write readiness' }));
   });
   readyServer.requestTimeout = 2000;
   readyServer.headersTimeout = 2000;
@@ -104,7 +127,8 @@ try {
     readyServer.once('error', reject);
     readyServer.listen(4302, '127.0.0.1', resolve);
   });
-  process.stdout.write('DEMO explicit empty DEV synthetic identity ready; volatile; no native writes\n');
+  process.stdout.write(full ? 'FULL TEST populated synthetic inquiries ready; frozen clock; volatile; no native writes\n'
+    : 'DEMO explicit empty DEV synthetic identity ready; volatile; no native writes\n');
 } catch {
   process.stderr.write('DEMO startup rejected\n');
   await shutdown(1);

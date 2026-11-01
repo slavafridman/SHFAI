@@ -34,6 +34,8 @@ import { lateMode, lateEnvironment, legacyRuntimeShape } from "./native-station-
 import { same } from "./stage-arrival-domain.mts";
 import { cancellationMode, cancellationLegacyProjection, cancellationOrigins } from "./station-exit-cancellation-config.mts";
 import { cancellationManifest } from "./station-exit-cancellation-validation.mts";
+// Literal runtime closure seam for M02 packaging; importing never starts a fixture.
+export { startFullTestEnvironment, createFullTestWorld, checkFullTestReadiness } from "./populated-server.mts";
 
 const resources = new WeakMap<Server, Array<OraclePool | NativePool>>();
 const shutdowns = new WeakMap<Server, Promise<void>>();

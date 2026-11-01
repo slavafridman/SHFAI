@@ -593,3 +593,399 @@ function, production mutation or broker transport. Simulated completion cannot s
 **Next handoff:** caller presents this reconciliation and M01-G01–G08 to architect/business owners,
 accepts or amends the finite scope/defer list, records approved mission contract versions, and
 serializes status. **Ready for owner review, not M01 Done, business sign-off, parity or release.**
+
+## M01 finite follow-up — USERAPPROVEDM01-G01-G08 / 2026-11-01
+
+**Task ID:** M01-FINITE-8. **Status:** DISCOVERY disposition ready for review, with explicit
+UNKNOWN; not implementation completion, UAT acceptance, M28 Done or release approval.
+This append supersedes only the earlier *discovery disposition* of the 121 unmatched rows.
+It preserves the architect header, historical records, original inventories and original
+classification algorithm. The caller reports full TEST52 and M02 deployed; neither was rerun
+here. Those bounded seven-read/fixture CRUD/CSV/§52 programs do not establish all-mission parity.
+User approval supplies finite mission boundaries and auto-next direction, not missing
+mission-specific business-critical acceptance, capability/API/UI versions or partner receipts.
+No public API, schema, application code, fixture or packaging change is authorized by this append.
+
+### Accounting and evidence interpretation
+
+The original algorithm is reproduced unchanged in memory, then each original U row is joined
+by **family + physical CSV record number (header=1)** to the disposition matrix below. Each
+join prints the original file/line and lexical identity; repeated targets/tags are retained.
+CSV record numbers are not source line numbers or business-action IDs.
+
+| Family | Original captured rows / lexical unique / duplicates | Original U | Source-disposition resolved | Remaining UNCERTAIN | Unclassified / ownerless |
+|---|---|---:|---:|---:|---:|
+| R | 216 / 215 / 1 | 1 | 1 | 0 | 0 / 0 |
+| D | 240 / 237 / 3 | 1 | 1 | 0 | 0 / 0 |
+| N | 397 / 255 / 142 | 27 | 26 | 1 | 0 / 0 |
+| C | 1,705 / 1,268 / 437 | 92 | 91 | 1 | 0 / 0 |
+
+The per-family values are checked by the CLI below; the overall equation is
+**121 =119 source-disposition resolved +2 UNCERTAIN**, with **0 unclassified, 0 ownerless**.
+“Resolved” means its source role/mismatch is identified, not that its business disposition
+is accepted, the deployed route works, or runtime reachability has been proved. In particular,
+an active-source URL with no configured route is a known gap, not an implemented action.
+The two UNCERTAIN records describe the **same** form-default hazard on different surfaces;
+they are not two distinct business actions. Dynamic actions outside the capture are not counted.
+
+The prior distribution retains M03–M25 plus M27 as **24 mission buckets with captured legacy
+rows**, with B separately (25 nonempty buckets including foundation). The finite M03–M27
+backlog has **25 mission IDs**; M26 has0 action rows because native verification is an
+environment/evidence lane. Do not invent an active branch for it or call all25 implemented.
+All active remaining mission branches stay **NOT IMPLEMENTED by this classification**;
+bounded TEST52/M02 achievements are separate. M28 delivery/acceptance remains OPEN.
+
+The same31 existing CSV families were parsed for structural shape only (no extraction,
+publisher/verifier execution, hash verification, Oracle operation or value disclosure).
+Rows remain separate by family; these heterogeneous kinds are not a unique-action union:
+
+| Existing CSV family | Rows | Existing CSV family | Rows |
+|---|---:|---|---:|
+| classes | 239 | database-usage | 736 |
+| dispatch-branches | 240 | fields | 1,633 |
+| forms | 50 | forwards | 309 |
+| methods | 3,553 | navigation | 397 |
+| oracle-arguments | 15 | oracle-columns | 722 |
+| oracle-constraints | 371 | oracle-context | 1 |
+| oracle-dependencies | 26 | oracle-indexes | 178 |
+| oracle-nls | 4 | oracle-objects | 242 |
+| oracle-procedures | 9 | oracle-sequences | 17 |
+| oracle-server-version | 4 | oracle-source-summary | 9 |
+| oracle-synonyms | 0 | oracle-timezones | 1 |
+| oracle-transaction-function | 12 | oracle-triggers | 0 |
+| parameter-keys | 38 | routes | 216 |
+| schema-usage-map | 80 | screen-controls | 1,705 |
+| screens | 185 | source-manifest | 454 |
+| validation-errors | 699 | — | — |
+
+### Eight group dispositions and controlling source
+
+**M01-G01 — M10, architect+business → backend/UI+QA; discovery DONE, acceptance OPEN.**
+[ExceptionAction:131–178](../old/SHF/src/bzq/shf/actions/ExceptionAction.java#L131)
+separates `cancel_param`, management `cancel` (form `from`, `ddMMyyyyHHmm`) and card
+`cancel_exception` (request `from`, `dd/MM/yyyy-HH:mm`), with distinct forwards/context.
+[ExceptionDataModel:54–145](../old/SHF/src/bzq/shf/model/ExceptionDataModel.java#L54)
+decides full-day delegation to `ShiftDataModel.cancelShift` versus partial cancellation.
+Partial validation requires day ID, start, state type and cancel reason; the update marks
+SOURCE=DEL and attribution/reason fields for day+start+state, after shift-source change.
+This is not blanket physical deletion. Preserve M10 cancellation variants explicitly;
+transaction/error preservation and full-day shift dependencies remain required contract cases.
+No new API. No original U rows were assigned G01; source coverage does not close business UAT.
+
+**M01-G02 — M20, architect+backend/UI+business; configured mismatch identified, acceptance OPEN.**
+R181 at config:1013 declares `param=insertActualJob`.
+[SystemAdminAction:337–376](../old/SHF/src/bzq/shf/actions/SystemAdminAction.java#L337)
+handles show/update only and otherwise returns its initially null result; it does **not**
+dispatch that configured insert literal. [BaseAction:45–145](../old/SHF/src/bzq/shf/actions/BaseAction.java#L45)
+reads configured parameters, not an invented alias/fallback. Actual insertion is reached by
+[actual_job.jsp:46–52](../old/SHFWeb/WebContent/jsp/actual_job.jsp#L46)'s dynamic app-name
+URL to `updateActualJob`, then
+[SystemAdminModel:812–910](../old/SHF/src/bzq/shf/model/SystemAdminModel.java#L812):
+category0 deletes; nonzero inserts with update fallbacks on selected insert exceptions.
+Thus “missing captured insert comparison” does not mean missing insertion capability.
+R181 is resolved as **configured-unhandled**, not active-success or independent API scope.
+Owner must accept stale-route disposition and preserve/characterize actual category update,
+delete and fallback behavior; the Action's success/error text is not a verified native outcome.
+
+**M01-G03 — M06/M09/M14/M22/M23, architect+UI+QA+business; eight resolved, two UNCERTAIN.**
+
+| Original records | Source status / deciding trace | Owner disposition, not implementation |
+|---|---|---|
+| N112, C757 | `late_popup.jsp:52` literal `/addEvent.do`; buttons:131/133 lack explicit type. `attendance.jsp:74–83` validates then `attendance.js:195–229` uses configured `/attendance/addEvent.do` AJAX. | M06 **UNCERTAIN form-default submission**: AJAX path is explicit, but default button/native submit interaction is not safely declared inactive. |
+| N344 | `attendance.js:408–411` `addMissing()` assigns an unconfigured form URL. Scoped manifest search finds its declaration, no literal call. Actual `saveMissing`:364–398 calls configured attendance/addEvent, not this URL. | M06 inactive-call **candidate**, no static caller; dynamic invocation remains runtime UNKNOWN. Not a second missing-write API. |
+| N396 | `shiftjs.js:119–155` `checkShiftForCancelForReduce` requests unconfigured checkForCancelShift; no literal caller found in scoped manifest. Neighbor `checkShiftForCancel`:92–116 uses configured cancel-remark dialog. | M09 inactive-call candidate; reduction-specific intended behavior remains owner review, not an alias invention. |
+| N249 | `showMessages.jsp:123` rendered anchor uses readMessage, not HTML/JSP-commented; no corresponding configured route. Dialog display in the same row is separate. | M14 active-source/unmapped link gap. Accept stale/delete-marker disposition or supply controlling changed contract; do not silently implement “read”. |
+| N279 | `admin_submenu.jsp:306` live-source onclick navigate(viewSPParameters); no corresponding configured route. | M22 active-source/unmapped menu gap. Abstract managed-break scope only; native SoftPhone transport remains excluded. |
+| N363–366 | `forecast.js:99–237` four named AJAX detail functions use missing calling/break/exception/all-exception URLs. Scoped search finds declarations, no literal calls; configured detail families are not these literals. | M23 source handler/unmapped candidates. Do not assert dead deployment, working details or infer batch generation; require accepted interactive subtype decision. |
+
+No unmatched `.do` row inspected here was proved commented-out. “No literal caller” is a bounded
+source finding, not exhaustive dynamic reachability. Owner review covers missing outcomes even
+when their structural classification is resolved.
+
+**M01-G04 — M27, architect+UI+QA+business; 109 source roles classified, runtime acceptance OPEN.**
+The following is the lossless membership matrix for all18 N /91 C original U27 rows.
+Ranges are inclusive CSV record numbers, expanded and checked by the executable matrix.
+
+| Records | Classification / controlling evidence | Mission owner disposition |
+|---|---|---|
+| N68,96 | `employee_card.jsp:468`, `forecast.jsp:64` frame starts at `chooseOption.jsp` placeholder. | M27 shell/display, not an API action. |
+| N161,163 | `shf_index.jsp:30,33` top-logo/right-menu frame sources. | M27 shell includes; no independent command. |
+| N282,298 | left-side/shift-change submenu about.jsp navigation at65/658. | M27 informational navigation, not business persistence. |
+| N135,368–378 | `replace_shift.jsp:54` team selector; `shfutils.js:32,100,128,156,184,214,242,270,301,329,387` AJAX selector destinations. | M27 shared selectors; consumer mission/context retained, no separate mutation API. |
+| C929,943–946,949–969 | reset/unit/team/activity/exception/inner-job/timeoff selector tags and hidden context. JSP parameters/disabled branches decide display; see set_multi_activity:8–34. | M27 input/form-selection; M13 switch, M15 staffing, M21 CTI, M23 forecast, M25 IWD consumers do not lose employee/unit restrictions. |
+| C947–948 | `set_emps.jsp:41,47` form and onchange `viewShiftsForSwitch`; `replace_shift.jsp:87` reads selected employee; configured getTeamMembers forward reaches fragment. | M27 shared fragment with M13 consumer. Selection triggers inquiry, not separate swap write. |
+| C930–936,1552–1569 | security wrapper tags in right/shift-change menus. `SecurityTag.doStartTag`:24–35 includes/skips body using allowedActivities. | M27 capability visibility, not25 independent mutations; server permission/business checks still required. |
+| C790,942,970–971,974,1160 | reloadErrors in non-employee/security/blank/fail/success/empty fragments. | M27 error/status presentation, not business command. |
+| C1551 | left_side_menu:54 msgIcon beside configured message/messages navigation. | M27/M14 inbox indicator reuse, not new inbox API. |
+| C769–770,972–973 | legacy login input/submit and external-identity redirect form/hidden return context. | M27 identity display/navigation; external provider outcome UNKNOWN. Never a target Administrator fallback. No external endpoint invoked. |
+| C28–32 | activity_aim_test:53/54 hidden mode/aim, reload error, tag embedded in JS item template:79, insertActivity button:95. | M27 copy/test candidate with M20 activity-aim consumer. No captured incoming reference found; not approved new CRUD. |
+| C937–941,1591–1599 | right-menu copy / temporary shift-menu security wrappers. | M27 copy/temp source; no captured incoming consumer found. Do not claim impossible direct/dynamic access. |
+| C1658–1661 | tmp.jsp remark textarea, clear/erase buttons, addShiftRemark save:20–32. | M27 temporary fragment with M09 candidate handler; no captured incoming consumer found. Save semantics need accepted consumer, not a new endpoint. |
+| C1703–1704 | responsive JS:18 creates elSelect checkbox → trClick; shfgrid:141 is JS comparison `i<checkBox.length`, **not an HTML checkBox tag**. | M27 row-selection state / lexical false-control candidate. Neither is independent API action. |
+| C1705–1706 | shfutils:828 readonly cancellation textarea;833 close popup button. | M27 readonly display/dismissal, no cancel command. |
+
+[CheckListTag:64–143](../old/SHF/src/bzq/shf/taglib/CheckListTag.java#L64)
+generates checkboxes from request form/property and list values; selection changes UI state.
+[set_multi_activity.jsp:8–34](../old/SHFWeb/WebContent/jsp/set_multi_activity.jsp#L8)
+binds formName/property/moked/from; this is dynamic **input binding**, not an independent
+activity command. [SecurityTag:24–35](../old/SHF/src/bzq/shf/taglib/SecurityTag.java#L24)
+controls rendering only. Source-role classification does not verify rendered option scope,
+custom-tag runtime values, disabled branch selection, mobile focus, or all actor capabilities.
+Copy/temp absence is bounded to inventoried consumers, not a global “dead code” assertion.
+
+**M01-G05 — M19, architect+business; source-empty discovery DONE, feature decision OPEN.**
+[EmployeeDataAction:180–210](../old/SHF/src/bzq/shf/actions/EmployeeDataAction.java#L180)
+forwards education form state, invokes courses without attaching its return, and invokes taxi.
+[EmployeeDataModel:285–305](../old/SHF/src/bzq/shf/model/EmployeeDataModel.java#L285)
+returns empty Vector for courses and has empty taxi method; skills is a different populated path.
+Existing S19 remains R2/D2/N2/C4, separate from the original121. Do not add imagined courses/taxi
+CRUD or business data. Education forward/input acceptance and explicit empty/defer decision stay OPEN.
+
+**M01-G06 — M24, architect+business; unmapped stub discovery DONE, acceptance OPEN.**
+D241 uses the actual [bank/BankHomeAction:27–56](../old/SHF/src/bzq/wfm/report/bank/BankHomeAction.java#L27).
+Build validates chosen innerJob, sets request form and forwards; non-build sets date defaults.
+There is no report construction call in that method and no configured Action route or captured
+bank consumer. Classification is **unmapped report stub**, not implemented export or batch.
+Owner accepts incomplete/stale disposition or supplies separately approved interactive contract;
+do not invent a bank report/path. No blind-path probe in this follow-up.
+
+**M01-G07 — M08/M09/M15/M16/M20, architect+backend/UI+business+QA; sizing DONE, cases OPEN.**
+[ShiftDataAction:190–299](../old/SHF/src/bzq/shf/actions/ShiftDataAction.java#L190)
+delegates inforce_request to [ShiftDataModel.doAction:1393–1465](../old/SHF/src/bzq/shf/model/ShiftDataModel.java#L1393):
+populate/add/update/delete/update_view; null mode defaults update. Add validates;
+the update validation call is **commented**, not evidence that validation is enforced.
+Update chooses number-only versus broader request by shiftStart; delete touches request/team/
+inner-job dependencies. Preserve these branch distinctions; privilege must not preserve a
+known validation bypass by default. `search_potential_inforce_add_inf` remains M15's additional
+source candidate even where configured linkage is absent; lexical ownership is not activation.
+[ShiftDataAction:962–993](../old/SHF/src/bzq/shf/actions/ShiftDataAction.java#L962)
+loops all selected potential IDs, skips certain zero-time breaks and catches per-item errors;
+it does **not** prove one all-selected transaction. M15 needs accepted partial/all-or-none
+semantics rather than silently borrowing pure CSV's bounded all-or-none guarantee.
+[ManageBuildingsAction:34–70](../old/SHF/src/bzq/shf/actions/ManageBuildingsAction.java#L34)
+has view/add/update/delete/view_update; [BuildingModel:116–200](../old/SHF/src/bzq/shf/model/BuildingModel.java#L116)
+writes existing building/team objects, deleting child/parent through separate DBAccess scopes.
+[SystemAdminAction:264–335](../old/SHF/src/bzq/shf/actions/SystemAdminAction.java#L264)
+inner-job view/add/viewUpdate/update/delete/groups uses allowed-unit filtering and reloadTables;
+swallowed exceptions are not acceptance of successful completion. M20 includes these cache/
+group/scope cases and G02 category modes. M08 CSV/complex editor, M09 broader inquiry/filter/
+original dialog and M16 nested reductions retain the prior G07 scope; no new source parity claim.
+Sizing remains M15 R9/D11/N36/C247 and M20 R20/D38/N49/C200, not estimated effort.
+
+**M01-G08 — M21 lead, architect+partner/business → backend+QA; native outcomes DEFERRED/UNKNOWN.**
+[CTIAction:81–155](../old/SHF/src/bzq/shf/actions/CTIAction.java#L81)
+retains allowed-moked and prior session team in completion selection; the TODO on setCompletion
+is not proof of full context enforcement.
+[CTICompletion:959–1050](../old/SHF/src/bzq/shf/model/CTICompletion.java#L959)
+saves selected employees through DBAccess(false), accumulates failures, rolls back on errors
+and commits otherwise; duration and overlap checks precede sequence-backed completion insertion
+with SAP_STATUS=0. Local record/status is not SAP delivery or partner acknowledgement.
+[ShiftDataAction:1063–1144](../old/SHF/src/bzq/shf/actions/ShiftDataAction.java#L1063)
+records login-cancellation event then conditionally calls mail helper; that sequence does not prove
+atomic event/mail delivery. Full-day exceptions delegate to broader shift dependencies.
+Baseline [WF-17/18 §6](SHF_REVERSE_ENGINEERING_DESIGN.md#6-end-to-end-workflow-traceability)
+and [integration §9](SHF_REVERSE_ENGINEERING_DESIGN.md#9-interfaces-messaging-and-transaction-boundaries)
+retain autonomous ledger/rollback hazards and abstract EMS outcomes. No ledger/function invoked.
+M18 pool, M22 abstract managed-break and M25 IWD scheduling retain deferred partner completion;
+batch workers/delivery and broker transport remain excluded. M26 native permissions are not
+implied by Docker. Synthetic Administrator never bypasses validation, employee/unit context
+or required completion; simulated success must remain labeled. No new DTO/API design here.
+
+### Explicit open evidence / owner retest
+
+| Finding / severity / owner | Expected versus actual / reproduction | Measurable next evidence |
+|---|---|---|
+| M01-G02 / high scope risk / architect+M20 business/backend | Configured insert must have accepted disposition; R181 → Action337–376 has no insert dispatch while update reaches insertion. Static mismatch, not reproduced application failure. | Accept stale-route disposition; versioned category update/delete/fallback cases and focused isolated retest from changed evidence. |
+| M01-G03-FORM / high flow risk / UI+QA+M06 business | Late save should have one approved outcome; N112/C757 expose stale form action plus AJAX and implicit-submit buttons. Browser submission/cancellation behavior UNKNOWN. | Caller-approved existing local/test Chrome instrumentation using synthetic context: capture submit/defaultPrevented, event order and requested URLs without legacy execution; show no duplicate/default stale request. If target cannot reproduce that source behavior, provide approved intended behavior instead. |
+| M01-G03-LINKS / high scope risk / architect+M14/M22/M23 business/UI | Accepted links/detail actions cannot silently disappear; matrix shows unmatched active-source/candidate URLs. No runtime failure claimed. | Accept per-subtype stale/defer/interactive disposition or provide changed controlling consumer+versioned contract; synthetic browser route/outcome evidence only after permission. |
+| M01-G04-BIND / medium / UI+QA+business | Source roles are known, actual dynamic selector context/reachability is not. | Approved capability matrix version; local/test instrumentation of form/property/moked, selected-row IDs, conditional branches and focus; no actual employee data, external identity call or legacy execution. |
+| M01-G07-TX / high / architect+M15/M20 business/backend | Accepted bulk and child/parent/cache failures need truthful outcome; loops/scopes/swallowed errors do not prove atomic success. | Versioned failure/rollback/preservation/capacity cases and isolated doubles from specific changed implementation evidence; no assumed legacy all-or-none. |
+| M01-G08-COMP / high / architect+partner+business, operator/DBA for M26 | Required native completion cannot be replaced by a local status or fixture receipt. | Accepted deferred/UNKNOWN outcomes and labeled doubles; separate environment/operation/data/permissions packet for any native retest. |
+
+These are discovery/prerequisite findings, not new executed product-test defects. Caller routes
+fixes and decisions; no automatic agent loop. Business-critical unknowns remain review gaps even
+when structurally classified. No estimates/deadlines. M27 UAT/WCAG measurements and M28 release/
+delivery acceptance cannot be marked Done on this evidence.
+
+### Exact in-memory follow-up regression
+
+Run from `D:\AIProjects\SHFAI`. This block is concatenated after the existing M01 JavaScript
+block, reusing its readCsv, tables, ownership and DAG checks. It writes nothing and emits the
+exact121-row evidence matrix without code snippets, credentials or personal data.
+
+```javascript
+const ledger=[];
+function capture(family,spec,group,mission,category,state,trace){
+ for(const term of spec.split(',')){
+  const [lo,hi=lo]=term.split('-').map(Number);
+  for(let record=lo;record<=hi;record++)
+   ledger.push({family,record,group,mission,category,state,trace});
+ }
+}
+capture('R','181','M01-G02','M20','configured-unhandled','resolved','SystemAdminAction:337-376 -> SystemAdminModel:812-910');
+capture('D','241','M01-G06','M24','unmapped-stub','resolved','bzq/wfm/report/bank/BankHomeAction:27-56');
+capture('N','112','M01-G03','M06','form-literal/default-submit','UNCERTAIN','late_popup:52,131 -> attendance:74 -> attendance.js:195-229');
+capture('C','757','M01-G03','M06','form-literal/default-submit','UNCERTAIN','late_popup:52,131 -> attendance:74 -> attendance.js:195-229');
+capture('N','344','M01-G03','M06','inactive-call-candidate','resolved','attendance.js:408-411; saveMissing:364-398');
+capture('N','396','M01-G03','M09','inactive-call-candidate','resolved','shiftjs.js:119-155; neighboring dialog:92-116');
+capture('N','249','M01-G03','M14','active-source/unmapped','resolved','showMessages:123');
+capture('N','279','M01-G03','M22','active-source/unmapped','resolved','admin_submenu:306');
+capture('N','363-366','M01-G03','M23','handler-candidate/unmapped','resolved','forecast.js:99-237');
+capture('N','68,96','M01-G04','M27','placeholder-frame','resolved','employee_card:468; forecast:64');
+capture('N','161,163','M01-G04','M27','shell-frame','resolved','shf_index:30,33');
+capture('N','282,298','M01-G04','M27','informational-navigation','resolved','left_side_menu:65; shift_change_submenu:658');
+capture('N','135,368-378','M01-G04','M27','dynamic-selector-link','resolved','replace_shift:54; shfutils.js:32-387');
+capture('C','929,943-946,949-969','M01-G04','M27','input/form-selection','resolved','selector JSP parameters/tags; CheckListTag:64-143');
+capture('C','947-948','M01-G04','M27','selection/inquiry-M13','resolved','set_emps:41,47 -> replace_shift:87');
+capture('C','930-936,1552-1569','M01-G04','M27','capability-wrapper','resolved','right_menu/shift_change_submenu -> SecurityTag:24-35');
+capture('C','790,942,970-971,974,1160','M01-G04','M27','error/status-display','resolved','reloadErrors fragments');
+capture('C','1551','M01-G04','M27','message-indicator-M14','resolved','left_side_menu:50-54');
+capture('C','769-770,972-973','M01-G04','M27','identity-navigation','resolved','login:25,28; shf_obtainUserId:34,46; external outcome UNKNOWN');
+capture('C','28-32','M01-G04','M27','test-copy-candidate-M20','resolved','activity_aim_test:53-95; no captured incoming reference');
+capture('C','937-941,1591-1599','M01-G04','M27','copy/temp-wrapper','resolved','right_menu_copy/shift_submenu_tmp; no captured incoming reference');
+capture('C','1658-1661','M01-G04','M27','temp-remark-candidate-M09','resolved','tmp:20-32; no captured incoming reference');
+capture('C','1703-1704','M01-G04','M27','row-selection/lexical-false-control','resolved','shf_responsive:18 -> trClick; shfgrid:141 comparison');
+capture('C','1705-1706','M01-G04','M27','readonly-display/dismissal','resolved','shfutils:828,833');
+const originalU=new Map();
+for(const [family,rows,fn] of tables)rows.forEach((r,i)=>{
+ if(fn(r).startsWith('U'))originalU.set(family+':'+(i+2),{r,bucket:fn(r)});
+});
+const used=new Set(),balance={};
+for(const item of ledger){
+ const id=item.family+':'+item.record,orig=originalU.get(id);
+ assert(orig,'not original U '+id);assert(!used.has(id),'duplicate '+id);used.add(id);
+ assert.equal(item.mission,orig.bucket.replace('U','M'));
+ assert(/^M01-G0[1-8]$/.test(item.group));assert(nodes.has(item.mission));
+ const source=fs.readFileSync(orig.r.file,'latin1').split('\n');
+ assert(Number(orig.r.line)>0&&Number(orig.r.line)<=source.length);
+ const cell=balance[item.family]??={resolved:0,UNCERTAIN:0};
+ cell[item.state]++;
+ console.log(JSON.stringify({...item,file:orig.r.file,line:Number(orig.r.line),
+  identity:orig.r.path||orig.r.branch||orig.r.target||
+   [orig.r.tag,orig.r.name,orig.r.property,orig.r.type,orig.r.action,orig.r.activity]}));
+}
+assert.equal(originalU.size,121);assert.equal(used.size,121);assert.equal(ledger.length,121);
+assert.deepEqual(balance,{R:{resolved:1,UNCERTAIN:0},D:{resolved:1,UNCERTAIN:0},
+ N:{resolved:26,UNCERTAIN:1},C:{resolved:91,UNCERTAIN:1}});
+assert.equal(ledger.filter(x=>x.state==='resolved').length,119);
+assert.equal(ledger.filter(x=>x.state==='UNCERTAIN').length,2);
+const gapIds=new Set([...plan.slice(plan.indexOf('## M01 finite follow-up')).matchAll(/M01-G0[1-8]/g)].map(x=>x[0]));
+assert.equal(gapIds.size,8);
+const remainingIds=Array.from({length:25},(_,i)=>'M'+String(i+3).padStart(2,'0'));
+remainingIds.forEach(id=>assert(nodes.has(id)));assert(!missions.M26);
+assert.equal(Object.keys(missions).filter(x=>/^M/.test(x)).length,24);
+const csvShape={};
+for(const name of fs.readdirSync(root).filter(x=>x.endsWith('.csv')).sort()){
+ const rows=readCsv(root+name);csvShape[name]=[rows.length,rows.filter(x=>x.file&&x.line).length];
+}
+assert.equal(Object.keys(csvShape).length,31);
+assert.equal(Object.values(csvShape).reduce((sum,x)=>sum+x[1],0),10000);
+const sourceProofs=[
+ ['old/SHF/src/bzq/shf/actions/SystemAdminAction.java','param.equals("updateActualJob")'],
+ ['old/SHF/src/bzq/shf/model/SystemAdminModel.java','insertActualJob();'],
+ ['old/SHFWeb/WebContent/js/attendance.js','/shf/attendance/addEvent.do?'],
+ ['old/SHFWeb/WebContent/js/shfgrid.js','i<checkBox.length'],
+ ['old/SHF/src/bzq/shf/model/EmployeeDataModel.java','public void populateTaxiOrders()'],
+ ['old/SHF/src/bzq/shf/model/CTICompletion.java','db.rollback();']
+];
+sourceProofs.forEach(([file,text])=>assert(fs.readFileSync(file,'latin1').includes(text),file));
+assert(!D.some(r=>r.file.endsWith('/SystemAdminAction.java')&&r.branch==='insertActualJob'));
+assert(!R.some(r=>r.action_source.endsWith('/bank/BankHomeAction.java')));
+for(const p of ['/addEvent','/attendance/addMissing','/shift/checkForCancelShift',
+ '/messages/readMessage','/admin/viewSPParameters','/forecast/callingResultDetails',
+ '/forecast/breakResultDetails','/forecast/exceptionResultDetails','/forecast/exceptionAllResultDetails'])
+ assert(!paths.has(p),p);
+const appendix=plan.slice(plan.indexOf('## M01 finite follow-up'));
+const appendixLinks=[...appendix.matchAll(/\]\(([^)\s]+)\)/g)].map(x=>x[1]);
+let lineAnchors=0;
+for(const link of appendixLinks){
+ const [file,anchor]=link.split('#'),resolved='docs/'+file;
+ assert(fs.existsSync(resolved),link);
+ if(anchor?.startsWith('L')){
+  assert(Number(anchor.slice(1))>0&&Number(anchor.slice(1))<=fs.readFileSync(resolved,'latin1').split('\n').length,link);
+  lineAnchors++;
+ }else if(anchor){
+  const headings=fs.readFileSync(resolved,'utf8').split('\n').filter(x=>/^#{1,6} /.test(x));
+  const slugs=headings.map(x=>x.replace(/^#{1,6} /,'').trim().toLowerCase()
+   .replace(/[^\p{L}\p{N}_\s-]/gu,'').replace(/\s/g,'-'));
+  assert(slugs.includes(anchor),'missing heading anchor '+link);
+ }
+}
+for(const family of ['R','D','N','C']){
+ const row=appendix.split('\n').find(x=>x.startsWith('| '+family+' |'));
+ assert(row,'missing printed balance '+family);
+ const cells=row.split('|').map(x=>x.trim());
+ assert.equal(Number(cells[3]),balance[family].resolved+balance[family].UNCERTAIN);
+ assert.equal(Number(cells[4]),balance[family].resolved);
+ assert.equal(Number(cells[5]),balance[family].UNCERTAIN);
+ assert.equal(cells[6],'0 / 0');
+}
+console.log('PASS M01-FINITE-8',JSON.stringify({originalU:121,resolved:119,UNCERTAIN:2,
+ unclassified:0,ownerless:0,balance,gapIDs:gapIds.size,roadmapIDs:nodes.size,
+ remainingMissionIDs:remainingIds.length,legacyMissionBuckets:24,acyclic:true,
+ csvFamilies:31,fileLineReferences:10000,appendixLinks:appendixLinks.length,lineAnchors,csvShape}));
+```
+
+Exact command (no files generated, no output redirection):
+
+```powershell
+@'
+import fs from 'node:fs';
+const p=fs.readFileSync('docs/SHF_COMPLETION_PLAN.md','utf8');
+const prior=p.slice(p.indexOf('## M01 reconciliation')).match(/```javascript\r?\n([\s\S]*?)```/)[1];
+const next=p.slice(p.indexOf('## M01 finite follow-up')).match(/```javascript\r?\n([\s\S]*?)```/)[1];
+const code=(prior+'\n'+next).replace("'./docs/reverse-engineering/csv.mjs'",
+ JSON.stringify(new URL('./docs/reverse-engineering/csv.mjs',
+ new URL('file:///'+process.cwd().replaceAll('\\','/')+'/')).href));
+await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+'@ | node --input-type=module
+```
+
+**Execution:** pending immediate document-only regression below; this placeholder records no
+passing runtime test. No legacy/app/fulltest/build/Docker/browser/live/batch command was run.
+Static inspection used existing readCsv CLI and scoped file/range/symbol reads only; the
+existing writing/hash-based publisher verifier was inspected, **not executed**.
+Only this plan append is owned/changed. Parent separately publishes M02/code/progress.
+
+### Recorded static check result and handoff
+
+The exact in-memory command above **PASS / exit0**: original four-family rows/unique/duplicate
+figures unchanged; 121 losslessly joined original U records,119 resolved source roles and2
+UNCERTAIN (N112/C757),0 unclassified/ownerless;8 gap IDs;29 unique roadmap IDs with acyclic
+prerequisites;25 M03–M27 mission IDs,24 nonempty legacy mission buckets (M26 has0);31 CSV
+families and10,000 existing file/line references, with heterogeneous row totals kept separate.
+Appendix links: **23 existing local paths,21 valid source-line anchors,2 baseline heading
+anchors**. Checks establish source classification and document consistency only.
+The first follow-up regression exited0. A subsequent inspection found the new §9 heading link
+used the wrong slug; corrected within this owned append, added heading-anchor and printed
+balance checks, then reran. This was a document-check gap, not an application failure.
+
+Additional exact read-only commands:
+`git --no-pager diff --numstat -- docs/SHF_COMPLETION_PLAN.md`,
+`git --no-pager diff --check -- docs/SHF_COMPLETION_PLAN.md`.
+Whitespace check passed with no output / exit0; final append-only size and unchanged-prefix
+comparison are returned to the caller after this result entry. No unrelated dirty-file hashes.
+Git status was inspected read-only to preserve user changes, not used to publish/commit/index.
+
+**Passed:** static inventory membership, duplicate retention, source-line bounds, six source
+text tripwires, nine absent-route checks, missing configured bank Action, G02 absent literal
+dispatch, printed per-family balances, IDs/DAG and appendix links. **Failed:** no remaining
+document regression failure after the owned citation correction.
+**Blocked:** business-critical subtype decisions, versioned API/UI/capability acceptance,
+partner completion/deferral, runtime form-default behavior and dynamic context evidence.
+**Not run:** application/unit/API/fulltest/build/typecheck/Docker/browser/mock execution,
+keyboard/RTL/responsive/AT/WCAG measurements, UAT, Oracle/DNS/broker/native partner, batch,
+legacy execution. No new live or mocked outcome is claimed.
+**Next action:** caller reviews each G01–G08 disposition with the named mission/business owner,
+publishes plan progress separately from M02 code, and supplies specific approved changed
+evidence for focused retest. Discovery disposition is ready; whole-application development,
+business acceptance, all mission parity and M28 completion are **not** established.
+
+**Additional deciding-symbol confirmation, same G07/G08 scope:** ShiftDataAction:367–378
+`search_potential_inforce_add_inf` constructs ShiftDataModel from ShiftInforceRequestForm,
+calls setAddInforceDefaults and forwards form state; it is a default/form branch, not a
+separate staffing insert or proof of configured activation. CTIAction:287–305 job-SAP
+view/assign/unassign delegates to CTICompletion.getJobs/assignJob/unAssignJob:1094–1177.
+Those methods partition cached jobs against assigned IDs and insert/delete existing
+SHF_CTI_JOB_TO_SAP mapping rows. Mapping administration is M21 in-scope source behavior,
+**not actual SAP transport or completion**; validation/context/transaction acceptance stays OPEN.

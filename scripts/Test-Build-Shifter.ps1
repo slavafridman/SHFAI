@@ -47,6 +47,11 @@ Assert-Delivery (Test-ShifterBrowserAsset 'employee-name.css.map' 'dev') 'known 
 Assert-Delivery (Test-ShifterBrowserAsset 'minute-picker.css.map' 'dev') 'known inline minute component map accepted for dev'
 Assert-Delivery (-not (Test-ShifterBrowserAsset 'attendance-page.css.map' 'test')) 'component map rejected for test'
 Assert-Delivery (-not (Test-ShifterBrowserAsset 'attendance-page.css.map' 'production')) 'component map rejected for production'
+foreach ($name in @('station-exit-cancellation-dialog.css.map', 'station-exit-cancellation-page.css.map')) {
+    Assert-Delivery (Test-ShifterBrowserAsset $name 'dev') "existing cancellation UI component map accepted for DEV: $name"
+    Assert-Delivery (-not (Test-ShifterBrowserAsset $name 'test')) "cancellation component map rejected for TEST: $name"
+    Assert-Delivery (-not (Test-ShifterBrowserAsset $name 'production')) "cancellation component map rejected for production: $name"
+}
 foreach ($name in @('unknown.css.map', '../attendance-page.css.map', 'Attendance-page.css.map', 'private.json')) {
     Assert-Delivery (-not (Test-ShifterBrowserAsset $name 'dev')) "browser allowlist rejects unknown/noncanonical asset: $name"
 }
@@ -123,6 +128,13 @@ try {
     Set-Content -LiteralPath (Join-Path $closureFixture 'server.mts') -Value 'import type {Example} from "./contracts.mts"; const driver = () => import("oracledb");'
     $closure = @(Get-ShifterClosure $closureFixture)
     Assert-Delivery (($closure -join ',') -eq 'contracts.mts,server.mts') 'closure includes relative type imports and declared driver'
+    Set-Content -LiteralPath (Join-Path $closureFixture 'populated-server.mts') -Value 'import "./contracts.mts";'
+    $both = @(Get-ShifterClosure $closureFixture @('server.mts', 'populated-server.mts'))
+    Assert-Delivery (($both -join ',') -eq 'contracts.mts,populated-server.mts,server.mts') 'explicit populated launcher closure includes only reachable modules'
+    Remove-Item -LiteralPath (Join-Path $closureFixture 'populated-server.mts')
+    $rejected = $false
+    try { Get-ShifterClosure $closureFixture @('unapproved.mts') } catch { $rejected = $true }
+    Assert-Delivery $rejected 'unapproved runtime entrypoint rejected'
     foreach ($scenario in @(
         'import "../outside.mts";',
         'import "./missing.mts";',

@@ -574,3 +574,167 @@ data-rich fixtures and acceptance; platform/security for base vulnerability/
 signature review. Production authentication, Oracle/client/secrets and live EMS
 remain separate architecture/application/infrastructure decisions, not blockers
 to the bounded empty-demo image and not authorized by its successful packaging.
+
+## Populated isolated TEST Docker packaging — M02, November 1
+
+**Task:** `SHF-PKG-M02-FULL-TEST-20261101`. **Status:** packaging verified;
+independent QA/service acceptance pending. This section supersedes no empty DEV
+defaults. “Full test environment” means populated existing implemented workflows,
+**not full legacy parity**, M01 completion, or remaining milestone completion.
+No application/contracts, locks, schema, private configuration, native allowance/
+coordinator files, or legacy artifacts were edited by this packaging task.
+
+### Package and source evidence
+
+- Native Windows `D:\AIProjects\SHFAI`; Docker Desktop Linux engine 29.4.3,
+  `desktop-linux`, linux/amd64. No WSL, daemon restart, prune, publishing or service
+  operation was performed.
+- Approved Node **24.21.0**, npm **11.19.0**, TypeScript **5.9.3**;
+  Angular core **21.2.25**, CLI/build **21.2.27**, Material/CDK **21.2.14**,
+  Vitest **4.0.9**. Immutable Node/NGINX base digests remain those above;
+  actual NGINX **1.28.0**, Bookworm, UID101. Runtime has only locked
+  `oracledb` **26.0.0**, no npm/dev dependencies/Oracle Client.
+  Driver presence is not a connection: parent readiness and backend launcher
+  have driver-import rejection hooks. No driver double replaces canonical tests.
+- Source HEAD `7ec8e729e96eca371194e5aff21aedcd830e2506`; M02 modules remain
+  unpublished working-tree inputs. Canonical source snapshot: **467 files**,
+  SHA256 `488F236AB4BFB1E39FB1DDC49A30C2566287D43FD711AF1DDF35CEA0FBA7C778`.
+  Final snapshot matched before/after builds and container checks.
+- Explicit runtime roots `server.mts,populated-server.mts`: **148 modules**
+  across all three developer profiles. Only literal reachable imports, including
+  existing application/fixture modules, are copied; no arbitrary module scan,
+  test subtree, source assets or unrelated subtree copy.
+- Purpose-built Docker context: **190 files**, no repository/private upload,
+  SHA256 `972D5699ED68C17C7BD68BE3AC291B35DBDF0B05E549FCADA5B947A2A7F70331`.
+  Image check matched **182 runtime/browser file SHA256 values** against the
+  canonical validated TEST ZIP/stage. Per-file manifests are in each `BUILD.md`.
+  The packaging-only stdin probe is not bundled.
+
+| M02 runtime module (actual source/stage/image byte proof) | SHA256 |
+|---|---|
+| `populated-config.mts` | `FA0FB7765D3D6F7FC274635D6937970981BBB3608FF671BB941736FC78154B90` |
+| `populated-readers.mts` | `21F94E0C01E154FEB23120D48F4FC4C8177A6EA72D4DDE4F81B28383F6EF4A32` |
+| `populated-server.mts` | `7BA2FFA791C907485B53C38F171FAD231070A9CEDE7C1A0E26F09E77557399ED` |
+| `populated-world.mts` | `13A9C8047683E83E5A5F03958C0386E094CBDA514C15315D6328158D2B52B8D8` |
+
+| Developer ZIP under `.shifter-developer-delivery/<profile>/` | Bytes | Entries | SHA256 |
+|---|---:|---:|---|
+| `dev/shifter-developer-dev.zip` | 2339499 | 232 | `6D592973003A34004C58A4A538FBDBC621F3B7A236D284114476A66EEF420674` |
+| `test/shifter-developer-test.zip` | 810067 | 186 | `81C1F55A34A1B1DEC6C0FB7FF57BFF466103CB68EEE043112AFF2C461F2D073C` |
+| `production/shifter-developer-production.zip` | 810738 | 186 | `E0FD935727DA7B18413BABA92F26D56067A804039D8589ED2467DEF971A0EABC` |
+
+TEST ZIP retains its original canonical-run README; this checkout section is the
+new operational handoff. DEV/production ZIPs include the subsequently updated
+distribution README. Runtime/browser source bytes match across the source freeze;
+profile-specific compiled assets intentionally differ. No TEST ZIP was manually
+restaged or relabeled as validated after tests.
+
+**New image:** `shifter-full-test:test`,
+`sha256:dc7708d1a58e410b11c9744aafdba36878b8c9c366a908fddd68cc5d2292901d`,
+120249379 bytes. Empty `shifter-local-demo:dev` and ingress tags were not replaced.
+Image default `NODE_ENV=production` rejects startup without deliberate opt-in.
+An immutable image-purpose file also rejects an explicit empty DEV opt-in on
+the TEST image; environment overrides cannot mismatch backend/browser profiles.
+The locked npm dependency stage needs registry access on a cold cache; image
+runtime checks have **network none**. Cold-cache/offline reproducibility is not
+claimed. Immutable bases are not automatically upgraded.
+
+### Exact commands and check distinctions
+
+Run from the repository root; no dependency/tool installation on Windows:
+
+```powershell
+powershell.exe -NoProfile -File scripts/Build-Shifter.ps1 -Profile test -Validation
+powershell.exe -NoProfile -File scripts/Test-Build-Shifter.ps1
+powershell.exe -NoProfile -File scripts/Build-Shifter.ps1 -Profile dev
+powershell.exe -NoProfile -File scripts/Build-Shifter.ps1 -Profile production
+powershell.exe -NoProfile -File scripts/Build-LocalDemo-Shifter.ps1 -DemoOptIn synthetic-full-test -Mode READONLY -ReuseValidatedPayload
+powershell.exe -NoProfile -File scripts/Test-FullTest-Shifter.ps1 -ContainerChecks
+powershell.exe -NoProfile -File scripts/Test-FullTest-Shifter.ps1 -ComposeChecks
+powershell.exe -NoProfile -File scripts/Test-LocalDemo-Shifter.ps1
+```
+
+- **Canonical TEST, one full run, exit0:** actual backend/frontend TSC; bare
+  backend `npm test` **2031 passed, 0 failed/skipped**; frontend `npm test`
+  **802 passed / 58 files**; actual TEST Angular build/profile check, ZIP raw-name/
+  byte manifest checks, extracted production/native rejection guards. DEV and
+  production final builds exit0 without repeated full suites; production still
+  lacks real authentication. Focused build tests **53 PASS**, empty-demo local
+  configuration checks **38 PASS**.
+- **Configuration, exit0:** three valid exclusive modes/seven invalid local
+  pre-import configs; resolved Compose image/profile/mode, UID101, read-only/init,
+  exact bounded tmpfs, 127-only host port and internal Node network. Not an
+  actual Compose deployment or egress certification.
+- **Container, exit0:** nginx syntax/nonroot/read-only; actual payload hashes;
+  eleven invalid pre-import configs and five rejected startup processes
+  (default/production/Oracle/coordinator injection/empty-DEV purpose mismatch); three sequential exclusive
+  synthetic processes with real proxy identity, all **7 populated inquiries +
+  4 scoped contexts** returning200, exact capabilities **7/14/9** respectively.
+  Management change committed to fixture and read back; cancellation cleared
+  the pre-recorded fixture exit, read back, and rejected replay. Both writers
+  rejected a different loopback Origin. Native partner completion not invoked.
+  All three backend/proxy processes drained/reaped exit0, `forced=false`.
+  Network-none probe had no default route; no host ports/mounts were opened.
+- **Earlier failures retained:** first DEV build rejected the two previously
+  unlisted existing cancellation component stylesheet maps; corrected only the
+  exact DEV-only allowlist and tested TEST/production rejection. First container
+  harness incorrectly assumed a flat context `dataSource` and used unsafe
+  SIGKILL cleanup; the owned ephemeral container was stopped (exit143), then
+  the harness was corrected to existing nested DTO/readiness semantics and
+  graceful cleanup. An attempted network-none dependency-stage build failed
+  `EAI_AGAIN` acquiring locked `oracledb`; dependency-stage networking restored,
+  runtime remained network-none. Resolved Compose checks also corrected an
+  inline tmpfs YAML list and a checker assumption about omitted `internal:false`.
+  No application repair, weakened canonical baseline or blind full-suite retry.
+
+### Operator/QA commands — NOT executed by packaging
+
+Use a fresh PowerShell session without inherited native/private configuration.
+The separately named opt-in is mandatory; choose **one** exact mode explicitly.
+All fixture people/data are synthetic. Clock is frozen
+`2026-11-01T12:00:00.123Z` in **UTC**, not real time. Mode/state is per-process
+and volatile; recreating a process resets it. Grants are never concatenated.
+`READONLY` exposes no native-write capability; browser flags are not authorization.
+Both writer families require the explicit caller Origin; no Host-derived allowlist.
+
+```powershell
+$env:SHF_DEMO_OPT_IN = 'synthetic-full-test'
+$env:SHF_FULL_MODE = 'READONLY' # or exactly management / cancellation, not all
+$env:SHF_FULL_ORIGINS = '["http://127.0.0.1:18080"]'
+$env:SHF_DEMO_HOST_PORT = '18080'
+docker image inspect --format '{{.Id}}' shifter-full-test:test
+docker compose --env-file NUL -p shf-local-demo -f docker/compose.full-test.yml config --quiet
+# ONLY after QA accepts the source-built image and service owner verifies ownership:
+docker compose --env-file NUL -p shf-local-demo -f docker/compose.full-test.yml up -d --pull never
+docker compose --env-file NUL -p shf-local-demo -f docker/compose.full-test.yml ps
+curl.exe --fail http://127.0.0.1:18080/readyz
+# Cleanup ONLY when that owner explicitly ends this synthetic project:
+docker compose --env-file NUL -p shf-local-demo -f docker/compose.full-test.yml down --timeout 20
+```
+
+Using the owned `shf-local-demo` project above is an intentional operator-only
+replacement step; packaging did not execute it. Preserve any running empty demo
+until QA explicitly accepts replacement. At this task's inspections the existing
+two demo containers were **exited(0)**, contrary to the incoming running-state
+description; packaging did not stop/restart them. Parent/service owner must
+reconcile that state before operation. For a separately approved writer port,
+change **both** host port and the exact Origin JSON and use a separately owned
+project; never start combined worlds or union capabilities in one process.
+
+`/readyz` is the existing packaging-only readiness URL, not a new application
+API: it uses M02's programmatic readiness to verify exact synthetic identity,
+selected capabilities and populated inquiry/context coherence. `/healthz`
+remains static-only. Ready output explicitly disclaims native Oracle/EMS readiness.
+
+**Not run / owners:** QA owns actual browser/native-button visibility, interaction/
+RTL/accessibility and source-built acceptance; service owner owns actual host
+ingress and internal-network TCP egress verification. Demo's Node is on the
+internal network only; separate ingress also has an ordinary bridge and may
+egress—accepted local limitation, not zero-egress proof for the entire topology.
+No live Oracle/EMS, native Linux Client setup, coordinator provisioning, fuse
+reset, schema changes, release, security/signature scan or deployment performed.
+Oracle 11.2.0.4/Thick Client19.3 compatibility remains separately authorized
+native-environment work; zero live configuration/connections here. Production
+login remains blocked pending the authentication owner. Next action: parent/
+independent QA accepts this exact image/source snapshot, then service owner
+performs only their explicitly approved replacement/probes.

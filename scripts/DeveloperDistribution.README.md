@@ -20,7 +20,8 @@ test tooling only and is not included in this runtime distribution.
 
 ## Contents / prerequisites
 
-- `backend/server.mts`, its relative import closure, `package.json` and lockfile.
+- `backend/server.mts` and `backend/populated-server.mts`, their explicitly rooted
+  literal relative import closure, `package.json` and lockfile. No test subtree.
 - Three sanitized config examples. They are **never automatically loaded**.
 - `frontend/browser/index.html` and selected compiled assets; the existing public
   environment has only frozen `appEnv` and relative `apiBasePath: "/api"`.
@@ -56,6 +57,34 @@ Configuration and namespace approval/provisioning remain the operator and
 architecture owners' responsibility, outside this developer validation.
 
 ## Explicit local fixture example (operator-run, not run during delivery)
+
+### Populated isolated TEST packaging (M02)
+
+The separately opted-in `synthetic-full-test` Docker package uses the validated
+TEST browser payload and the top-level populated launcher. `READONLY`,
+`management`, and `cancellation` are exact, exclusive per-process modes; no
+combined grants. This means populated **existing implemented workflows**, not
+full legacy parity or completion of remaining milestones. All people/data are
+synthetic; the fixture clock is frozen at `2026-11-01T12:00:00.123Z` in UTC, not
+real time. Management/C52 transactions affect volatile fixtures only. Oracle
+and EMS completion is never asserted. Browser flags are not authorization.
+
+From the source checkout, run exactly one canonical TEST validation, followed
+by optional DEV/production builds without repeated full validation:
+
+```powershell
+powershell.exe -NoProfile -File scripts/Build-Shifter.ps1 -Profile test -Validation
+powershell.exe -NoProfile -File scripts/Build-Shifter.ps1 -Profile dev
+powershell.exe -NoProfile -File scripts/Build-Shifter.ps1 -Profile production
+powershell.exe -NoProfile -File scripts/Build-LocalDemo-Shifter.ps1 -DemoOptIn synthetic-full-test -Mode READONLY -ReuseValidatedPayload
+powershell.exe -NoProfile -File scripts/Test-FullTest-Shifter.ps1 -ContainerChecks
+```
+
+See the root README Docker section for operator-only Compose commands.
+Packaging probes use network-none ephemeral containers and never replace an
+existing demo. Image default production rejects mock startup. Production ZIP
+remains fail-closed pending real authentication. The TEST example JSON below
+remains inert and is not the populated environment configuration.
 
 The backend defaults to **no usable authentication/configuration**, never
 automatic Administrator. To deliberately opt into a loopback-only synthetic

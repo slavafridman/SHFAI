@@ -91,13 +91,80 @@ for (const env of [{}, {...base,NODE_ENV:'production'}, {...base,SHF_APP_ENV:'pr
   {...base,NODE_OPTIONS:'--inspect'}, {...base,SHF_ORACLE_CONFIG:'{}'},
   {...base,SHF_NATIVE_COMMAND_COORDINATOR_CONFIG:'{}'},
   {...base,SHF_FIXTURE_CONFIG:'{}'}, {...base,SHF_FIXTURE_ROWS:'[]'},
-  {...base,SHF_STATION_EXIT_ORIGINS:'[]'}]) {
+  {...base,SHF_STATION_EXIT_ORIGINS:'[]'}, {...base,SHF_PACKAGING_SCOPE_PATH:'{}'}]) {
   assert.throws(()=>childEnvironment(env));
 }
-console.log('PASS 11 invalid/forbidden environment gates before config read/application import');
+console.log('PASS 12 invalid/forbidden environment gates before config read/application import; no marker-path option');
 '@
     $configTest | & node --input-type=module
-    Assert-Demo ($LASTEXITCODE -eq 0) '11 explicit opt-in/profile/native/override gates'
+    Assert-Demo ($LASTEXITCODE -eq 0) '12 explicit opt-in/profile/native/override gates'
+    $purposeTest = @'
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {registerHooks} from 'node:module';
+const source=readFileSync('./docker/local-demo-supervisor.mjs','utf8');
+const empty='synthetic-empty-dev',full='synthetic-full-test';
+let trace,marker;
+globalThis.m02={
+ read(path,encoding){trace.push('read');assert.equal(path,'/app/packaging-scope');
+  assert.equal(encoding,'utf8');if(marker===null)throw Error('Missing marker');return marker;},
+ config(kind){trace.push(kind);return {};},
+ spawn(){trace.push('spawn');throw Error('Synthetic spawn boundary');}
+};
+const mocks={
+ 'node:fs':'export const readFileSync=(...a)=>globalThis.m02.read(...a);',
+ 'node:child_process':'export const spawn=(...a)=>globalThis.m02.spawn(...a);',
+ './local-demo-config.mjs':'export const childEnvironment=()=>globalThis.m02.config("dev");',
+ './full-test-config.mjs':'export const fullChildEnvironment=()=>globalThis.m02.config("test");',
+ './full-test-readiness.mjs':'export const fullReady=()=>false;'
+};
+const hook=registerHooks({
+ resolve(s,c,next){
+  if(s.startsWith('m02:'))return {url:s,shortCircuit:true};
+  if(c.parentURL?.startsWith('m02:supervisor')&&Object.hasOwn(mocks,s))
+   return {url:'m02:mock/'+s,shortCircuit:true};
+  return next(s,c);
+ },
+ load(url,c,next){
+  if(url.startsWith('m02:supervisor'))return {format:'module',source,shortCircuit:true};
+  if(url.startsWith('m02:mock/'))return {format:'module',source:mocks[url.slice(9)],shortCircuit:true};
+  return next(url,c);
+ }
+});
+const previous={NODE_ENV:process.env.NODE_ENV,SHF_DEMO_OPT_IN:process.env.SHF_DEMO_OPT_IN};
+const listeners=['SIGTERM','SIGINT'].map(s=>[s,process.listeners(s)]);
+let checks=0;
+try {
+ const invalid=[
+  [empty,full,'test'],[full,empty,'development'],
+  [empty,undefined,'production'],[full,undefined,'production'],
+  [empty,empty,'production'],[full,full,'production'],
+  [empty,'true','development'],[full,'synthetic-full-test\n','test'],
+  ['unknown',full,'test'],['synthetic-full-test\n',full,'test'],
+  [null,empty,'development'],[empty,'','development']
+ ];
+ const valid=[[empty,empty,'development','dev'],
+  ...['READONLY','management','cancellation'].map(mode=>[full,full,'test','test',mode])];
+ for(const [built,selected,nodeEnv,kind,mode] of [...invalid,...valid]){
+  marker=built;trace=[];process.env.NODE_ENV=nodeEnv;
+  if(selected===undefined)delete process.env.SHF_DEMO_OPT_IN;
+  else process.env.SHF_DEMO_OPT_IN=selected;
+  process.env.SHF_FULL_MODE=mode??'READONLY';
+  await import('m02:supervisor/'+checks++);
+  assert.deepEqual(trace,kind?['read',kind,'spawn']:['read']);
+  assert.equal(process.exitCode,1);process.exitCode=0;
+  for(const [signal,original] of listeners)
+   for(const listener of process.listeners(signal))
+    if(!original.includes(listener))process.removeListener(signal,listener);
+ }
+ console.log('PASS M02 immutable purpose: 12 rejections before config/spawn; DEV + 3 FULL modes; one fixed-path read; minimal mocks, no application imports');
+} finally {
+ hook.deregister();delete globalThis.m02;delete process.env.SHF_FULL_MODE;
+ for(const [k,v] of Object.entries(previous))if(v===undefined)delete process.env[k];else process.env[k]=v;
+}
+'@
+    $purposeTest | & node --input-type=module
+    Assert-Demo ($LASTEXITCODE -eq 0) 'M02 shared supervisor read-before-config/spawn immutable-purpose gate'
 } finally { Pop-Location }
 $compose = Get-Content -LiteralPath (Join-Path $root 'docker/compose.local-demo.yml') -Raw
 $nginx = Get-Content -LiteralPath (Join-Path $root 'docker/nginx.local-demo.conf') -Raw
@@ -123,6 +190,19 @@ Assert-Demo ($nginx.Contains('location = /api {') -and
     $nginx.Contains('proxy_intercept_errors off') -and -not $nginx.Contains('X-Forwarded') -and
     $nginx.Contains('error_page 502 504 =503')) 'loopback proxy preserves API and maps only gateway failure'
 Assert-Demo ($nginx.Contains('access_log off') -and $nginx.Contains('error_log /dev/null')) 'API paths, query strings and bodies excluded from NGINX logs'
+foreach ($location in @('= /api', '^~ /api/')) {
+    $block = [regex]::Match($nginx, 'location ' + [regex]::Escape($location) + ' \{([^}]+)\}').Groups[1].Value
+    Assert-Demo ($block.Contains('proxy_hide_header X-Content-Type-Options;') -and
+        -not $block.Contains('add_header ') -and -not $block.Contains('proxy_hide_header Cache-Control') -and
+        -not $block.Contains('proxy_hide_header Content-Type')) "SHF53-D01 $location hides only upstream nosniff and inherits canonical security headers"
+}
+foreach ($location in @('= /healthz', '@gateway_unavailable')) {
+    $block = [regex]::Match($nginx, 'location ' + [regex]::Escape($location) + ' \{([^}]+)\}').Groups[1].Value
+    Assert-Demo ($block.Contains('add_header Cache-Control no-store always;') -and
+        $block.Contains('add_header X-Content-Type-Options nosniff always;')) "SHF53-D01 $location explicit no-store/nosniff after inheritance override"
+}
+Assert-Demo (-not $ingress.Contains('add_header X-Content-Type-Options') -and
+    -not $ingress.Contains('proxy_hide_header')) 'SHF53-D01 fixed ingress does not duplicate or strip upstream security headers'
 Assert-Demo ($builder.Contains('Get-ValidatedDemoInputs') -and $builder.Contains('ComputeHash($stream)') -and
     $builder.Contains('Get-ShifterClosure') -and $builder.Contains('shf-docker-demo-') -and
     $builder.Contains('$ignore.Add("!$($input.Target)")')) 'validated ZIP/source hashes and exact temporary-context allowlist'

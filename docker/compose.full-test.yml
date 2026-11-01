@@ -1,0 +1,78 @@
+# Operator-owned service operation only after independent QA image acceptance.
+# Does not alter the empty-demo file or its default image.
+name: shf-full-test
+services:
+  demo:
+    image: shifter-full-test:test
+    platform: linux/amd64
+    pull_policy: never
+    environment:
+      NODE_ENV: test
+      SHF_DEMO_OPT_IN: ${SHF_DEMO_OPT_IN:?Explicit synthetic-full-test opt-in required}
+      SHF_FULL_MODE: ${SHF_FULL_MODE:?Explicit READONLY or management or cancellation required}
+      SHF_FULL_PROFILE: test
+      SHF_FULL_DEPLOYMENT_CLASS: isolated-test-demo
+      SHF_FULL_SYNTHETIC_ADMINISTRATOR: "true"
+      SHF_FULL_PORT: "4301"
+      SHF_FULL_ORIGINS: ${SHF_FULL_ORIGINS:?Explicit canonical loopback browser Origin JSON required}
+    expose: ["8080"]
+    user: "101:101"
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: "no"
+    stop_grace_period: 20s
+    pids_limit: 64
+    mem_limit: 256m
+    networks:
+      demo:
+        aliases: [demo]
+    labels:
+      org.shifter.scope: populated-existing-workflows-synthetic-only
+      org.shifter.state: volatile-frozen-clock-no-native-writes
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "const h=require('node:http');const r=h.get('http://127.0.0.1:8080/readyz',s=>{s.resume();s.on('end',()=>process.exit(s.statusCode===200?0:1))});r.setTimeout(1500,()=>r.destroy());r.on('error',()=>process.exit(1))"
+      interval: 5s
+      timeout: 2s
+      start_period: 10s
+      retries: 3
+  ingress:
+    image: shifter-local-demo-ingress:dev
+    platform: linux/amd64
+    pull_policy: never
+    depends_on:
+      demo:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${SHF_DEMO_HOST_PORT:?Explicit approved host port required}:8080"
+    user: "101:101"
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: "no"
+    stop_grace_period: 20s
+    pids_limit: 32
+    mem_limit: 64m
+    networks: [ingress, demo]
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "2", "--output", "/dev/null", "http://127.0.0.1:8080/readyz"]
+      interval: 5s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+networks:
+  demo:
+    internal: true
+  ingress:
+    driver: bridge
+    internal: false
