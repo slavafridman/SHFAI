@@ -7,7 +7,10 @@ export type CapabilityV1 = "shift-day:read" | "current-shifts:read" | "shift-sea
   | "shift-management:cancel" | "shift-management:csv-preview"
   | "shift-management:csv-apply" | "shift-management:test-oracle-write"
   | "attendance-station-arrival-late:prepare" | "attendance-station-arrival-late:commit"
-  | "attendance-station-arrival-late:test-oracle-write";
+  | "attendance-station-arrival-late:test-oracle-write"
+  | "attendance-station-exit-cancellation:prepare"
+  | "attendance-station-exit-cancellation:commit"
+  | "attendance-station-exit-cancellation:test-oracle-write";
 export interface PrincipalV1 {
   subject: string;
   provider: "synthetic" | "real";

@@ -55,13 +55,13 @@ export class ViewHistory {
       if (event instanceof NavigationEnd) {
         const token = this.target ?? crypto.randomUUID();
         if (!this.entries.has(token)) this.entries.set(token, {
-          itemsJourney: event.urlAfterRedirects === '/attendance' || /\/(breaks-and-exceptions|operational-card|manage|shift-management)$/.test(event.urlAfterRedirects) ||
+          itemsJourney: event.urlAfterRedirects === '/attendance' || /\/(breaks-and-exceptions|operational-card|manage|shift-management|station-exit-cancellation)$/.test(event.urlAfterRedirects) ||
             !!(this.current && this.entries.get(this.current)?.itemsJourney),
           path: event.urlAfterRedirects, parent: this.popping ? null : this.current,
           slots: this.slots(), view: null, local: null,
         });
         this.current = token; this.target = null;
-        if (/\/(breaks-and-exceptions|operational-card|manage|shift-management)$/.test(event.urlAfterRedirects)) {
+        if (/\/(breaks-and-exceptions|operational-card|manage|shift-management|station-exit-cancellation)$/.test(event.urlAfterRedirects)) {
           let ancestor: string | null = token;
           while (ancestor) {
             const e: Entry | undefined = this.entries.get(ancestor);

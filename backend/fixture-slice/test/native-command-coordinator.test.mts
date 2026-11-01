@@ -43,6 +43,35 @@ test("global competition retains both fences across operation/day/profile/restar
     assert.ok(readFileSync(f.marker).length);
   } finally { f.cleanup(); }
 });
+test("prior native station exit blocks cancellation across UUID/restart; null clearing cannot reopen authority", async () => {
+  const f = provisionCoordinator();
+  try {
+    const c = f.create();
+    await c.consume({ employeeId: f.employeeId, operation: "station-exit",
+      commandId: "00000000-0000-4000-8000-000000000010" });
+    // Synthetic business record representation is deliberately independent of
+    // authority; clearing/restoring its exit never rewrites filesystem fences.
+    const row: { stationExit: string | null } = { stationExit: "synthetic-existing-exit" };
+    for (const exit of [row.stationExit, null, "synthetic-restored-exit"]) {
+      row.stationExit = exit;
+      await assert.rejects(f.create().assertAvailable(f.employeeId));
+      await assert.rejects(f.create().consume({ employeeId: f.employeeId, operation: "station-exit-cancellation",
+        commandId: "00000000-0000-4000-8000-000000000011" }));
+    }
+    assert.equal(JSON.parse(readFileSync(f.guard, "utf8")).state, "consumed");
+    assert.ok(readFileSync(f.marker).length);
+  } finally { f.cleanup(); }
+});
+test("cancellation owns the same employee-wide opaque coordinator handle, not an operation namespace", async () => {
+  const f = provisionCoordinator();
+  try {
+    const c = f.create(), binding = { employeeId: f.employeeId, operation: "station-exit-cancellation" as const,
+      commandId: "00000000-0000-4000-8000-000000000012" };
+    const handle = await c.consume(binding); c.assertMutationAllowed(handle, binding);
+    assert.throws(() => c.assertMutationAllowed(handle, { ...binding, operation: "station-exit" }));
+    await assert.rejects(f.create().consume({ ...binding, operation: "station-exit" }));
+  } finally { f.cleanup(); }
+});
 test("missing, partial, foreign, linked and replaced records fail closed with zero provisioning", async () => {
   for (const fault of ["missing", "partial", "foreign", "linked", "replaced"] as const) {
     const f = provisionCoordinator();
@@ -98,7 +127,7 @@ test("two actual isolated Node processes compete across kinds; exactly one retai
       });
     });
     assert.deepEqual((await Promise.all([run("stage-arrival"), run("csv-create")])).sort(), ["admitted", "denied"]);
-    for (const operation of ["station-arrival", "station-arrival-late", "station-exit", "change", "cancel"])
+    for (const operation of ["station-arrival", "station-arrival-late", "station-exit", "change", "cancel", "station-exit-cancellation"])
       assert.equal(await run(operation), "denied");
     assert.equal(JSON.parse(readFileSync(f.guard, "utf8")).state, "consumed");
     assert.ok(readFileSync(f.marker).length);

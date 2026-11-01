@@ -1,10 +1,17 @@
 # Shifter: finite remainder and development-completion plan
 
 **Task:** SHF-REMAINDER-52. **Version:** remainder-v0.1. **Date:** 1 November 2026.
-**Status:** PLANNING DELIVERED / proposed execution backlog; §52-v0.2 API,
-52-config-v0.1 and reviewed 52-UI-v0.2 PENDING USER APPROVAL.
+**Status:** APPROVED execution roadmap remainder-v0.1; §52-v0.2 API,
+52-config-v0.1 and reviewed 52-UI-v0.2 explicitly approved by the user
+2026-11-01 13:56+02: «Одобряю план remainder-v0.1 и §52-v0.2,
+включая52-config-v0.1 и52-UI-v0.2». Canonical handoff: design §52.8.
 Owner: system_architect; caller owns scheduling, status and publication. No agents invoked.
-This requested plan authorizes this document, not unwritten API implementation or live operations.
+The subsequent user mandate allows automatic continuation of future missions and
+bounded live Oracle/provisioning/release work through the caller. It is not evidence
+of current environment readiness or approval of unwritten API versions; each future
+versioned baseline still records/checks its owner/approval boundary. Operational
+readiness/provisioning is a separate bounded owner task; no production mutation,
+schema change, live EMS or real-auth fallback is authorized by this record.
 
 ## 1. Starting point and evidence envelope
 
@@ -211,3 +218,378 @@ source paths. One pre-existing user-report anchor was not read under the preserv
 Source `#L` references use the existing repository convention; no rendered-page/runtime claim.
 Two stale UI-review-pending statements were corrected; no link repair was necessary.
 Tests/build/live checks remain NOT RUN; reviewed proposals still require explicit user approval.
+
+## M01 reconciliation — USERAPPROVEDremainder-v0.1
+
+**Task:** M01 / source-backed coverage reconciliation. **Date:** 1 November 2026.
+**Result:** finite lexical accounting delivered, **REVIEW; M01 scope closure remains OPEN**.
+QA owns only this appended section; architect owns the preceding plan and canonical contracts;
+caller serializes status/publication. No agents invoked. The user's November 1 roadmap and
+future full-test-environment direction are recorded here; they do not turn unresolved source
+behavior into accepted business requirements, or supply unpublished API/UI contract versions.
+This section does not update the historical header, approve new endpoints, or claim release.
+
+### Evidence envelope and counting contract
+
+Reused [routes](reverse-engineering/routes.csv), [dispatch](reverse-engineering/dispatch-branches.csv),
+[navigation](reverse-engineering/navigation.csv), [controls](reverse-engineering/screen-controls.csv),
+and baseline [menu §4.3](SHF_REVERSE_ENGINEERING_DESIGN.md#43-shell-and-menu),
+[screens §5](SHF_REVERSE_ENGINEERING_DESIGN.md#5-screen-and-interaction-catalog) and
+[WF-01–23 §6](SHF_REVERSE_ENGINEERING_DESIGN.md#6-end-to-end-workflow-traceability).
+These are four physical CSVs across **three logical surfaces**: configured routes, Java dispatch,
+and UI navigation/controls. Navigation and control figures remain separate even within UI.
+The existing 31-CSV/10,000-reference publisher envelope above is historical evidence, **not**
+a new denominator or a verifier rerun. No Oracle snapshots, original dirty-file hashes,
+status file, operator material, legacy execution or newly concurrent canonical files were used.
+The contract catalog was absent from both enumerated HEAD/index docs names; no replacement created.
+
+| Physical input | Rows classified | Unique lexical identities | Duplicate rows beyond identity | Identity definition |
+|---|---:|---:|---:|---|
+| Routes R | 216 | 215 | 1 | exact configured path |
+| Dispatch D | 240 | 237 | 3 | file + method + literal branch |
+| Navigation N | 397 | 255 | 142 | exact target, including query suffix |
+| Controls C | 1,705 | 1,268 | 437 | file + tag/name/property/type/action/activity, excluding line |
+
+Each physical row receives exactly one bucket below. Duplicate rows are retained in row totals,
+not counted as additional distinct action identities. The duplicate route is
+`/shift/viewOriginalShiftDialog`; three repeated AdminAction comparisons are not three extra
+business actions. **Unique lexical identities are not a count of distinct business actions**:
+controls include inputs/error/security tags, several URLs reach the same command, and nested
+`action`/`mode` or dynamic links may reveal subactions. No cross-surface unique-action union,
+percentage, runtime reachability, full-parity or test-coverage claim is justified.
+All captured rows are included, including copies/stubs/unmapped candidates; “active” means
+configured route declaration only, not proven activity of every JSP/Java comparison.
+
+Disposition keys: `B` = known bounded foundation overlap (not source parity);
+`Mxx` = remaining candidate scope owned by that mission; `S19` = source-empty/stub, M19 owner;
+`X22` = excluded native SoftPhone transport, abstract contract remains M22 work;
+`Uxx` = unresolved candidate **M01-open**, assigned to mission xx's owner for resolution.
+The parser's contextual control assignments are discovery ownership, not invented button semantics.
+
+| Disposition | R | D | N | C |
+|---|---:|---:|---:|---:|
+| B | 3 | 0 | 24 | 1 |
+| Remaining Mxx candidates | 208 | 235 | 344 | 1,608 |
+| S19 source-empty/stub | 2 | 2 | 2 | 4 |
+| X22 excluded transport | 2 | 2 | 0 | 0 |
+| Uxx unresolved, owned | 1 | 1 | 27 | 92 |
+| **Sum = input** | **216** | **240** | **397** | **1,705** |
+
+No batch row appears in these four selected inventories: **0 batch rows classified** is not
+proof of no batch dependencies. IWD delivery jobs and managed-break workers remain excluded
+dependencies. Required pool/CTI/SAP/mail/SMS/EMS completion cannot be counted completed merely
+because an abstract port or labeled double exists.
+
+### Mission distribution and requirement traceability
+
+Counts below include the assigned S/X/U rows; parentheses identify unresolved U subsets.
+Zeros are real: infrastructure/verification missions have no independent legacy action rows.
+Do not manufacture rows for them. Owners are the existing §4 mission owners; all business
+missions require architect contract/acceptance resolution, then backend/UI/QA. U rows remain
+on M01's closure ledger even when a future implementation mission owns their investigation.
+
+| Mission | R | D | N | C | WF / ownership interpretation |
+|---|---:|---:|---:|---:|---|
+| M01 | 0 | 0 | 0 | 0 | architect+QA reconciliation gate; owns closure of all U subsets below |
+| M02 | 0 | 0 | 0 | 0 | backend+UI+DevOps+QA populated synthetic demonstration, not a legacy endpoint |
+| M03 | 1 | 1 | 1 | 0 | WF-03 bounded ordinary exit cancellation; no dedicated captured action-form control |
+| M04 | 2 | 2 | 2 | 13 | WF-03 agent exit / early exit, event attribution and mood |
+| M05 | 10 | 10 | 12 | 71 | WF-03 attendance inquiry/arrival/stage/correction remainder |
+| M06 | 8 | 8 | 12 (2 U) | 43 (1 U) | WF-02/03 employee events, missing/report lifecycle |
+| M07 | 3 | 3 | 3 | 0 | WF-03 flag/briefing; controls may be dynamic, zero is not missing functionality proof |
+| M08 | 6 | 6 | 8 | 104 | WF-05/06/07 complex editor/addition/CSV remainder |
+| M09 | 14 | 13 | 34 (1 U) | 101 | WF-04/08 shift inquiry/location/remarks/cancellation remainder |
+| M10 | 7 | 7 | 9 | 50 | exceptions inquiry/remarks **and cancellation**, not only shift-items inquiry |
+| M11 | 6 | 6 | 8 | 33 | WF-12 actual/planned breaks and inquiry |
+| M12 | 14 | 14 | 20 | 29 | WF-09/10 marketplace, management/employee modes and potential requests |
+| M13 | 15 | 15 | 21 | 25 | WF-11/12 forced swaps, break exchange and participant selection |
+| M14 | 4 | 4 | 7 (1 U) | 11 | WF-09/10 inbox/delete/accept navigation; old readMessage reference unresolved |
+| M15 | 9 | 11 | 36 | 247 | WF-13 staffing/potential/bulk interactive variants |
+| M16 | 7 | 17 | 17 | 99 | WF-14 reductions; nested duplicate/edit/insert/delete/decline variants |
+| M17 | 12 | 12 | 20 | 125 | WF-15 time-change lifecycle |
+| M18 | 2 | 2 | 2 | 1 | WF-23 pool; actual partner completion blocked/deferred, not abstract success |
+| M19 | 13 | 13 | 16 | 63 | WF-02 broader employee tabs/search; includes S19 = 2/2/2/4 |
+| M20 | 20 (1 U) | 38 | 49 | 200 | WF-22 catalogs/jobs/buildings/cache loader; insertActualJob unresolved |
+| M21 | 16 | 16 | 20 | 201 | WF-17 CTI/job-SAP and shift login-cancellation event/mail |
+| M22 | 4 | 4 | 3 (1 U) | 6 | WF-18/19; includes X22 = 2/2/0/0; admin SP link unresolved |
+| M23 | 16 | 16 | 23 (4 U) | 112 | WF-16 forecast/detail references, no batch generation |
+| M24 | 20 | 18 (1 U) | 28 | 58 | WF-21 reports/exports/cancelled/mobile/BI; Bank build unmapped |
+| M25 | 4 | 4 | 4 | 21 | WF-20 IWD scheduling/history/cancel; delivery job excluded |
+| M26 | 0 | 0 | 0 | 0 | operator+DBA+QA native Oracle TEST evidence, separate environment lane |
+| M27 | 0 | 0 | 18 (18 U) | 91 (91 U) | QA+UI+business; shell/shared selectors/copies/dynamic binding resolution |
+| M28 | 0 | 0 | 0 | 0 | DevOps+QA+caller refreshed packages/images and populated browser evidence |
+| B, outside remaining mission totals | 3 | 0 | 24 | 1 | temporary login/platform/message-bar bounded foundation |
+| **Sum, including B** | **216** | **240** | **397** | **1,705** | no additive menu/control/action total |
+
+Menu/submenu filter (`right_menu.jsp` or `/submenu/`) yields **70 N rows and 75 C rows**,
+already included above, not additional scope. The literal destination determines its mission;
+non-action/shared menu controls go to U27. Relative `bi_cti.jsp` at
+[right_menu.jsp:164](../old/SHFWeb/WebContent/jsp/right_menu.jsp#L164) is outside the extracted
+application-URL envelope: bind its BI/external-report assessment to M24 and shell traversal
+to M27, do not invent a BI implementation or count it as an extra CSV row.
+
+**Completed baseline versus remaining subtypes:** the plan's seven inquiry families, selected
+stage/station first-arrival/ordinary exit, §50 bounded late-station arrival, §49 simple
+future single-employee create/change/logical-cancel and pure all-or-none CSV, and §51 **empty**
+Docker demo remain documented bounded achievements, not rerun here. Their legacy route families
+also serve broader branches, so those rows conservatively stay assigned to M05/M08/M09/M19/M24.
+No complete legacy result/export/filter/editor family is removed merely because one target
+slice passed. M02 populated scenarios, M26 native TEST and M27 accepted scenario verdicts remain work.
+
+### Source-backed gaps, scope additions and owner retest
+
+These are coverage/prerequisite findings, not freshly demonstrated application defects.
+Priorities describe closure risk, not an accepted API change.
+
+| ID / priority / owner | Evidence and actual versus expected finite scope | Measurable resolution/retest |
+|---|---|---|
+| M01-G01 / high / architect+business, M10 | [ExceptionAction:131–169](../old/SHF/src/bzq/shf/actions/ExceptionAction.java#L131) has management `cancel` and employee-card `cancel_exception` with different input date handling; roadmap M10 emphasized inquiry/remarks. Cancellation cannot silently disappear. | **Append M10 scope:** characterize cancel dialog, management cancellation and card partial-exception cancellation; accepted preserve/clear fields, validation, transaction/partner dependencies and negative cases, or explicit business deferral for each. No endpoint auto-approved. |
+| M01-G02 / high / architect+backend/UI, M20 | `/admin/insertActualJob` is configured, but no literal `insertActualJob` dispatch comparison is captured; [SystemAdminAction:337](../old/SHF/src/bzq/shf/actions/SystemAdminAction.java#L337) enters `showActualJob`. `/admin`'s absent `admin_main` comparison alone is not this defect: AdminAction separately reads request action. | Resolve the configured insert path against actual deciding code and nested modes; classify legacy mismatch/dead route/accepted behavior, with business owner decision. U20 R=1 stays open. |
+| M01-G03 / high / architect+UI+QA, M06/M09/M14/M22/M23 | Unmatched `.do` references: `/addEvent`, `/attendance/addMissing`, `/shift/checkForCancelShift`, `/messages/readMessage`, `/admin/viewSPParameters`, forecast `callingResultDetails`, `breakResultDetails`, `exceptionResultDetails`, `exceptionAllResultDetails`. [admin_submenu:306](../old/SHFWeb/WebContent/jsp/submenu/admin_submenu.jsp#L306) confirms the SP link text; it is not a configured route. | Each of 9 N rows plus 1 C row gets source deciding-symbol trace and accepted implement/defer/exclude/stale disposition. Owner mission follows table. A lexical match in a different feature is not repair evidence. M01 remains open. |
+| M01-G04 / medium / architect+UI+QA, M27 | 18 N and 91 C unresolved contextual entries: direct JSP/shared selectors, about/shell targets, copies/temp artifacts, JS-generated controls, security/error/blank fragments. Valid file existence does not bind employee/unit context or prove active actor action. | Resolve consumers/includes/handlers for the accepted UI flow, deduplicate actual capabilities against approved matrix, and explicitly exclude stale artifacts. Reconcile right/left/submenus; real keyboard/focus/RTL checks belong M27, not this source scan. |
+| M01-G05 / medium / architect+business, M19 | [EmployeeDataModel:285–305](../old/SHF/src/bzq/shf/model/EmployeeDataModel.java#L285) returns an empty Vector for courses and has an empty taxi method; EmployeeDataAction calls them at185–210. Education simply forwards form state at180–184, unlike populated skills. | Preserve courses/taxi as **source-empty/stub** until explicit business decision; do not invent course/taxi CRUD. M19 must characterize education's input/forward contract separately. S19 has 10 lexical rows, not 10 completed workflows. |
+| M01-G06 / medium / architect+business, M24 | [bank/BankHomeAction:27–55](../old/SHF/src/bzq/wfm/report/bank/BankHomeAction.java#L27) compares mode `build`, validates innerJob and forwards; no configured route matches this Action. This is not proof of a working report or a batch action. | U24 D=1: determine active consumer or accept excluded/incomplete report stub; do not implement an imagined bank report. |
+| M01-G07 / high / architect+backend/UI, M08/M09/M15/M16/M20 | CSVs capture nested dispatch not exposed as separate routes: staffing `search_potential_inforce_add_inf`/bulk model branch, building view/add/update/delete, reduction duplicate/update/decline/insert/delete at [ReduceDataAction:168–218](../old/SHF/src/bzq/shf/actions/ReduceDataAction.java#L168). Broader inquiry families share baseline routes. | **Scope clarification:** M08 includes remaining CSV subtypes; M09 includes broader shift inquiry/filter/original-dialog variants; M15 includes extra potential branch and interactive all-selected outcome; M16 all nested modes; M20 building and inner-job nested modes/cache loading. Accepted case list and capability matrix must enumerate subtypes before Done. No new mission/API approval inferred. |
+| M01-G08 / high / architect+partner+operator/DBA, M18/M21/M22/M25/M26 | WF-18 autonomous integration ledger survives outer rollback; WF-23 pool is partner-dependent; CTI/SAP/mail and IWD recorded scheduling are not delivered outcomes. | Accepted abstract DTO/error/UNKNOWN contracts and labeled doubles; separate actual-completion evidence or explicit affected-action deferral. Preview performs zero writes/ledger/sequence/transport. Approved synthetic Administrator cannot bypass rules, employee/unit context or required completion. |
+
+The U buckets total **121 physical rows** (1 R, 1 D, 27 N, 92 C), not 121 business actions.
+They are **all owned**, but not resolved or accepted. The count also does not measure dynamic
+actions absent from lexical extraction, or establish the deciding handler for every context-only
+control candidate assigned Mxx. U is the detectable unmatched/ambiguous structural subset,
+**not a complete count of unresolved business actions**. No business scope sign-off or full parity acceptance.
+Caller routes the findings; no silent application fix or automatic agent/fix loop.
+
+### Exact reproducible document check
+
+Dependency-free Node CLI; reuse the existing CSV parser **in memory**, no new source/CSV/report.
+This block is executable from the repository root by the PowerShell command immediately below it.
+Route/dispatch classification is by deciding action and literal subtype; UI explicit targets take
+precedence over contextual filename groups. Unknown defaults are deliberately owned, not success.
+
+```javascript
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {readCsv} from './docs/reverse-engineering/csv.mjs';
+const root='docs/reverse-engineering/';
+const R=readCsv(root+'routes.csv'),D=readCsv(root+'dispatch-branches.csv');
+const N=readCsv(root+'navigation.csv'),C=readCsv(root+'screen-controls.csv');
+const base=p=>p.split('/').pop().replace(/\.java$/,'');
+function branch(a,b){
+ if(['LoginAction','MobileLoginAction'].includes(a))return 'B';
+ if(a==='LoadTablesAction')return 'M20';
+ if(a==='MessagesAction')return 'M14';
+ if(a==='EmployeeDataAction'){
+  if(['courses','taxi'].includes(b))return 'S19';
+  if(['events','add_event','event_cancel'].includes(b))return 'M06';
+  if(b==='inforce_result')return 'M15';if(b==='shifts_switch')return 'M13';
+  if(b==='export')return 'M24';return 'M19';
+ }
+ if(a==='AttendanceDataAction'){
+  if(b==='cancel_exit')return 'M03';if(['agent_exit','EarlyExit'].includes(b))return 'M04';
+  if(['add_event','removeMissing','approve_report','cancel_report','viewMissing'].includes(b))return 'M06';
+  if(['flag','cancel_flag','setTadreech'].includes(b))return 'M07';
+  if(b==='export')return 'M24';return 'M05';
+ }
+ if(a==='ShiftDataAction'||a==='ShiftDataModel'){
+  if(/export/i.test(b))return 'M24';
+  if(/pool|Pool/.test(b))return 'M18';if(/shift_cancel_login/.test(b))return 'M21';
+  if(/Change|change|requestApplications|requestOptions|agentRequests|deleteFromRepositories/.test(b))return 'M17';
+  if(/inforce|potential|add_shift_request|add_extra_shift_all|search_add_options/.test(b))return 'M15';
+  if(['upsert_shift_check_exceptions','upsert_shift','addFromFile','add_extra_shift','view_add_shift','update_param'].includes(b))return 'M08';
+  return 'M09';
+ }
+ if(a==='BreakDataAction'){
+  if(b==='export')return 'M24';
+  if(['check_break','change_break','select_offer','insert_break','ask_replace_break','manage_break','cancel_break_offer','reject_break_offer','accept_break_offer','cancel_break_cand'].includes(b))return 'M13';
+  return 'M11';
+ }
+ if(['AdminAction','SystemAdminAction','ManageBuildingsAction'].includes(a))return 'M20';
+ if(a==='CTIAction')return b==='export'?'M24':'M21';
+ if(a==='ExceptionAction')return b==='export'?'M24':'M10';
+ if(a==='ForecastAction')return 'M23';if(a==='IWDAction')return 'M25';
+ if(a==='OptShfSpAction')return 'M22';if(a==='SoftPhoneAction')return 'X22';
+ if(a==='ReduceDataAction')return 'M16';if(a==='ReplaceAction')return 'M12';
+ if(a==='SwitchAction')return 'M13';
+ if(['ShiftCancelledAction','PlatformAction','ScheduleHomeAction','ScheduleForecastAction','ScheduleSitesAction'].includes(a))return 'M24';
+ if(a==='BankHomeAction')return 'U24';return 'U01';
+}
+function route(r){
+ if(r.path==='/msgBar')return 'B';
+ if(r.path==='/admin/insertActualJob')return 'U20';
+ return branch(base(r.action_source),r.param);
+}
+const paths=new Map(R.map(r=>[r.path,r]));
+const normalize=t=>t.replace(/^\/shf(?=\/)/,'').split('?')[0].replace(/\.do$/,'');
+function target(t){
+ const p=normalize(t),r=paths.get(p);
+ if(r){if(p==='/reduce/reduceShiftReq'&&/[?&]mode=export(?:&|$)/.test(t))return 'M24';return route(r);}
+ if(/\/attendance\/addMissing|^\/addEvent$/.test(p))return 'U06';
+ if(/\/forecast\//.test(p))return 'U23';
+ if(/\/messages\/readMessage/.test(p))return 'U14';
+ if(/\/admin\/viewSPParameters/.test(p))return 'U22';
+ if(/\/shift\/checkForCancelShift/.test(p))return 'U09';
+ if(/\/jsp\/add_event/.test(p))return 'M06';
+ if(/\/jsp\/replace_shift/.test(p))return 'M13';return 'U27';
+}
+function context(f){
+ const n=f.split('/').pop();
+ if(/^(emp_courses)\./.test(n))return 'S19';
+ if(/^(activity_aim_test|right_menu_copy|shift_submenu_tmp|tmp)\./.test(n))return 'U27';
+ if(/^(activity_aim|actual_job|admin|assign_team|manage_buildings|manage_inner_jobs|update_building|update_inner_job|view_completions_types|employee_parameters|eventReason|event_types|event_update_delete|system_parameters|update_skill|update_skills)/.test(n))return 'M20';
+ if(/^opt_shf_sp/.test(n))return 'M22';if(/^poolExt/.test(n))return 'M18';
+ if(/^peleIWD/.test(n))return 'M25';
+ if(/^(bi_cti|shf_usage_report|shift_activity_cancelled|shift_sum|forecast_select|hr_report|schedule_report|site_select)/.test(n))return 'M24';
+ if(/^forecast/.test(n))return 'M23';if(/^(cti|add_cancel_login)/.test(n))return 'M21';
+ if(/^reduce/.test(n))return 'M16';
+ if(/^(agent_change|change_request|shift_time_change|shift_change_request)/.test(n))return 'M17';
+ if(/^(shift_add_inforce|shift_inforce)/.test(n))return 'M15';
+ if(/^(showManageReplaceBreak|showReplaceBreak|breakShowCandidate|shift_my_breaks)/.test(n))return 'M13';
+ if(/^(showManageReplace|showReplace|switchPotential)/.test(n))return 'M12';
+ if(/^(replace_shift|shifts_for_switch)/.test(n))return 'M13';
+ if(/^break/.test(n))return 'M11';
+ if(/^(add_exception_remark|cancel_exception|exception_list|exceptions_table|employee_exceptions)/.test(n))return 'M10';
+ if(/^(emp_events|add_event|missing_popup|report_popup)/.test(n))return 'M06';
+ if(/^employee_earlyExit/.test(n))return 'M04';
+ if(/^(attendance|attend_submenu|employee_arrive|late_popup)/.test(n))return 'M05';
+ if(/^(emp_|employee_|employee_submenu)/.test(n))return 'M19';
+ if(/^(add_shift|shift_change\.|shift_addFromFile)/.test(n))return 'M08';
+ if(/^(add_remark|cancel_shift|show_original_shift|shifts_|shift_submenu)/.test(n))return 'M09';
+ if(/^(showMessages|message_bar)/.test(n))return 'M14';return 'U27';
+}
+const tables=[
+ ['R',R,route,r=>r.path],
+ ['D',D,r=>branch(base(r.file),r.branch),r=>JSON.stringify([r.file,r.method,r.branch])],
+ ['N',N,r=>target(r.target),r=>r.target],
+ ['C',C,r=>r.action?target(r.action):context(r.file),
+  r=>JSON.stringify([r.file,r.tag,r.name,r.property,r.type,r.action,r.activity])]
+];
+const buckets={},missions={},uniques=[];
+for(const [name,rows,fn,key]of tables){
+ const seen=new Map();
+ for(const r of rows){
+  const k=key(r),v=fn(r);assert(!seen.has(k)||seen.get(k)===v);seen.set(k,v);
+  const x=buckets[v]??={};x[name]=(x[name]||0)+1;
+  const m=v==='B'?'B':v.replace(/^[SUX]/,'M'),y=missions[m]??={};
+  y[name]=(y[name]||0)+1;assert(v==='B'||/^(M|S|U|X)\d{2}$/.test(v));
+ }
+ uniques.push(seen.size);console.log(name,rows.length,seen.size,rows.length-seen.size);
+ assert.equal(Object.values(buckets).reduce((s,x)=>s+(x[name]||0),0),rows.length);
+}
+assert.deepEqual(tables.map(x=>x[1].length),[216,240,397,1705]);
+assert.deepEqual(uniques,[215,237,255,1268]);assert(!buckets.U01);
+assert.deepEqual(buckets.U20,{R:1});
+console.log('buckets',JSON.stringify(buckets));console.log('missions',JSON.stringify(missions));
+console.log('menu subsets',N.filter(r=>/right_menu\.jsp$|\/submenu\//.test(r.file)).length,
+ C.filter(r=>/right_menu\.jsp$|\/submenu\//.test(r.file)).length);
+const plan=fs.readFileSync('docs/SHF_COMPLETION_PLAN.md','utf8');
+const report=plan.slice(plan.indexOf('## M01 reconciliation —'));
+const columns=['R','D','N','C'],reported=new Set();
+for(const line of report.split('\n')){
+ const m=line.match(/^\| (M\d{2}|B, outside remaining mission totals) \|/);
+ if(!m)continue;const id=m[1].startsWith('B')?'B':m[1];
+ assert(!reported.has(id));reported.add(id);const cells=line.split('|').slice(2,6);
+ columns.forEach((c,i)=>assert.equal(parseInt(cells[i].trim(),10),missions[id]?.[c]||0,id+' '+c));
+}
+assert.equal(reported.size,29);
+const grouped={B:{},M:{},S:{},X:{},U:{}};
+for(const [key,values]of Object.entries(buckets))
+ for(const c of columns)grouped[key[0]][c]=(grouped[key[0]][c]||0)+(values[c]||0);
+for(const [label,key]of [['B','B'],['Remaining Mxx candidates','M'],
+ ['S19 source-empty/stub','S'],['X22 excluded transport','X'],['Uxx unresolved, owned','U']]){
+ const row=report.split('\n').find(l=>l.startsWith('| '+label+' |'));assert(row,label);
+ const cells=row.split('|').slice(2,6);
+ columns.forEach((c,i)=>assert.equal(parseInt(cells[i].trim().replaceAll(',',''),10),grouped[key][c]||0));
+}
+assert.equal(columns.reduce((s,c)=>s+(grouped.U[c]||0),0),121);
+const before=plan.split('## M01 reconciliation —')[0];
+const nodes=new Map();
+for(const line of before.split('\n')){
+ const match=line.match(/^\| ((?:M|R)\d{2}) \//);if(!match)continue;
+ assert(!nodes.has(match[1]));const cell=line.split('|')[3],deps=new Set();
+ const expanded=cell.replace(/M(\d{2})[–-]M(\d{2})/g,(_,a,b)=>
+  Array.from({length:Number(b)-Number(a)+1},(_,i)=>'M'+String(Number(a)+i).padStart(2,'0')).join(','));
+ for(const id of expanded.match(/(?:M|R)\d{2}/g)||[])deps.add(id);
+ nodes.set(match[1],[...deps]);
+}
+assert.equal(nodes.size,29);
+for(let i=1;i<=28;i++)assert(nodes.has('M'+String(i).padStart(2,'0')));
+const done=new Set(),visiting=new Set();
+function visit(id){
+ assert(nodes.has(id));assert(!visiting.has(id),'dependency cycle '+id);
+ if(done.has(id))return;visiting.add(id);for(const d of nodes.get(id))visit(d);
+ visiting.delete(id);done.add(id);
+}
+for(const id of nodes.keys())visit(id);
+const section=plan.slice(plan.indexOf('## M01 reconciliation —'));
+const links=[...section.matchAll(/\]\(([^)\s]+)\)/g)].map(x=>x[1]);
+for(const link of links)assert(fs.existsSync('docs/'+link.split('#')[0]),link);
+console.log('PASS: row sums, printed mission/disposition tables, lexical identity consistency, owned buckets, 29 unique IDs, DAG,',
+ links.length,'existing local link paths; source/runtime/business acceptance NOT asserted');
+```
+
+Exact PowerShell execution (no output redirection or generated evidence):
+
+```powershell
+@'
+import fs from 'node:fs';
+const p=fs.readFileSync('docs/SHF_COMPLETION_PLAN.md','utf8');
+const s=p.slice(p.indexOf('## M01 reconciliation'));
+const code=s.match(/```javascript\r?\n([\s\S]*?)```/)[1];
+await import('data:text/javascript;base64,'+Buffer.from(code.replace(
+ "'./docs/reverse-engineering/csv.mjs'",
+ JSON.stringify(new URL('./docs/reverse-engineering/csv.mjs',new URL('file:///'+process.cwd().replaceAll('\\','/')+'/')).href)
+)).toString('base64'));
+'@ | node --input-type=module
+```
+
+### Verification result, risks and next action
+
+**Static only.** CLI probes: `git --no-pager ls-tree -r --name-only HEAD docs .github`
+and `git --no-pager ls-files docs .github/skills/quality-assurance-engineer` enumerated names
+only (no status/diff/private-file content/hashes). `Get-ChildItem docs/reverse-engineering -File`
+confirmed existing evidence names; four `readCsv` inputs were parsed, not a 10,000-row dump.
+Focused `Select-String`/range reads traced the findings above. One exploratory
+`Select-String` used a nonexistent `.../report/BankHomeAction.java` path and exited1;
+the dispatch CSV supplied the real `.../report/bank/BankHomeAction.java`, subsequently read.
+This was a discovery-path error, not a failing product test.
+
+The first extraction-command attempt exited1 because the non-ASCII em-dash header marker did
+not survive this PowerShell-to-Node stdin encoding; the command marker was made ASCII-safe
+within this section and rerun. No application code changed.
+The exact CLI check above is the document-only regression: row classifications, printed-table
+agreement, duplicate identity consistency, mission IDs/prerequisite DAG and existing local source/evidence paths.
+It does not revalidate historical hashes or read linked status/private reports.
+**PASS / exit0:** R216/215/1, D240/237/3, N397/255/142, C1705/1268/437
+(rows/unique/duplicate); all disposition/mission sums match the inputs; U121 owned physical rows;
+menu subsets70 N/75 C; 29 unique roadmap IDs (M01–M28 and R01), acyclic prerequisite graph,
+14 existing local link paths in this section. Semantic handlers, rendered anchors and accepted
+business actions are not certified by these checks. No unresolved document-check failure remains.
+**NOT RUN:** application tests/typechecks/builds, Docker, browser/keyboard/AT/WCAG measurements,
+UAT, live Oracle/EMS/partner operations, batch and legacy execution.
+**BLOCKED for closure:** U disposition acceptance; mission-specific approved acceptance criteria,
+API/UI/capability versions and partner deferrals. Parent supplies versioned changed evidence for
+any retest. Passing document checks is not release approval.
+
+**Prioritized next missions:** (1) M01 U closure and M03's bounded contract handshake;
+(2) M02 FULL populated synthetic journeys in parallel planning, because empty §51 is inadequate;
+(3) M06 and M08 transaction/non-mutating-preview risks, then M04;
+(4) M15 (9 routes/11 comparisons/247 controls) and M20 (20/38/200, including unresolved insert)
+need nested-mode sizing, while M21 (16/16/201) needs partner-completion boundaries;
+(5) M11/M12 before reuse-dependent M13/M14, then remaining families by accepted risk;
+(6) M27 actual cross-family/manual/UAT evidence and M28 same-source delivery.
+Counts size lexical discovery, not effort or calendar commitments.
+
+**M02 FULL remains explicit work:** approved populated synthetic manifest/clock and safe employee/
+unit contexts for all seven inquiries, §49 create/change/cancel/CSV and §50 late-arrival variants;
+real Docker list→detail→action→readback/UNKNOWN and empty/loading/error/identity-failure states,
+synthetic Administrator indication and approved capability coverage, Hebrew/RTL/mixed direction,
+responsive and keyboard/focus journeys, with labeled EMS/partner doubles and native-only disablement.
+Fixture/packaging approval is not an invented new API. **Oracle TEST FULL is M26**, not M02:
+the future full-environment direction still requires a concrete target/operation/data/permissions,
+driver-client/charset compatibility, excluded-writer and cleanup/preservation packet before execution.
+Measure actual named reads/writes/rollback/readback only there; no supposedly read-only autonomous
+function, production mutation or broker transport. Simulated completion cannot satisfy native work.
+
+**Next handoff:** caller presents this reconciliation and M01-G01–G08 to architect/business owners,
+accepts or amends the finite scope/defer list, records approved mission contract versions, and
+serializes status. **Ready for owner review, not M01 Done, business sign-off, parity or release.**

@@ -1,0 +1,56 @@
+<shf-workspace-shell [principal]="principal()" [identityState]="identityState()">
+  <section class="cancellation-page" dir="rtl" lang="he">
+    <h1 tabindex="-1">ביטול רישום יציאה</h1>
+    <button mat-button id="cancellation-back" (click)="back()">חזרה למסך המקור</button>
+    <p class="notice">פעולה מוגבלת לבדיקות; אינה ביטול יומיומי בייצור. ניקוי היציאה אינו פותח מחדש סמכות כתיבה. יציאה שנרשמה בפקודה מתואמת כבר צרכה סמכות; בירור מפעיל נפרד הוא מחוץ לממשק זה.</p>
+    <p>מנהל מערכת סינתטי אינו העובד/ת שנבחר/ה; לא בוצע אימות סיסמה אמיתית.</p>
+    <p class="source">{{ context()?.dataSource === 'isolated-fixture' ? 'הדמיה מבודדת בלבד — ללא Oracle' :
+      context()?.dataSource === 'oracle-test' ? 'כתיבה בפועל למסד TEST — לא ייצור' : 'המקור טרם אומת — הפעולה חסומה' }}</p>
+    <p id="cancellation-summary" tabindex="-1" [attr.role]="state() === 'error' || state() === 'unknown' ? 'alert' : 'status'" aria-live="polite">{{ message() }}</p>
+    @if (allowed() && selection(); as s) {
+      <h2>העובד/ת והרשומה שנבחרו</h2>
+      <p>{{ s.name }} — עובד/ת <bdi dir="ltr">{{ s.employeeId }}</bdi>, משמרת <bdi dir="ltr">{{ s.shiftDayId }}</bdi>, צוות <bdi dir="ltr">{{ s.orgUnitId }}</bdi></p>
+    }
+    @if (context(); as c) {
+      <dl class="facts">
+        <div><dt>תחילת משמרת מתוכננת</dt><dd><bdi dir="ltr">{{ time(c.planned.startLocal) }}</bdi></dd></div>
+        <div><dt>סיום משמרת מתוכנן</dt><dd><bdi dir="ltr">{{ time(c.planned.endLocal) }}</bdi></dd></div>
+        <div><dt>הגעה לבמה</dt><dd>{{ c.recorded.stageArrivalLocal ? time(c.recorded.stageArrivalLocal) : 'לא נרשמה הגעה לבמה' }}</dd></div>
+        <div><dt>הגעה לעמדה</dt><dd><bdi dir="ltr">{{ time(c.recorded.stationArrivalLocal) }}</bdi></dd></div>
+        <div><dt>יציאה מקורית — לפני פקודה</dt><dd><bdi dir="ltr">{{ time(c.recorded.stationExitLocal) }}</bdi></dd></div>
+        <div><dt>תדריך</dt><dd>{{ c.recorded.briefing === null ? 'לא ידוע — NULL' : c.recorded.briefing ? 'כן' : 'לא' }}</dd></div>
+        <div><dt>זמן השרת / אזור עסקי</dt><dd><bdi dir="ltr">{{ time(c.serverTime.local) }} / {{ c.serverTime.instant }} / {{ c.serverTime.businessTimeZone }}</bdi></dd></div>
+        <div><dt>מדיניות שסופקה מהשרת — B / A (דקות)</dt><dd><bdi dir="ltr">{{ c.policy.maxEarlyWholeMinutes }} / {{ c.policy.maxAfterEndMinutes }}</bdi></dd></div>
+      </dl>
+      @if (c.blockers.length) {
+        <ul aria-label="סיבות למניעת ביטול רישום היציאה">
+          @for (b of c.blockers; track b) { <li>{{ blockers[b] }} — <bdi dir="ltr">{{ b }}</bdi></li> }
+        </ul>
+      }
+    }
+    <div class="actions">
+      <button mat-flat-button id="cancellation-validate" [disabled]="!canValidate()" aria-describedby="cancellation-disabled" (click)="validate()">בדיקת ביטול רישום יציאה — ללא שינוי</button>
+      @if (state() === 'review') {
+        <button mat-flat-button id="cancellation-review" (click)="confirm()">סקירת אזהרת הניקוי ואישור כל הפעולה</button>
+      }
+      <button mat-button id="cancellation-cancel" [disabled]="state() === 'pending' || state() === 'success' || state() === 'unknown' || state() === 'blocked'" (click)="cancel()">ביטול — ללא שינוי</button>
+      @if (state() === 'expired' || (state() === 'error' && !blocked())) {
+        <button mat-button id="cancellation-refresh" (click)="recheck()">טעינת הקשר חדש — ללא שינוי</button>
+      }
+    </div>
+    <p id="cancellation-disabled">טרם ניתן לבצע ללא זהות, מקור, הקשר ובדיקה תקפים ושני אישורים נפרדים. בזמן שליחה או לאחר ניסיון אין שליחה חוזרת.</p>
+    @if (receipt(); as r) {
+      <section aria-label="תוצאת ביטול רישום היציאה">
+        <h2>{{ r.outcome === 'simulated' ? 'הדמיה בלבד — נתונים סינתטיים' : 'אישור שרת — מסד TEST בלבד' }}</h2>
+        <p>יציאה לאחר הביטול: לא נרשמה יציאה. ההגעות והתדריך נשמרו; לא הופעל שותף חיצוני.</p>
+        <p>היציאה המקורית: <bdi dir="ltr">{{ time(r.originalExitLocal) }}</bdi></p>
+        @if (r.outcome === 'oracle-test-committed') {
+          <p>אישור COMMIT אינו רגע השמירה המדויק: <bdi dir="ltr">{{ r.commitAcknowledgedAt }}</bdi></p>
+          <p>בדיקה חוזרת עצמאית: <bdi dir="ltr">{{ r.readBackVerifiedAt }}</bdi></p>
+        } @else {
+          <p>אישור COMMIT ובדיקת מסד עצמאית: אין — NULL. זו אינה הוכחת כתיבה למסד אמיתי.</p>
+        }
+      </section>
+    }
+  </section>
+</shf-workspace-shell>

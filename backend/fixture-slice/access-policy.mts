@@ -14,6 +14,27 @@ import type { StationArrivalAccessPolicy } from "./station-arrival-contracts.mts
 import type { ShiftManagementAccessPolicy, ShiftManagementModeV1 } from "./shift-management-contracts.mts";
 import { validatePrincipal } from "./contract-validation.mts";
 import { shiftFail } from "./shift-management-errors.mts";
+import type { CancellationModeV1 } from "./station-exit-cancellation-contracts.mts";
+
+export function cancellationAccessPolicy(mode: CancellationModeV1) {
+  return {
+    requirePrepare(p: import("./contracts.mts").PrincipalV1) {
+      if (mode === "disabled") stageFail("LIVE_WRITES_DISABLED");
+      try { validatePrincipal(p); } catch { stageFail("UNAUTHENTICATED"); }
+      if (!p.synthetic || p.provider !== "synthetic" || p.employeeId !== null ||
+          !p.capabilities.includes("attendance-station-exit-cancellation:prepare") ||
+          mode === "test-oracle-controlled" &&
+            !p.capabilities.includes("attendance-station-exit-cancellation:test-oracle-write")) stageFail("FORBIDDEN");
+    },
+    requireCommit(p: import("./contracts.mts").PrincipalV1) {
+      this.requirePrepare(p);
+      if (!p.capabilities.includes("attendance-station-exit-cancellation:commit")) stageFail("FORBIDDEN");
+    },
+    authorizedTeamIds(p: import("./contracts.mts").PrincipalV1) {
+      return stageArrivalAccessPolicy.authorizedTeamIds(p);
+    },
+  };
+}
 
 export function shiftManagementAccessPolicy(mode: ShiftManagementModeV1): ShiftManagementAccessPolicy {
   const validate = (p: import("./contracts.mts").PrincipalV1) => {

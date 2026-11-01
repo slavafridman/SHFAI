@@ -119,7 +119,8 @@ function candidate(row: unknown, schema: NativeSchema): StationCandidate {
   if (change.SHF_EMPLOYEE_DAY_ID === null && Object.values(change).some(v => v !== null)) stageFail("INVALID_SOURCE_DATA");
   return { day, change: change.SHF_EMPLOYEE_DAY_ID === null ? null : change };
 }
-export function exitSnapshot(q: NativeQuery, schema: NativeSchema, b: ExitBinding, zone: string,
+type ExitInquiryBinding = Pick<ExitBinding, "employeeId" | "shiftDayId" | "orgUnitId" | "expectedDaySource">;
+export function exitSnapshot(q: NativeQuery, schema: NativeSchema, b: ExitInquiryBinding, zone: string,
   signal?: AbortSignal): Promise<ExitSnapshot> {
   return readExitSnapshot(q, schema, b, zone, signal);
 }
@@ -127,7 +128,7 @@ export function exitPreparedSnapshot(q: NativeQuery, schema: NativeSchema, b: Ex
   before: ExitSnapshot, signal?: AbortSignal): Promise<ExitSnapshot> {
   return readExitSnapshot(q, schema, b, zone, signal, before);
 }
-async function readExitSnapshot(q: NativeQuery, schema: NativeSchema, b: ExitBinding, zone: string,
+async function readExitSnapshot(q: NativeQuery, schema: NativeSchema, b: ExitInquiryBinding, zone: string,
   signal?: AbortSignal, prepared?: ExitSnapshot): Promise<ExitSnapshot> {
   const active = () => checkStageBudget(signal); active();
   const e = await one(q, schema, "SHF_EMPLOYEES", "EMPLOYEE_ID=TO_NUMBER(:employeeId)", { employeeId: b.employeeId });

@@ -38,6 +38,11 @@
       </div>
     }
     @if (state() === 'dirty') { <p class="surface state-panel">{{ message() }}</p> }
+    @if (canOpenCancellation() && row(); as data) {
+      <a mat-button id="detail-cancellation"
+        [routerLink]="['/employees', data.employeeId, 'shift-days', data.shiftDayId, 'station-exit-cancellation']"
+        (click)="openCancellation($event)">ביטול רישום יציאה</a>
+    }
     @if (state() === 'error') {
       <div class="surface state-panel error">
         <h2 id="error-heading" tabindex="-1" aria-describedby="error-message">לא ניתן להציג את הפרטים</h2>

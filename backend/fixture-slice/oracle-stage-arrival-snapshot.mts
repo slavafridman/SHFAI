@@ -114,10 +114,12 @@ return [visibleColumns, hybrid[1], hybrid[2], hybrid[4], hybrid[5], hybrid[6], h
     FROM user_triggers WHERE table_owner='SHIFTER' AND ${ownerScope} ORDER BY table_name,trigger_name`];
 }
 export const nativeMetadataSql = nativeMetadataQueries(Object.keys(nativeTables));
-export type NativeMetadataOperation = LimitedOperation;
+// Cancellation packet authority is deliberately not accepted by old digests.
+export type NativeMetadataOperation = LimitedOperation | "native-station-exit-cancellation-v0.1";
 export function nativeMetadataDigest(provider: NativeMetadataProvider, operation: NativeMetadataOperation,
   tables: readonly string[], proof: unknown): string {
   parseMetadataProvider(provider);
+  if (operation === "native-station-exit-cancellation-v0.1") stageFail("LIVE_WRITES_DISABLED");
   if (provider === "owner-test-limited-v1") return limitedMetadataDigest(proof, operation, tables);
   if (!["native-stage-arrival-v0.1", "native-station-arrival-v0.1", "native-station-arrival-late-v0.1"].includes(operation) ||
       !Array.isArray(proof) || proof.length !== 9 || proof.some(rows => !Array.isArray(rows)))

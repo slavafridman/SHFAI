@@ -38,7 +38,7 @@ type Checks = [
   Assert<Equal<NativeCommandCoordinatorGuardV1["state"], "ready" | "consumed">>,
   Assert<Equal<NativeCommandOperationV1,
     "stage-arrival" | "station-arrival" | "station-arrival-late" | "station-exit"
-    | "create" | "change" | "cancel" | "csv-create">>,
+    | "create" | "change" | "cancel" | "csv-create" | "station-exit-cancellation">>,
   Assert<Equal<keyof NativeCommandCoordinatorBindingV1,
     "employeeId" | "operation" | "commandId">>,
   Assert<Equal<Assignable<{}, NativeCommandAdmissionV1>, false>>,

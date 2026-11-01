@@ -26,6 +26,7 @@ import { handleShiftManagement, isShiftManagementRoute, shiftManagementParserPro
   validateShiftManagementHttpOptions } from "./shift-management-http.mts";
 import type { ShiftManagementHttpOptions } from "./shift-management-http.mts";
 import { ShiftManagementError, shiftProblem } from "./shift-management-errors.mts";
+import { handleCancellation, isCancellationRoute, cancellationParserProblem } from "./station-exit-cancellation-http.mts";
 
 export const REQUEST_BUDGET_MS = 5000;
 export const RESPONSE_LIMIT_BYTES = 16 * 1024;
@@ -141,7 +142,9 @@ function send(response: ServerResponse, status: number, contentType: string, pay
   });
   response.end(payload);
 }
-export function createLoopbackServer(runtime: SliceRuntime, options: StageArrivalHttpOptions & ShiftManagementHttpOptions = {}) {
+export function createLoopbackServer(runtime: SliceRuntime, options: StageArrivalHttpOptions & ShiftManagementHttpOptions & {
+  stationExitCancellationOrigins?: readonly string[];
+} = {}) {
   validateStageArrivalHttpOptions(options);
   validateShiftManagementHttpOptions(options);
   const lifecycle = new BackendLifecycle();
@@ -159,6 +162,9 @@ export function createLoopbackServer(runtime: SliceRuntime, options: StageArriva
     response.once("finish", release); response.once("close", release);
     if (isShiftManagementRoute(request.url ?? "")) {
       await handleShiftManagement(request, response, runtime, options); return;
+    }
+    if (isCancellationRoute(request.url ?? "")) {
+      await handleCancellation(request, response, runtime, options.stationExitCancellationOrigins); return;
     }
     if (isStageArrivalRoute(request.url ?? "")) {
       await handleStageArrival(request, response, runtime, options); return;
@@ -282,6 +288,7 @@ export function createLoopbackServer(runtime: SliceRuntime, options: StageArriva
     // response: that earlier command may already have installed an effect.
     if ((inFlight.get(socket) ?? 0) > 0) { socket.destroy(); return; }
     if (stageArrivalParserProblem(error, socket)) return;
+    if (cancellationParserProblem(error, socket)) return;
     if (shiftManagementParserProblem(error, socket)) return;
     // Preserve native non-F1 parser rejection semantics. An incomplete/split
     // request-line is not assigned a fabricated business route or outcome.

@@ -1667,3 +1667,109 @@ unchanged `.ts` exports as CommonJS under NodeNext/verbatim syntax. Strictness
 and the full helper import graph are retained. The historical optional mixed
 checkJs probe is **not a passing gate**; see its exact disposition and the
 separate NodeNext failure in `VERIFICATION.md`.
+
+## U52 / C52-v0.2 — ordinary recorded-exit cancellation (1 November 2026)
+
+**SOURCE-STABLE / frontend review; actual browser integration BLOCKED.**
+Approved inputs: §52-v0.2, C52-v0.2, 52-config-v0.1 and 52-UI-v0.2
+(explicit approval recorded in design §52.8). No new API or approval is inferred.
+Existing Node24.21.0/npm11.19.0/Angular21.2/Material3 baseline reused; no dependencies changed.
+
+Attendance/detail offer “ביטול רישום יציאה” under the exact read7+cancellation2
+fixture or read7+cancellation3 native identity. Native read navigation maps
+`oracle-read-only`/`oracle` to the dedicated `oracle-test` selection; identity
+employeeId remains null, separate from selected employee/day/unit. No URL-derived
+employee defaults, Administrator fallback, editable time/reason/user/mood or
+client-side ordinary-exit/window adjudication.
+
+Preparation is exact `{}`, private generation/source/full-context-bound, <=30s
+with request latency included in a monotonic expiry budget. A single RTL Material
+review dialog starts at safe Cancel with two independent unchecked checkboxes.
+Only both consents dispatch one exact command; cancel/expiry/drift clear both.
+Pending is inline, unchanged facts, disabled repeat/cancel-effect actions.
+Native completion requires matching original, preserved public values and
+nonnull ACK plus readback; fixture completion requires simulated source and
+both timestamps null. Null observation is not a receipt. Unknown/mismatched
+post-dispatch responses quarantine native work across old/new flows and reload.
+Opaque consumed-attempt markers additionally prevent cancellation from undoing
+an older coordinated writer's consumed allowance, even after its UI receipt
+resolves. No operator reopening, automatic fixture fallback or retry endpoint.
+
+**Measured frontend gates:** full `npm test` **801/801, 58 files**; U52 contributes
+48 new tests (12 guards,33 component/API/interlock,3 navigation). Focused U52 plus
+existing global session **59/59**. App/spec TSC, three isolated builds and public
+profile checks pass. See appended U52 evidence in `VERIFICATION.md` for commands,
+source manifest/hashes, failures, and mocked/actual distinctions.
+
+**Actual-browser blocker:** `station-exit-cancellation-http.mts` requires an
+allowlisted `Origin` even for GET `/context`. Actual same-origin Chrome GET has
+no Origin; it receives403 before context, with **context1/validation0/command0**.
+The checker uses the pure fixture environment and
+`startFromEnvironment`/`stopBackendServer`, forbids infrastructure factories,
+and forwards requests unchanged. It does not inject Origin or synthesize
+command/receipt responses. Caller routes the exact browser-compatible
+read-admission seam to B52/system_architect; POST protections must remain intact.
+Native protocol/actual completion awaits a frozen parent handoff and is NOT
+evidenced by typed HTTP doubles or fixture startup.
+
+After the seam is frozen, rerun from `frontend/fixture-slice`:
+
+```powershell
+node checks/station-exit-cancellation-browser-check.mjs .angular/u52-production/browser ready
+node checks/station-exit-cancellation-browser-check.mjs .angular/u52-production/browser not-recorded
+node checks/station-exit-cancellation-browser-check.mjs .angular/u52-production/browser early-deferred
+node checks/station-exit-cancellation-browser-check.mjs .angular/u52-production/browser partner-required
+node checks/station-exit-cancellation-browser-check.mjs .angular/u52-production/browser partner-unknown
+```
+
+The checker contains actual-fixture assertions for safe Escape0effects, two
+Space consents, pending unchanged state, one command and independent detail read
+showing exit-only clearing,320/390/1440 widths and200%-equivalent CSS viewport.
+Those assertions have **not passed**: GET admission blocks before them.
+Equivalent viewport is not manual zoom/AT or full WCAG proof. Normal `dist`,
+running Docker, backend/contracts/design/plans/status/locks/private config,
+old source and other dirty work were not written by U52. No release/deployment/
+full-project completion or routine production cancellation is claimed.
+
+### U52 resumed actual integration — PASS, 2026-11-01
+
+This subsequent measured result supersedes the preceding integration blocker,
+not its historical evidence. C52-v0.2 / §52-v0.2 / 52-config-v0.1 /
+52-UI-v0.2 (caller UI52-v0.2) remain unchanged. The supplied backend GET fix now
+admits the actual same-origin GET without Origin; the proxy never injects it.
+Foreign GET Origin and missing/foreign POST Origin still reject.
+
+The checker uses actual `startFromEnvironment` and owned shutdown for both
+fixture and native-protocol worlds. The new frontend-owned
+`checks/station-exit-cancellation-protocol-backend.mts` imports only non-registering
+test helpers, explicitly injects every read/native/endpoint factory, and extends
+the synthetic READ port only for the actual detail reader's query. No canned HTTP
+receipt, manual successful command, real driver/DNS/Oracle/EMS or inherited SHF
+configuration is used. Native SYSTEM clock is not replaced by the fixture clock.
+Each native world has its own provisioned TEMP metadata/certificate, READY global
+guard and unused cancellation allowance. No consumed guard is reset.
+
+From `frontend/fixture-slice`, both final loops passed, exit0:
+
+```powershell
+foreach ($s in @('ready','not-recorded','early-deferred','partner-required','partner-unknown','outcome-unknown','authority-consumed','navigation','expiry')) { node checks/station-exit-cancellation-browser-check.mjs .angular/u52-production/browser $s; if (-not $?) { exit 1 } }
+foreach ($s in @('native-success','native-ack-loss','native-readback-mismatch','native-rollback','native-preconsumed')) { node checks/station-exit-cancellation-browser-check.mjs .angular/u52-production/browser $s; if (-not $?) { exit 1 } }
+```
+
+Results: 13 actual Angular browser worlds plus one startup-denial check.
+Native success proves two NULL SET fields and preservation over protocol-double
+data, ACK then writer release then independent READ ONLY readback. ACK loss and
+preservation mismatch return UNKNOWN without a receipt; rollback preserves the
+original data. All attempted worlds retain the admission fence and reject restart
+before any additional factory call. Fixture success has both timestamps NULL.
+
+Actual Back exposed a detail-opener focus defect; the two existing history-route
+patterns now include cancellation. Production was rebuilt after this specific
+product fix. Focused Angular regression: 137/137,15 files; existing management
+protocol browser: four operations PASS; existing late browser: five worlds PASS.
+No full801 or dev/test build rerun was needed beyond these impact checks.
+Exact cumulative 24-path manifest, commands, failure history, hashes, scenario
+distinctions and remaining limits are appended in `VERIFICATION.md`.
+Subset reflow/keyboard/contrast checks are not full WCAG or Hebrew AT conformance.
+Backend/contracts/legacy/Docker/dependencies/private operator state are untouched;
+this result is not live Oracle completion, UAT or release approval.

@@ -30,6 +30,8 @@ import { stationSource } from './station-arrival-contract';
 import { lateIdentity } from './station-arrival-late-contract';
 import { exitIdentity } from './station-exit-contract';
 import { StationExitSession } from './station-exit-session';
+import { cancellationSource } from './station-exit-cancellation-contract';
+import { StationExitCancellationSession } from './station-exit-cancellation-session';
 
 const timeControl = () => new FormControl('', { nonNullable: true,
   validators: [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/)] });
@@ -46,6 +48,7 @@ export class AttendancePage {
   private readonly arrival = inject(StageArrivalSession);
   readonly station = inject(StationArrivalSession);
   readonly exit = inject(StationExitSession);
+  readonly cancellation = inject(StationExitCancellationSession);
   readonly journey = inject(ViewHistory);
   readonly navigation = inject(ListNavigation);
   private readonly api = inject(SliceApi);
@@ -320,6 +323,24 @@ export class AttendancePage {
     return exitIdentity(this.principal()) && this.result()?.dataSource === 'oracle-read-only' &&
       !!row.shiftDayId && row.planned.startLocal !== null && row.planned.endLocal !== null &&
       this.principal()!.principal.resourceScope.orgUnitIds.includes(row.employee.unit.code);
+  }
+  canOpenCancellation(row: AttendanceRowV1) {
+    const source = cancellationSource(this.principal());
+    return source !== null && this.result()?.dataSource === (source === 'oracle-test' ? 'oracle-read-only' : 'isolated-fixture') &&
+      !!row.shiftDayId && row.planned.startLocal !== null && row.planned.endLocal !== null &&
+      this.principal()!.principal.resourceScope.orgUnitIds.includes(row.employee.unit.code);
+  }
+  openCancellation(row: AttendanceRowV1, event: MouseEvent) {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
+    event.preventDefault();
+    const source = cancellationSource(this.principal());
+    if (!source || !this.canOpenCancellation(row) || !this.result()?.items.includes(row)) return;
+    this.cancellation.selection = { employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId!,
+      attendanceKey: { shiftDayId: row.shiftDayId! }, orgUnitId: row.employee.unit.code,
+      name: `${row.employee.firstName} ${row.employee.lastName}`, startLocal: row.planned.startLocal!,
+      endLocal: row.planned.endLocal!, dataSource: source, actor: actorBinding(this.principal()!) };
+    void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'station-exit-cancellation'],
+      { state: { origin: 'attendance' } });
   }
   openExit(row: AttendanceRowV1, event: MouseEvent) {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;

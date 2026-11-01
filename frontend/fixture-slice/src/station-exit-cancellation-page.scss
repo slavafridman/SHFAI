@@ -1,0 +1,10 @@
+:host { display: block; min-inline-size: 0; }
+.cancellation-page { max-inline-size: 1120px; margin-inline: auto; padding: 1rem; overflow-wrap: anywhere; }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+dt { font-weight: 600; }
+dd { margin: 0; }
+.notice, .source { padding: .75rem; border-inline-start: 4px solid var(--mat-sys-primary); background: var(--mat-sys-surface-container); color: var(--mat-sys-on-surface); }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+button { min-block-size: 44px; white-space: normal; }
+[tabindex="-1"]:focus-visible { outline: 3px solid var(--mat-sys-primary); outline-offset: 3px; }
+@media (max-width: 600px) { .facts { grid-template-columns: 1fr; } .cancellation-page { padding: .75rem; } }

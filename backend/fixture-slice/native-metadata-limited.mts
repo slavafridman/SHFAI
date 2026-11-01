@@ -150,6 +150,31 @@ export function validateLimitedMetadataStartup(env: NodeJS.ProcessEnv, config: u
   const flag = env.SHF_TEST_ORACLE_METADATA_LIMITED_ENABLED;
   if (flag !== undefined && flag !== "false" && flag !== "true") throw Error("Invalid TEST limited metadata opt-in");
   if (!record(config)) throw Error("Explicit backend configuration required");
+  if (config.attendanceStationExitCancellationMode === "test-oracle-controlled") {
+    const raw = env.SHF_NATIVE_EXIT_CANCELLATION_BINDING;
+    if (typeof raw !== "string" || Buffer.byteLength(raw) > 1048576)
+      throw Error("Explicit cancellation metadata binding required");
+    // Purpose gate only. The dedicated parser certifies the exact packet before
+    // coordinator/pool construction; never pass a new waiver to old parsers.
+    const packet: unknown = JSON.parse(raw);
+    if (!record(packet) || packet.operation !== "native-station-exit-cancellation-v0.1")
+      throw Error("Dedicated cancellation metadata purpose required");
+    const limited = packet.metadataProvider === "owner-test-limited-v1";
+    if (!limited) {
+      if (flag === "true") throw Error("Cancellation provider opt-in mismatch");
+      return false;
+    }
+    const w = packet.metadataCoverageWaiver;
+    if (!exact(w, ["id", "accepted", "externalEffectsAssessment", "operation"]) ||
+        w.id !== "shf-test-exit-cancellation-two-view-waiver-v0.1" || w.accepted !== true ||
+        w.operation !== packet.operation || w.externalEffectsAssessment !== "unknown-user-waived" ||
+        flag !== "true" || env.SHF_APP_ENV !== "test" || env.NODE_ENV === "production" ||
+        config.authenticationMode !== "synthetic" || config.syntheticAdministratorEnabled !== true ||
+        config.deploymentClass !== "isolated-test-demo" || config.dataSource !== "oracle-read-only" ||
+        config.oracleTestScopeConfirmed !== true || env.SHF_TEST_ORACLE_EXIT_CANCELLATION_WRITE_ENABLED !== "true")
+      throw Error("Exact dedicated limited cancellation admission required");
+    return true;
+  }
   if (record(config.shiftManagement) && config.shiftManagement.mode === "test-oracle-controlled") {
     const raw = env.SHF_NATIVE_SHIFT_BINDING;
     if (typeof raw !== "string" || Buffer.byteLength(raw) > 16384) throw Error("Explicit management metadata binding required");

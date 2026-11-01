@@ -52,7 +52,7 @@ export function validateStageArrivalHttpOptions(options: StageArrivalHttpOptions
       }))) throw Error("Exact isolated loopback origins required");
   }
 }
-function headers(request: IncomingMessage, post: boolean, origins: readonly string[]) {
+function headers(request: IncomingMessage, post: boolean, origins: readonly string[], byteLimit = 8192) {
   const allowed = new Set(["host", "connection", "content-length", "transfer-encoding", "content-type",
     "authorization", "accept", "accept-encoding", "user-agent", "origin", "sec-fetch-mode",
     "sec-fetch-site", "sec-fetch-dest", "referer", "accept-language", "cache-control", "pragma",
@@ -72,17 +72,17 @@ function headers(request: IncomingMessage, post: boolean, origins: readonly stri
       !/^application\/json(?:\s*;\s*charset=(?:utf-8|"utf-8"))?$/i.test(request.headers["content-type"])))
     stageFail("UNSUPPORTED_MEDIA_TYPE");
   const length = request.headers["content-length"];
-  if (length !== undefined && (!/^(0|[1-9][0-9]*)$/.test(length) || Number(length) > 8192))
+  if (length !== undefined && (!/^(0|[1-9][0-9]*)$/.test(length) || Number(length) > byteLimit))
     stageFail("REQUEST_TOO_LARGE");
 }
-async function body(request: IncomingMessage, post: boolean, signal: AbortSignal): Promise<unknown> {
+async function body(request: IncomingMessage, post: boolean, signal: AbortSignal, byteLimit = 8192): Promise<unknown> {
   const buffers: Buffer[] = []; let size = 0;
   for await (const chunk of request.iterator({ destroyOnReturn: false })) {
     if (signal.aborted) stageFail("DEPENDENCY_TIMEOUT");
     const b = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
     size += b.length;
     if (!post && size) stageFail("INVALID_REQUEST");
-    if (size > 8192) stageFail("REQUEST_TOO_LARGE");
+    if (size > byteLimit) stageFail("REQUEST_TOO_LARGE");
     buffers.push(b);
   }
   if (!post) return null;
@@ -97,6 +97,7 @@ function send(response: ServerResponse, status: number, value: unknown, problem 
     "Content-Length": Buffer.byteLength(payload), "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
   response.end(payload);
 }
+export { headers as mutationHeaders, body as mutationBody, send as sendMutation };
 export async function handleStageArrival(request: IncomingMessage, response: ServerResponse,
   runtime: SliceRuntime, options: StageArrivalHttpOptions) {
   const requestId = randomUUID(), abort = new AbortController();

@@ -4925,3 +4925,455 @@ No implementation blocker. Caller owns final new-image rebuild from frozen
 source and deployed independent QA; QA owns broader acceptance. Main residual
 risk is continued use of old deployed image. Next action: caller rebuilds the
 new image separately, then runs deployed checker including `--rapid-reopen`.
+
+## U52 — SOURCE-STABLE frontend / BLOCKED actual integration — 2026-11-01
+
+Approval: **C52-v0.2 / §52-v0.2 / 52-config-v0.1 / 52-UI-v0.2**, explicit
+user approval2026-11-01 13:56+02 recorded in design §52.8.
+Canonical imports are TYPE-ONLY from
+`backend/fixture-slice/station-exit-cancellation-contracts.mts`.
+No canonical DTO mismatch/cast workaround or new public fields.
+Backend compiler7/fixture42/full1900 are caller-reported, NOT rerun by U52.
+
+### Exact U52 changed-source manifest: 22 paths
+
+Relative to `frontend/fixture-slice/`. Only the two existing documents were
+appended; no old verification/history was overwritten.
+
+```text
+README.md
+VERIFICATION.md
+checks/station-exit-cancellation-browser-check.mjs
+src/api.ts
+src/attendance-page.html
+src/attendance-page.ts
+src/contract.ts
+src/native-command-session.ts
+src/routes.ts
+src/shift-day-page.html
+src/shift-day-page.ts
+src/station-exit-cancellation-contract.spec.ts
+src/station-exit-cancellation-contract.ts
+src/station-exit-cancellation-dialog.ts
+src/station-exit-cancellation-fixtures.ts
+src/station-exit-cancellation-navigation.spec.ts
+src/station-exit-cancellation-page.html
+src/station-exit-cancellation-page.scss
+src/station-exit-cancellation-page.spec.ts
+src/station-exit-cancellation-page.ts
+src/station-exit-cancellation-session.ts
+src/workspace-shell.html
+```
+
+Generated builds are exclusively `.angular/u52-{dev,test,production}`.
+Normal `dist`, Docker delivery at18080, old source, backend/shared contracts,
+design/plan/status, dependencies/locks, private configuration and other dirty
+files were not written by this task. No new app/router wrapper or agents.
+Existing old7 read flows, four management writers and late-arrival tests were
+left intact and included in the passing full frontend suite.
+
+### Source evidence and semantics
+
+Read-only controlling legacy evidence:
+`old/SHF/src/bzq/shf/model/AttendanceDataModel.java:2197–2248` rejects absent exit
+and clears only exit time/user; no editable new time/reason/mood is observed.
+`old/SHFWeb/WebContent/js/attendance.js:610–640` uses mutating GET and text-driven
+optimistic clearing; U52 does NOT preserve that unsafe presentation behavior.
+Approved design §§52.1–7 supplies exact new flow/fields/fence decisions; §52.8
+supersedes historical proposal/approval-stop wording.
+
+Static source plus Angular HTTP doubles cover:
+- Exact nine/ten-capability synthetic identity and source/unit/resource checks,
+  Administrator employeeId=null kept separate; missing/failed identity denied.
+- Exact context shape (no §47 exitWindow/classification), no business defaults.
+  Server-owned ordinary/early/window/partner eligibility; Hebrew blocker allowlist
+  for missing/late/flag/locked/report/overlap/ordinary/partner/window.
+- Exact empty validation draft, string warning tuple, original/source/full
+  preparation binding and <=30s TTL; monotonic request-latency-inclusive budget.
+- Two independent unchecked controls in one labelled RTL Material dialog;
+  safe initial Cancel, no nested dialogs, private generation invalidation.
+  Partial consent/cancel/untrusted close/stale/expiry/drift dispatch0commands.
+- Exact command warningConfirmation+operationConfirmation; pending leaves original
+  facts unchanged and disables repeat/cancel-effect actions.
+- Matching original/preserved public facts/source/zone required for receipts.
+  Native nonnull ACK+readback vs fixture simulated with BOTH timestamps null;
+  no partner invocation/completion or already-null receipt.
+- Native UNKNOWN remains opaque all-kind quarantine across F1/F2/late/exit/U52/
+  management, employee/day/source/route/reload/new UUID. Cancellation does not
+  resolve/release it even after success/proven rollback. Opaque consumed markers
+  also prevent an older coordinated exit receipt from reopening cancellation.
+  There is no operator button/reset/fallback/retry/status/poll endpoint.
+- Attendance/detail navigation supplies volatile explicit selected resource,
+  reuses ViewHistory/ListNavigation and never serializes tokens/receipts/employee
+  context into history. Return delegates to existing exact-origin history.
+
+These are frontend guards/presentation checks, NOT authorization or actual
+Oracle transaction/preservation/fence proof.
+
+### Exact commands and measured results
+
+All commands below run from `frontend/fixture-slice`; no package installation.
+
+```powershell
+node --version
+npm --version
+npx vitest run src/station-exit-cancellation-contract.spec.ts
+npm test -- --include='src/station-exit-cancellation*.spec.ts' --include='src/native-command-session.spec.ts'
+npm test
+npx tsc --noEmit -p tsconfig.app.json
+npx tsc --noEmit -p tsconfig.spec.json
+node --check checks/station-exit-cancellation-browser-check.mjs
+node --test checks/owned-protocol-browser.test.mjs checks/workspace-shell-readiness.test.mjs
+npx ng build --configuration development --output-path .angular/u52-dev
+node checks/environment-build-check.mjs dev .angular/u52-dev/browser
+npx ng build --configuration test --output-path .angular/u52-test
+node checks/environment-build-check.mjs test .angular/u52-test/browser
+npx ng build --configuration production --output-path .angular/u52-production
+node checks/environment-build-check.mjs production .angular/u52-production/browser
+node checks/station-exit-cancellation-browser-check.mjs .angular/u52-production/browser ready
+```
+
+- Runtime: Node **v24.21.0**, npm **11.19.0**; established package baseline reused.
+- Initial cheapest guards: **12/12 PASS** (plain Vitest/static synthetic DTOs).
+- Final focused Angular U52+existing global session: **59/59,4 files PASS**:
+  U52 guards12, component/API/interlock33, navigation3, existing global session11.
+- Final full Angular frontend: **801/801,58 files PASS**, natural measured count,
+  duration47.73s, start14:43:47. Prior753 baseline +48 new U52 tests. No skipped
+  or excluded old suites; not a whole-project completion or visual/AT assertion.
+- Both app and spec TSC: **PASS exit0** on frozen source.
+- Checker syntax: **PASS exit0**. Existing readiness/owned-browser helper tests:
+  **11/11 PASS**. Their “FAIL NAMED STAGE” output is an expected negative
+  diagnostic test; runner fail0, not a failed acceptance check.
+- Final dev/test/production builds: **PASS exit0**. Production initial659.14kB,
+  estimated145.52kB; no budget failure. Each explicit profile check **PASS**:
+  exact public object keys appEnv/apiBasePath, no private config embedded.
+- Actual owned Chrome + production Angular + actual C52 Node fixture entrypoint:
+  **FAIL exit1 / BLOCKED before context**, context1/validations0/commands0.
+  GET Origin absent, response403, explicit denied UI; no Administrator fallback.
+  Actual identity/detail/read navigation rendered; actual command completion
+  was NOT reached, not a passing synthetic/native receipt assertion.
+
+### Failure chronology, blocker owner and not-run checks
+
+First Angular compilation exposed strict narrowing defects in the new guard
+(`unknown` zone/recorded). Fixed with a canonical recorded type predicate and
+explicit string refinement, no casts; focused and full TSC/tests reran PASS.
+First local browser checker failed static-file404 handling after sending headers;
+fixed read-before-writeHead. A subsequent owned helper close timeout masked the
+check failure; checker now requests native Browser.close before existing owned
+cleanup and closes its UI/backend in nested finally. No shared CDP helper/root
+fix was rewritten. Repeated final browser attempts cleanly report the real
+admission blocker, not either earlier helper failure.
+
+**Exact blocker: B52/system_architect through caller.**
+`backend/fixture-slice/station-exit-cancellation-http.mts:61` demands allowlisted
+Origin on GET `/context`, unlike browser same-origin GET behavior. The final
+unmodified proxy observes `{contextOriginPresent:false,contextStatus:403}`.
+Browsers control this forbidden header; frontend must not fabricate authority.
+Provide a frozen browser-compatible read-only admission seam consistent with
+approved Origin/Fetch-Metadata protections, preserving strict POST admission
+and exact public GET/no-body/no-query contract. No backend edit was made here,
+and no extra §52 approval is requested.
+
+The actual checker constructs only `cancellationFixtureEnvironment('ready')`,
+overrides its explicit loopback origin, passes bounded synthetic clock and
+throwing read/native infrastructure factories into `startFromEnvironment`.
+It imports the PURE environment helper, NOT auto-running `.test.mts` files.
+Requests/response bytes are forwarded unchanged; no canned receipt or business
+rule proxy, no real ENV inheritance, Oracle connection, EMS or operator paths.
+Diagnostics are counts/booleans/status only, never raw token/fingerprint/body.
+
+**Blocked/not run:** actual fixture validation/two-consent/command/exit-only
+independent HTTP-read assertions; actual not-recorded/early/partner-required/
+partner-unknown browser worlds; browser focus trap/Space/Escape0effects and
+exact origin filter/page/sort/RTL table/document scroll/opener restoration;
+320/390/1440 and200%-equivalent viewport assertions after context; manual
+Hebrew AT, actual zoom, contrast4.5:1/3:1 and focus/target measurements.
+Neither tool scans nor static CSS establish full WCAG conformance.
+Native protocol integration and actual native completion are **PENDING frozen
+parent B52 seam handoff**, not imported/claimed as completed by U52. Live
+Oracle/EMS/metadata/operator/provisioning/UAT/release and Docker verification
+were not run. Existing Docker delivery is untouched, not verified by this task.
+
+### Source-freeze SHA256 (after final code edits, before append-only docs)
+
+```text
+src/station-exit-cancellation-contract.ts
+5155DD26DE52EEAA881ED95B2A2F725FD0EE8C949C6A7D06739853C83CE41BC8
+src/station-exit-cancellation-page.ts
+0A0FD0CE833047B6DDCCA4C15B3F7F3EEA827B41CB9C014D5AA7BBA68D107BCD
+src/station-exit-cancellation-page.html
+BA15F2BE23ECA8ADA33AC97A2FB3B0E8B4781BB08C86164A8C01512648858518
+src/station-exit-cancellation-session.ts
+AABB81DEA0D7A515310D61F6CDDB0E257A578F1A638CEF2E32117ED1A5374605
+src/native-command-session.ts
+E981DB1926F8FC41C2924CF3A0BF9CD1D459499855FAE286B88DF9FE07E819AC
+checks/station-exit-cancellation-browser-check.mjs
+8AF85DAA642AA8286FA3E66FCD9108F3BCD1DDF3E5D8207A99671AD2B53A23F2
+```
+
+Next action: caller obtains B52 browser-compatible GET admission/frozen native
+seam; rerun checker against these isolated assets, then run the separate actual
+native phase with its authorized synthetic factory/protocol environment.
+Residual risk: actual UI business journey and accessibility remain unverified
+until GET admission is resolved; UI quarantine is supplementary and cannot
+prove backend/external-writer/power-loss safety. No routine production undo or
+mission/full-project completion is claimed.
+
+## U52 resumed — actual isolated integration PASS / scoped DONE — 2026-11-01
+
+The historical BLOCKED section remains evidence of the prior source. This
+subsequent result supersedes that blocker. Approval remains C52-v0.2 / §52-v0.2 /
+52-config-v0.1 / 52-UI-v0.2 (caller UI52-v0.2), recorded in design §52.8.
+No new contract/approval, backend fix or automatic operator authority is invented.
+Backend SOURCE-STABLE1986 / TSC121 / cancellation PASS is **caller-reported**, not
+rerun as frontend work. No remaining reproducible backend defect was found.
+
+### Exact cumulative manifest — 24 paths
+
+Relative to `frontend/fixture-slice/`. The original 22-path manifest above is
+retained, plus the new protocol helper and the reproduced shared-history fix.
+This resume writes six paths: README, VERIFICATION, checker, protocol helper,
+existing cancellation-navigation test, and existing view-history source.
+The other 18 original paths are unchanged by this resume.
+
+```text
+README.md
+VERIFICATION.md
+checks/station-exit-cancellation-browser-check.mjs
+checks/station-exit-cancellation-protocol-backend.mts
+src/api.ts
+src/attendance-page.html
+src/attendance-page.ts
+src/contract.ts
+src/native-command-session.ts
+src/routes.ts
+src/shift-day-page.html
+src/shift-day-page.ts
+src/station-exit-cancellation-contract.spec.ts
+src/station-exit-cancellation-contract.ts
+src/station-exit-cancellation-dialog.ts
+src/station-exit-cancellation-fixtures.ts
+src/station-exit-cancellation-navigation.spec.ts
+src/station-exit-cancellation-page.html
+src/station-exit-cancellation-page.scss
+src/station-exit-cancellation-page.spec.ts
+src/station-exit-cancellation-page.ts
+src/station-exit-cancellation-session.ts
+src/view-history.ts
+src/workspace-shell.html
+```
+
+Generated production assets stay under `.angular/u52-production`; ordinary
+dist, other deliveries and Docker were not rebuilt. No backend, canonical,
+design/plan/status, lock, credential, ENV, legacy or operator file was edited.
+The two documents are append-only; existing failure history is not overwritten.
+
+### Source and source-freeze evidence
+
+Read-only `AttendanceDataModel.java:2197–2248` controls absent-exit rejection and
+only exit time/user NULL clearing. Read-only `attendance.js:610–640` controls
+historical optimistic GET behavior, deliberately not retained. Both were
+inspected during this resume. The source contract catalog is unavailable in this
+workspace; design §§52.1–8 and their controlling legacy references were used.
+Canonical contract imports remain type-only; no new field or business default.
+
+Five prior product hashes were remeasured and exactly match the preceding
+source-freeze block: cancellation contract, page TS/HTML, cancellation session
+and native command session. No U52 business/presentation source change was needed.
+The one actual product defect was direct-detail Back losing opener focus:
+`ViewHistory` had not marked cancellation as a restoration journey. The fix adds
+the route to the two existing patterns (git numstat 2 additions / 2 deletions).
+The new test verifies a popped direct-detail ancestor restores its opener once
+without serializing business context; geometry is explicitly synthetic in that
+test and separately observed in Chrome.
+
+Final resumed-source SHA256:
+
+```text
+checks/station-exit-cancellation-browser-check.mjs
+CB1461D9A26DB4B9CF12272C33E35465A818E9CDD5D6CB4F266DC6339BF85668
+checks/station-exit-cancellation-protocol-backend.mts
+5E9FDB1207324683B2ED4DB32D61884E4EE07C337262CE6F98BA9E0B1B29A869
+src/view-history.ts
+F4C5C692B2E46227F598895B8A53384801DF7E6D4E446B32E936E4509A025B74
+src/station-exit-cancellation-navigation.spec.ts
+CDF4CCCDFF058C344B50505E7A56C7FBD3FFD27170820211C26AA72B81F5C5E2
+```
+
+### Exact resume commands and final results
+
+All except the explicitly rooted git command run from `frontend/fixture-slice`.
+No installation, backend build/test or legacy execution occurred.
+
+```powershell
+node --version
+npm --version
+node --check checks/station-exit-cancellation-browser-check.mjs
+node --check checks/station-exit-cancellation-protocol-backend.mts
+npx tsc --noEmit --strict --target ES2024 --lib ES2024,DOM --module preserve --moduleResolution bundler --allowImportingTsExtensions --skipLibCheck --types node --typeRoots ../../backend/fixture-slice/node_modules/@types checks/station-exit-cancellation-protocol-backend.mts
+npm run typecheck
+npx tsc --noEmit -p tsconfig.app.json
+npx tsc --noEmit -p tsconfig.spec.json
+npm test -- --include 'src/station-exit-cancellation-*.spec.ts' --include 'src/shift-management-history.spec.ts' --include 'src/station-arrival-late*.spec.ts' --include 'src/shift-management-*.spec.ts'
+npm run build:production -- --output-path .angular/u52-production
+node --test checks/owned-protocol-browser.test.mjs checks/workspace-shell-readiness.test.mjs
+node checks/environment-build-check.mjs production .angular/u52-production/browser
+node checks/station-exit-cancellation-browser-check.mjs .angular/u52-production/browser ready
+foreach ($s in @('ready','not-recorded','early-deferred','partner-required','partner-unknown','outcome-unknown','authority-consumed','navigation','expiry')) { node checks/station-exit-cancellation-browser-check.mjs .angular/u52-production/browser $s; if (-not $?) { exit 1 } }
+foreach ($s in @('native-success','native-ack-loss','native-readback-mismatch','native-rollback','native-preconsumed')) { node checks/station-exit-cancellation-browser-check.mjs .angular/u52-production/browser $s; if (-not $?) { exit 1 } }
+node checks/shift-management-protocol-browser-check.mjs .angular/u52-production/browser
+node checks/station-arrival-late-browser-check.mjs .angular/u52-production/browser
+```
+
+- Node24.21.0/npm11.19.0; existing Angular21.2/Material21.2/TS5.9 baseline reused.
+- Initial unchanged ready checker after supplied GET fix: PASS exit0.
+- Final syntax checks, app/spec TSC and strict Preserve/Bundler helper TSC:
+  PASS exit0. Explicit extension support and ES2024 library are required by
+  the imported backend source; no dependency/compiler-settings file change.
+- Focused Angular: **137/137,15 files PASS**, start15:02:38, duration8.06s.
+  Includes cancellation guards12/page33/navigation4, late contract/API/page/
+  navigation25, and management contract/API/page/readviews/dialog/history/
+  native interlock/session63. No excluded failing assertion or skipped test.
+- Production rebuild after the actual history fix: PASS exit0, initial659.19kB,
+  estimated145.45kB; generation6.249s. Production profile PASS, public exact
+  appEnv/apiBasePath keys; no mock authority/config embedded.
+- Harness regression **11/11 PASS**, duration258.56ms. Expected negative
+  “FAIL NAMED STAGE” diagnostic is asserted by a passing test, not acceptance failure.
+- Final U52 **14 scenarios PASS exit0**: nine fixture/browser plus four
+  native/browser and one preconsumed startup denial. This is **13 browser worlds**,
+  not fourteen successful browser receipts or fourteen Node unit tests.
+- Existing management protocol: create/change/cancel/csv-create, **4/4 worlds
+  PASS** on rebuilt U52 assets. Existing helper emits its limited-metadata waiver
+  warning and Node tests0 footer; neither is four Node unit tests or live proof.
+- Existing late browser: fixture0/fixture1/native-success/native-defer/
+  native-unknown, **5/5 worlds PASS** on rebuilt assets.
+- Cumulative prior verification is retained, not rerun: plain guards12/12,
+  focused U52/global59/59, full frontend801/801 in58 files, both source TSC,
+  three dev/test/production builds and three profile checks, harness11/11.
+  The new popped-journey test adds one test; no full802 count is claimed.
+  Only affected production, focused regression and relevant static checks were
+  rerun after this resume's actual product source edit.
+
+### Scenario evidence and distinctions
+
+Every successful command was deliberately dispatched by actual Angular keyboard
+interaction through a byte-preserving Node forwarding proxy. No response, token,
+validation, receipt or Origin is constructed by that proxy. Parsed bodies are
+observations only and are never logged. No manual successful HTTP command exists.
+Direct negative admission requests intentionally use `{}` and assert403.
+Each process asserts inherited SHF keys are absent, uses whitelisted synthetic
+ENV, and passes explicit read/native/resolveEndpoint factories; no DNS resolution,
+real driver, credential source, live pool, EMS or operator mount is available.
+
+| World | Observed result |
+| --- | --- |
+| ready | 3 actual validations, 1 deliberate command; simulated receipt with both ACK/readback NULL; independent actual HTTP detail observes exit-only clearing |
+| not-recorded | context says not recorded; validations0/commands0, no receipt, unchanged detail |
+| early-deferred | ordinary-exit requirement shown; validations0/commands0, unchanged detail |
+| partner-required / partner-unknown | partner blocker shown; each validations0/commands0, unchanged detail |
+| outcome-unknown | actual fixture command clears its synthetic state then returns UNKNOWN; no receipt, retained fence, no repeat |
+| authority-consumed | actual context403, validations0/commands0; no receipt or operator reset control |
+| navigation | actual relational 105-row fixture, four pages25 then final5; selected row6201; date/time/moked, fixed sort, page offset, document scroll, RTL table scroll and opener exactly restored after page Escape; validations0/commands0 |
+| expiry | actual server <=30s TTL and browser monotonic expiry closes open review; validations1/commands0; unchanged detail |
+| native-success | actual startup/config/binding/metadata certification/global coordinator/own allowance/application/UoW path; one exact two-NULL UPDATE; nonnull ACK then writer release then independent READ ONLY readback; native receipt and UI disclosure |
+| native-ack-loss | actual write commits but loses ACK; UNKNOWN/no receipt; exactly one UPDATE, retained fences |
+| native-readback-mismatch | actual post-ACK synthetic unowned-column drift fails preservation; UNKNOWN/no receipt, not a manufactured “valid receipt” |
+| native-rollback | actual rowsAffected0 proves rollback; original rows unchanged; stale preparation UI, effect rolled-back; no receipt, retained fences |
+| native-preconsumed | independently provisioned TEMP global guard consumed as prior coordinated exit before startup; startup rejects before every factory, rows/files unchanged; no browser/receipt claim |
+
+Native worlds provision a synthetic LEGACY recorded exit and a separately READY
+new global guard before startup. They use SYSTEM clock: the deliberately ancient
+fixtureClock cannot govern native validation. UTC-boundary checks fail explicitly
+instead of altering that clock. Complete synthetic rows and authority files are
+snapshotted: context/validation, safe cancellation and held pending dispatch
+produce zero writer leases/locks/SEQ/DML, zero authority changes and zero row
+changes. Only STATION_EXIT_TIME/STATION_EXIT_USER become NULL on success; all
+other rows/fields remain equal. The mismatch world deliberately changes one
+unowned column and therefore never receives a success receipt.
+The old exit/F1-related allowance reference remains absent/untouched in these
+worlds. Cancellation/global consumed state stays retained after success,
+proven rollback and UNKNOWN. Restart after each attempt rejects before additional
+factory calls; independent context GET403 and UI return verify no retry.
+No reset, recovery/operator button or automatic opening of authority is added.
+
+Browser checks include Hebrew synthetic-Administrator/employee separation,
+correct fixture versus native source disclosure, no editable cancellation data,
+one labelled RTL dialog, safe initial focus, Tab trap, native Cancel Enter and
+Escape with commands0, restored validate focus, unchecked two-consent state,
+warning-only disabled dispatch, both Space consents with commands0 before
+deliberate Enter, pending unchanged facts and disabled actions, final summary
+focus, Back/direct-detail opener, source-appropriate receipt timestamps.
+Final responsive subsets cover320/390/1440 and720x500@2 CSS viewport
+(200%-equivalent, **not manual browser zoom**), no document overflow and dialog
+button targets>=24px. Settled enabled-button sRGB contrast was
+**5.000601:1**, body text/root background **14.252504:1**.
+These are two measured text pairs, not all colors/states or full WCAG conformance.
+Actor/source/generation drift, invalid/absent identity and stale preparation are
+covered by the passing Angular HTTP-double tests; they were not fabricated as
+native/browser identity transitions. Sort restoration is the actual fixed
+server/UI sort; no unsupported sort control was invented.
+
+### Failure history during resume, repaired and retested
+
+- Expanded immediate two-consent assertion ran before Angular enabled-button
+  rendering; Node's assertion source formatter surfaced “Unterminated template”.
+  Added actual enabled-state readiness and explicit assertion message, no dropped
+  consent assertion. Both fixture/native paths then passed.
+- First helper TSC omitted allowImportingTsExtensions (TS5097); next still used
+  ES2022 library for backend String.isWellFormed (TS2550). Final exact ES2024,
+  Preserve/Bundler, explicit extensions and backend Node typeRoots command passes.
+- Both fixture/native successful paths reproduced direct-detail Back focus
+  timeout. The sole product fix is the two existing ViewHistory patterns; actual
+  rebuilt browser worlds and the new regression pass.
+- First regression test was inadvertently nested under instantiated harness
+  setup: 136passed/1failed. Moved it to its own suite; final137/137 pass.
+- Already-consumed fixture403 was initially mislabeled by the old GET-seam
+  diagnostic. That scenario now explicitly asserts its expected403 and zero
+  commands, rather than masking it as eligible or bypassing Origin.
+- Pending DOM state sometimes preceded proxy request arrival (commands0 versus1).
+  Added bounded condition on actual command arrival/held forwarder, no sleep,
+  broadcast or retry; final deliberate command count remains exactly1.
+- Rollback initially waited for generic copy; STALE_PREPARATION uses dedicated
+  stale-data copy. Checker now asserts that copy plus actual effect=rolled-back
+  and full preserved data, never a success receipt.
+- Navigation initially assumed100-row pages; established UI uses25. Corrected
+  the synthetic journey to four real transitions; transient pager unmount is
+  observed with optional readiness. Final exact origin restoration passes.
+- Contrast sampled an enabled-control transition (including4.197756:1) before
+  paint settlement. Checker now awaits actual Web Animation completion plus two
+  paints, **not retries until a passing ratio**. Final ratios above pass without
+  product CSS changes. No all-state contrast or full accessibility claim.
+- Existing MODULE_TYPELESS_PACKAGE_JSON warnings from shared TS check helpers
+  remain nonfatal; no package/lock change was made to suppress them.
+
+Historical pre-resume narrowing/static404/owned-close/GET403 failures remain in
+the preceding section. All resume acceptance failures named here were repaired
+and rerun on the final assigned source; no current failure is silently waived.
+
+### Cleanup, not-run checks, limits and next action
+
+All final processes exit0. Owned Chrome/CDP/profile, loopback forwarding server,
+actual backend server and owned pools close in finally. Every native TEMP world
+is disposed and removal asserted; attempted authority is never reset while the
+world exists. No persistent server was started, no user process was killed and
+no original private coordinator/F1 fuse was read or changed.
+Synthetic snapshots/reference restoration are in-memory only; no receipt tokens,
+fingerprints, credential configuration, CSV or personal identifiers are logged.
+
+**Not run / not claimed:** live Oracle/DNS/native client/metadata discovery,
+EMS, native operator provisioning/GO, shared DB mutation, Docker18080 verification,
+manual Hebrew AT, actual browser zoom, comprehensive contrast/focus geometry,
+full WCAG, UAT/release or whole-project/mission completion. Full801 and dev/test
+builds were not needlessly repeated; prior evidence remains historical.
+Browser actor/source-generation fault injection is not claimed beyond the
+separately passing mocked Angular tests. Existing read/backend suites were not
+rerun as frontend ownership; current caller backend counts remain caller evidence.
+
+No missing approved contract or open reproducible backend blocker remains for
+this isolated U52 task. Owner for further live/operator/UAT/release decisions is
+the caller with separately authorized backend/operator/QA work, not an automatic
+frontend action. Residual risks are real infrastructure/external writers and
+power-loss behavior beyond doubles, plus manual accessibility coverage.
+Next action: caller review this scoped PASS and cumulative manifest; continue
+only the assigned subsequent work, without treating this as live completion.

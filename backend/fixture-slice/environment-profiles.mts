@@ -3,6 +3,7 @@ import { validateRuntimeConfig } from "./runtime-config.mts";
 import type { RuntimeConfig } from "./runtime-config.mts";
 import { validateLimitedMetadataStartup } from "./native-metadata-limited.mts";
 import { validateShiftManagementEnvironment } from "./shift-management-config.mts";
+import { validateCancellationEnvironment } from "./station-exit-cancellation-config.mts";
 
 export type AppEnvironment = "dev" | "test" | "production";
 export const deploymentClasses = Object.freeze({
@@ -34,6 +35,7 @@ export function validateEnvironmentProfile(value: unknown, env: NodeJS.ProcessEn
   if (limitedFlag === "true" && (profile !== "test" || env.NODE_ENV === "production"))
     throw Error("TEST profile required for limited metadata");
   if (!record(value)) throw Error("Explicit backend configuration required");
+  validateCancellationEnvironment(value, env);
   if (env.NODE_ENV === "production" &&
       (profile !== undefined && profile !== "production" ||
        value.deploymentClass !== deploymentClasses.production))

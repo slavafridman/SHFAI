@@ -52,6 +52,8 @@ import { lateMode, legacyRuntimeShape } from "./native-station-arrival-late-conf
 import type { OracleLateStationArrivalApplication } from "./oracle-station-arrival-late-application.mts";
 import { lateDraft, lateCommand } from "./native-station-arrival-late-validation.mts";
 import { nativeLateStationArrivalAccessPolicy } from "./access-policy.mts";
+import { cancellationMode, cancellationLegacyProjection } from "./station-exit-cancellation-config.mts";
+import type { CancellationApplicationPort } from "./station-exit-cancellation-ports.mts";
 
 export interface CurrentRuntimeOptions {
   reader: CurrentShiftReadPort;
@@ -67,6 +69,7 @@ export interface CurrentRuntimeOptions {
   nativeStationExit?: OracleStationExitApplication;
   shiftManagement?: ShiftManagementApplication;
   nativeLateStationArrival?: OracleLateStationArrivalApplication;
+  cancellation?: CancellationApplicationPort;
 }
 
 export class SyntheticAdministratorProvider implements AuthenticationProvider {
@@ -78,8 +81,11 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
   private readonly nativeExitEnabled: boolean;
   private readonly managementEnabled: boolean;
   private readonly lateEnabled: boolean;
+  private readonly cancellation: "disabled" | "isolated-fixture" | "test-oracle-controlled";
   constructor(configuration: unknown) {
     const config = validateRuntimeConfig(configuration);
+    this.cancellation = cancellationMode(config);
+    configuration = cancellationLegacyProjection(configuration);
     configuration = legacyRuntimeShape(configuration);
     this.lateEnabled = lateMode(config) === "test-oracle-controlled";
     if (config.authenticationMode !== "synthetic") throw new Error("Synthetic provider disabled");
@@ -106,7 +112,10 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
         ...(this.nativeExitEnabled ? ["attendance-station-exit:prepare" as const, "attendance-station-exit:commit" as const,
           "attendance-station-exit:test-oracle-write" as const] : []),
         ...(this.lateEnabled ? ["attendance-station-arrival-late:prepare" as const,
-          "attendance-station-arrival-late:commit" as const, "attendance-station-arrival-late:test-oracle-write" as const] : [])], employeeId: null,
+          "attendance-station-arrival-late:commit" as const, "attendance-station-arrival-late:test-oracle-write" as const] : []),
+        ...(this.cancellation !== "disabled" ? ["attendance-station-exit-cancellation:prepare" as const,
+          "attendance-station-exit-cancellation:commit" as const] : []),
+        ...(this.cancellation === "test-oracle-controlled" ? ["attendance-station-exit-cancellation:test-oracle-write" as const] : [])], employeeId: null,
       resourceScope: { orgUnitIds: [...this.orgUnitIds] },
     };
   }
@@ -118,6 +127,21 @@ export async function createRuntime(
   currentOptions?: CurrentRuntimeOptions,
 ) {
   const config = validateRuntimeConfig(configuration);
+  const cancellation = cancellationMode(config);
+  configuration = cancellationLegacyProjection(configuration);
+  if (cancellation !== "disabled") {
+    if (cancellation === "isolated-fixture") {
+      const { CancellationFixtureApplication } = await import("./station-exit-cancellation-application.mts");
+      if (!(currentOptions?.cancellation instanceof CancellationFixtureApplication)) throw Error("Dedicated cancellation fixture required");
+    } else {
+      const { OracleStationExitCancellationApplication } = await import("./oracle-station-exit-cancellation-application.mts");
+      if (!(currentOptions?.cancellation instanceof OracleStationExitCancellationApplication)) throw Error("Dedicated native cancellation required");
+    }
+    if (currentOptions?.nativeStageArrival || currentOptions?.nativeStationArrival || currentOptions?.nativeStationExit ||
+        currentOptions?.nativeLateStationArrival || currentOptions?.stageArrivalStore || currentOptions?.shiftManagement)
+      throw Error("Exclusive cancellation adapter required");
+  }
+  if (cancellation === "disabled" && currentOptions?.cancellation) throw Error("Cancellation disabled");
   const late = lateMode(configuration);
   configuration = legacyRuntimeShape(configuration);
   const stageMode = validateStageArrivalMode(configuration);
@@ -143,7 +167,7 @@ export async function createRuntime(
   if (managementMode === "disabled" && currentOptions?.shiftManagement)
     throw Error("Management application requires explicit mode");
   if (currentOptions && Object.keys(currentOptions).some(k => !["reader", "clock", "searchReader", "myShiftsReader",
-    "shiftItemsReader", "employeeCardReader", "attendanceReader", "stageArrivalStore", "nativeStageArrival", "nativeStationArrival", "nativeStationExit", "shiftManagement", "nativeLateStationArrival"].includes(k)))
+    "shiftItemsReader", "employeeCardReader", "attendanceReader", "stageArrivalStore", "nativeStageArrival", "nativeStationArrival", "nativeStationExit", "shiftManagement", "nativeLateStationArrival", "cancellation"].includes(k)))
     throw new Error("Unsupported backend adapter");
   if (currentOptions?.stageArrivalStore && stageMode !== "isolated-fixture")
     throw new Error("Stage-arrival store requires explicit isolated mode");
@@ -257,7 +281,7 @@ export async function createRuntime(
       ].includes(error.code)) throw error;
       throw new SliceError("DEPENDENCY_UNAVAILABLE");
     }
-    validatePrincipal(principal, late === "test-oracle-controlled" ? "native-late" : managementMode !== "disabled" ? "shift-management" :
+    validatePrincipal(principal, cancellation !== "disabled" ? undefined : late === "test-oracle-controlled" ? "native-late" : managementMode !== "disabled" ? "shift-management" :
       exitMode === "test-oracle-controlled" ? "native-exit" :
       station === "test-oracle-controlled" ? "native-station" : station === "isolated-fixture" ? "joint-fixture" : stageMode);
     if (principal.provider !== config.authenticationMode) throw new SliceError("UNAUTHENTICATED");
@@ -274,6 +298,8 @@ export async function createRuntime(
     };
   }
   return Object.freeze({
+    attendanceStationExitCancellationMode: cancellation,
+    cancellation: currentOptions?.cancellation,
     shiftManagement: currentOptions?.shiftManagement,
     attendanceStationExitMode: exitMode,
     stationExitContext: (p: unknown, target: unknown, signal?: AbortSignal) => {

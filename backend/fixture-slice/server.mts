@@ -32,6 +32,8 @@ import { shiftManagementMode } from "./shift-management-config.mts";
 import { nativeCoordinatorFromEnvironment } from "./native-command-coordinator.mts";
 import { lateMode, lateEnvironment, legacyRuntimeShape } from "./native-station-arrival-late-config.mts";
 import { same } from "./stage-arrival-domain.mts";
+import { cancellationMode, cancellationLegacyProjection, cancellationOrigins } from "./station-exit-cancellation-config.mts";
+import { cancellationManifest } from "./station-exit-cancellation-validation.mts";
 
 const resources = new WeakMap<Server, Array<OraclePool | NativePool>>();
 const shutdowns = new WeakMap<Server, Promise<void>>();
@@ -75,7 +77,17 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
   factories?: BackendPoolFactories) {
   const oracleMode = environment.SHF_ORACLE_CONFIG !== undefined;
   const config = loadEnvironmentConfig(environment);
-  const oldConfig = legacyRuntimeShape(config);
+  const cancellation = cancellationMode(config);
+  const nativeCancellation = cancellation === "test-oracle-controlled"
+    ? (await import("./native-station-exit-cancellation-config.mts")).cancellationNativeEnvironment(environment, config) : undefined;
+  const cancellationFixture = cancellation === "isolated-fixture"
+    ? (await import("./station-exit-cancellation-fixture.mts")).createCancellationFixture(cancellationManifest(environment.SHF_STATION_EXIT_CANCELLATION_FIXTURE ?? ""),
+      config.businessTimeZone, config.authenticationMode === "synthetic" ? config.syntheticOrgUnitIds[0] : "",
+      config.authenticationMode === "synthetic" ? config.syntheticOrgUnitIds : [], true)
+    : undefined;
+  const stationExitCancellationOrigins = cancellation !== "disabled"
+    ? cancellationOrigins(environment.SHF_STATION_EXIT_CANCELLATION_ORIGINS) : undefined;
+  const oldConfig = legacyRuntimeShape(cancellationLegacyProjection(config));
   const late = lateMode(config);
   if (shiftManagementMode(oldConfig) === "isolated-fixture") {
     const { startManagementFixture } = await import("./shift-management-runtime.mts");
@@ -132,7 +144,9 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
   }
   const native = nativeEnvironment(environment, stageMode === "test-oracle-controlled");
   const nativeStation = stationEnvironment(environment, station === "test-oracle-controlled");
-  const nativeExit = exitEnvironment(environment, exitMode === "test-oracle-controlled");
+  // New cancellation prefix overlaps old EXIT lexically, but not authority.
+  // Its dedicated exact environment gate already rejected every old input.
+  const nativeExit = exitEnvironment(nativeCancellation ? {} : environment, exitMode === "test-oracle-controlled");
   const nativeLate = lateEnvironment(environment, late === "test-oracle-controlled");
   let stationArrivalLateOrigins: readonly string[] | undefined;
   if (nativeLate) {
@@ -144,9 +158,14 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
     stationArrivalLateOrigins = Object.freeze(parsed);
   }
   const coordinator = await nativeCoordinatorFromEnvironment(environment,
-    [native?.binding, nativeStation?.binding, nativeExit?.binding, nativeLate?.binding].filter(b => b !== undefined));
-  if (nativeLate) {
-    const target = nativeTargetReference(nativeLate.binding.readIdentity).target;
+    [native?.binding, nativeStation?.binding, nativeExit?.binding, nativeLate?.binding, nativeCancellation?.binding].filter(b => b !== undefined));
+  // Read-only fuse/guard availability BEFORE any connection factory/probe.
+  // This neither creates nor consumes operation authority.
+  const cancellationAuthority = nativeCancellation && coordinator
+    ? new (await import("./native-station-exit-cancellation-admission.mts")).CancellationOperatorAdmission(nativeCancellation.binding, coordinator)
+    : undefined;
+  if (nativeLate || nativeCancellation) {
+    const target = nativeTargetReference((nativeCancellation ?? nativeLate)!.binding.readIdentity).target;
     if (target.kind === "sid") {
       const expected = target.endpointProof;
       const actual = await resolveNativeEndpointProof({ kind: expected.kind, revision: expected.revision,
@@ -219,6 +238,22 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
       let nativeStationArrival;
       let nativeStationExit;
       let nativeLateStationArrival;
+      let nativeStationExitCancellation;
+      if (nativeCancellation) {
+        const [{ createNativePool }, { OracleStationExitCancellationUow },
+          { OracleStationExitCancellationApplication }] = await Promise.all([
+          import("./oracle-stage-arrival-uow.mts"),
+          import("./oracle-station-exit-cancellation-uow.mts"), import("./oracle-station-exit-cancellation-application.mts"),
+        ]);
+        if (!coordinator || !cancellationAuthority) throw Error("Cancellation coordinator and authority required");
+        writePool = await (factories?.native ?? createNativePool)(nativeCancellation.writer);
+        const uow = new OracleStationExitCancellationUow(writePool, session, nativeCancellation.binding,
+          config.businessTimeZone, coordinator, cancellationAuthority);
+        await uow.initialize();
+        nativeStationExitCancellation = new OracleStationExitCancellationApplication(uow, nativeCancellation.binding,
+          config.businessTimeZone, config.syntheticOrgUnitIds);
+        await nativeStationExitCancellation.assertReady();
+      }
       if (native) {
         // Separate account/UoW, never the read pool or injected fixture Clock.
         const [{ createNativePool, OracleStageArrivalUow }, { OracleStageArrivalApplication }] = await Promise.all([
@@ -278,6 +313,7 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
         { reader: new OracleCurrentReader(session), searchReader: new OracleSearchReader(session),
           myShiftsReader: new OracleMyShiftsReader(session), shiftItemsReader: new OracleShiftItemsReader(session),
           employeeCardReader: new OracleEmployeeCardReader(session), attendanceReader: new OracleAttendanceReader(session),
+          cancellation: nativeStationExitCancellation,
           nativeStageArrival, nativeStationArrival, nativeStationExit, nativeLateStationArrival });
     } else if (stageMode === "isolated-fixture") {
       if (["SHF_FIXTURE_ROWS", "SHF_CURRENT_SHIFTS_FIXTURE", "SHF_SHIFT_SEARCH_FIXTURE",
@@ -321,13 +357,22 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
         throw new Error("Employee card fixture requires explicit shared current catalog configuration");
       if (environment.SHF_ATTENDANCE_FIXTURE !== undefined && !currentOptions)
         throw new Error("Attendance fixture requires explicit shared current catalog configuration");
-      runtime = await createRuntime(config, new FixtureReader(validatedRows), undefined, currentOptions);
+      if (cancellationFixture && (!currentOptions || config.authenticationMode !== "synthetic"))
+        throw Error("Cancellation requires explicit synthetic read loaders");
+      const detail = cancellationFixture
+        ? new (await import("./station-exit-cancellation-fixture.mts")).CancellationDetailFixtureReader(validatedRows, cancellationFixture.store)
+        : new FixtureReader(validatedRows);
+      runtime = await createRuntime(config, detail, undefined,
+        currentOptions ? { ...currentOptions, ...(cancellationFixture ? {
+          cancellation: cancellationFixture.app, clock: cancellationFixture.clock,
+        } : {}) } : undefined);
     }
   } catch (error) {
     await closePools([...(pool ? [pool] : []), ...(writePool ? [writePool] : [])]).catch(() => {});
     throw error;
   }
-  const server = createLoopbackServer(runtime, { stageArrivalOrigins, stationArrivalOrigins, stationExitOrigins, stationArrivalLateOrigins });
+  const server = createLoopbackServer(runtime, { stageArrivalOrigins, stationArrivalOrigins, stationExitOrigins, stationArrivalLateOrigins,
+    stationExitCancellationOrigins });
   try {
     await new Promise<void>((resolve, reject) => {
       server.once("error", reject);

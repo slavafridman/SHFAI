@@ -40,6 +40,9 @@ type ManagementRights = "shift-management:prepare" | "shift-management:create"
   | "shift-management:change" | "shift-management:cancel"
   | "shift-management:csv-preview" | "shift-management:csv-apply"
   | "shift-management:test-oracle-write";
+type CancellationRights = "attendance-station-exit-cancellation:prepare"
+  | "attendance-station-exit-cancellation:commit"
+  | "attendance-station-exit-cancellation:test-oracle-write";
 // Exact approved order for backend runtime owner; this is NOT a runtime grant.
 type NativeExit10 = [
   "shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read",
@@ -51,8 +54,8 @@ type ParameterName =
   NonNullable<StationExitProblemV1["invalidParameters"]>[number]["name"];
 type UnknownProblem = Extract<StationExitProblemV1, { code: "COMMAND_OUTCOME_UNKNOWN" }>;
 type ContractChecks = [
-  Assert<Equal<CapabilityV1, Read7 | ArrivalRights | LateArrivalRights | ExitRights | ManagementRights>>,
-  Assert<Equal<Exclude<CapabilityV1, Read7 | ArrivalRights | LateArrivalRights | ManagementRights>, ExitRights>>,
+  Assert<Equal<CapabilityV1, Read7 | ArrivalRights | LateArrivalRights | ExitRights | ManagementRights | CancellationRights>>,
+  Assert<Equal<Exclude<CapabilityV1, Read7 | ArrivalRights | LateArrivalRights | ManagementRights | CancellationRights>, ExitRights>>,
   Assert<Equal<Extract<CapabilityV1, `shift-management:${string}`>, ManagementRights>>,
   Assert<Equal<Extract<CapabilityV1, `attendance-station-exit:${string}`>, ExitRights>>,
   Assert<Equal<Extract<CapabilityV1, `attendance-stage-arrival:${string}`>,

@@ -29,6 +29,10 @@ export const nativeLateCapabilities = [...readCapabilities, 'attendance-station-
   'attendance-station-arrival-late:commit', 'attendance-station-arrival-late:test-oracle-write'] as const;
 export const nativeExitCapabilities = [...readCapabilities, 'attendance-station-exit:prepare',
   'attendance-station-exit:commit', 'attendance-station-exit:test-oracle-write'] as const;
+export const fixtureCancellationCapabilities = [...readCapabilities, 'attendance-station-exit-cancellation:prepare',
+  'attendance-station-exit-cancellation:commit'] as const;
+export const nativeCancellationCapabilities = [...fixtureCancellationCapabilities,
+  'attendance-station-exit-cancellation:test-oracle-write'] as const;
 export const managementCapabilities = [...readCapabilities, 'shift-management:prepare', 'shift-management:create',
   'shift-management:change', 'shift-management:cancel', 'shift-management:csv-preview',
   'shift-management:csv-apply', 'shift-management:test-oracle-write'] as const;
@@ -40,7 +44,7 @@ export function identity(v: unknown): v is IdentityResponseV1 {
       !['synthetic', 'real'].includes(String(p.provider)) ||
       p.synthetic !== (p.provider === 'synthetic') ||
       !unique(p.roles, r => r === 'Administrator') ||
-      !unique(p.capabilities, c => typeof c === 'string' && ([...nativeArrivalCapabilities, ...jointArrivalCapabilities, ...nativeStationCapabilities, ...nativeLateCapabilities, ...nativeExitCapabilities, ...managementCapabilities] as readonly string[]).includes(c)) ||
+      !unique(p.capabilities, c => typeof c === 'string' && ([...nativeArrivalCapabilities, ...jointArrivalCapabilities, ...nativeStationCapabilities, ...nativeLateCapabilities, ...nativeExitCapabilities, ...nativeCancellationCapabilities, ...managementCapabilities] as readonly string[]).includes(c)) ||
       !(p.employeeId === null || id(p.employeeId)) ||
       !object(p.resourceScope) || !unique(p.resourceScope.orgUnitIds, unit)) return false;
   return !p.synthetic || (p.subject === 'synthetic:administrator' &&
@@ -49,8 +53,9 @@ export function identity(v: unknown): v is IdentityResponseV1 {
     (p.capabilities.join(',') === readCapabilities.join(',') ||
       (v.dataSource === 'isolated-fixture' && p.capabilities.join(',') === f1Capabilities.join(',')) ||
       (v.dataSource === 'isolated-fixture' && p.capabilities.join(',') === jointArrivalCapabilities.join(',')) ||
+      (v.dataSource === 'isolated-fixture' && p.capabilities.join(',') === fixtureCancellationCapabilities.join(',')) ||
       p.capabilities.join(',') === managementCapabilities.join(',') ||
-      (v.dataSource === 'oracle' && [nativeArrivalCapabilities.join(','), nativeStationCapabilities.join(','), nativeLateCapabilities.join(','), nativeExitCapabilities.join(',')].includes(p.capabilities.join(',')))) &&
+      (v.dataSource === 'oracle' && [nativeArrivalCapabilities.join(','), nativeStationCapabilities.join(','), nativeLateCapabilities.join(','), nativeExitCapabilities.join(','), nativeCancellationCapabilities.join(',')].includes(p.capabilities.join(',')))) &&
     p.resourceScope.orgUnitIds.length > 0 && p.resourceScope.orgUnitIds.length <= 100);
 }
 

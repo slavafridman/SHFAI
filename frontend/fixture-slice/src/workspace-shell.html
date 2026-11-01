@@ -33,6 +33,10 @@
       @if (identity.dataSource === 'oracle' && identity.principal.capabilities.includes('attendance-station-exit:test-oracle-write')) {
         <strong class="source-label"> · כתיבה בפועל למסד TEST. Controlled TEST Oracle write — יציאה רגילה מעמדה בלבד; שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור. ללא CTI או הפעלת שותף חיצוני. שבעת הבירורים נשארים לקריאה בלבד; שתי פקודות ההגעה מושבתות.</strong>
       }
+      @if (identity.principal.capabilities.includes('attendance-station-exit-cancellation:prepare')) {
+        <strong class="source-label"> · ביטול רישום יציאה בלבד — {{ identity.dataSource === 'oracle' ? 'כתיבה בפועל למסד TEST — לא ייצור' : 'הדמיה מבודדת בלבד — ללא Oracle' }}.
+          בירורים נשארים לקריאה בלבד; ניקוי יציאה אינו פותח מחדש סמכות כתיבה. אין הפעלת שותף חיצוני.</strong>
+      }
       @if (identity.principal.capabilities.includes('shift-management:prepare')) {
         <strong class="source-label">{{ identity.dataSource === 'oracle' ? ' · ניהול משמרות: כתיבה מבוקרת במסד TEST בלבד, כפוף להקשר ואישור. שבעת הבירורים נשארים לקריאה בלבד; פקודות נוכחות אינן מופעלות אוטומטית.' : ' · ניהול משמרות בסימולציה מבודדת בלבד — אין כתיבה ל־Oracle.' }}</strong>
       }

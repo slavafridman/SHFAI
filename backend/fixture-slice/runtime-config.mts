@@ -5,6 +5,7 @@ import { stationMode } from "./station-arrival-validation.mts";
 import { stationExitMode } from "./native-station-exit-config.mts";
 import { shiftManagementMode } from "./shift-management-config.mts";
 import { lateMode, legacyRuntimeShape } from "./native-station-arrival-late-config.mts";
+import { cancellationMode, cancellationLegacyProjection, validateCancellationConfig } from "./station-exit-cancellation-config.mts";
 
 type OracleMode = { dataSource: "oracle-read-only"; oracleTestScopeConfirmed: true };
 export type OracleStartupConfig =
@@ -12,8 +13,11 @@ export type OracleStartupConfig =
   | (Omit<Extract<StartupConfig, { authenticationMode: "real" }>, "dataSource"> & OracleMode);
 export type RuntimeConfig = (StartupConfig | OracleStartupConfig) & {
   attendanceStationArrivalLateMode?: "disabled" | "test-oracle-controlled";
+  attendanceStationExitCancellationMode?: "disabled" | "isolated-fixture" | "test-oracle-controlled";
 };
 export function validateRuntimeConfig(value: unknown): RuntimeConfig {
+  if (cancellationMode(value) !== "disabled") return validateCancellationConfig(value);
+  value = cancellationLegacyProjection(value);
   const late = lateMode(value), old = legacyRuntimeShape(value);
   shiftManagementMode(old);
   stationExitMode(old);

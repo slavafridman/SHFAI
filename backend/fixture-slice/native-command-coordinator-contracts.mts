@@ -29,7 +29,8 @@ export interface NativeCommandCoordinatorGuardV1 {
 // Attribution is handle binding only; NEVER part of the employee scope key.
 export type NativeCommandOperationV1 =
   | "stage-arrival" | "station-arrival" | "station-arrival-late" | "station-exit"
-  | "create" | "change" | "cancel" | "csv-create";
+  | "create" | "change" | "cancel" | "csv-create"
+  | "station-exit-cancellation";
 export interface NativeCommandCoordinatorBindingV1 {
   employeeId: DecimalId;
   operation: NativeCommandOperationV1;

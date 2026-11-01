@@ -15,7 +15,7 @@ import { stageFail } from "./stage-arrival-errors.mts";
 
 const version = "shf-native-command-coordinator-v1";
 const operations = ["stage-arrival", "station-arrival", "station-arrival-late", "station-exit",
-  "create", "change", "cancel", "csv-create"];
+  "create", "change", "cancel", "csv-create", "station-exit-cancellation"];
 function deny(): never { return stageFail("LIVE_WRITES_DISABLED"); }
 function identity(s: Stats) { return { dev: s.dev, ino: s.ino, birthtimeMs: s.birthtimeMs }; }
 function regular(s: Stats) {

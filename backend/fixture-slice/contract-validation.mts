@@ -53,6 +53,17 @@ export function validateConfig(value: unknown): StartupConfig {
 }
 export function validatePrincipal(value: unknown, stageMode?: "disabled" | "isolated-fixture" | "test-oracle-controlled" | "joint-fixture" | "native-station" | "native-exit" | "shift-management" | "native-late"): asserts value is PrincipalV1 {
   const fail = (): never => { throw new SliceError("UNAUTHENTICATED"); };
+  if (record(value) && Array.isArray(value.capabilities) &&
+      value.capabilities.some(c => typeof c === "string" && c.startsWith("attendance-station-exit-cancellation:"))) {
+    const rights = ["attendance-station-exit-cancellation:prepare", "attendance-station-exit-cancellation:commit",
+      "attendance-station-exit-cancellation:test-oracle-write"];
+    const reads = ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read",
+      "shift-items:read", "employee:read", "attendance:read"];
+    if (stageMode !== undefined || ![9, 10].includes(value.capabilities.length) ||
+        value.capabilities.some((c, i) => c !== (i < 7 ? reads[i] : rights[i - 7]))) return fail();
+    validatePrincipal({ ...value, capabilities: value.capabilities.slice(0, 7) });
+    return;
+  }
   if (stageMode === "native-late" || record(value) && Array.isArray(value.capabilities) &&
       value.capabilities.some(c => typeof c === "string" && c.startsWith("attendance-station-arrival-late:"))) {
     if (stageMode !== undefined && stageMode !== "native-late" || !record(value) ||

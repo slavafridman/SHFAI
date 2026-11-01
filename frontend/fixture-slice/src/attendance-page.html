@@ -154,6 +154,12 @@
                         [attr.aria-label]="'יציאה מעמדה — בדיקת כשירות במסד TEST עבור ' + row.employee.firstName + ' ' + row.employee.lastName"
                         (click)="openExit(row, $event)">יציאה מעמדה — בדיקת כשירות במסד TEST</a>
                     }
+                    @if (canOpenCancellation(row)) {
+                      <a class="row-link" [id]="'attendance-cancellation-' + row.shiftDayId"
+                        [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'station-exit-cancellation']"
+                        [attr.aria-label]="'ביטול רישום יציאה — ' + row.employee.firstName + ' ' + row.employee.lastName"
+                        (click)="openCancellation(row, $event)">ביטול רישום יציאה</a>
+                    }
                     @if (canOpenLate(row)) {
                       <a class="row-link" [id]="'attendance-late-' + row.shiftDayId"
                         [routerLink]="['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'station-arrival-late']"

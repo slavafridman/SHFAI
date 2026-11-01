@@ -7189,3 +7189,254 @@ C52-01–08/browser/AT/contrast/build/TSC/Docker/UAT/live/support checks NOT RUN
 User/business owner must accept §52.5 limitation/finite coverage/required-partner deferrals; operator/DBA own current private evidence+separate GO, not UI design blockers.
 Approval request: present exact §52.6 bundled sentence with this §52.7 / 52-UI-v0.2 review reference; no extra design loop or inferred mission/full-project approval.
 Next: caller bundles READY PROPOSAL now; implement only after explicit user contract approval and architect handshake; no release/production-ready/full-project Done claim.
+
+### 52.8 Explicit approval recorded / C52-v0.2 canonical handoff
+
+**Task: SHF-CANONICAL-52 (C52). Revision: C52-v0.2; private envelope
+52-config-v0.1; UI consumer baseline 52-UI-v0.2. Date: 2026-11-01.**
+**Status: CANONICAL TYPE/PORT SOURCE MATERIALIZED; TSC/TEST GATE NOT RUN.**
+This subsequent approval record supersedes the historical proposal/STOP/remaining
+approval wording in §§52.1–7 for these exact versions. The config/executable-consumer
+design is complete and approved; no old missing-envelope or user-approval gate
+remains for B52/U52 implementation. This handoff is not an invented API approval.
+
+**Explicit USER approval, 2026-11-01 13:56+02:** «Одобряю план remainder-v0.1
+и §52-v0.2, включая52-config-v0.1 и52-UI-v0.2».
+The current caller/user instruction also mandates live Oracle/provisioning/release
+and automatic future-mission continuation. Record that mandate, not a current
+environment/driver/grants/metadata/freeze/provisioned namespace/native-ready
+assertion. Operator actual-readiness/provisioning/GO is a separately bounded task
+assigned through the parent, not commands in C52. It does not authorize production
+business mutation, schema change, live EMS, real-auth implementation/fallback or
+silent permission elevation. Future version baselines must still document and
+check their own owner/approval boundary against that mandate; C52 handoff does not
+approve APIs not yet designed or finite action coverage not yet reconciled.
+No request to reapprove §52 is made.
+
+**Exact canonical paths (all relative to backend/fixture-slice):**
+- `station-exit-cancellation-contracts.mts`: exact §52.3 context, empty draft,
+  validation, string-literal warning tuple, two-consent command, fixture/native
+  receipt discriminants/nullability, dedicated problem union and cancellation3.
+- `station-exit-cancellation-private-contracts.mts`: 52-config-v0.1 enabled
+  profile/ENV text contracts, fixture scenario manifest, purpose-bound binding/
+  review/certificate/new metadata wrappers and two-UNKNOWN waiver. Physical field
+  names are private certificate metadata only, never public SQL/driver/raw schema.
+- `station-exit-cancellation-ports.mts`: application boundary, pure rules/reader/
+  partner assessment and native operator admission/UoW requiring coordinator PLUS
+  own opaque allowance admission. Backend-private Snapshot/Decision/Result generic
+  parameters avoid inventing a canonical physical row layout; Result is constrained
+  to the dedicated native receipt's ACK/readback/preserved-recorded fields, and the
+  backend owns complete parsed originals and full independent preservation checks.
+- `contracts.mts`: ONLY append cancellation3 to CapabilityV1. Principal, identity,
+  old capability/grant arrays and wire shapes unchanged; no runtime grants.
+- `native-command-coordinator-contracts.mts`: ONLY append
+  `station-exit-cancellation` to NativeCommandOperationV1. Namespace/key/ports/old
+  writers unchanged; type support is not executable coordinator admission.
+- `test/station-exit-cancellation-contracts.test.mts`: exact compiler assertions
+  and three runtime-empty namespace assertions; no workflow/runtime conformance claim.
+- `test/station-exit-contracts.test.mts`: exact prior full-capability union and
+  exclusion updated for ONLY approved cancellation3, preserving Equal assertions.
+- `test/native-command-coordinator-contracts.test.mts`: exact prior operation
+  union updated for ONLY approved cancellation operation, no weakened assertion.
+Existing completion-plan header records approval only; no backlog/body rewrite.
+Total10 assigned files; no application/UI/coordinator implementation, query,
+runtime/grant, metadata collector, status/README/Git/lock/dependency change.
+
+**Evidence / checks actually performed:** S: bounded read-only controlling source
+AttendanceDataAction:292–300 and AttendanceDataModel:2197–2248; source catalog absent
+in docs listing, followed existing baseline links rather than duplicating inventory.
+D: read entire current §52.1–7 including exact config/UI; inspected §50 canonical
+ports, existing six contract tests, current package.json/tsconfig.json, private
+identity/metadata row schemas/exitTables structure. Static field-by-field type,
+problem/warning/receipt/source/NULL-clear/two-admission comparison and bounded
+readback of changed files; no credentials or operator values reproduced.
+Frozen Node24/TS5.9/Angular21.2/M3 and Oracle schema/abstract EMS retained, no new
+stack selection. Installed/supported current driver-client-database combination
+and live facts remain U, owned by the separate operations compatibility gate.
+
+**NOT RUN (all executable checks):** no execution/CLI tool is exposed to this
+architect session; git/curl availability in the environment is not an invocation
+interface. Node type stripping cannot validate compiler assertions. From
+`D:\AIProjects\SHFAI\backend\fixture-slice`, B52 must FIRST run:
+
+```text
+npm run typecheck
+node --test test/station-arrival-contracts.test.mts test/oracle-station-arrival-contracts.test.mts test/station-exit-contracts.test.mts test/shift-management-contracts.test.mts test/oracle-station-arrival-late-contracts.test.mts test/native-command-coordinator-contracts.test.mts test/station-exit-cancellation-contracts.test.mts
+```
+
+Expected gate: strict no-emit TSC exit0, all six existing contract namespace checks
+plus the new C52 check pass (all three new namespaces empty); failures return
+specific compiler/test evidence to C52 through caller before consumer widening.
+The other existing family-local Equal assertions remain exact and require no
+change because their Extract/Exclude already exclude the additive family.
+No tests/build/browser/AT/contrast/link/verifier/Docker/native/live/legacy execution
+or source-wide search was run here; no historical count presented as a fresh pass.
+
+**Transaction/authority acceptance:** validation0 DML/locks/sequence/function/
+allowance consumption/partner calls; <=30s preparation binds full originals and
+current server policy/classification, two independent consents. Native one existing
+row, exactly TWO NULL replacements, full originals/preservation, rows0/1/>1/
+undefined and abort/budget/ACK/readback cases as C52-02–04. Autonomous ledger commit
+limitations in baseline remain; no ledger/function call is added. ACK plus complete
+independent readback required; uncertain effects UNKNOWN, no automatic replay.
+Global employee guard/marker and own allowance remain consumed after EVERY attempt.
+Prior coordinated exit cannot cancel without separately controlled operator
+reconciliation/reprovisioning; consumed F1 fuse IMMUTABLE, cleared coordinator
+record does not reopen it or any independently consumed operation allowance.
+External writers/phantoms and storage-loss/power-loss remain operational risks,
+not solved by type brands or fingerprints. No new durable idempotency, rowversion,
+schema, broker/outbox/reset/retry/status API.
+
+**Measurable owner handoff / next action (through caller, no agents invoked):**
+- **B52 / backend:** run the above gate immediately, return exit codes and exact
+  failures/passes. Then implement approved dedicated config/parser/auth grants,
+  pure application/domain, fixture and native adapters/HTTP in disjoint assigned
+  feature paths. Preserve old profiles/grants/query/proof/fuse contracts; execute
+  C52-01–05/07–08, strict ENV/source/provider/NULL-nullable checks, mandatory direct
+  UoW BOTH-admission rejection tests and honest failure-window tests. Native remains
+  fail-closed pending CURRENT operator readiness, not pending another API approval.
+- **U52 / UI:** consume exact §52.3 types and reviewed 52-UI-v0.2, implement populated
+  isolated scenario journeys, both consents/drift, native-vs-simulated validation
+  (fixture BOTH ACK fields null), shared all-kind UNKNOWN/history interlock and
+  Hebrew/RTL/M3 focus/navigation; execute C52-06. Browser/AT/contrast/reflow evidence
+  is independent of C52 compile checks; no private binding/proof fields copied.
+- **QA:** independently verify C52-01–08 against accepted source shapes and actual
+  implementation; distinguish synthetic/protocol-double/native-live evidence.
+- **Operator/DBA/business owner via parent:** bounded current target/driver-client/
+  nullable-clear/constraints/grants/effects/purpose-bound partner review/freeze/
+  namespace/own allowance and GO task under user mandate. C52 performs none.
+- **Parent:** owns scheduling/status/Git and approval-boundary records for future
+  baselines; assigns disjoint shared-file integration ownership. No whole-project
+  completion, production release/readiness or operational provisioning claimed.
+
+---
+
+## 53. M02 populated FULL isolated test environment — operational composition v0.1
+
+**Task: SHF-M02-2026-11-01. Version: §53-v0.1. Status: DRAFT / OWNER REVIEW.**
+This is the concrete existing-API/fixture operational baseline under USER-APPROVED remainder-v0.1 and the November1 continuation mandate.
+The mandate requests isolated environment implementation/provisioning coordination, not approval inferred from a handoff.
+Parent may accept bounded synthetic composition within that request; any changed technical/wire/grant-family contract requires a versioned explicit decision.
+No new business API, identity shape, framework, database, schema, dependency or partner transport is proposed here.
+§52.8/C52-v0.2 approval stands unchanged; this append neither reapproves C52 nor declares B52/U52 complete.
+Only this document is edited; completion plan, parent status, application, canonical types, Docker, operator files and Git remain untouched.
+
+### 53.1 Evidence snapshot and concrete gaps
+
+**S:** `server.mts:startFromEnvironment` currently exposes all seven inquiry seams through `createRuntime`/`http-adapter.mts`.
+`CurrentRuntimeOptions` accepts current, search, schedule, items, card and attendance ports alongside the mandatory detail reader.
+General fixture startup requires `SHF_FIXTURE_ROWS`; the six optional loaders use `SHF_CURRENT_SHIFTS_FIXTURE`, `SHF_SHIFT_SEARCH_FIXTURE`,
+`SHF_MY_SHIFTS_FIXTURE`, `SHF_SHIFT_ITEMS_FIXTURE`, `SHF_EMPLOYEE_CARD_FIXTURE`, `SHF_ATTENDANCE_FIXTURE`; optional absence is not populated readiness.
+`FixtureReader`, `CurrentFixtureReader`, `SearchFixtureReader`, `MyShiftsFixtureReader`, `ShiftItemsFixtureReader`,
+`EmployeeCardFixtureReader`, `AttendanceFixtureReader` are relational synthetic adapters, not canned HTTP responses.
+Existing sample/helper dates, employee IDs and catalogs differ; concatenating them does NOT establish one coherent selected employee/day.
+Items explicitly compare their complete detail contexts with detail rows. Search/schedule/attendance have source-specific overlay predicates.
+**S:** `shift-management-runtime.mts:managementFixtureAdapters` rebuilds current/detail from committed `fixture.inspect().snapshot`.
+Its current executable supplies only those two inquiry readers; the other five require coherent existing-port adapters, not more routes.
+**S, one bounded snapshot:** C52 fixture helper selects9001/6201, clock12:00:00.123Z, T001; current catalog has empty employees/days.
+`CancellationDetailFixtureReader` overlays fresh exit state, but static optional loaders do not themselves observe its store mutations.
+At this snapshot server rejects native cancellation before construction; B52 is writing, so that observation is NOT a post-freeze verdict.
+No unfinished native application is imported/executed here; no B52 implementation file is reread after this scope's snapshot.
+**S:** Docker `local-demo-config.mjs` permits only explicit synthetic-empty-dev and supplies rows=[]; it cannot currently launch this FULL baseline.
+`local-demo-backend.mjs` blocks driver imports and read/native/endpoint factories; Compose separates internal demo network from published ingress.
+**D, caller only:** current loopback8080 demo is empty; private TEST process ENV absent, Oracle cannot connect, M26 blocked.
+Caller counts753/1863 and B52 fixture1900 are historical/reported checkpoints, not M02 coverage, current test passes or native readiness.
+**S/D source:** catalog absent in docs listing; use §§49–50/52 and linked inventories, not a duplicated invented catalog.
+Read-only controlling `ShiftDataModel.java:5801–5835` allocates sequence before validation and rolls overnight; `:3604–3660` has commented attendance checks.
+`AttendanceDataModel.java:2197–2248` requires recorded exit and NULL-clears only exit time/user. Those paths do not authorize execution.
+Baseline autonomous `SHF_INS_AND_RETURN_LASTID` INSERT/COMMIT, impure validation and separate legacy effects remain transaction risks.
+
+### 53.2 Two complementary modes, not one all-grants super-runtime
+
+**P FULLREAD:** catalog-scoped populated inquiry world, all seven existing read capabilities, all command modes explicitly disabled.
+**P SINGLE writer:** choose exactly ONE management fixture OR C52 cancellation fixture world per process/session, with all seven read ports wired.
+Management uses exactly existing ordered `shiftManagementActorCapabilities`, including its existing test-oracle-write literal even in fixture mode.
+That literal is an application grant, NOT a pool/native allowance. Do not silently remove it or union in other command families.
+C52 fixture uses exactly R7+cancellation prepare/commit, no cancellation:test-oracle-write; retain §52-config-v0.1 peer-mode exclusion.
+R7 exactly: shift-day:read, current-shifts:read, shift-search:read, my-shifts:read, shift-items:read, employee:read, attendance:read.
+Preserve EACH existing F1/F2/native-exit/late/management/cancellation grant family and its order; never concatenate all families to make UI buttons work.
+Stage, ordinary F2, native-only exit and §50 late are visibly unavailable in these Docker worlds by source/capability/admission.
+No fake late fixture capset, fixture masquerading as native, or default native-to-memory proxy; direct protocol suites remain separately labelled.
+Existing stage/station isolated suites may test their own explicit family, but do not widen this launcher or reopen operational F1.
+Identity remains `{principal:{subject,provider,synthetic,displayName,roles,capabilities,employeeId,resourceScope:{orgUnitIds}},dataSource}`.
+Synthetic subject=`synthetic:administrator`, provider=synthetic, synthetic=true, roles=[Administrator], employeeId=null; actor never selected staff.
+All backend capability/resource checks remain central, including same404 for missing/wrong selected scope where that contract specifies it.
+Explicit dev/test mock only; production/NODE_ENV production reject before factories/listen, auth errors never fall back, real provider absent fails explicitly.
+
+### 53.3 Exact proposed synthetic manifest and clock discipline
+
+Manifest is local fixture/test metadata, NOT a REST/config DTO addition; reuse current typed envelopes and pure helper constructors.
+Common FULLREAD/management catalog: M001 G01 “מוקד סינתטי”, T001 J01 “צוות סינתטי” parentM001; grant onlyT001.
+Negative sibling T002 underM001 and T003 underM002 are ungranted; no parent/sibling/prefix expansion.
+Selected employee1, private synthetic number001234567/key00123456, names “בדיקה / סינתטית”, status3, site7001.
+Catalog activity1 “פעילות סינתטית”, job11, innerJob101 active/T001, start-end reason1, cancel reasonC1; nullable labels tested separately.
+No real employee numbers/names, parameter values, credentials or personal records are copied; DecimalIds remain strings.
+Deterministic epoch=`2026-11-01T12:00:00.123Z`, zoneUTC; full civil seconds and null/source distinctions preserved.
+FULLREAD selected19001 baseline2026-11-01T11:00:00→18:00:00, type4, site7001, homeN, activity1, no overlay.
+Attendance19001 stage11:00:01/station11:01:00/exitnull, missingnull/briefing1; all projections derive these SAME facts.
+Items19001: state4 break11:20:00→11:35:00/duration15 and state7/type1 exception12:20:00→12:25:00/duration5, distinct starts.
+Their cancellationReason=null, break exit/return=null, remark “נתוני בדיקה בלבד”, sourceTEST; exception1 label “חריגה סינתטית”.
+Also19002 same employee2026-11-02T23:00:00→2026-11-03T01:00:00, no attendance/items; overlay/null and DST cases are separate test worlds.
+Management world keeps inquiry19001 but marks its dependent attendance/items unsupported; target19003 Nov4 09:00→10:00 is simple future/no dependencies.
+Create Nov5 09:00→10:00/activity1/site/remarknull; change19003 09:00→10:30 with reason1; cancel reasonC1, remarknull.
+CSV creates Nov6 09:00→10:00 and Nov7 09:00→10:00 for employee1 only; min30/max720/gap60, partner disabled/not-required.
+Reuse helper snapshot complete originals/text-storage and validity constructors; test validUntilNov10, derived site7001, no fake Oracle metadata.
+Generated create IDs come from fixture allocator and are captured in test metadata; never assert an unevidenced fixed allocator start.
+C52 world retains its EXISTING fixed9001/6201/999999991 synthetic envelope, T001/site7001, rather than translating its identifiers.
+Use exact version `shf-station-exit-cancellation-fixture-v1`, clockInstant above and existing scenarioId strings only.
+Ready planned11:00:00→12:01:00, station11:00:00, exit11:59:50; fixture partner assessment not-required, no report/exception/overlap dependencies.
+Selected C52 items is a truthful200 empty collection; populated break coverage belongs to FULLREAD, never injected into eligible cancellation.
+Ready, not-recorded, early-deferred, partner-required, partner-unknown and UNKNOWN/failure cases use the approved manifest/parser and existing suites.
+Programmatic injected Clock is fixture-only; tests hold/advance it explicitly, launcher uses an explicit ticking epoch after initialization.
+C52 TTL/window remains bounded; after expiry say stale/unavailable, never silently recreate dates/tokens or rebase already-created state.
+Optional launch epoch may be sampled once from actual today and derive future dates BEFORE world creation; record epoch/zone/scenario in local test metadata.
+No browser date override, new clock HTTP endpoint or undocumented ENV clock fallback. Native ALWAYS systemClock, never injected fixture time.
+
+### 53.4 Real application composition and isolation preflight
+
+Backend owner implements missing existing ports over ONE owned immutable/versioned synthetic snapshot per world, not independent copied loaders.
+Use existing use cases/domain validation, projections/typed DTOs and HTTP adapter; request filters/paging/sort are processed, not URL-matched canned200s.
+Management/C52 commits install shared business state and existing receipt/audit semantics atomically; subsequent read adapters derive a fresh snapshot.
+Keep legitimate per-family differences: cancelled shifts may leave search/schedule/current; cancelled context/detail uses that family's admitted rules.
+C52 exit clearing must immediately appear in detail AND attendance; card identity/catalog unchanged; items contexts remain coherent.
+No promise of global HTTP-read transaction across separate requests; each admitted read gets a consistent snapshot, fresh refresh preserves original filters.
+Minimal owner edits: existing fixture adapters/runtime composition plus focused tests and one small programmatic fixture launcher/helper; no new framework/DB/install.
+Serialize server/runtime/shared B52 writes AFTER caller declares native SOURCE STABLE/C52 freeze; no parallel edits against the current snapshot.
+DevOps later selects explicit dev isolated-fixture synthetic or test isolated-test-demo fixture config, correct matching browser appEnv and loopback Origin8080.
+Do not run existing oracle-read-only test.example.json as a fixture profile; change Docker's empty-only packaging guard only within assigned owner implementation.
+Clean child ENV allowlist rejects Oracle/native/coordinator/waiver/partner/credential inputs; no credentialfile/.env/operator fallback or inherited NODE_OPTIONS.
+Retain driver import tripwire AND forbidden read/native/resolveEndpoint factories, original API loopback, nonroot/read-only/no socket/mounts and no API publication.
+Verify internal Node network egress denial separately from bridge ingress; internal:true configuration is not runtime proof.
+Keep original proxy path/query/body/Origin, strict command-header allowlists/no injected auth/X-Forwarded defaults, no retry/interception/canned receipt.
+CLI preflight may report key-name/presence booleans only from its explicitly supplied process ENV; never print values/lengths or read excluded credential sources.
+Host Oracle TEST lane is SEPARATE: actual target/session/schema/metadata/client/support/freezes/allowances required, absent credentials currently block operator.
+Docker synthetic FULL is not Oracle-connected, production, real authentication or partner completion; Windows native client cannot be assumed available in Linux.
+User provisioning coordination permission does not resolve exact namespace/employee scope/cross-host writer exclusion; operator+parent must bind those facts.
+Never reset/reopen consumed F1/employee guard, change namespace/day/UUID to evade consumption, or read live data to “populate” these fixtures.
+Local synthetic coordination doubles are allowed only as test evidence, never operational authority/fallback; native single-attempt/UNKNOWN limitations remain.
+
+### 53.5 Measurable acceptance, checks and owner continuation
+
+QA fixture query Q=`attendanceDate=2026-11-01&timeFrom=11:00&timeTo=11:00&teamCodes=T001&innerJobCodes=101&workLocations=site`.
+FULLREAD requires200 populated: `/api/v1/current-shifts?mode=at&attendanceDate=2026-11-01&currentTime=12:00`,
+`/api/v1/shift-search?Q`, `/api/v1/my-shifts?mode=selected&employeeId=1&dateFrom=2026-11-01&dateTo=2026-11-07`,
+`/api/v1/employees/1/shift-days/19001`, that path+`/breaks-and-exceptions`, `/api/v1/employees/1/operational-card`, `/api/v1/attendance?Q`.
+Q denotes exact substitution, not literal wire key; require all four existing filter/context GETs200 with scoped populated options and correct defaults.
+Assert SAME employee/day/times/zone, nonempty expected items, source=isolated-fixture per each DTO, JSON/problem headers/no-store/nosniff and original bounds.
+Wrong pair/unknown employee yields existing404 where specified; wrong filters yield honest200 empty or existing403, not invented universal404/forced rows.
+Missing port stays explicit503, malformed/duplicate query/body/header denied; deny ungranted siblings, self schedule with synthetic employeeIdnull and production mock.
+Management create/change/cancel and UTF8/Windows1255 Hebrew CSV use real validation→review→explicit command, atomic all-row apply and fresh cross-read.
+Invalid one-row CSV applies0; doubleclick/conflicting UUID/stale token/abort before install produce existing classified results, no replay or auto resend.
+C52 pre-existing synthetic-legacy exit sends ONE two-consent command, clears exit/user only, preserves all other facts, receipt simulated with BOTH ACK fieldsnull.
+Cancel/Back/Escape before dispatch0 effects; post-dispatch loss/malformed/unknown stays UNKNOWN across history/reload and all-kind interlock, not inferred success.
+Time/branch warnings, minutes0/overnight/CSV rollover, native-only disabled labels, HebrewRTL/LTR IDs, keyboard/focus and Back filter/page/scroll drift regress.
+`/healthz` static-only; `/readyz` original packaging identity/process probe is NOT seven-port coverage. FULL readiness requires the above separate QA probes.
+Oracle DML/connection/driver/endpoint/partner counts0 for every Docker fixture journey; simulated memory commits never claim native ACK or EMS completion.
+Exact existing owner checks from backend/fixture-slice: `npm run typecheck`; `node --test test/shift-management-entrypoint.test.mts test/shift-management-application.test.mts test/shift-management-http.test.mts test/shift-management-csv.test.mts test/station-exit-cancellation-fixture.test.mts test/station-exit-cancellation-http.test.mts test/environment-profiles.test.mts`; then `npm test`.
+After SOURCE STABLE and assigned packaging changes: `powershell.exe -NoProfile -File scripts\Build-Shifter.ps1 -Profile dev -Validation`; `powershell.exe -NoProfile -File scripts\Test-Docker-Shifter.ps1`; owner selects populated profile before Compose config/up and curl probes.
+No nonexistent FULL launcher command is claimed runnable; new mode-selection switches/entrypoint must be documented and tested by its backend/DevOps owner.
+**Actually checked:** bounded source/docs/helper/config read and manual composition/contract review; appended text readback only, no executable tool exposed.
+**NOT RUN:** all commands/tests/TSC/build/Docker/curl/browser/AT/contrast/egress/compatibility/Git/hash/link/verifier checks; no agents, live read/DML, credentials, setup or reset.
+**Owners/next:** parent reviews/accepts §53-v0.1 operational bounds and freezes B52 shared sources; backend then ports/shared world/programmatic launcher; UI fixture-only Docker modes/labels; DevOps profile/entrypoint and actual deployment; QA integration evidence.
+Operator owns absent TEST ENV/client and actual identity/namespace/writer-exclusion/current evidence; M26 remains blocked, R01 separate, no whole-legacy completion claim.
+**Approval request:** parent/user review this DRAFT composition, not a new business API; approve any discovered material contract delta separately before consumers change it. Next safe implementation is M02 after that review and C52 native freeze, within the explicitly requested isolated environment.

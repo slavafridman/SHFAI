@@ -1,5 +1,204 @@
 # SHF backend: seven reads, isolated arrivals, and default-off controlled native TEST arrivals
 
+## B52 native implementation — offline SOURCESTABLE
+
+Approved baselines: **52-v0.2 / C52-v0.2**, **52-config-v0.1**, **52-UI-v0.2**
+(design §52.8 records approval on 2026-11-01 13:56+02).
+Canonical DTO/port/private-contract sources and their assertions were not edited.
+The dedicated native path is implemented; this is bounded subset completion,
+not application parity, deployed Oracle certification or a live GO.
+
+Implemented here:
+- Full-instant ordinary-original/window rules, conservative civil/DST deferral,
+  existing missing/late/flag/report/dependency blockers and purpose/original-bound
+  synchronous partner assessment. No partner transport or completion.
+- Strict empty draft, two independent confirmations, source/resource/actor-bound
+  preparations capped at30s; fixture authority retained after attempts/UNKNOWN.
+- Dedicated default-OFF mutually exclusive config/ENV/Origin validation, synthetic
+  read7+cancellation2 fixture grants and read7+cancellation3 native-profile grants;
+  production/invalid configuration rejection before pool factories/listening.
+- Actual `startFromEnvironment` fixture composition and native Node HTTP routes:
+  `GET .../station-exit-cancellation/context`,
+  `POST .../station-exit-cancellation/validations` with `{}`,
+  `POST .../station-exit-cancellation/commands` with C52 command.
+  POST requires exact allowlisted loopback Origin. Immutable context GET accepts
+  absent Origin (standard same-origin Chrome GET) or an exact allowlisted Origin;
+  foreign or duplicate Origin remains rejected. No query; JSON16KiB/depth8;
+  request5s/no-store.
+- Complete synthetic fixture before-images with simulated two-field clear only;
+  same-store selected-detail refresh. Manifest time advances monotonically in
+  executable fixture mode; isolated unit tests control time explicitly.
+- Shared coordinator runtime allowlist adds only `station-exit-cancellation`.
+  Synthetic temporary-directory tests show prior native exit consumption blocks
+  cancellation, and clearing/restoring a business field never reopens authority.
+  No operator filesystem provisioning is supplied.
+  The dedicated native UoW uses current operation-specific metadata, complete
+  physical supported-type projections, both nullable exit columns and their
+  exact original values, full baseline/overlay/employee/site/policy/dependency
+  evidence, ordered NOWAIT locks and fresh pure redecision. One guarded UPDATE
+  clears only STATION_EXIT_TIME and STATION_EXIT_USER. No old writer builder,
+  insertion, sequence, business function, event, mood or partner call is reused.
+  Unknown nonneutral columns/unsupported types/ambiguous civil instants defer.
+  Both owned opaque operation allowance and employee-wide global admission are
+  checked synchronously with explicit/ambient deadlines pre-DML/pre-COMMIT.
+  Both stay consumed after zero effects, rollback, success or UNKNOWN.
+  Writer ACK and release precede a new independent identity-checked READ ONLY
+  full preservation readback. Lost ACK, mismatched/malformed readback, deadline
+  loss, uncertain rollback or post-attempt close failure cannot yield a receipt.
+
+### Offline UI/QA replacement seam
+
+**C52 transport correction (2026-11-01):** “Missing/foreign Origin denied” in
+§52 config prose applies to POST validations/commands; context GET reuses the
+existing `stage-arrival-http.mts` optional-Origin admission. This clarifies the
+observed same-origin browser transport defect, not public C52 payload semantics.
+Authentication, direct employee/day/team scope, capability checks, empty GET
+body and read-only business behavior are unchanged. No Origin is synthesized
+from Host; no CORS/POST/identity/commit authority is widened. Existing Fetch
+Metadata fields remain optional ignored metadata, never authentication.
+
+`test/station-exit-cancellation-fixture-environment.mts` exports
+`cancellationFixtureEnvironment(scenarioId)`, `cancellationFixtureConfig` and
+`cancellationFixtureOrigin`. It supplies synthetic explicit read-loader inputs,
+selected employee9001/day6201/teamT001, a scenario/clock manifest and port0.
+Pass the returned object directly to `startFromEnvironment`; use `server.address()`
+for the loopback port and `stopBackendServer` for owned cleanup.
+Never merge operator/private/process ENV into this helper. It supplies no Oracle
+authority, certificates, credentials, real-provider verification or native fallback.
+The actual three-route journey (including selected-detail refresh) is exercised
+by `test/station-exit-cancellation-http.test.mts`.
+Additional seven-read fixture loaders remain explicitly supplied by consumers;
+this helper is not an all-menu populated-world delivery.
+
+### Native offline UI/QA protocol replacement seam
+
+`test/native-exit-cancellation-double.mts` exports `CancellationOracleDouble`
+and `cancellationNativeConfig` / `cancellationSelection`. Call
+`await double.certifyCancellation()`, then pass `double.environment()` directly
+to `startFromEnvironment` with injected `read: async () => double.readPool`,
+`native: async () => double.cancellationWritePool` and an isolated
+`resolveEndpoint` double. Use `stopBackendServer`, then `double.dispose()`.
+Never merge process/operator ENV. Every identity/row/proof/review and TEMP guard
+is synthetic. The real factory/HTTP/UoW/session protocol runs, not a live pool.
+Native application time always uses systemClock; the fixture-clock argument
+cannot substitute for it. Required/unknown partner review remains deferred.
+The dedicated limited-provider test preserves precisely DBA_TRIGGERS and
+DBA_ROLE_PRIVS as unknown-user-waived; no old waiver or digest is accepted.
+
+Private native ENV **key names only**:
+`SHF_APP_ENV`, `SHF_ORACLE_CONFIG`, `SHF_ORACLE_PORT`,
+`SHF_STATION_EXIT_CANCELLATION_ORIGINS`,
+`SHF_TEST_ORACLE_EXIT_CANCELLATION_WRITE_ENABLED`,
+`SHF_NATIVE_EXIT_CANCELLATION_BINDING`,
+`SHF_NATIVE_EXIT_CANCELLATION_CONNECT_STRING`,
+`SHF_NATIVE_EXIT_CANCELLATION_USER`, `SHF_NATIVE_EXIT_CANCELLATION_PASSWORD`,
+`SHF_NATIVE_EXIT_CANCELLATION_CLIENT_LIB_DIR`,
+`SHF_ORACLE_CONNECT_STRING`, `SHF_ORACLE_USER`, `SHF_ORACLE_PASSWORD`,
+`SHF_ORACLE_CLIENT_LIB_DIR`, `SHF_NATIVE_COMMAND_COORDINATOR_CONFIG`,
+`SHF_TEST_ORACLE_METADATA_LIMITED_ENABLED`.
+No root-file, old-EXIT, fixture, real-authentication or missing-port fallback.
+
+### Cumulative B52 backend manifest
+
+All paths below are relative to `backend/fixture-slice/`. This inventory includes
+the 22-file fixture checkpoint and 16 additional native paths (38 total);
+it excludes the eight architect-owned canonical files. No Git/status changes.
+
+```text
+access-policy.mts
+contract-validation.mts
+environment-profiles.mts
+http-adapter.mts
+native-command-coordinator.mts
+native-metadata-limited.mts
+native-station-exit-cancellation-admission.mts
+native-station-exit-cancellation-config.mts
+native-station-exit-cancellation-metadata.mts
+oracle-cancellation-transaction.mts
+oracle-stage-arrival-snapshot.mts
+oracle-station-exit-cancellation-application.mts
+oracle-station-exit-cancellation-snapshot.mts
+oracle-station-exit-cancellation-sql.mts
+oracle-station-exit-cancellation-uow.mts
+oracle-station-exit-snapshot.mts
+README.md
+runtime-config.mts
+server.mts
+stage-arrival-http.mts
+station-exit-cancellation-application.mts
+station-exit-cancellation-config.mts
+station-exit-cancellation-domain.mts
+station-exit-cancellation-errors.mts
+station-exit-cancellation-fixture.mts
+station-exit-cancellation-http.mts
+station-exit-cancellation-validation.mts
+synthetic-identity.mts
+test/native-command-coordinator.test.mts
+test/native-exit-cancellation-config.test.mts
+test/native-exit-cancellation-double.mts
+test/native-station-exit-double.mts
+test/oracle-station-exit-cancellation.test.mts
+test/oracle-station-exit-cancellation-http.test.mts
+test/station-exit-cancellation-domain.test.mts
+test/station-exit-cancellation-fixture.test.mts
+test/station-exit-cancellation-fixture-environment.mts
+test/station-exit-cancellation-http.test.mts
+```
+
+No live Oracle/DNS/EMS checks were run or private operator files inspected.
+Approved TESTENV parameters were absent at handoff; this is missing provisioning,
+not a database fault. No credential-source fallback was searched.
+Real current evidence, external-writer exclusion and separate live GO
+remain operator/DBA/business-owner responsibilities, not an offline coding gate.
+Legacy evidence is read-only `AttendanceDataModel.java:2197–2248` (absent-exit
+rejection; only exit time/user NULL clear); legacy was not built/executed.
+Fixture/protocol tests do not certify deployed Oracle semantics or production.
+
+### Final offline checks (Windows / Node v24.21.0)
+
+Run from `backend/fixture-slice/`:
+
+```powershell
+node --test test/native-exit-cancellation-config.test.mts test/oracle-station-exit-cancellation.test.mts test/oracle-station-exit-cancellation-http.test.mts test/station-exit-cancellation-contracts.test.mts test/station-exit-cancellation-domain.test.mts test/station-exit-cancellation-fixture.test.mts test/station-exit-cancellation-http.test.mts
+npm run typecheck
+node --test "test/*contracts.test.mts"
+npm test
+```
+
+Final results: cumulative cancellation focus116/116, TypeScript clean,
+canonical contract suites7/7, full backend1981/1981 (natural count;0 failures,
+0 cancelled,0 skipped,0 todo;24.071s final full run). Existing budgets were
+not increased. Initial native TDD intentionally failed on missing modules;
+intermediate type/import/error-expectation failures were repaired. The first
+full regression exposed a fixture Oracle-import prohibition failure caused by
+an eager new native import; native loading is now conditional, the focused
+prohibition check passed, and the final full suite passed.
+These are static/synthetic protocol checks, not live Oracle/DNS/client/EMS
+verification. No dependencies, lockfiles, schema, frontend, Docker, canonical
+contracts, legacy files or private operator records were edited.
+
+### C52 GET Origin correction — offline SOURCESTABLE
+
+The correction adds five tests without removing any test: cancellation focus
+**121/121** (previous116), canonical contracts **7/7**, full backend
+**1986/1986** (previous1981), TypeScript clean. Full run:23.195s;
+0 failures/cancelled/skipped/todo. The initial absent-Origin regression reproduced
+403 before the one-line handler fix; test-harness frozen-runtime/error-expectation
+and readonly-tuple typing failures were repaired before these final gates.
+
+Changed-source manifest for this correction only:
+- `station-exit-cancellation-http.mts`
+- `test/station-exit-cancellation-http.test.mts`
+- `test/oracle-station-exit-cancellation-http.test.mts`
+- `README.md`
+
+Actual loopback HTTP tests use synthetic fixture/native protocol doubles and
+check POST rejection before application port calls, retained authentication and
+resource scope, immutable GET facts, no writer/sequence/row locks, and unchanged
+synthetic allowance/coordinator files. No live Oracle/DNS/EMS, frontend rebuild,
+browser acceptance, or M02 work was performed. Parent U52 acceptance must use a
+fresh Node process with the existing unchanged Angular assets.
+
 ## B49 selected-employee shift management — approved `49-v0.1`
 
 The bounded §49 implementation includes CSV parsing, strict canonical draft/command/JSON

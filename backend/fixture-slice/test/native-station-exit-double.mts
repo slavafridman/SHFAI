@@ -94,7 +94,7 @@ export class ExitOracleDouble {
   }
   certify() { this.binding.exitMetadataDigest = exitMetadataDigest(this.binding, this.proof); }
   dispose() { rmSync(this.directory, { force: true, recursive: true }); }
-  private async query(sql: string, binds: BindParameters, source: "read" | "write") {
+  protected async query(sql: string, binds: BindParameters, source: "read" | "write") {
     this.sql.push({ sql, binds: structuredClone(binds), source });
     const tag = /\/\* ((?:native|exit):[^*]+) \*\//.exec(sql)?.[1] ?? (sql.startsWith("SET") ? "readonly" : "probe");
     await this.point(`${source}:${tag}`);
@@ -117,7 +117,14 @@ export class ExitOracleDouble {
     if (tag === "exit:candidates") {
       return [{ day: this.rows.SHF_EMPLOYEE_DAY!, change: this.rows.SHF_DAY_CHANGES }, ...this.extraCandidates]
         .map(c => Object.fromEntries([...Object.entries(c.day).map(([k, v]) => [`d_${k}`, v]),
-          ...exitTables.SHF_DAY_CHANGES.map(k => [`c_${k}`, c.change?.[k] ?? null])]));
+          // Project the currently observed synthetic overlay, not the old
+          // minimum table contract. Keep day entries literal so missing-column
+          // fault fixtures still reach the real parser unchanged.
+          ...this.proof[0].filter(r => record(r) && r.tableName === "SHF_DAY_CHANGES")
+            .map(r => {
+              if (!record(r) || typeof r.columnName !== "string") throw Error("Isolated invalid column");
+              return [`c_${r.columnName}`, c.change?.[r.columnName] ?? null];
+            })]));
     }
     if (tag.startsWith("native:row:") && record(binds)) {
       const table = tag.slice("native:row:".length);

@@ -18,6 +18,8 @@ import { EmployeeName } from './employee-name';
 import { lateIdentity } from './station-arrival-late-contract';
 import { StationArrivalSession } from './station-arrival-session';
 import { actorBinding } from './stage-arrival-contract';
+import { cancellationSource } from './station-exit-cancellation-contract';
+import { StationExitCancellationSession } from './station-exit-cancellation-session';
 import {
   detail, displayTime, id, identity, problem,
   type EmployeeShiftDayResponseV1, type IdentityResponseV1,
@@ -46,6 +48,7 @@ const COPY = {
 })
 export class ShiftDayPage {
   private readonly station = inject(StationArrivalSession);
+  private readonly cancellation = inject(StationExitCancellationSession);
   readonly journey = inject(ViewHistory);
   private readonly api = inject(SliceApi);
   private readonly navigation = inject(ListNavigation);
@@ -273,6 +276,25 @@ export class ShiftDayPage {
       lateIdentity(p) && row !== null && row.dataSource === 'oracle' &&
       row.effectiveShift.startLocal !== null && row.effectiveShift.endLocal !== null &&
       p.principal.resourceScope.orgUnitIds.includes(row.employee.orgUnitId);
+  }
+  canOpenCancellation(): boolean {
+    const row = this.row(), p = this.principal(), source = cancellationSource(p);
+    return this.state() === 'success' && !this.fromDiagnostic() && source !== null && row !== null &&
+      row.dataSource === (source === 'oracle-test' ? 'oracle' : 'isolated-fixture') &&
+      row.effectiveShift.startLocal !== null && row.effectiveShift.endLocal !== null &&
+      p !== null && p.principal.resourceScope.orgUnitIds.includes(row.employee.orgUnitId);
+  }
+  openCancellation(event: MouseEvent) {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
+    event.preventDefault();
+    const row = this.row(), p = this.principal(), source = cancellationSource(p);
+    if (!this.canOpenCancellation() || !row || !p || !source ||
+      row.effectiveShift.startLocal === null || row.effectiveShift.endLocal === null) return;
+    this.cancellation.selection = { employeeId: row.employeeId, shiftDayId: row.shiftDayId,
+      attendanceKey: { shiftDayId: row.shiftDayId }, orgUnitId: row.employee.orgUnitId,
+      name: `${row.employee.firstName} ${row.employee.lastName}`, startLocal: row.effectiveShift.startLocal,
+      endLocal: row.effectiveShift.endLocal, dataSource: source, actor: actorBinding(p) };
+    void this.router.navigate(['/employees', row.employeeId, 'shift-days', row.shiftDayId, 'station-exit-cancellation']);
   }
   openLate(event: MouseEvent): void {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;

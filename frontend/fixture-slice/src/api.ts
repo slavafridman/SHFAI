@@ -11,7 +11,9 @@ import type { NativeStageArrivalCommitV1 } from '../../../backend/fixture-slice/
 import type { StationArrivalDraftV1, StationArrivalCommitV1 } from '../../../backend/fixture-slice/station-arrival-contracts.mts';
 import type { NativeStationArrivalCommitV1 } from '../../../backend/fixture-slice/oracle-station-arrival-contracts.mts';
 import { environment } from './environments/environment';
+import { id } from './contract';
 import { emptyExitDraft, exitCommand, type StationExitCommitV1 } from './station-exit-contract';
+import { cancellationDraft, cancellationCommand, type CancellationCommandV1 } from './station-exit-cancellation-contract';
 import { lateDraft, lateCommand, type NativeLateStationDraftV1, type NativeLateStationCommitV1 } from './station-arrival-late-contract';
 
 @Injectable({ providedIn: 'root' })
@@ -39,6 +41,26 @@ export class SliceApi {
   stationExitContext(employeeId: string, shiftDayId: string) {
     return this.http.get<unknown>(this.exitBase(employeeId, shiftDayId) + '/context',
       { cache: 'no-store', timeout: 5000, observe: 'response' }).pipe(map(r => this.arrivalBody(r, 65536)));
+  }
+  cancellationContext(employeeId: string, shiftDayId: string) {
+    return this.http.get<unknown>(this.cancellationBase(employeeId, shiftDayId) + '/context',
+      { cache: 'no-store', timeout: 5000, observe: 'response' }).pipe(map(r => this.arrivalBody(r, 65536)));
+  }
+  cancellationValidate(employeeId: string, shiftDayId: string, draft: Record<string, never>) {
+    if (!cancellationDraft(draft)) throw Error('Invalid cancellation draft');
+    return this.http.post<unknown>(this.cancellationBase(employeeId, shiftDayId) + '/validations', draft,
+      { cache: 'no-store', timeout: 5000, observe: 'response', headers: { 'Content-Type': 'application/json' } })
+      .pipe(map(r => this.arrivalBody(r, 16384)));
+  }
+  cancellationCommand(employeeId: string, shiftDayId: string, command: CancellationCommandV1) {
+    if (!cancellationCommand(command)) throw Error('Invalid cancellation command');
+    return this.http.post<unknown>(this.cancellationBase(employeeId, shiftDayId) + '/commands', command,
+      { cache: 'no-store', timeout: 5000, observe: 'response', headers: { 'Content-Type': 'application/json' } })
+      .pipe(map(r => this.arrivalBody(r, 16384)));
+  }
+  private cancellationBase(employeeId: string, shiftDayId: string) {
+    if (!id(employeeId) || !id(shiftDayId, 10)) throw Error('Invalid cancellation resource');
+    return `${environment.apiBasePath}/v1/employees/${employeeId}/shift-days/${shiftDayId}/station-exit-cancellation`;
   }
   stationExitValidate(employeeId: string, shiftDayId: string, draft: Record<string, never>) {
     if (!emptyExitDraft(draft)) throw Error('Invalid exit draft');
