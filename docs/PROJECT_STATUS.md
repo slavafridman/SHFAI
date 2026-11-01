@@ -57,10 +57,17 @@ B-D1 actor/provenance, B-D2 mandatory remark, B-D3 event time/length and B-D4
 status/report/no-mood policy remain unresolved. Automatic continuation does
 not authorize stronger unverified policy or fabricate missing facts.
 Current approved TEST worlds remain running; their state was not reset.
-Next action: publish standalone preflight and reviewed M04 prerequisites,
-then obtain protected TEST process configuration and concrete B-D1-D4 decisions
-before new early-exit canonical/business implementation. Full project and
-Oracle-connected/production release remain blocked, not marked complete.
+Operator-preflight and reviewed M04 source package were published as
+6f890cbfe886db0d74ce018aa2beb996f04d2098, exactlyfive files. Syntax/privacy/
+preservation and standard31/10000/454/436-link/293-anchor/20-capture checks
+passed; one source-line range was corrected. Direct remote matched HEAD,
+cached0/0, index/conflicts empty. All25 unrelated statuses and external
+checkpoint (+131/-1) remain unchanged/unstaged. Full2101/66 focused tests were
+not repeated during publication; actual CLI remained BLOCKED with child ACK.
+Next action: obtain protected TEST process configuration and concrete
+B-D1-D4 business decisions before new early-exit canonical/implementation.
+Full project and Oracle-connected/production release remain blocked, not
+marked complete; permissions alone do not supply these missing facts.
 
 Current approval update,2026-11-01 at13:56+02: user explicitly approved
 remainder-v0.1,52-v0.2,52-config-v0.1 and52-UI-v0.2, and requested automatic
