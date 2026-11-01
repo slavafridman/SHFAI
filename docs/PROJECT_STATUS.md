@@ -27,8 +27,8 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-RESUME-29 — current resume checkpoint
 
-**State: approved50 IMPLEMENTED AND PUBLISHED; local Docker deployment
-implementation authorized by the user's2026-11-01 continuation request.**
+**State: approved50 IMPLEMENTED AND PUBLISHED; local Docker demo DEPLOYED,
+verified and published under the user's2026-11-01 continuation request.**
 
 SHF-DOCKER-LOCAL-51 current step: local Desktop Linux engine29.4.3 and
 Compose5.1.3 responded successfully; historical engine HTTP500 is superseded
@@ -89,9 +89,19 @@ Host readiness/identity200 pairs and final Docker health passed. Seven read
 families return truthful empty/missing/dependency400/404/503 responses;
 native commands403. This deployment is an empty synthetic DEV demo, not
 populated parity, real authentication, live Oracle/EMS, UAT or full WCAG.
-Next action: publish exact Docker/script/shell/doc scopes with partial
-root README/status staging, preserve unrelated user edits, then record the
-verified remote result. Leave the accepted owned demo running for the user.
+Feature8580554be2eb19071722acf56b4966cbaede002d is published: exactly27
+authorized Docker/script/shell/doc files. Scoped manifest/privacy/whitespace,
+history preservation, six PowerShell parses and six MJS syntax checks passed.
+Direct remote matched HEAD, cached0/0 and index empty; unrelated edits,
+README introduction and historical user checkpoint sections remain unstaged.
+No service operation or build was repeated during publication. Containers
+remain at the verified image IDs; packaged source provenance retains its
+actual precommit4fea20e identity, not a fabricated new build revision.
+This closes the requested local Docker deployment milestone. Leave both
+accepted owned services running. The root README provides explicit startup,
+port preflight, opt-in and ownership-scoped stop commands. Next safe project
+action is the next source-backed workflow baseline and explicit API/UI approval;
+no whole-rewrite, production or live-system completion is claimed.
 
 #### SHF-FOUNDATION-PUBLISHED-29 — verified handoff
 
