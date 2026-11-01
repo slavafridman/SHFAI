@@ -6482,3 +6482,186 @@ First command checks compiler assertions; Node type stripping alone cannot. Seco
 **Not run:** full tests/build/browser/ZIP/automated diff/hash/link verifier/Git/publication, Oracle/DNS/broker/legacy execution, filesystem provision/allowance/fuse IO. No executable success, operational readiness or whole-feature completion is claimed. Parent/evidence owner may separately run the normal design verifier in its assigned output-write scope.
 
 **Risks/blockers and owners:** compiler/focused execution unavailable here → backend owner initial gate; required runtime coordinator enforcement across all native entrypoints still unimplemented → backend owner before any enablement; dependent UI and independent QA → respective owners after same canonical gate. System-time strict lateness/floor0/minute expiry, full five-column/preserved-field readback, external writer exclusion, ordinary rollback versus autonomous/unknown trigger effects remain runtime acceptance obligations. Current metadata/charset/support/partner/reason obligations, two waived unknown scopes and separately approved target/provisioning/exclusion/retention/reconciliation packet → operator/business/DBA/platform; required or unknown partner/reason-specific requirements defer. These are not missing coding approval. **Next safe action:** parent hands this exact six-path `50-v0.1` source to backend for initial gating and mandatory coordinator/late implementation; then UI/QA consumers. No live expansion, repeated approval request or completed-feature claim.
+
+## 51. Docker local deployment — Docker-v0.1 operational package
+
+**Task:** SHF-ARCH-51-DOCKER-LOCAL-v0.1; **date:** 1 November 2026; **status: REVIEW / proposed, NOT deployed.**
+**D, caller:** approved50 complete at1d5bc6a, final4fea20e; not independently Git-verified here.
+The current user request authorizes bounded local dev/demo packaging and service operation,
+not production, live TEST writes, registry publication, shared hosts or Docker-engine changes.
+This section proposes only deployment mechanics; §§49–50 API/identity/domain contracts stand.
+
+### 51.1 Actual source boundary and listener decision
+
+**S:** `backend/fixture-slice/server.mts:startFromEnvironment` validates explicit profiles/config,
+branches into exclusive management fixture startup or existing fixture readers, and finally
+calls `server.listen(port,"127.0.0.1")`; `shift-management-runtime.mts` does the same.
+`http-adapter.mts:createLoopbackServer` also rejects nonloopback hosts at the listen seam.
+There is **no existing bind override**; publishing an API container port cannot fix this.
+`environment-profiles.mts:loadEnvironmentConfig/validateEnvironmentProfile` rejects production
+synthetic mode and missing real provider before factories; NODE_ENV=production conflicts with DEV.
+`server.mts` lazily imports Oracle adapters only in Oracle/native branches; `oracle-session.mts`
+itself imports oracledb and its pool factory initializes Thick Client. Packaged closure presence
+is not driver execution. No fixture deployment may enter those branches or initialize a pool.
+**S/D:** existing Dockerfiles/build script are production-only preparation; NGINX `/api` returns503,
+`/healthz` means static-only, backend defaults fail startup; `.dockerignore` permits production stage only.
+README/checkpoint report historical engine HTTP500, not current engine availability or image success.
+
+**P recommended:** one local-demo container containing the existing Node runtime and approved
+unprivileged NGINX runtime, sharing loopback; NGINX proxies to `127.0.0.1:4301`.
+No application transport change. DevOps must prove the exact Node/NGINX executable and shared-library closure
+from reviewed bases; no guessed binary copy, apt upgrade, supervisor dependency or Oracle client.
+A packaging-only process owner plus Docker `init:true` owns both children and signal/reap behavior.
+If that closure/process gate cannot be met, **stop**; do not silently introduce a bridge or bind change.
+Alternative two-service isolated network requires a backend-owned, versioned, explicitly approved
+local-demo-only bind option, validated for explicit dev/test + isolated-fixture + synthetic opt-in,
+rejecting production, Oracle/native modes and malformed/absent opt-in before listen.
+Generic HOST/SHF_LISTEN_HOST=0.0.0.0, patching the listen guard, and production loose binding are rejected.
+That alternative is NOT approved by this section or needed for the recommendation.
+### 51.2 Artifact, fixture and isolation contract
+
+DevOps owns Docker/scripts/Compose/root README changes under the new request; frontend stays unchanged.
+Explicit dev|test selection, no default DEV; project `shf-local-demo`, service `demo`, mapping `127.0.0.1:8080:8080`.
+No API port publication, host networking, Docker socket, privileged mode, devices or host source mounts.
+Use a project-owned internal network, nonroot UID/GID101 after build-time ownership normalization,
+read_only=true, cap_drop=ALL, no-new-privileges, init=true, restart="no", stop_grace_period=20s.
+Bounded tmpfs (e.g. /tmp,32MiB,noexec/nosuid); verify/configure NGINX PID/cache there; no durable volumes/coordinator/outbox/broker.
+Internal-network isolation plus no host aliases/services is required; runtime egress denial must be tested,
+not inferred from loopback host publication. Build-time public dependency downloads are a separate boundary.
+
+Build from the canonical selected-profile developer ZIP/stage after source-stable full `-Validation`.
+Check canonical ZIP names/bytes/hashes and `.mts` closure including types; exact allowlist, no recursive COPY/broadened production context.
+Allow only that closure/manifests/locks, selected browser assets/notices, approved inert examples and
+explicit packaging files plus validated public synthetic fixture data; no tests, legacy, private operator
+files, .env, secrets, host node_modules, traces/screenshots or Oracle client. Preserve production preparation.
+Build accepts reviewed immutable linux/amd64 base digests only; no tags-only/invented digest or registry push.
+Record actual Node24.21.0/npm11.19.0, TS5.9.3, Angular21.2.25/CLI-build21.2.27,
+Material/CDK21.2.14, Vitest4.0.9 and locked oracledb26.0.0; install locked runtime dependencies
+without lifecycle scripts. DevOps verifies current vendor support, provenance/security and Linux closure;
+Windows package versions/history do not verify container support or Oracle interoperability.
+
+Minimal supported demo is explicit SHF_APP_ENV=dev, nonproduction NODE_ENV, SHF_FIXTURE_PORT=4301,
+SHF_FIXTURE_CONFIG from approved inert `config-examples/dev.example.json`, SHF_FIXTURE_ROWS='[]'.
+Its DEMO grant/UTC/disabled stage command are unchanged; examples are never automatically authentication defaults.
+For test, require an explicitly validated isolated-fixture config with isolated-test-demo deploymentClass;
+existing test.example.json is oracle-read-only with unconfirmed scope and **must NOT be used as runnable demo**.
+Construct an exact clean child-environment allowlist: no inherited SHF_ORACLE_*, SHF_NATIVE_*, native write
+flags, coordinator/metadata keys, partner settings, secrets or operator session inputs. Reject supplied
+forbidden inputs/profile-source mismatch; do not merely hide them in documentation or sanitize auth failures.
+Synthetic Administrator remains visibly synthetic, employeeId=null; backend owns all capability decisions.
+No new principal/capability shape, authentication relaxation or implicit fallback; real mode still fails explicitly.
+
+### 51.3 Routing, readiness and lifetime
+
+Keep frozen browser {appEnv,apiBasePath:"/api"} and existing Hebrew/RTL Material UI/deep-link routes.
+Proxy `/api` and `/api/*` without rewriting path/query/body/Origin or fabricating authentication headers.
+Do not add X-Forwarded-* headers blindly: command handlers enforce an exact header allowlist.
+Preserve backend JSON/problem status, no-store and response limits; no SPA fallback for any API error.
+Disable proxy retry, error interception for real backend503 and request/response buffering for commands;
+connection failure maps to gateway503 with a distinct non-business diagnostic, not a command receipt
+or proven effect=none. Lost/uncertain command response retains existing UNKNOWN/no-resend semantics.
+Command Origin must equal explicit `http://127.0.0.1:8080`; never infer an allowed origin from Host.
+`/healthz` stays static-only. Proposed packaging `/readyz` returns200 only while both processes live
+and the actual loopback identity probe passes synthetic/source/profile checks, otherwise503/no-store.
+Readiness does not certify all optional readers, writes, Oracle, real login or EMS completion.
+Use Node for bounded probes; start NGINX after identity readiness; first child exit stops sibling/fails container, no auto-restart.
+On stop, cease proxy admission, signal Node SIGTERM (existing stopBackendServer closes sockets/drains work),
+signal NGINX SIGQUIT, reap both; record failure/forced termination. Never report an aborted command as rollback.
+Keep logs bounded diagnostics only; disable API access-body/query logging and never dump environment/fixtures.
+
+### 51.4 Acceptance commands and gates — ALL NOT RUN by architect
+
+Proposed DevOps filename `docker/compose.local-demo.yml`, not yet runnable. From `D:\AIProjects\SHFAI`:
+`docker version`; `docker info --format '{{.OSType}}'`;
+`powershell.exe -NoProfile -File scripts\Test-Docker-Shifter.ps1`;
+`powershell.exe -NoProfile -File scripts\Build-Shifter.ps1 -Profile dev -Validation`.
+After owner supplies pinned combined-image build/fixture selection, run
+`docker compose -p shf-local-demo -f docker/compose.local-demo.yml config --quiet`, then
+`docker compose -p shf-local-demo -f docker/compose.local-demo.yml up --build -d --wait --wait-timeout 60`.
+Any nonzero/engine500 stops dependent work; do not claim image build/start from mocked checks.
+Use `curl.exe -sS -i http://127.0.0.1:8080/healthz`, `/readyz`, `/api/v1/identity`.
+Probe all7 existing read families: current-shifts/filter-context, shift-search/filter-context,
+my-shifts/context, employees/{E}/shift-days/{D}, that detail/breaks-and-exceptions,
+employees/{E}/operational-card and attendance/filter-context, each under `/api/v1/`.
+Use only public synthetic E/D; fixture manifest fixes expected status/body/source for each probe.
+Minimal empty demo does NOT promise seven200s: missing rows/readers remain honest404/503/problems.
+Optional richer read fixtures use existing current/shared-catalog loaders and existing validated DTOs only;
+optional create/CSV-preview uses exclusive SHF_SHIFT_MANAGEMENT_FIXTURE/origins and existing management
+context/preparations/commands/csv-previews routes, in a separate run, not mixed with all7-reader composition.
+Measure preview0 business effects; fixture-create receipt/state synthetic only, lost response no retry.
+Verify SPA deep links/current-shifts/attendance/my-shifts and synthetic detail, asset404, Hebrew/RTL and focus;
+backend-down gateway503/readiness503, production mock rejection, clean real-provider-missing rejection,
+zero Oracle module/driver factory imports and zero live network/DNS/EMS calls using isolated guards.
+Inspect nonroot/read-only/caps/namespace/port settings, test blocked egress, bounded shutdown/drain and no child leak.
+Cleanup only owned project: `docker compose -p shf-local-demo -f docker/compose.local-demo.yml down`;
+no broad prune/engine restart. Record image IDs/digests, selected artifact hashes and every real exit/status.
+
+**Actual checks:** source/document reads and append readback only; no execution tool, tests/build/curl/Docker/Git/vendor/live checks or runtime PASS.
+**Risks:** volatile fixture state/preparations vanish on stop; no durable receipt or partner completion;
+legacy autonomous commits/rollback limitations remain outside this fixture package, not solved by Docker.
+**Owners/gates:** DevOps proves image closure/process/readiness/egress and current pinned vendor support;
+operator supplies working approved Linux engine/unused local port without automatic engine changes;
+QA verifies the matrix; parent owns source stability, checkpoint and separate scoped Git approval.
+**Approval request:** accept Docker-v0.1 same-container operational baseline before dependent packaging;
+bounded local-operation authorization is already in this request, not production/live/registry approval.
+If caller needs the alternative bind option, return its exact versioned contract for explicit approval first.
+**Next action:** parent obtains baseline acceptance and hands only DevOps packaging work onward;
+backend remains unchanged unless a separately approved transport delta becomes necessary.
+
+### 51.5 Implemented local deployment and verified topology amendment
+
+**Status: LOCAL DEMO DEPLOYED / bounded verification PASS, 1 November 2026.**
+The parent accepted the local operational baseline within the user's explicit
+Docker request. This supersedes the proposed host-publication assumptions in
+51.1-51.4, not the application loopback binding or production authentication.
+Docker's internal-only network did not program a host port. The implemented
+topology therefore adds a separate fixed-upstream unprivileged NGINX ingress
+on an ordinary bridge plus the shared internal bridge. Node/demo remains
+exclusively internal; ingress alone publishes127.0.0.1:18080 to8080.
+The default host port remains8080, but an unrelated host proxy occupied it;
+explicit SHF_DEMO_HOST_PORT=18080 avoids interference with that service.
+Ingress can egress on its ordinary network. This is not a whole-topology
+zero-egress guarantee, production firewall or permission for live dependencies.
+
+The combined demo image retains Node's loopback4301 listener and NGINX8080
+proxy, explicit synthetic-empty-dev opt-in and strict clean child environment.
+No real Oracle/EMS/native-write/coordinator configuration is accepted or
+mounted. The image default remains production and rejects missing demo opt-in.
+Compose explicitly selects nonproduction dev fixtures. Both services run
+UID101, read-only with bounded tmpfs, init, dropALL, no-new-privileges,
+no automatic restart and no host mounts. Lifecycle checks exercise child
+failure, drain/reap and truthful readiness/gateway503.
+
+Source validation passed backend1863 and frontend753 tests, app/spec TSC
+and all three profile builds. Scoped packaging45 and55 unique local container
+assertions passed; production26 checks are static/mocked, not fresh release
+acceptance. Actual pinned production images were built earlier, but their
+frontend is not the final shell version; they are not deployed or release-ready.
+All three developer ZIPs are current and independently byte-verified.
+
+Browser QA exposed two shell defects: default skip-anchor navigation and a
+queued native close event clearing a rapidly reopened drawer. The template
+now prevents default skip navigation and derives menu state from current
+native dialog.open. Deterministic regressions failed before repair, passed
+afterward, and the final deployed check passed4/4 trusted-keyboard worlds plus
+2/2 rapid-reopen regressions. Rapid reopen uses programmatic DOM clicks,
+not trusted-keyboard UAT. Checker-only readiness barriers account for final
+error focus and native close tasks without forced focus or hidden retries.
+Historical3/4 failures remain recorded in frontend VERIFICATION.md.
+
+Actual host readiness/identity200 pairs and both healthy containers were
+verified. Identity is synthetic Administrator, DEMO scope, seven read rights
+and employeeId=null. Empty reads correctly return400/404/503; they do not
+prove populated business records, all workflows or real credential checks.
+Actual Node external TCP probes return ENETUNREACH. No blanket DNS/ingress
+egress, WCAG, UAT, native-live, production or whole-project claim is made.
+
+Running images:
+- demo: sha256:1e0d62e045e312e22512c96185204ec5a98ffc0371f2adc51b8c75908abcd6b1
+- ingress: sha256:51119d5d5f661a7b81de52e10f265b8a4c2cb4fa7baba5f48abe8baadd32188a
+
+The root README documents explicit opt-in, preflight, image build, Compose
+start, host-port environment restoration and ownership-scoped stop commands.
+User-approved local demo operation does not approve registry publication,
+shared-host/production deployment, real authentication, Oracle/EMS access or
+operator namespace provisioning. Broader rewrite work remains separately gated.

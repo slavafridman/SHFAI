@@ -4530,3 +4530,398 @@ neither checker nor product code changed. No Git/status, live Oracle, EMS,
 private configuration, credentials, environment or provisioning changes.
 No blocker; caller/DevOps should use the exact command above for the auxiliary
 check. Earlier U50 browser and suite results remain historical, not new runs.
+
+## QA-UI-01 — skip-link default navigation defect — 1 November 2026
+
+**SOURCE-FROZEN / REVIEW; deployed-image retest pending.** Caller-authorized
+continuation against the existing deployed-demo/748-test baseline, not new API
+approval. Existing approved UI/shared contract `50-v0.1` (§§50.8–50.9) and
+identity V1 remain unchanged. This presentation-only fix uses the controlling
+modern shell, not a legacy business rule; the source-contract catalog remains
+unavailable. No legacy execution or edits.
+
+Exact changed source manifest, relative to `frontend/fixture-slice/`:
+
+```text
+src/workspace-shell.html
+src/workspace-shell.spec.ts
+checks/workspace-shell-browser-check.mjs
+VERIFICATION.md
+```
+
+Root cause: the semantic `href="#main"` anchor called `focusMain()` without
+cancelling its native default action. The one-line template fix uses the
+existing dialog-cancel pattern, `$event.preventDefault(); focusMain()`.
+`workspace-shell.ts`, router, ViewHistory, styles, heading/main tabindex=-1,
+identity/capability contracts and drawer behavior are unchanged. No dependencies.
+
+Exact checks, all from `D:\AIProjects\SHFAI\frontend\fixture-slice`:
+
+| Command | Observed result |
+|---|---|
+| `npm test -- --include src/workspace-shell.spec.ts` | Before fix: 3 new failures / 2 existing PASS; after fix: 1 file / 5 PASS, exit0. DOM/jsdom, not trusted keyboard. |
+| `npm test` | 55 files / 751 PASS, exit0; baseline748 + exactly3 new cases. Mock/DOM suite, not deployed browser evidence. |
+| `npm run typecheck` | App TSC PASS, exit0. |
+| `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.spec.json` | Spec TSC PASS, exit0. |
+| `node --check checks/workspace-shell-browser-check.mjs` | Final checker syntax PASS, exit0. |
+| `npm run build:dev -- --output-path ../../.shifter-developer-delivery/dev/frontend-build` | PASS, exit0; only permitted isolated dev output, no Docker rebuild. |
+| `npm run check:profile -- dev ../../.shifter-developer-delivery/dev/frontend-build/browser` | PASS, exit0; exact public keys appEnv/apiBasePath. |
+| `node checks/workspace-shell-browser-check.mjs http://127.0.0.1:18080` | Unchanged deployed image: repeat confirmed 4/4 FAIL, exit1; trusted Enter/click, defaultPrevented=false, history +1, view replaced. |
+| `node checks/workspace-shell-browser-check.mjs --build ../../.shifter-developer-delivery/dev/frontend-build/browser` | Final fixed local build: 4/4 skip checks PASS, exit0; both mobile worlds additionally PASS native Escape/exact opener and desktop-resize/main-focus transitions. |
+
+Browser worlds use 1440x800 and 360x800, `/current-shifts` and synthetic nested
+`/employees/TEST-E1/operational-card?origin=qa-ui-01&filter=a%2Fb`. On the old
+image current-shifts became current-shifts#main; the nested route lost its
+path/query and became current-shifts#main. In these runs focus ended at an error
+H2, rather than caller's BODY observation; neither is the expected main H1.
+The fixed local build kept exact URL/query, history length/state, view element
+and scroll; actual trusted Enter produced a normal click with defaultPrevented
+true and unobscured H1 focus. Hebrew link remained keyboard-reachable/visible,
+RTL had no viewport overflow. No response interception or product substitution.
+
+Local fixed-build serving explicitly returns API503: failed/absent identity,
+no backend, invented principal or business data. This proves the real fixed
+Angular shell in an error-state browser, NOT deployed synthetic-session UAT.
+Owned Chrome/profile/server were cleaned up. No current Docker change.
+First old-image checker iteration sampled visibility before a rendered frame
+and lost input observations when navigation replaced the window. Checker-only
+repair waits for rendering and retains trusted-input booleans in owned-profile
+session storage; repeat failed specifically at uncancelled native navigation.
+Existing Node MODULE_TYPELESS_PACKAGE_JSON helper warning remains non-fatal;
+no package/lock edit. No final static failures.
+
+DevOps/caller owns image rebuild/deployment; independent QA owns the new-image
+trusted-Enter retest using the exact deployed command above (expected 4/4 PASS,
+unchanged route/query/history and same H1/main focus). Rebuilt-image browser
+verification, healthy synthetic-session UAT, test/production builds, live
+Oracle/EMS, full accessibility conformance and production readiness are NOT
+claimed or run here. Preserve all prior verification history above.
+
+## QA-UI-01 retest3/4 — deployed error-world checker readiness — 1 November 2026
+
+**REVIEW; checker-only correction; actual deployed four-world PASS, natural
+exit0.** Caller reports fixed image prefix `58af...` at
+`http://127.0.0.1:18080`, with first-cold desktop current-shifts failing
+skip reach/visibility and Enter targeting another control; nested/mobile
+worlds previously passed (3/4). This reported initial failure is retained,
+not recast as a passing run. Image digest was not independently inspected;
+no Docker/service/build/image command was executed.
+
+Approved presentation/shared baseline remains `50-v0.1` (§§50.8–50.9),
+identity V1 and the existing QA-UI-01 shell acceptance contract. No public
+contract, app, dependency or business-rule change. Source evidence:
+`src/current-shifts-page.ts` `fail`/`defer` (lines290–297), the actual
+`#list-error` and results `aria-busy` in `src/current-shifts-page.html`
+(lines62–71), and the H1-only initial wait/Shift+Tab sequence in
+`checks/workspace-shell-browser-check.mjs`. The controller schedules error
+focus with a generation-checked **timer task**, not a microtask; therefore
+draining microtasks/painting alone is not evidence that this task ran.
+Modern shell source controls this presentation test; no new legacy business
+rule is involved. Source-contract catalog remains unavailable.
+
+**Falsifiable hypothesis and evidence limitation:** H1 readiness can precede
+API failure and scheduled H2 focus, making the old checker capable of starting
+keyboard before the final error world. A steal after observed final readiness
+would disconfirm the checker-only explanation. The missing readiness condition
+is confirmed by source and actual H1-before-error observations. However,
+the caller's specific historical steal was **not reproduced** in these probes:
+all observed error-focus events preceded keyboard. This is a confirmed checker
+precondition correction, **not a conclusive causal attribution of the historical
+3/4 failure**, and not proof that arbitrary early user interaction cannot be
+stolen by application error focus. No product bug was confirmed; controller
+generation/guard code was not changed.
+
+Before editing, two bounded diagnostic commands used inline ESM through
+PowerShell here-strings piped to `node --input-type=module` from the repository
+root (full commands and event traces in this task's execution transcript,
+sessions397 and400). Both imported the existing `ownedProtocolBrowser`, used
+the exact H1 wait/two paints/backward CDP Tab loop/Enter path, and observed
+actual deployed DOM/API/network events without interception or forced focus.
+The first covered desktop cold and mobile warm (2 observations); the second
+explicitly covered cold/warm desktop and cold/warm mobile (4 observations).
+Both exited0, cleaned owned Chrome/profiles, and recorded no new failing
+skip observation. They were structured timing probes, not repeated four-world
+checker retries. Representative second-probe times (milliseconds since each
+navigation; H1 sampled before error, keyboard-start sampled after two paints):
+
+| Width/cache | H1 sampled, error absent | H2 error focus | Keyboard start | Enter | H1 focus |
+|---|---:|---:|---:|---:|---:|
+| 1440 cold | 393.60 | 439.40 | 614.50 | 717.40 | 718.20 |
+| 1440 warm | 157.20 | 162.80 | 178.30 | 247.10 | 248.40 |
+| 360 warm | 156.40 | 165.30 | 178.90 | 215.10 | 215.80 |
+| 360 cold | 409.10 | 437.50 | 601.90 | 662.90 | 663.80 |
+
+Small checker repair observes actual final `#list-error`, complete document
+load, results `aria-busy=false`, absent loading progress and **existing
+scheduled focus on that error heading** using the existing bounded condition
+poller. It then drains associated microtasks/two paints and fails explicitly
+if that readiness changed; no retry, fixed readiness sleep or `.focus()` call.
+Only current-shifts receives this error-world precondition. Nested-route
+assertions and required trusted keyboard skip traversal remain unchanged.
+The old arbitrary250ms post-Enter delay was replaced by microtask/two-paint
+completion; default cancellation and exact route/query/history/scroll,
+same-view H1 focus, visibility, RTL/overflow assertions were not weakened.
+
+Exact changed manifest, relative to `frontend/fixture-slice/`:
+
+```text
+checks/workspace-shell-browser-check.mjs
+checks/workspace-shell-readiness.mjs
+checks/workspace-shell-readiness.test.mjs
+VERIFICATION.md
+```
+
+Exact persisted-check commands, from
+`D:\AIProjects\SHFAI\frontend\fixture-slice`:
+
+| Command | Result |
+|---|---|
+| `node --test checks/workspace-shell-readiness.test.mjs` | 3/3 PASS, exit0; Node/static mocked-document/helper-order tests, not Angular or browser tests. |
+| `node --check checks/workspace-shell-browser-check.mjs` | PASS, exit0. |
+| `node --check checks/workspace-shell-readiness.mjs` | PASS, exit0. |
+| `node checks/workspace-shell-browser-check.mjs http://127.0.0.1:18080` | Executed **exactly once** after repair: actual deployed **4/4 PASS**, natural exit0; both mobile drawer Escape/opener and resize/main-focus checks additionally PASS. |
+
+Actual four worlds: 1440x800 and360x800, `/current-shifts` and
+`/employees/TEST-E1/operational-card?origin=qa-ui-01&filter=a%2Fb`.
+Every world had trusted Enter/normal trusted anchor click,
+`defaultPrevented=true`, unchanged exact URL/query/history length/state/scroll,
+same main element, unobscured focused H1 with tabindex=-1, visible Hebrew skip
+anchor, RTL and no overflow. History lengths before/after were respectively
+2/2,3/3,4/4,5/5; scroll remained[0,0]. No keyboard interception/main route
+change, response interception, invented API success or synthetic UI replacement.
+This is actual deployed API/error-state browser evidence, not healthy
+business-data/synthetic-session UAT or credential verification.
+
+After repair, one additional bounded **targeted current-shifts timing probe**
+(inline `node --input-type=module`, session403, imports the repaired readiness
+helper) covered cold/warm at each width, exit0. Its observed sequence:
+
+| Width/cache | Load | H2 error focus | Final readiness sample | Trusted Enter | H1 focus / prevented click |
+|---|---:|---:|---:|---:|---:|
+| 1440 cold | 196.40 | 437.00 | 602.70 | 680.40 | 681.40 / true |
+| 1440 warm | 87.70 | 190.00 | 257.80 | 324.50 | 325.60 / true |
+| 360 cold | 215.00 | 443.20 | 642.40 | 695.90 | 696.60 / true |
+| 360 warm | 79.10 | 162.70 | 211.70 | 260.40 | 261.00 / true |
+
+Desktop reached skip in7 backward Tabs, mobile in3; all final readiness
+samples had document complete/error present/busy false/error heading focused.
+No later H2 focus occurred through the post-Enter microtask/paint observation.
+All owned browsers/profiles were cleaned by awaited `finally` close; clean
+runtime/non-local-request assertions passed. Existing
+MODULE_TYPELESS_PACKAGE_JSON warning remained non-fatal; no manifest/lock edit.
+
+No full751 suite, app/spec TSC, build/profile check or image repeat was run:
+no application code changed, and caller explicitly excludes these for a
+checker-only repair. Existing751-test product baseline remains historical,
+unchanged by these3 standalone checker tests. No Docker/scripts/backend/design/
+status/Git/lock/private-environment/operator/Oracle/EMS work, service mutation,
+new dependency or delegation. This append preserves all4,598 pre-existing
+verification lines, including the first4,532 and original failure history.
+Product source manifest/image input is unchanged; only checker/test/docs
+manifest gains these paths.
+
+Risk/next action: caller/QA should retain the un-reproduced historical timing
+failure as a limitation, use the final-readiness checker for this deployed
+error-world acceptance, and return a timestamped trace if H2 steals focus
+**after** this precondition or during separately scoped early-user interaction.
+That would reopen controller-focus work with a focused regression and full
+frontend/TSC verification; any resulting new image remains parent-owned.
+No rebuild is needed for this checker-only change; existing services stay UP.
+
+## QA-UI-01 MOBILE-COMPOSITE — native-close lifecycle admission — 1 November 2026
+
+**REVIEW; bounded checker-only fix complete; exact deployed four-world composite
+PASS, natural exit0.** Preserve the caller's independent historical **3/4
+composite FAIL after all four skip assertions passed**. It was an unnamed
+mobile wait, not a new skip/default-navigation defect. The separate passing
+drawer diagnostic was not a replacement for that composite. This task reproduced
+a failure with the original second-open preconditions and named its stage.
+
+Approved baseline remains **UI/shared `50-v0.1` (§§50.8–50.9), identity V1** and
+existing QA-UI-01 acceptance. Source contract catalog remains unavailable.
+Controlling presentation evidence is modern `src/workspace-shell.ts`,
+`src/workspace-shell.html` and `checks/keyboard-modal.ts`; reverse-engineering
+baseline v1.0 supplies project context, not a new legacy business rule.
+No legacy execution/read of business data, contract or product change.
+Installed Node24.21.0/npm11.19.0 match package engines; established
+Angular21.2/CDK21.2/TypeScript5.9.3 reused, no dependency selection/install.
+
+Changed paths, relative to `frontend/fixture-slice/`:
+
+```text
+checks/workspace-shell-browser-check.mjs
+checks/workspace-shell-readiness.mjs
+checks/workspace-shell-readiness.test.mjs
+VERIFICATION.md
+```
+
+**Reproduction and classification:** original-precondition focused cold/warm
+mobile current-shifts run: cold PASS, warm FAIL, exit1. All skip assertions,
+first modal readiness, native Escape and exact opener focus passed. Named
+failure: `360:/current-shifts:warm:drawer.second.closed-and-exact-skip-target`.
+At timeout: innerWidth1440, visualWidth1425 (scrollbar), desktop media=true,
+dialogOpen=true, aria-expanded=false, focus=menu-close, targetFocused=false.
+This is **drawer still open / inconsistent menu state**, not a demonstrated
+post-main-focus restore steal.
+
+Warm navigation trace (milliseconds since navigation):
+
+| Signal | ms | Evidence |
+|---|---:|---|
+| breakpoint listener installed | 156.4 | media=false at width360 |
+| Escape cancel | 409.2 | first drawer open |
+| exact opener focus | 412.5 | first drawer closed |
+| second activation starts | 417.0 | prior native close task not completed |
+| second close-button focus | 422.5 | reopened modal |
+| first queued native close event | 422.8 | **open=true** at event dispatch |
+| resize media change | 437.8 | width1440, media=true |
+| named final wait timeout sample | 15463.0 | still open, menu state false |
+
+The native dialog close event is queued. Template `(close)="menuOpen.set(false)"`
+can therefore reset the signal after an immediate reopen. The shell resize
+listener only calls `closeMenu(false); focusMain()` when desktop matches AND
+menuOpen is true. It was installed well before interaction, so no speculative
+afterNextRender listener wait was added. Threshold is the source's
+`(min-width: 761px)` (mobile through760), and measured innerWidth360/1440 agrees
+with media=false/true. Visual viewport minus scrollbar is not the CSS breakpoint.
+The template has `[cdkTrapFocus]="menuOpen()"`, **no auto-capture binding**;
+no evidence justified a CDK restore-guard or product focus change.
+
+Small driver correction: arm a once-only native-close completion observer
+before Escape; retain the original closed/exact-opener assertion, then await
+that close event plus closed DOM, rendered aria-expanded=false and exact opener
+before the second activation. Apply the SAME existing keyboard-modal-ready
+barrier on second open, then require aria-expanded=true before resizing.
+Retain the original closed + exact `window.__qaSkip.target` H1 assertion.
+No forced target focus, assertion removal, delay, general retry or error silence.
+All waits/actions have explicit world/stage labels. Bounded diagnostics record
+only allowlisted focus roles, native dialog events, viewport/media/listener
+signals, public menu state, trap-anchor count and timestamps; no private Angular
+fields, identity, form values or API payloads. Owned document listeners disappear
+with Chrome/profile cleanup; the close observer is once-only.
+
+Corrected focused trace: cold and warm both PASS, exit0. Cold first close
+786.2ms precedes second activation828.0ms; media=true903.7ms precedes H1
+focus910.7ms. Warm first close389.6ms precedes second activation422.0ms;
+media=true506.8ms precedes H1 focus513.0ms. Both second opens pass stable
+keyboard-modal readiness before resize. This supports correcting independent
+test-interaction lifecycle admission; it does NOT claim arbitrarily fast early
+user reopen cannot encounter the source-observed native-close race.
+
+Exact checks from `D:\AIProjects\SHFAI\frontend\fixture-slice`:
+
+| Command | Result / evidence type |
+|---|---|
+| `node --check checks/workspace-shell-browser-check.mjs` | Final syntax PASS, exit0; static. |
+| `node --check checks/workspace-shell-readiness.mjs` | Final syntax PASS, exit0; two initial misplaced-brace syntax failures repaired before browser execution. |
+| `node --test checks/workspace-shell-readiness.test.mjs` | 10 PASS, exit0; helper doubles/negative tests, not browser. Covers incomplete/reopened close, once-only observer, both modal barriers, failed preconditions blocking resize, exact final assertion and labeled error cause. Intentional negative-test `FAIL NAMED STAGE` is expected. |
+| `node --test checks/owned-protocol-browser.test.mjs` | 1 PASS, exit0; absent-Chrome ENOENT and owned-profile removal, no real Chrome started by this test. |
+| `node checks/workspace-shell-browser-check.mjs http://127.0.0.1:18080 --mobile-trace` | Original admission: 1/2 composite FAIL, exit1 at precise warm final drawer stage; corrected admission: 2/2 PASS, exit0. Two deliberate before/after probes, not success retries. |
+| `node checks/workspace-shell-browser-check.mjs http://127.0.0.1:18080` | **Final exact command once: 4/4 composite PASS, natural exit0.** Actual deployed Angular, no interceptions/product replacement; four trusted Enter/click skip successes plus both mobile native Escape/exact opener and resize/exact original H1 successes. |
+
+Final browser worlds:1440x800 and360x800; `/current-shifts` and synthetic nested
+`/employees/TEST-E1/operational-card?origin=qa-ui-01&filter=a%2Fb`.
+Exact route/query/history/state/view/scroll preserved; prevented default,
+keyboard-visible Hebrew link, unobscured original H1, RTL/no overflow verified.
+Browser runtime/non-local-request assertions and owned Chrome/profile cleanup
+completed. Existing MODULE_TYPELESS_PACKAGE_JSON warning is non-fatal.
+Caller reports image prefix58af.../healthy service; image identity/health was
+not independently inspected via operations. No service changes; services left UP.
+
+No application source changed: full751 frontend suite, app/spec TSC, builds,
+profile/image checks and image rebuild **not run/not required for checker-only
+scope**. Historical751 product tests remain historical, not replaced by these10
+standalone tests. No Docker/scripts/backend/contracts/status/Git/dependencies/
+private environment/Oracle/EMS work or delegation. No full WCAG conformance,
+synthetic-actor/business-form UAT, production readiness or release approval claim.
+
+Blockers: none for this checker correction. Caller/QA owns independent acceptance
+with the exact final command and retained failure history. If rapid early-user
+reopen is separately commissioned, use the queued-close trace as source/runtime
+evidence for a focused product regression, then full frontend/TSC verification;
+caller owns any resulting image work. No rebuild needed for this change.
+
+## 2026-11-01 — FIXROOT queued native close / rapid reopen — source frozen, REVIEW
+
+User explicitly commissioned the coupled accessibility root fix, not only
+checker admission avoidance. Earlier checker-only history above is retained;
+its "no rebuild needed" conclusion does not apply to this new product change.
+No full WCAG/UAT/production or release approval is asserted.
+
+**Root evidence:** the previous mobile warm trace and the controlling current
+`workspace-shell.html` close binding unconditionally clearing `menuOpen` explain
+why an earlier queued native close could clear a newly reopened dialog's state,
+disable CDK trapping and prevent the desktop resize branch from closing it.
+The new deterministic test reproduced exactly native open=true / menuOpen=false
+before the fix. The smallest product change is ONLY
+`(close)="menuOpen.set(menu.open)"`: synchronize to CURRENT native open state,
+not the historical notification. Cancel preventDefault, closeMenu restoration,
+keyboard semantics, CdkTrapFocus, routes, UI workflow and API contracts unchanged.
+No timers, delays, generations, dependencies or other product edits.
+
+**Approved baselines:** §§13–14 v0.1 (approval §15), visual/shell v0.1 (§22),
+current-shifts §19 v0.1 (§22.3), existing IdentityResponseV1. This correction is
+also directly authorized by this user's FIXROOT request. Legacy navigation
+evidence remains read-only: baseline §21 and
+`old/SHFWeb/WebContent/jsp/shf_index.jsp:25–34` (right frame) and
+`old/SHFWeb/WebContent/jsp/right_menu.jsp:72–84` (shift navigation). Legacy is
+not the source of the modern native-dialog race. Source contract catalog absent.
+Existing exact Node24.21.0/npm11.19.0 observed; Angular21.2.25,
+Material/CDK21.2.14, CLI/build21.2.27, TS5.9.3, Vitest4.0.9 reused without changes.
+
+**Exact assigned change manifest** (all relative to frontend/fixture-slice):
+- `src/workspace-shell.html`: one current-native-state close binding.
+- `src/workspace-shell.spec.ts`: TWO added tests; existing five preserved.
+  Rapid open→close→open→queued close verifies native open, signal, ARIA and
+  actual CdkTrapFocus directive enabled; dispatched registered desktop media
+  callback closes and focuses H1, never BODY. Ordinary native close still
+  clears signal/ARIA/CDK. Native modal/media behavior modeled in this DOM test.
+- `checks/workspace-shell-browser-check.mjs`: opt-in `--rapid-reopen`, separate
+  root regression; original keyboard/modal/close readiness barriers unchanged.
+  Synchronous DOM activations invoke real Angular open/close/open handlers,
+  WITHOUT any interposed readiness gate. Actual native queued close is observed
+  afterwards. Cache explicitly cleared for cold load; next load is warm.
+- `VERIFICATION.md`: this append only; earlier evidence preserved.
+
+**Exact checks from D:\AIProjects\SHFAI\frontend\fixture-slice:**
+
+| Command | Actual result / classification |
+|---|---|
+| `npm test -- --include=src/workspace-shell.spec.ts` before HTML change | RED exit1: 6 PASS / 1 FAIL of 7; native open assertion passed, menuOpen expected true received false. |
+| Same focused command after HTML change | GREEN exit0: 7/7 PASS, one file. |
+| `npx tsc --noEmit -p tsconfig.app.json` | PASS exit0; static. |
+| `npx tsc --noEmit -p tsconfig.spec.json` | PASS exit0; static. |
+| `npm test` | PASS exit0: 55 files, **753/753** tests = historical751 + actual2 additions; mocked/DOM, no live infrastructure. |
+| `npm run build:dev -- --output-path=dist/workspace-shell-root-fix` | PASS exit0; isolated local fixed development build, not normal distribution or deployed image. |
+| `node --check checks/workspace-shell-browser-check.mjs` | PASS exit0, including final cache-cold version. |
+| `node --test checks/workspace-shell-readiness.test.mjs checks/owned-protocol-browser.test.mjs` | PASS exit0: 11/11 (10 readiness +1 owned browser cleanup negative test). Expected negative named-stage diagnostic is not a failure. |
+| `node checks/workspace-shell-browser-check.mjs --build dist/workspace-shell-root-fix/browser --rapid-reopen` | Final PASS natural exit0: 4/4 existing composite worlds plus **2/2 ROOT cold/warm rapid proofs**. Earlier run also passed; final run adds explicit cache clearing, not a failure retry. |
+
+**Actual LOCAL Chrome:** real fixed Angular build on owned ephemeral loopback
+server; APIs deliberately 503, identity absent/error, no backend or interception.
+1440x800/360x800 current route and synthetic nested operational-card route with
+query retain trusted Enter skip/default prevention/original H1 focus,
+route/query/history/state/scroll, RTL/no overflow; native Escape/exact opener and
+desktop/original H1 pass with existing CDK keyboard barriers. Separate rapid
+proof uses programmatic DOM clicks (not trusted keyboard UAT), actual native
+dialog/queued close: queuedCloseSawOpen=true, nativeOpen=true, expanded='true',
+two enabled CDK anchors; actual desktop resize gives nativeOpen=false,
+expanded='false', trapInactive=true, original headingFocused=true,
+bodyFocused=false. Browser runtime/non-local-request assertions and owned
+Chrome/profile/server cleanup completed. Existing MODULE_TYPELESS_PACKAGE_JSON
+warning non-fatal. No service left running by this check.
+
+**Source freeze SHA256** (no subsequent source/checker changes):
+- HTML: `5D49AE281FC3EDBB027347CB626042F9548E8E2606669CDC3DC6BC0C1F604A10`
+- spec: `60514299172651A4B2A12301E2D2B17D15EC0974C67863C691E13F84C4A1BFB4`
+- checker: `CDB054FCB33896F17B18EBBF92E94937EDEE355EE0992889B8410D1FFC62D7D7`
+
+**Blocked/not run:** deployed image58af... not inspected/rebuilt/retested by
+this task; **new product fix is NOT deployed**. Production build/profile/image
+checks and broad actor/business-context UAT/full WCAG not run in this scope.
+No Docker/scripts/backend/contracts/status/Git/dependency/credential/private
+environment/live Oracle/EMS work, legacy execution or delegation.
+No implementation blocker. Caller owns final new-image rebuild from frozen
+source and deployed independent QA; QA owns broader acceptance. Main residual
+risk is continued use of old deployed image. Next action: caller rebuilds the
+new image separately, then runs deployed checker including `--rapid-reopen`.

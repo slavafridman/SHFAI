@@ -112,6 +112,38 @@ function Get-ShifterClosure([string]$Backend) {
     return @($seen | Sort-Object)
 }
 
+function Get-ShifterSourceSnapshot {
+    # Hash only enumerated application/tooling inputs, never private operator
+    # configuration, docs, installed dependencies or arbitrary repository files.
+    $names = @(& git -C $script:Repository ls-files --cached --others --exclude-standard -- backend/fixture-slice frontend/fixture-slice)
+    if ($LASTEXITCODE -ne 0) { throw 'Cannot enumerate scoped source inputs.' }
+    $rows = @()
+    foreach ($name in ($names | Sort-Object -Unique)) {
+        $allowed = $name -cmatch '^backend/fixture-slice/(?:[a-z0-9-]+\.mts|test/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\.mts|package(?:-lock)?\.json|tsconfig\.json|config-examples/(?:dev|test|production)\.example\.json)$' -or
+            $name -cmatch '^frontend/fixture-slice/(?:src/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\.(?:ts|html|scss|css)|checks/[A-Za-z0-9._-]+\.(?:mjs|mts|ts)|package(?:-lock)?\.json|angular\.json|tsconfig(?:\.app|\.spec)?\.json|vitest\.config\.ts)$'
+        if (-not $allowed) { continue }
+        $path = Join-Path $script:Repository $name
+        Assert-ShifterNoLink $path
+        $rows += "SOURCE`t$name`t$((Get-Item -LiteralPath $path).Length)`t$((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash)"
+    }
+    if (-not $rows.Count) { throw 'Missing scoped source inputs.' }
+    return $rows
+}
+
+function Get-ShifterSnapshotHash([string[]]$Rows) {
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        return [BitConverter]::ToString($sha.ComputeHash(
+            [Text.Encoding]::UTF8.GetBytes(($Rows -join "`n") + "`n"))).Replace('-', '')
+    } finally { $sha.Dispose() }
+}
+
+function Assert-ShifterSourceSnapshot([string[]]$Recorded, [string[]]$Current) {
+    if (-not $Recorded.Count -or ($Recorded -join "`n") -cne ($Current -join "`n")) {
+        throw 'Scoped source bytes differ from validation snapshot; run the canonical DEV full validation.'
+    }
+}
+
 function Write-ShifterZip([string]$Stage, [string]$Zip, [string[]]$EntryNames) {
     # Never derive archive names from Windows filesystem separators.
     # Validate the entire explicit whitelist before creating an output file.
@@ -197,6 +229,7 @@ function Invoke-ShifterBuild {
     foreach ($path in @($zip, $stage, $build, $extracted)) { Remove-ShifterOwned $path $profileRoot }
     New-Item -ItemType Directory -Path $profileRoot -Force | Out-Null
     try {
+        $sourceSnapshot = @(Get-ShifterSourceSnapshot)
         # Resolve installed packages without executing the application or driver.
         $toolCheck = @'
 const fs = require('node:fs');
@@ -312,8 +345,12 @@ console.log('PASS installed approved package versions; no install or driver impo
             'powershell.exe -NoProfile -File scripts\Test-Build-Shifter.ps1',
             "powershell.exe -NoProfile -File scripts\Build-Shifter.ps1 -Profile $Profile$validationArgument",
             '',
-            'Payload bytes / SHA256 (excluding this self-describing BUILD.md):'
+            "Source snapshot SHA256: $(Get-ShifterSnapshotHash $sourceSnapshot)",
+            "Source snapshot files: $($sourceSnapshot.Count)",
+            'Scoped source bytes / SHA256 (evidence only; source is not bundled):'
         )
+        $provenance += $sourceSnapshot
+        $provenance += @('', 'Payload bytes / SHA256 (excluding this self-describing BUILD.md):')
         foreach ($name in ($expected | Sort-Object)) {
             $payload = Join-Path $stage $name
             $provenance += "$name`t$((Get-Item -LiteralPath $payload).Length)`t$((Get-FileHash -LiteralPath $payload -Algorithm SHA256).Hash)"
@@ -468,7 +505,9 @@ console.log('PASS synthetic allowance-path validation calls=' + syntheticPathCal
         Invoke-ShifterCommand $node @('--input-type=module', '-e', $productionCheck, $extractedBackend) $extracted
         Invoke-ShifterCommand $npm @('run', 'check:profile', '--', $Profile, (Join-Path $extracted 'frontend/browser')) $frontend
         Remove-ShifterOwned $extracted $profileRoot
+        Assert-ShifterSourceSnapshot $sourceSnapshot @(Get-ShifterSourceSnapshot)
         $files = @(Get-ChildItem -LiteralPath $stage -File -Recurse)
+        Write-Host "PASS unchanged scoped source snapshot files=$($sourceSnapshot.Count); SHA256=$(Get-ShifterSnapshotHash $sourceSnapshot)"
         Write-Host "PASS developer snapshot profile=$Profile validation=$Validation"
         Write-Host "PASS runtime closure=$($closure.Count); required manifests/index; exact ZIP whitelist; no dependencies/private files"
         Write-Host 'PASS raw ZIP names: canonical forward slashes; zero backslashes/traversal/absolute paths/duplicates/case collisions'

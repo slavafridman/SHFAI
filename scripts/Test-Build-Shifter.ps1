@@ -28,6 +28,20 @@ Assert-Delivery ($LASTEXITCODE -ne 0) 'source output collision rejected before c
 
 # Dot-sourcing defines functions only; it cannot start an application build.
 . $builder -Profile dev
+$snapshot = @(Get-ShifterSourceSnapshot)
+Assert-ShifterSourceSnapshot $snapshot @(Get-ShifterSourceSnapshot)
+Assert-Delivery ($snapshot.Count -gt 0) 'canonical source-byte snapshot matches current checkout'
+$syntheticRows = @("SOURCE`tfrontend/fixture-slice/src/workspace-shell.html`t1`t$('A' * 64)")
+foreach ($changed in @(
+    @("SOURCE`tfrontend/fixture-slice/src/workspace-shell.html`t1`t$('B' * 64)"),
+    @($syntheticRows[0], "SOURCE`tfrontend/fixture-slice/src/new.ts`t1`t$('A' * 64)"),
+    @()
+)) {
+    $rejected = $false
+    try { Assert-ShifterSourceSnapshot $syntheticRows $changed } catch { $rejected = $true }
+    Assert-Delivery $rejected 'changed/added/missing source snapshot rejects validated reuse'
+}
+Assert-Delivery ((Get-ShifterSnapshotHash $syntheticRows) -cmatch '^[A-F0-9]{64}$') 'source proof is canonical UTF8 SHA256'
 Assert-Delivery (Test-ShifterBrowserAsset 'attendance-page.css.map' 'dev') 'known Angular component map accepted only for dev'
 Assert-Delivery (Test-ShifterBrowserAsset 'employee-name.css.map' 'dev') 'known inline employee component map accepted for dev'
 Assert-Delivery (Test-ShifterBrowserAsset 'minute-picker.css.map' 'dev') 'known inline minute component map accepted for dev'

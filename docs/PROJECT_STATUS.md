@@ -27,7 +27,71 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-RESUME-29 — current resume checkpoint
 
-**State: FOUNDATION PUBLISHED / approved B49 and U49 IMPLEMENTATION RUNNING.**
+**State: approved50 IMPLEMENTED AND PUBLISHED; local Docker deployment
+implementation authorized by the user's2026-11-01 continuation request.**
+
+SHF-DOCKER-LOCAL-51 current step: local Desktop Linux engine29.4.3 and
+Compose5.1.3 responded successfully; historical engine HTTP500 is superseded
+by fresh availability evidence. Git main/direct remote matched4fea20e,
+index/conflicts empty and32 unrelated dirty paths preserved. Existing26
+Docker static/mocked checks passed; no image build/start has run yet.
+Source-backed Docker-v0.1 operational contract in design51 selects a combined
+Node/unprivileged NGINX demo container, preserving Node's loopback binding.
+NGINX proxies same-origin API to127.0.0.1:4301; publish only127.0.0.1:8080.
+Parent accepts this bounded local operational choice within the user's
+explicit Docker request: dev/test isolated fixtures only, explicit synthetic
+Administrator notice, no Oracle/EMS/operator namespace mounts or production
+authentication bypass. Production image preparation remains fail-closed.
+No registry publication/shared-host deployment/engine restart is authorized.
+Public registry evidence confirms supported linux/amd64 Node24.21.0 and
+NGINX1.28.0 bases; pinned observed digests must be enforced and actual versions/
+runtime closure checked by the packaging owner before starting the demo.
+Packaging built actual pinned demo and production images;1863/748 source
+validation,26 static and21 container assertions passed. Local8080 was occupied
+by an unrelated proxy; it was left untouched. Explicit18080 ingress option
+passed37 focused/41 Compose-preflight checks. The owned demo is running and
+healthy internally, but host publication failed: Docker internal-only networks
+do not program external port connectivity. Internal readiness/identity200 and
+Node externalTCP ENETUNREACH are verified; no working host URL is claimed yet.
+Parent chooses the minimal local-demo correction within the user's Docker
+request: separate nonroot NGINX ingress on an ordinary bridge plus the shared
+internal network, fixed upstream demo:8080, only127.0.0.1:18080 published.
+Node/demo remains exclusively internal. This supersedes the single-container
+host-publication assumption, not the Node loopback binding/business contract.
+Ingress has outbound connectivity; do not describe the whole topology as
+zero-egress or production containment. Its fixed proxy has no Oracle/client/
+operator secrets. Production authentication/release remains blocked.
+SHF-DOCKER-LOCAL-51 is deployed and independently verified at
+http://127.0.0.1:18080. Demo and ingress are running/healthy, zero restarts;
+only ingress publishes that loopback port, Node/demo has no host bindings
+and actual externalTCP probes return ENETUNREACH. The unrelated8080 proxy
+was untouched. Both services retain nonroot101/read-only/dropALL/init and
+no-new-privileges/no host mounts. Ingress ordinary-network egress is allowed.
+QA found skip-link navigation and queued-dialog-close races. Both product
+root causes were fixed, regression-tested and rebuilt. Final actual deployed
+browser passed4/4 composite keyboard worlds and2/2 rapid-reopen cases;
+helper/cleanup11 tests passed. Earlier3/4 failures remain historical evidence,
+not quietly reclassified. Rapid reopen DOM clicks are not keyboard UAT.
+Final full source validation passed1863 backend/753 frontend and TSC;
+all dev/test/production ZIP/profile builds passed. Packaging45 and55 unique
+container assertions, actual lifecycle/error/identity checks and independent
+157 payload/161 image file comparisons passed. Source byte proof420 records
+detect stale reuse; it is not a signed repository or full security attestation.
+Current local demo image:
+sha256:1e0d62e045e312e22512c96185204ec5a98ffc0371f2adc51b8c75908abcd6b1.
+Ingress image:
+sha256:51119d5d5f661a7b81de52e10f265b8a4c2cb4fa7baba5f48abe8baadd32188a.
+Fresh ZIPs: dev2247648 bytes/204 entries; test742936/162; production742951/162.
+TEST SHA256A6EFD21248D3A66725042327FCA587420FD9BE924550D0B2C1A8DA1C9B8EFFB7.
+Production ZIP is fresh, but earlier production images are not the final
+shell baseline and remain undeployed/fail-closed; no release claim.
+Host readiness/identity200 pairs and final Docker health passed. Seven read
+families return truthful empty/missing/dependency400/404/503 responses;
+native commands403. This deployment is an empty synthetic DEV demo, not
+populated parity, real authentication, live Oracle/EMS, UAT or full WCAG.
+Next action: publish exact Docker/script/shell/doc scopes with partial
+root README/status staging, preserve unrelated user edits, then record the
+verified remote result. Leave the accepted owned demo running for the user.
 
 #### SHF-FOUNDATION-PUBLISHED-29 — verified handoff
 

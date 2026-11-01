@@ -1,4 +1,4 @@
-<a class="skip" href="#main" (click)="focusMain()">דילוג לתוכן הראשי</a>
+<a class="skip" href="#main" (click)="$event.preventDefault(); focusMain()">דילוג לתוכן הראשי</a>
 <header class="topbar">
   <div class="brand"><bdi class="wordmark" lang="en">SHF</bdi><span class="brand-caption">ניהול משמרות</span></div>
   <div class="identity">זהות היישום נפרדת מהעובד/ת הנבחר/ת</div>
@@ -82,7 +82,7 @@
   <main #main id="main" tabindex="-1"><ng-content /></main>
 </div>
 <dialog #menu id="menu" aria-labelledby="menu-heading"
-  (cancel)="$event.preventDefault(); closeMenu()" (close)="menuOpen.set(false)">
+  (cancel)="$event.preventDefault(); closeMenu()" (close)="menuOpen.set(menu.open)">
   <div [cdkTrapFocus]="menuOpen()">
   <div class="drawer-head"><h2 id="menu-heading">ניווט משמרות</h2>
     <button id="menu-close" mat-stroked-button type="button" (click)="closeMenu()" autofocus>סגירת תפריט</button>
