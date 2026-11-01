@@ -56,7 +56,7 @@ including the shared coordinator for every native writer and intentional
 old-native-startup precondition. Implementation is authorized; live TEST
 execution, operator provisioning/reopening and deployment are not.
 Canonical50 and backend/frontend implementation are source-stable and
-verified offline; scoped publication is next. The initial compiler gate
+verified offline and published as1d5bc6a. The initial compiler gate
 required a tightly coupled exact-capability assertion repair in the existing
 exit contract test; after repair TSC and all six canonical suites passed.
 Preserve existing49 application behavior/read-only profiles, proof/digest/
@@ -99,8 +99,8 @@ No live Oracle/EMS/DNS, operator provisioning, native late0 live proof,
 power-loss/distributed guarantee, UAT/full WCAG or release is established.
 Canonical/backend/UI/packaging scopes total99 publication paths including
 the existing design and parent-only checkpoint; actual manifests reconcile
-59 backend,35 frontend,three packaging andtwo docs. Index/conflicts empty,
-last direct remote main matched7b11bd2; these new bytes are not published yet.
+59 backend,35 frontend,three packaging andtwo docs. The paragraphs below
+record publication preflight evidence followed by its verified outcome.
 Publication preflight on1November passed exact99-path reconciliation,
 918 relative imports/452 local document links, credential-pattern scan,
 two owned PowerShell parser checks and all three stage/ZIP byte comparisons.
@@ -114,8 +114,17 @@ corrected parent-only staging against HEAD preserves external133/2 hunks.
 Final staged privacy/whitespace,918 imports/443 local links and strict
 compilation of both protocol helpers passed using existing dependencies.
 Staged design is50.9 append-only; frontend history has zero deletions.
-Next action: normal scoped commit/push, verify direct remote=HEAD and0/0,
-empty index and preserved external changes; parent records publication next.
+Feature1d5bc6ae6df22b73d40ad801c17edc9de6c0a365 is published, exactly99
+paths. Direct remote matched HEAD, cached0/0, index empty and no conflicts.
+All32 remaining user-dirty paths and external checkpoint payload (+133/-2)
+were preserved. All three ZIP/source comparisons passed after publication;
+archives retain honest precommit provenance and unchanged payload hashes.
+Full suites/builds/live checks were not repeated during publication.
+Approved50 implementation is DONE under the stated offline evidence, not
+full rewrite/native-live/release acceptance. Next safe action: select the
+next source-backed workflow and obtain versioned contract approval before
+dependent implementation. Separately authorized operator provisioning/live
+compatibility checks remain outside this coding milestone.
 
 Approved49-v0.1 canonical gate and both consumer handshakes are complete.
 B49 owner exclusively implements noncanonical backend CRUD/CSV rules,
