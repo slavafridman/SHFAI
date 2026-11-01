@@ -6665,3 +6665,527 @@ start, host-port environment restoration and ownership-scoped stop commands.
 User-approved local demo operation does not approve registry publication,
 shared-host/production deployment, real authentication, Oracle/EMS access or
 operator namespace provisioning. Broader rewrite work remains separately gated.
+
+## 52. NEXT: ordinary station-exit cancellation — 52-v0.2 PROPOSAL
+
+**Task:** SHF-REMAINDER-52 / NEXT52. **Date:** 1 November 2026.
+**Status: PENDING USER APPROVAL; UI-DESIGNER REVIEW COMPLETE as 52-UI-v0.2 (§52.7).**
+Architecture/contracts only; no canonical/application/UI implementation authorization.
+Companion [finite remainder plan](SHF_COMPLETION_PLAN.md) distinguishes subset completion from parity.
+All target behavior below is P. S is static source, D is prior design/checkpoint, U is unverified.
+**Prerequisite closure:** this revision supplies `52-config-v0.1` (§52.4) BEFORE approval;
+it supersedes §52-v0.1's missing native envelope, not prior approved §§47/49/50 contracts.
+No approval, canonical materialization, configuration handoff or native readiness is asserted.
+
+### 52.1 Why this one action, and evidence
+
+S: [Struts cancelExit:304](../old/SHFWeb/WebContent/WEB-INF/struts-config.xml#L304) declares `param=cancel_exit, activity=attend_cancel_exit`.
+[AttendanceDataAction:292–300](../old/SHF/src/bzq/shf/actions/AttendanceDataAction.java#L292) dispatches cancelExitStation and returns success forward/message.
+[validateCancelExitStation:2197–2207](../old/SHF/src/bzq/shf/model/AttendanceDataModel.java#L2197) reloads day/attendance and rejects absent exit.
+[cancelExitStation:2210–2248](../old/SHF/src/bzq/shf/model/AttendanceDataModel.java#L2210) sets only STATION_EXIT_TIME and STATION_EXIT_USER to NULL, where day matches and exit is nonnull.
+[attendance.js:610–640](../old/SHFWeb/WebContent/js/attendance.js#L610) confirms then mutating GET/success-text matching, not ACK/readback proof.
+Default DBAccess commit behavior and unseen DB effects are U; no explicit transaction or event/mood/EMS/function/sequence call is visible here.
+
+D/S: §47/current `backend/fixture-slice/station-exit-contracts.mts` excludes cancellation; exit domain rejects recorded exit. §49/50 approvals do not cover this concrete manager correction.
+Early exit is **not** substituted: AttendanceDataAction:181–260 + EmployeeDataModel:1098–1160 create an event using SHF_EMPLOYEE_EVENT_ID and optionally mood.
+Early JSP:78–112 collects reason/manager/remark; agentAttendance.js:49–59 embeds manager text. Manager provenance/multiple effects need M04, not invented null-remark ordinary exit.
+§52 closes only cancellation of one coherent ordinary recorded exit.
+
+### 52.2 Application boundary and bounded admission
+
+Native HTTP → centralized access → dedicated application → pure rules → repository/UoW; partner assessment pure, never transport. Reuse budgets/serialization/civil-time/admission; no Angular/HTTP business rules.
+Native: isolated approved TEST, one employee/day, coherent arrival+ordinary-exit pairs, today/same-day simple activity, resolved effective employee/site/G01, valid policies, no overlap/split/exception/dependency ambiguity.
+Use §47 policy provenance, not defaults. Original exit ordinary full-instant rule: `exit > E-(B+1)*60000`, `S-60min <= exit <= E+Amin`, arrival<=exit<=serverNow.
+Now within `[S-60min,E+Amin]`, today/operator window `[from,to)`. Stored civil seconds must resolve uniquely; floor-to-second borderline originals may conservatively defer.
+Malformed/orphan, missing/late/report/flag/dependent/locked/partner-required-or-unknown defer; no early/historical/backdated correction/re-registration. Unknown remark/report/mood obligations defer, no label assumptions.
+Stage pair may coherently be null; preserve briefing null/0/1 and admitted neutral P2 values.
+
+Fixture adapter: same rules/populated synthetic rows/injected bounded clock; receipt `simulated`, never native fallback. Dedicated native ports/receipt, no §47 widening.
+GET/check only bounded SELECT/read-only checks/ephemeral tokens:0 DML/locks/NEXTVAL/functions/allowance consumption/filesystem writes/partner calls; coordinator availability read only.
+Consumption after both consents. No pagination: one resource; bounded dependency reads, overflow rejects.
+
+### 52.3 Exact draft APP/API package for approval
+
+`B=/api/v1/employees/{employeeId}/shift-days/{shiftDayId}/station-exit-cancellation`.
+Reuse DecimalId positive1–38 digits, ShiftDayId positive1–10 digits, LocalDateTime civil seconds,
+Instant/token/fingerprint/UUID grammar from approved arrival contracts; required keys unless noted.
+LocalDateTime is exactly `YYYY-MM-DDTHH:mm:ss`, Gregorian years0001–9999 (not0000),
+valid calendar/time, no offset/fraction/leap second. Instant is that calendar plus exactly
+`.sssZ`, canonical UTC roundtrip; no extended/signed year. Token43 base64url characters,
+fingerprint64 lowercase hex, command UUID lowercase RFC4122 v4; no coercion/normalization.
+JSON max16KiB/depth8; existing response bounds/5s whole-request budget/no-store/Origin/header guards.
+No query parameters; reject duplicate/unknown keys/coercion, GET body and non-JSON POST.
+
+| Method | Exact request → status/body |
+|---|---|
+| GET `B/context` | No body →200 CancellationContextV1; read-only observed/deferred state |
+| POST `B/validations` | `{}` →200 CancellationValidationV1 only when ready; otherwise problem |
+| POST `B/commands` | CancellationCommandV1 →200 CancellationReceiptV1 only after verified completion |
+
+```typescript
+type CancellationDraftV1 = {}; // runtime EXACT empty object, not TS {} validation
+type CancellationRecordedV1 = {
+  stageArrivalLocal:LocalDateTime|null; stationArrivalLocal:LocalDateTime|null;
+  stationExitLocal:LocalDateTime|null; briefing:boolean|null
+};
+type CancellationContextV1 = {
+  employeeId: DecimalId; shiftDayId: ShiftDayId; orgUnitId: UnitCodeV1;
+  planned:{startLocal:LocalDateTime;endLocal:LocalDateTime}; recorded:CancellationRecordedV1;
+  serverTime: {instant:Instant; local:LocalDateTime; businessTimeZone:string};
+  policy: {maxEarlyWholeMinutes:number; maxAfterEndMinutes:number};
+  mode:"isolated-fixture"|"test-oracle-controlled"; dataSource:"isolated-fixture"|"oracle-test";
+  eligibility:"eligible"|"not-recorded"|"deferred";
+  blockers:Array<StationExitBlockerV1|"ORDINARY_EXIT_REQUIRED"|"PARTNER_REVIEW_REQUIRED"|"OUTSIDE_CANCELLATION_WINDOW">
+};
+type CancellationValidationV1 = {
+  employeeId:DecimalId; shiftDayId:ShiftDayId; state:"ready";
+  evaluatedAt:Instant; evaluatedLocal:LocalDateTime; expiresAt:Instant;
+  businessTimeZone:string; validationToken:ValidationToken; fingerprint:Fingerprint;
+  originalExitLocal:LocalDateTime; warnings:["RECORDED_EXIT_WILL_BE_CLEARED"];
+  confirmationRequired:true; dataSource:"isolated-fixture"|"oracle-test"
+};
+type CancellationCommandV1 = {
+  commandId:CommandUUID; draft:CancellationDraftV1; validationToken:ValidationToken;
+  fingerprint:Fingerprint; warningConfirmation:{accepted:true;code:"RECORDED_EXIT_WILL_BE_CLEARED"};
+  operationConfirmation:{accepted:true}
+};
+type CancellationReceiptV1 = {
+  commandId:CommandUUID; employeeId:DecimalId; shiftDayId:ShiftDayId;
+  originalExitLocal:LocalDateTime; recorded:CancellationRecordedV1 & {stationArrivalLocal:LocalDateTime;stationExitLocal:null};
+  businessTimeZone:string; replayed:false; receiptPersistence:"none"; partnerCompletion:"not-invoked"
+} & (
+  {outcome:"oracle-test-committed";dataSource:"oracle-test";
+   commitAcknowledgedAt:Instant;readBackVerifiedAt:Instant} |
+  {outcome:"simulated";dataSource:"isolated-fixture";
+   commitAcknowledgedAt:null;readBackVerifiedAt:null}
+);
+```
+
+Mode/source and preparation/receipt source must match; reuse blocker spelling, not §47 eligibility algorithm.
+TTL<=30s shortened at midnight/operator/upper boundary; bind actor/resource/source/draft/full originals/policy/dependencies/both consents/config identity.
+Server time only evaluates; no new timestamp/user. Reason/remark/manager/mood absent: source has none.
+No reset/retry/status/poll/PATCH/DELETE/upsert/already-null success receipt/auto resend.
+
+Problem envelope reuses §47 type/title/status/code/requestId/commandId/effect/nextAction structure.
+Dedicated invalidParameters names: employeeId,shiftDayId,commandId,draft,validationToken,fingerprint,
+warningConfirmation,operationConfirmation,query,body; reasons required/invalid-format/unsupported.
+Codes/status: INVALID_REQUEST400/405, REQUEST_TOO_LARGE413, UNSUPPORTED_MEDIA_TYPE415,
+BUSINESS_VALIDATION_FAILED422, UNAUTHENTICATED401, FORBIDDEN/LIVE_WRITES_DISABLED403,
+SHIFT_DAY_NOT_FOUND404, STALE_PREPARATION409/prepare-again, EXIT_NOT_RECORDED409/stop,
+COMMAND_SCOPE_DEFERRED/COMMAND_ID_CONFLICT/COMMAND_IN_PROGRESS409/stop,
+CONFIRMATION_REQUIRED409/correct-and-validate, AMBIGUOUS_ATTENDANCE/INVALID_SOURCE_DATA/
+INTERNAL_ERROR500/stop, DEPENDENCY_UNAVAILABLE/DEPENDENCY_TIMEOUT503/stop.
+Other400/413/415/422 use correct-and-validate;401/403/404 stop.
+405 INVALID_REQUEST also uses correct-and-validate. `CONFIRMATION_REQUIRED` is a new
+cancellation-specific409, not an added ordinary-exit code; `EXIT_NOT_RECORDED` replaces
+ordinary exit's ALREADY_REGISTERED only in this new problem union. No other §47 code is
+implicitly accepted. invalidParameters is optional and bounded to10 entries, exact
+`{name,reason}` pairs from the above allowlist; never raw values, SQL, identities or proofs.
+All these have proven effect none or rolled-back; COMMAND_OUTCOME_UNKNOWN503 has only
+effect unknown/nextAction reconcile. No proven rollback on ambiguous commit/failed readback.
+
+### 52.4 Exact identity/capability delta and private ports
+
+Preserve PrincipalV1/IdentityResponseV1/AuthenticationProvider/AuthenticationRequest unchanged.
+CapabilityV1 adds ONLY `attendance-station-exit-cancellation:prepare`, `attendance-station-exit-cancellation:commit`, `attendance-station-exit-cancellation:test-oracle-write` after approval.
+Synthetic Administrator: existing read7+cancellation prepare/commit for fixture, read7+all cancellation3 for native TEST. Other profile grants unchanged.
+Context/check require prepare+unit membership (native also test-oracle-write); command adds commit/recheck under ownership. Role/UI cannot bypass rules.
+Explicit synthetic opt-in local/isolated only; production rejects before factories/listen; otherwise configured real provider or fail, no auth-error fallback.
+Synthetic employeeId=null, selected employee not authenticated self; no DB/broker grant. Cancellation default OFF; native needs separate config/proof/Origin/allowance/coordinator.
+
+#### 52.4.1 `52-config-v0.1`: exact profile and ENV admission (P)
+
+This is the missing architect-owned design, submitted WITH §52 for approval, not a later
+unspecified decision. Only key names/type constraints are published: no working secret,
+host, endpoint, private path, certificate, fingerprint or operator permission is supplied.
+Reuse existing `SHF_FIXTURE_CONFIG` / `SHF_ORACLE_CONFIG` JSON entrypoints, exactly one;
+`SHF_APP_ENV` and `NODE_ENV` production guards remain authoritative, including direct/
+profileless entrypoints. New cancellation mode absent or `disabled` means OFF. Invalid
+mode/spelling/extra keys or inconsistent environment rejects; never defaults to fixture.
+
+| Profile | Exact enabled configuration keys / constraints |
+|---|---|
+| fixture | `attendanceStationExitCancellationMode:"isolated-fixture"`, `deploymentClass:"local-development"|"isolated-test-demo"`, `authenticationMode:"synthetic"`, `syntheticAdministratorEnabled:true`, `syntheticOrgUnitIds`, `businessTimeZone`, `dataSource:"isolated-fixture"`; peer mode keys below all explicitly `disabled`. Exactly these keys; no oracleTestScopeConfirmed/realProviderId/private native inputs. Explicit existing synthetic read fixture loaders plus cancellation scenario/clock manifest required; no native snapshot imported as fixture. |
+| native | `attendanceStationExitCancellationMode:"test-oracle-controlled"`, `deploymentClass:"isolated-test-demo"`, `authenticationMode:"synthetic"`, `syntheticAdministratorEnabled:true`, `syntheticOrgUnitIds`, `businessTimeZone`, `dataSource:"oracle-read-only"`, `oracleTestScopeConfirmed:true`; peer mode keys below all explicitly `disabled`. Exactly these keys; `SHF_APP_ENV` must be `test`; no realProviderId/fixture inputs. |
+| disabled / production | Preserve old enabled profiles/contracts. Reject any cancellation private inputs/Origin/scenario manifest when OFF; cancellation write flag only absent or literal `false`. Production rejects synthetic or either enabled cancellation mode before factories/filesystem authority/listen. Outside approved synthetic mode require a configured real provider or explicit failure; no real-provider implementation here. |
+
+Peer keys are `attendanceStageArrivalMode`, `attendanceStationArrivalMode`,
+`attendanceStationArrivalLateMode`, `attendanceStationExitMode`, `shiftManagementMode`.
+Enabled cancellation is mutually exclusive with EVERY old mutation profile, including
+joint fixture; read7 stays available. Consume/validate the new key in a dedicated branch;
+when OFF pass the unchanged old configuration projection to old validators. Do not loosen
+their exact-key validators, grant arrays, ENV acceptance, SELECT/DML or query/proof digests.
+New keys cannot select an old operation. Old flags must be absent/`false`, old native
+prefix inputs and old mutation Origins absent while cancellation is enabled.
+
+| New / required ENV key names | Exact meaning / absence behavior |
+|---|---|
+| `SHF_STATION_EXIT_CANCELLATION_ORIGINS` | Required in either enabled mode; nonempty JSON array of at most16 unique exact HTTP(S) origins, no wildcard/null/credentials/path/query/fragment, canonical serialization, loopback-only fixture/native TEST browser perimeter. Missing/foreign Origin denied, same HTTP/header/body guards as §47; no permissive CORS. |
+| `SHF_STATION_EXIT_CANCELLATION_FIXTURE` | Fixture only: exact JSON `{version,scenarioId,clockInstant}`, max16KiB/depth8; version `shf-station-exit-cancellation-fixture-v1`, scenarioId exactly `ready`, `not-recorded`, `early-deferred`, `partner-required`, `partner-unknown`, `outcome-unknown` or `authority-consumed`, clockInstant grammar above. Required, no default scenario/clock. Reuse existing explicitly selected synthetic read loaders; scenario supplies complete originals/policies/partner assessment and in-memory bounded admission, not real rows. Reject native prefixes, coordinator, Oracle inputs and write flags other than absent/false; no Oracle factories or operator mounts. |
+| `SHF_TEST_ORACLE_EXIT_CANCELLATION_WRITE_ENABLED` | Native only, literal `true` required; no truthy coercion. False/absence cannot open native. |
+| `SHF_NATIVE_EXIT_CANCELLATION_BINDING` | Required exact private CancellationBindingV1 below; complete JSON including embedded certificate max1MiB/depth12 (private evidence, NOT HTTP body budget), duplicate/unknown keys rejected. Unknown keys under `SHF_NATIVE_EXIT_CANCELLATION_` reject. |
+| `SHF_NATIVE_EXIT_CANCELLATION_CONNECT_STRING`, `SHF_NATIVE_EXIT_CANCELLATION_USER`, `SHF_NATIVE_EXIT_CANCELLATION_PASSWORD`, `SHF_NATIVE_EXIT_CANCELLATION_CLIENT_LIB_DIR` | Required separate writer settings; existing oracleEnvironment validation/approved alias restrictions, identity/account checks and Thick-client requirements, no read-account promotion/old EXIT input substitution/Thin fallback. Values remain operator-private. |
+| `SHF_ORACLE_CONNECT_STRING`, `SHF_ORACLE_USER`, `SHF_ORACLE_PASSWORD`, `SHF_ORACLE_CLIENT_LIB_DIR` | Existing independently configured read connection inputs, native only; match readIdentity and same approved physical target as writer. Presence is not compatibility/runtime proof. |
+| `SHF_NATIVE_COMMAND_COORDINATOR_CONFIG` | Native required unchanged exact §50 `{directory,targetScope}` and existing namespace/employee guard; no cancellation namespace. OFF behavior unchanged for old writers. |
+| `SHF_TEST_ORACLE_METADATA_LIMITED_ENABLED` | Existing explicit limited-provider flag: native limited branch requires literal `true` AND new cancellation waiver/certificate. Full providers require absent/`false`; flag alone never selects provider or authorizes writes. |
+
+#### 52.4.2 Exact private binding / purpose-bound review packet (P)
+
+```typescript
+type CancellationBindingV1 = {
+  operation:"native-station-exit-cancellation-v0.1";
+  marker:typeof nativeMarker; employeeId:DecimalId; shiftDayId:ShiftDayId; orgUnitId:UnitCodeV1;
+  expectedDaySource:string|null; // REQUIRED, not inherited SOURCE default
+  readIdentity:NativeIdentity; writeIdentity:NativeIdentity;
+  cancellationMetadataDigest:Fingerprint; cancellationCertificate:CancellationCertificateV1;
+  partnerReview:CancellationPartnerReviewV1;
+  approval:string; freezeOwner:string; recoveryOwner:string;
+  writerFreezeConfirmed:true; singleExecutorConfirmed:true;
+  windowStart:Instant; windowEnd:Instant; allowanceFile:string;
+} & (
+  {metadataProvider:"dba-v1"|"owner-hybrid-v1";noExternalEffectsConfirmed:true} |
+  {metadataProvider:"owner-test-limited-v1";metadataCoverageWaiver:{
+    id:"shf-test-exit-cancellation-two-view-waiver-v0.1";accepted:true;
+    externalEffectsAssessment:"unknown-user-waived";
+    operation:"native-station-exit-cancellation-v0.1"
+  }}
+);
+type CancellationCertificateV1 = {
+  version:"shf-native-exit-cancellation-certificate-v1";
+  operation:"native-station-exit-cancellation-v0.1"; tableScope:string[];
+  metadataProof:CancellationMetadataProofV1;
+  updateColumns:["STATION_EXIT_TIME","STATION_EXIT_USER"];
+  replacement:{STATION_EXIT_TIME:null;STATION_EXIT_USER:null};
+  completeOriginalsDigest:Fingerprint; bindingScopeDigest:Fingerprint;
+};
+type CancellationPartnerReviewV1 = {
+  version:"shf-exit-cancellation-partner-review-v1";
+  purpose:"clear-recorded-ordinary-station-exit"; assessment:"not-required"|"required"|"unknown";
+  reviewReference:string; reviewedBy:string; reviewedAt:Instant; expiresAt:Instant;
+  bindingScopeDigest:Fingerprint; completeOriginalsDigest:Fingerprint;
+};
+```
+
+All fields required; exact union keys, no optional legacy metadataDigest/exitMetadataDigest/
+operation aliases. Shared NativeIdentity uses existing exact legacy/service-reference/SID
+endpoint-proof shapes and validation, not publicly reproduced values. Read/write expected
+accounts must independently match their respective connections, both physical target/schema
+references equal; distinct connection roles, not assumed distinct usernames. Owner providers
+require expected SHIFTER owner writer. SID alias/address-set proof remains private and is
+not evidence that DNS/runtime target was verified. Missing/mismatched identity fails closed.
+approval/freezeOwner/recoveryOwner/reviewReference/reviewedBy: well-formed, control-free
+nonblank strings1–128 characters, no embedded credential/config. SOURCE parser remains
+exact null or nonempty control-free UTF-8<=15 bytes, with no trim/coercion/default; bind
+exact stored SOURCE, including explicitly approved null, not marker-only authorization.
+Use existing nativeMarker symbol and synthetic employee-number/prefix validators unchanged
+(exact ASCII8–9 and first8, no numeric normalization); selected employee marker/prefix and
+day/effective employee must be uniquely consistent. No new/special marker value is invented.
+
+Window endpoints canonical Instants, start<end, finite same business day as selected simple
+shift; startup must precede end, may precede future start, no token/command before start.
+Validation/command checks `[windowStart,windowEnd)` intersected with §52.2/TTL bounds;
+midnight/zone/drift invalidates. allowanceFile canonical absolute trusted local path outside
+repo/application/package, existing trusted ancestors/no links/network share, filename prefix
+`station-exit-cancellation-`, separate from EVERY old allowance/coordinator record. Preserve
+old exclusive-create+fsync one-attempt allowance mechanism; no allowance create/consume in
+context/check/startup, no copying/deleting/reseeding old fuses. Operator alone supplies trust/
+ownership/window/external-writer freeze and recovery approval before native configuration
+handoff; this design defines those parameters, it does not provision them.
+
+bindingScopeDigest is fingerprint of canonical exact `{operation,marker,employeeId,shiftDayId,
+orgUnitId,expectedDaySource,readIdentity,writeIdentity,metadataProvider,
+cancellationMetadataDigest,approval,freezeOwner,recoveryOwner,writerFreezeConfirmed,
+singleExecutorConfirmed,windowStart,windowEnd,allowanceFile,metadataPermission,
+coordinatorNamespace}`. metadataPermission is the selected exact noExternalEffectsConfirmed
+or new metadataCoverageWaiver object; coordinatorNamespace is unchanged §50 namespace.
+No self-referential certificate/partnerReview/digest fields in this preimage.
+completeOriginalsDigest fingerprints the complete cancellation snapshot (all attendance
+columns incl original nonnull exit time/user, all owned baseline/overlay/employee/unit/site/
+policy rows, absence/count/candidate/dependency facts) plus exact SOURCE and policy provenance.
+Certificate and partner review must bind BOTH digests, not just IDs/exit timestamp; their
+exact bytes/digests also participate in preparation/config identity. Never accept old exit,
+arrival, late or shift certificate/waiver/review, even on identical tables/rows.
+
+#### 52.4.3 Table / NULL-clear certificate and budget (P; current facts U)
+
+Reuse current `exitTables` STRUCTURE as the minimum source-backed scope, not its evidence or
+digest: SHF_EMPLOYEES, SHF_EMPLOYEE_DAY, SHF_DAY_CHANGES, SHF_ATTENDANCE, SHF_ORG_UNIT,
+SHF_EMPLOYEE_REPORTS, SHF_EMPLOYEE_EXCEPTIONS, SHF_EMPLOYEE_EXCEPTIONS_BASE,
+SHF_SYSTEM_PARAM, SHF_UNIT_PARAM, SHF_ORG_UNITS_SHF_SITES (schema SHIFTER).
+Exact tableScope order is current exitTables insertion order; no invented partner/reason/
+ledger table. Required projections use current exitTables column names, physical `LATE_*`,
+WM_SITE_ID/NEW_SITE_ID and SS_SITE_ID/SOU_ORG_UNIT_ID; original-exit-null rejection is NEW.
+Discover/project ALL physical attendance columns, not only this minimum; new cancellation
+owned-row projections also cover all physical baseline/overlay/employee/unit/site/policy
+columns for full before-image/preservation readback, without altering any old query/digest.
+Unknown/unsupported/virtual columns or inability to compare/preserve any original deny native,
+not omit it. Reports/exceptions/candidates retain complete bounded eligibility evidence and
+externally excluded dependency writes; this is not a claim of whole-database snapshot isolation.
+Existing baseline/overlay/related rows remain untouched and full bounded evidence preserved;
+unsupported dependency/partner/mood/remark/report obligations defer, never fabricate absence.
+
+CancellationMetadataProofV1 reuses existing metadata row schemas/order/constraints validation
+only. Full exact wrapper `{version,provider,owner,operation,tableScope,proof}`: version
+`shf-native-exit-cancellation-metadata-v1`, selected full provider, owner SHIFTER,
+new operation and exact scope above; proof is the existing9 ordered metadata result arrays.
+Limited exact wrapper uses existing LimitedMetadataEvidence keys/observation shapes, BUT new
+operation and waiverId above, version `shf-exit-cancellation-owner-test-limited-proof-v1`;
+coverage retains DBA_TRIGGERS/DBA_ROLE_PRIVS UNKNOWN and ownerTriggers owner-only observed,
+collectorMethod unchanged. No generic old LimitedOperation/waiver parser acceptance.
+cancellationMetadataDigest fingerprints the entire new provider-specific wrapper; certificate
+metadataProof must match it and current separately authorized collected facts before readiness.
+Private proof parse max1MiB/depth8/1000 rows per observation; overflow/duplicates/missing facts
+reject. No proof collection permission follows from coding approval.
+
+Current certification must establish real non-temporary tables/required columns, valid unique
+day/attendance ownership/constraints, VPD/trigger/dependency/grant assessments and read access
+to ALL preserved facts. Specifically DATE STATION_EXIT_TIME and VARCHAR2 STATION_EXIT_USER
+are BOTH currently nullable and nonvirtual, clearing BOTH is allowed by enabled constraints,
+and writer has UPDATE on precisely these targets (or observed table grant) with no hidden
+unwaived effects. Historical nullable metadata is insufficient. Full providers require their
+explicit effect assessment; limited provider needs NEW operation-specific two-UNKNOWN
+disclosure/acceptance, never “no external effects”. Neither waiver proves safe triggers/
+role grants nor substitutes for external-writer exclusion or direct privilege checks.
+Exact plan is `SET STATION_EXIT_TIME=NULL,STATION_EXIT_USER=NULL`, no new actor/time/reason;
+certificate explicitly certifies that replacement, not §47's nonnull assignment.
+
+Whole request budget remains5s including read/pure assessment/admission/transaction/
+independent readback; token<=30s, JSON body16KiB/depth8. All snapshots/dependencies use existing
+bounded SELECTs (candidate probe1001, maximum accepted1000; overflow rejects), not unbounded
+queries or callback/transport. Native per-call timeout is remaining request budget, explicit
+AbortSignal AND ambient deadline checked synchronously pre-DML/pre-COMMIT. Cleanup may drain
+with existing1s rollback timeout outside response budget; unsafe native promises/leases must
+be drained/discarded, no asynchronous business continuation. ACK/readback budget loss is
+UNKNOWN, not success. No SLA/capacity/runtime compatibility proof claimed.
+
+#### 52.4.4 Exact private ports and partner decision seam (P)
+
+CancellationReader.read(signal?)→Promise<CancellationSnapshotV1>: complete snapshot defined
+above, dedicated cancellation identity/config and original exit; no native exit reader cast
+whose eligibility excludes recorded exit. CancellationRules.decide(snapshot,serverNow) is pure.
+CancellationPartnerAssessmentPort.assess({purpose:"clear-recorded-ordinary-station-exit",
+bindingScopeDigest,completeOriginalsDigest,review:CancellationPartnerReviewV1})→
+`{assessment:"not-required"|"required"|"unknown"}` is synchronous pure review validation,
+no partner calls. Absent/expired/mismatched review or uncovered observers →unknown;
+required/unknown yields PARTNER_REVIEW_REQUIRED and COMMAND_SCOPE_DEFERRED, no token/DML.
+Native review is operator/business-owner purpose-specific current evidence, bound to entire
+original exit+SOURCE+preservation/dependency snapshot, not inferred from no legacy sender.
+Fixture review is exclusively synthetic and cannot authorize native. ReviewedAt<=serverNow<
+expiresAt<=windowEnd; re-evaluate under ownership, any drift invalidates both consents.
+“not-required” means no partner work needed under that review, NEVER actual partner completion.
+
+CancellationOperatorAdmissionPort.assertAvailable(scope,signal?)→Promise<void> checks frozen
+binding/certificate/review/current scope, separate allowance availability and mandatory
+coordinator read-only; consume(scope,commandId,globalAdmission,signal?)→Promise<opaque
+CancellationOperationAdmissionV1> applies the cancellation-only exclusive allowance;
+assertMutationAllowed(handle,scope,commandId):void synchronously checks provenance/ownership.
+scope is exact `{bindingScopeDigest,completeOriginalsDigest}`; no HTTP token/boolean/cast can
+provide either branded admission. No reset/provision/reconcile/finish method.
+CancellationUow extends required §50 NativeCommandCoordinatorDependencyV1;
+execute(before,decide,globalAdmission,operationAdmission,signal?) returns the dedicated
+ACK+preservation-readback result, requiring BOTH owned handles even for direct constructor/
+UoW calls. Application consumes global coordinator THEN own allowance after fresh auth/
+checks/two consents; backend owns private SQL, HTTP never supplies plan/columns.
+Canonical materialization after approval must add only coordinator operation
+`station-exit-cancellation`; key stays employee-wide, not kind/day/UUID. All old writer seams/
+queries/digests/allowances remain unchanged. Native composition is mandatory, no no-op/default.
+
+Startup order: strict config/auth/profile/ENV/Origin/binding parse → read-only trusted
+coordinator/allowance availability (missing guard fails) → authorized identity/metadata/current
+certificate/review checks → native ready/listen. No business DML, lock, allowance consumption,
+filesystem provisioning or synthetic/native fallback. Inability to establish CURRENT facts
+keeps native unavailable; startup cannot report ready from static certificate/type declarations.
+The envelope is design-complete; target values/current nullable-clear/effects/driver-client-
+database support/operator permission remain U and mandatory fail-closed runtime prerequisites,
+not unspecified keys for consumers to invent.
+
+### 52.5 Locked DML, completion and irreversible authority
+
+After fresh auth/check/two consents consume coordinator then cancellation-only allowance before DML; no exit/late/F1 proof reuse. Failed acquisition may consume with0 business effects.
+Retain marker+guard after EVERY attempt including success/rollback. Nulling exit never reopens authority; no finish/release/reseed.
+Separate operator reconciliation/all writers stopped only; consumed allowances/F1 remain closed; no operator permission here. Prior-consumed employee blocks even eligible cancellation.
+**Operational cases, explicitly part of requested approval:** (a) recorded exit created by the
+current coordinated exit command: employee guard/marker already consumed, so native
+cancellation is IMPOSSIBLE without separately authorized operator reconciliation/reprovisioning;
+success, rollback, another day/UUID/restart and data clearing cannot change that. (b) An
+existing legacy/synthetically provisioned TEST recorded exit may be tested only with an
+independently operator-provisioned existing ready employee guard/absent attempt marker AND
+its own unused cancellation allowance, current packet and freeze, before ANY native API.
+The application must never programmatically reset/provision either case. Synthetic fixture
+success is not evidence of (a) native viability. This pilot is not meaningful routine daily
+production cancellation/re-registration; operator provisioning/reopening is outside coding
+approval and cannot be a hidden “setup” task. (c) consumed/corrupt/foreign/absent authority:
+fail closed before API availability, no operator-style recovery endpoint.
+
+Short autoCommit=false transaction: identity-checked connection/NOWAIT ownership employee/day/overlay/attendance/policy/dependencies; external phantom/legacy exclusion required.
+Reload ALL originals/re-decide, complete null-safe attendance WHERE/before-image checks under locks; hash not ownership.
+ONE UPDATE SHF_ATTENDANCE SET STATION_EXIT_TIME=NULL,STATION_EXIT_USER=NULL only, exact day/coherent original nonnull arrival+exit.
+Preserve ALL other attendance columns/users/briefing/P2/missing/late/flag, baseline/overlay/related rows.0 INSERT/DELETE/event/mood/sequence/function/ledger/EMS/DDL.
+rows0→stale/proven rollback;1→commit candidate;>1/undefined→rollback/invariant. Synchronous AbortSignal+ambient deadline+coordinator pre-DML/pre-COMMIT guards/no await gap; drain cleanup/discard unsafe leases.
+Receipt only COMMIT ACK+independent identity-checked readback of both NULL fields and complete preservation; ACK loss/readback fault/possible effects→UNKNOWN/quarantine/no retry/no fake partner completion.
+Two metadata UNKNOWN scopes DBA_TRIGGERS/DBA_ROLE_PRIVS (native-metadata-limited.mts:17–23) require NEW operation-specific disclosure/permission; external-writer exclusion is a separate risk.
+No distributed/power-loss guarantee; other hosts/simultaneous fence loss remain risks.
+
+### 52.6 UI review-ready proposal, acceptance matrix and approval
+
+Browser `/employees/{E}/shift-days/{D}/station-exit-cancellation` from attendance/detail ordinary exit. M3 Hebrew/RTL facts→pure check→warning→review→separate operation consent→pending→receipt/UNKNOWN.
+Show original exit→“לא נרשמה יציאה”, preserved arrival/source, action “ביטול רישום יציאה”; no editable time/reason/remark.
+Pre-dispatch Cancel0 effects/restores opener/filter/page/scroll; safe initial Cancel/trap focus/Escape precedence/no nested dialog. Pending/result no resend.
+Drift clears both consents; stale responses rejected. Persistent UNKNOWN employee interlock across all old/new flows/history/reload/UUID.
+Fixture “הדמיה בלבד”, native TEST not production; no partner-completed claim. Designer review is ready in §52.7 (52-UI-v0.2); caller presents the bundled proposal for explicit approval.
+
+| Test ID / owner | Measurable acceptance, all NOT RUN here |
+|---|---|
+| C52-01 backend+QA | Exact routes/keys/bounds/mode-source/problems and capability/resource/startup gates; production mock, auth error, absent real provider fail before ports. Existing reads/native writers unchanged. |
+| C52-02 backend+QA | Original exit at early boundary and +1ms, arrival/order, now upper equality/+1ms, midnight/overnight/DST ambiguity, missing policy/overlap/early/partner unknown defer; no date precision truncation before classification. |
+| C52-03 backend+QA | GET/check/warning-only/whole-consent-only/cancel have0 DML/lock/NEXTVAL/function/allowance consumption/partner calls. Drift invalidates token and both consents. |
+| C52-04 backend+QA | Exact two SET columns; full before-image preservation; rows0/1/>1/undefined; lock conflict, external-writer missing exclusion, abort before/after DML/COMMIT and ACK/readback faults classified honestly. |
+| C52-05 backend+QA | All old/new kinds/processes/days compete employee-wide; success/rollback/UNKNOWN and restart never reopen; consumed prior exit blocks cancellation. Missing/corrupt marker/guard fail closed;0 further commands after UNKNOWN. |
+| C52-06 UI+QA | Populated synthetic integrated success/cancel/deferred/UNKNOWN worlds; native protocol doubles labeled, not live. Hebrew/RTL/LTR-isolated IDs,320/390/1440px,200% zoom, keyboard/focus/history, manual AT/contrast/reflow evidence separate. |
+| C52-07 backend+QA | Exact 52-config-v0.1 keys/provider unions/ENV/Origins/window/SOURCE/synthetic marker-prefix/identity/NULL-clear proof checks; old operation proofs and new-key typos rejected; all old grant/query/digest profiles preserved. Missing/expired/full-original mismatched partner review defers with0 effects; required/unknown never yields partner-completed receipt. |
+| C52-08 backend+QA+operator | Protocol doubles prove prior coordinated exit cannot cancel; separately provisioned existing TEST record+ready guard+own allowance is the only no-reopen native starting case. No provisioning/reset under coding scope; actual current certificate/support/waiver/freeze/runtime verification NOT RUN and separate GO required. |
+
+#### 52.6.1 Remaining-plan critical path and finite completion interpretation
+
+Within this exclusive §52 amendment, clarify remainder-v0.1 (companion plan unchanged):
+M01 must produce a USER-ACCEPTED finite coverage boundary: every reconciled active menu/
+submenu/route/dispatch/control action (including dynamic/unknown branches, duplicates and
+stubs) maps to an accepted implementation/test case or explicit action-specific business
+deferral/exclusion with owner, dependency and rationale. Zero unclassified/ownerless actions;
+no current whole-project completeness assertion, and no automatic approval of M03–M25 APIs.
+Mission28 is delivery, not28 approved business APIs. All G(ID) contract/UI approvals remain.
+For DEVELOPMENT COMPLETE, all accepted action cases/V packs/M27/M28 must actually pass;
+each required partner mutation deferred from delivery needs explicit business acceptance of
+its affected action and unavailable outcome, not a fake receipt or closing a parent mission
+on a tested partial subtype. CTI(M21), pool(M18), managed-break(M22) and IWD(M25) partner
+actions are abstract port/DTO/assessment/simulation only, with no actual transport/completion.
+M21 Done specifically cannot mean required native partner mutations work: either accepted
+abstract/local cases pass AND each required mutation has accepted deferral, or M21 stays open.
+
+M26 live identity/metadata/NULL-clear/support/exclusion/preservation evidence is a prerequisite
+of applicable R01 RELEASE, NOT offline M28 development delivery or offline M03–M25 coding.
+M28 may package a complete accepted offline scope with native disabled and live evidence
+explicitly not-run/deferred; it must not label that production ready. R01 requires M28 AND
+applicable M26 plus separate real-provider implementation/security/operations/business
+acceptance. Real identity is EXCLUDED from this development coding request, but REQUIRED
+for release; planning/full-project direction neither approves its implementation nor waives it.
+Coverage acceptance defines finite development completion, not deployment or legacy parity.
+
+**Changed/checks (follow-up):** only existing DESIGN §52, version52-v0.2 +52-config-v0.1;
+companion remainder-v0.1/status/canonical/apps unchanged. Static actual source reads:
+AttendanceDataModel:2197–2248; native-station-exit-config exitBinding/exitEnvironment;
+native-stage-arrival-config nativeBinding/NativeIdentity/SOURCE/path checks; current exitTables/
+exitSafety/exitSnapshot/exitUpdate; native-metadata-limited two scopes/row schemas; native
+coordinator contracts/implementation; native-pilot-identity; runtime/environment/DTO validators.
+Docs listing confirmed source-contract catalog absent; reused baseline/source evidence, no
+duplicate inventory. Manual envelope/union/operation-digest/profile/time/problem/case/plan
+crosscheck and view readback only. NOT RUN tests/TSC/build/CLI/Git/link/verifier/Docker/browser/
+AT/UAT/DB/DNS/EMS; documentation-only view/patch tools, no executable test evidence.
+Frozen versions retained; current vendor support/Oracle11 Thick Linux U pending separate gate;0 dependencies/schema/framework/service/live changes.
+**Owners/blockers:** missing-envelope DESIGN blocker resolved in proposal, NOT approved.
+Designer review ready (§52.7)→caller; bundled baseline/capability/UI+finite scope/defer acceptance→user/
+business owner; canonical handshake→architect after approval; current operation certificate/
+partner review/NULL-clear facts/compatibility/exclusion/GO→operator/DBA/business owner.
+**Exact bundled approval sentence (UI review: §52.7, 52-UI-v0.2):** “Approve §52-v0.2 and
+52-config-v0.1 bounded ordinary exit-cancellation API/capabilities, reviewed M3 UI and exact
+fixture/native envelope, two consents, two-column NULL clear, preservation/ACK/readback and
+shared fence+own allowance; accept prior coordinated exit requires separately approved
+operator reopening, only independently provisioned ready-guard existing TEST records qualify,
+and no daily-production claim; accept remainder-v0.1 planning under §52.6.1 finite coverage,
+explicit required-partner deferrals and separate mission API/UI approvals, M26 for R01 not
+offline M28; authorize no live access, operator provisioning/reopening, real-auth implementation,
+transport, schema or deployment.”
+**Next:** caller reviews/presents; consumers STOP until explicit approval; then architect canonical handshake, disjoint backend/UI+independent QA. No whole-project Done.
+
+### 52.7 Reviewed UI contract — 52-UI-v0.2 / READY PROPOSAL
+
+**Task:** NEXT52-UI; 1 November 2026. READY for bundled approval, NOT approved/implemented.
+This completes the designer review requested in §52.6; it does not supply user approval.
+P throughout target UI; input is §52-v0.2 + exact 52-config-v0.1 (§52.1–6), not a new API version.
+Preserve approved Node24.21/Angular21.2 Material/CDK M3, Hebrew RTL shell/focus fixes and §51 empty Docker demo.
+Reported frontend753/backend1863 are D, not rerun here; neither full-project completion nor production/UAT readiness follows.
+
+**S: controlling source / differences requiring approval**
+- `old/SHFWeb/WebContent/jsp/attendance.jsp:357–379`: distinct security-gated cancel-exit, exit and cancel-station image buttons.
+- `old/SHFWeb/WebContent/js/attendance.js:571–640`: dayExit checks selection; cancel_exit confirms then mutating GET and success-text cell clearing, without that selection guard.
+- `old/SHFWeb/WebContent/WEB-INF/struts-config.xml:304–311` → `old/SHF/src/bzq/shf/actions/AttendanceDataAction.java:292–300`.
+- `old/SHF/src/bzq/shf/model/AttendanceDataModel.java:2197–2248`: reload, absent-exit rejection, clear only exit time/user; DB effects/commit remain U.
+- `attendance.js:11–180,489–553` and `jsp/attendance.jsp:75–88`: stage/briefing/missing interlocks and station lateness/reason guards, NOT cancellation permission.
+- `AttendanceDataAction.java:181–260`, `jsp/employee_earlyExit.jsp:78–112`: ordinary/early branching, early reason/manager/remark/event/mood are separate; never silently cancel these.
+P decisions: strict selected resource, read-only check, two consents and ACK/readback replace unsafe GET/text matching; no legacy optimistic blank-cell success.
+D nearest patterns inspected: `frontend/fixture-slice/src/{station-exit-page,station-arrival-page,station-arrival-dialog}.html`, `list-navigation.ts`, `native-command-session.ts`.
+D server fence: `backend/fixture-slice/native-command-coordinator-contracts.mts:19–53,87–106`; UI quarantine is supplementary, never authority.
+
+**Entry, identity, source and navigation**
+Browser route `/employees/{E}/shift-days/{D}/station-exit-cancellation`; attendance row/detail action “ביטול רישום יציאה”, not shift DELETE/logical cancellation.
+Require explicit synthetic employee/day/unit selection plus fresh identity/unit membership; Administrator employeeId=null is never “my employee”.
+Enabled fixture identity: exact existing read7 + cancellation prepare/commit; native: read7 + cancellation3 (§52.4), no old writer grants added.
+Route is not a grant: unauthorized/deep-link selection mismatch blocks; refresh without trusted selection offers “יש לבחור רשומה בבירור נוכחות”.
+Native read navigation source `oracle`/profile `oracle-read-only` is NOT command source `oracle-test`; dedicated boundary mapping, never string coercion/fallback.
+Label fixture “הדמיה מבודדת בלבד — ללא Oracle”; native “כתיבה בפועל למסד TEST — לא ייצור”; unverified source “המקור טרם אומת — הפעולה חסומה”.
+Show “מנהל מערכת סינתטי אינו העובד/ת שנבחר/ה; לא בוצע אימות סיסמה אמיתית”; native/code/Origin gates default OFF, production blocked.
+Retain exact origin route, typed filters/date bounds/sort/page or cursor, selected row, document/table scroll and opener in existing volatile navigation patterns.
+These are UI return state only, never cancellation query fields. Pre-dispatch Back/Cancel restores them with0 effects; missing opener focuses return-list heading.
+Back/Forward/tab switching/rapid reopen invalidate generations, token and consents; re-enter requires fresh context/check, never replay saved command/receipt.
+Reload/history retain only existing opaque safety markers, not tokens/consents/receipts/private config; unknown employee binding conservatively blocks native writers.
+
+**Facts → check → warning → review → separate consent**
+Read-only facts: employee/day/unit, source badge, planned dates, stage/station arrival, exit, briefing, server time/zone and supplied B/A policy.
+Null stage is “לא נרשמה הגעה לבמה”; briefing null/false/true stays “לא ידוע / לא / כן”, never defaulted or an automatic stage prerequisite.
+Original ordinary-exit classification/window is server-owned (§52.2); display blockers, not a browser-clock eligibility claim or editable/rounded date.
+No new time, user, reason, remark, manager, mood or report form; no §47 classification/exitWindow fields imported into §52 context.
+Button “בדיקת ביטול רישום יציאה — ללא שינוי” calls validations with EXACT `{}`; disable during loading/check/interlock, explain adjacent “טרם ניתן לבצע”.
+Warning heading “רישום היציאה הקיים ינוקה”; explain “ינוקו רק זמן היציאה וחותמת המפעיל; המשמרת, ההגעות, התדריך וכל היתר יישמרו”.
+Warning consent unchecked: “קראתי והבנתי שרישום היציאה הקיים ינוקה”; binds only `RECORDED_EXIT_WILL_BE_CLEARED`; accepting sends0 commands.
+Review uses two semantic columns “כעת” / “לאחר הביטול”: originalExitLocal → “לא נרשמה יציאה”; arrivals/briefing show unchanged values.
+Explain exit-user clear as scope text, not a fabricated before-value (no public user field); this is NOT deletion of shift/history or an audit-report workflow.
+Show evaluatedLocal/evaluatedAt, businessTimeZone, expiresAt and source; validity <=30s is exclusive/shortenable, not a promise of another available attempt.
+Separate whole-operation consent unchecked: “אני מאשר/ת את כל פעולת ביטול רישום היציאה בהקשר ובמקור המוצגים”.
+Primary “שליחת ביטול רישום יציאה — TEST” / “הדמיית ביטול רישום יציאה” enables only after BOTH consents and current preparation.
+One commandId for this dispatch, exact §52.3 command with draft `{}`, token/fingerprint and both accepted:true objects; no extra UI/public fields.
+Selection/actor/source/context/originals/policy/expiry drift clears BOTH consents/token; discard late generation responses and return to fresh facts/check.
+
+**Operational limitation and persistent all-kind interlock**
+Persistent notice: “פעולה מוגבלת לבדיקות; אינה ביטול יומיומי בייצור. ניקוי היציאה אינו פותח מחדש סמכות כתיבה”.
+Prior coordinated exit already consumed employee guard: NO cancellation/undo from its receipt, another day/UUID/restart or clearing exit; operator reopening requires separate permission outside UI.
+Only existing legacy/synthetically provisioned TEST record with independently provisioned existing ready guard/absent marker AND unused own allowance/current packet may qualify.
+No provisioning/reset/re-enable/operator button, command compensation or automatic fixture fallback. Operator setup is NOT implicit coding authorization.
+Hold shared employee fence after EVERY attempt, even success/proven rollback/0-effect acquisition failure; terminal receipt resolution never reopens server authority.
+Interlock covers stage/station/late/exit/cancellation and shift create/change/cancel/CSV across days/processes/history; unknown binding blocks conservatively.
+UI does not expose private guard/allowance/SOURCE proof/metadata/waiver paths or version packet; unavailable authority uses existing problems/disabled notice, no invented guard DTO.
+
+**State / result contract**
+- Loading/checking: stable read-only surface, polite status “טוענים הקשר / בודקים ללא שינוי”; no blank-state command or synthetic identity on error.
+- No access/401/403 or unverified identity/source: no protected facts/command, “אין הרשאה או שהמקור לא אומת”; stop, retain safe origin only.
+- No selection/data/404: chooser or “הרשומה אינה זמינה”; no create/upsert, invented data or success.
+- Context not-recorded / EXIT_NOT_RECORDED409: “לא נרשמה יציאה — זו אינה קבלת ביטול”; stop, no already-null receipt.
+- Deferred: render exact blocker allowlist in Hebrew with safe code; missing/late/flag/locked/overlap/early/window/report/required-or-unknown partner obligations cannot be bypassed.
+- STALE_PREPARATION409: “הנתונים או תוקף הבדיקה השתנו”; fresh preparation only if server permits; clear both consents, never automatically resend.
+- Correct-and-validate problems: associate only allowed invalidParameters with consent controls or summary (no raw values); explicit new check, not command retry.
+- Other stop problems incl COMMAND_IN_PROGRESS/ID_CONFLICT/SCOPE_DEFERRED and proven rollback: honest stopped/failed state; rollback does not restore allowance/fence.
+- Pending: read-only facts/consents, single polite “הפקודה נשלחה — אין לשלוח שוב”; no resend/cancel effect; leaving/unsubscribe is not rollback.
+- Native success ONLY exact matching oracle-test-committed receipt, nonnull ACK/readback Instants, originalExit match, exit null and returned preserved facts/zone.
+- Fixture success ONLY simulated/isolated-fixture with BOTH timestamps null: “הדמיה בלבד — רישום היציאה נוקה בנתונים סינתטיים”; not native evidence.
+- Receipt requires replayed:false/receiptPersistence:none/partnerCompletion:not-invoked; say “לא הופעל שותף חיצוני”, never partner-completed.
+- Malformed/source-mismatched/uncertain post-dispatch result or network/timeout/lost ACK/readback → UNKNOWN; “התוצאה אינה ידועה — אין לשלוח שוב; נדרש בירור מפעיל”.
+- UNKNOWN survives navigation/reload with all-kind quarantine; observation of null exit later is not a receipt/reconciliation. No polling/status/retry endpoints.
+
+**Keyboard, responsive and accessibility acceptance — future C52-06 QA, not verified compliance**
+Reuse shell HTML landmarks/M3 tokens, logical CSS Grid, Material buttons/checkboxes and CDK focus; visible hover/pressed/disabled/focus, no color-only warning.
+Desktop1440: compact facts and two-column review;320/390 and200% zoom: stacked labelled “כעת / לאחר”, wrap long IDs, no lost actions or horizontal page scroll.
+`lang=he`, `dir=rtl`; bdi/dir=ltr for IDs/codes/UUIDs/zone and full `dd/MM/yyyy HH:mm:ss` civil dates; no browser timezone conversion or precision loss.
+Tab follows DOM: return link→check→warning checkbox→continue→review action→operation consent→safe cancel→submit; Space toggles checkbox, Enter activates focused button only.
+Sequential single dialogs only: labelled title/described warning, initial focus safe “חזרה ללא שינוי”, trap Tab/Shift+Tab, no nested modals or background interaction.
+Escape closes top dialog pre-dispatch with0 effects (then focused opener); overlay first, page last. Pending/results are inline; Escape never implies command cancellation.
+On route/review/error/result focus visible heading/summary without scroll theft; restore exact opener+scroll on return, fallback heading; associate errors via aria-describedby/invalid.
+Hebrew status polite, UNKNOWN/error alert once; accessible labels “אישור אזהרת ניקוי יציאה”, “אישור כל הפעולה”; required/disabled reasons readable to AT.
+QA measure targets>=24x24 CSS px (aim44), text contrast>=4.5:1/nontext>=3:1, unobscured focus,200% reflow/320px and keyboard+Hebrew AT; reduced-motion respected.
+
+**Dependencies/checks/approval:** static view/field-by-field review only; no §52 shape inconsistency found, no shared contract changes or private version leak.
+API only §52.3 B: GET `/context` no body/query, POST `/validations` exact `{}`, POST `/commands` exact CancellationCommandV1; strict response/problem/source unions.
+Architect owns post-approval canonical exact shapes/capability/Origin/fence handshake; consumers must not alias §47 validators or invent unavailable fields/endpoints.
+M02 populated synthetic scenario/clock manifest remains TODO per remainder-v0.1; use §52.4.1 exact scenarios, never native success as fixture fallback or claim empty demo proves journeys.
+C52-01–08/browser/AT/contrast/build/TSC/Docker/UAT/live/support checks NOT RUN: documentation-only assignment/tools and no implementation/live permission.
+User/business owner must accept §52.5 limitation/finite coverage/required-partner deferrals; operator/DBA own current private evidence+separate GO, not UI design blockers.
+Approval request: present exact §52.6 bundled sentence with this §52.7 / 52-UI-v0.2 review reference; no extra design loop or inferred mission/full-project approval.
+Next: caller bundles READY PROPOSAL now; implement only after explicit user contract approval and architect handshake; no release/production-ready/full-project Done claim.

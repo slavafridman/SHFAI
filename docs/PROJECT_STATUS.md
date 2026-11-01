@@ -30,6 +30,42 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 **State: approved50 IMPLEMENTED AND PUBLISHED; local Docker demo DEPLOYED,
 verified and published under the user's2026-11-01 continuation request.**
 
+SHF-REMAINDER-52 current planning step,2026-11-01: user requested a plan for
+all remaining missions and development completion. Requested
+[remainder-v0.1 plan](SHF_COMPLETION_PLAN.md) now defines M01-M28 with actual
+prerequisites, owners, proposed/readiness states, measurable deliverables and
+a separate R01 production-release gate. Existing menus/routes/workflow maps
+are the evidence envelope; M01 must reconcile unmatched actions and obtain a
+finite accepted scope. Test counts and empty Docker availability are not parity.
+Priority is coverage/populated synthetic demo, remaining attendance and
+complex shifts, exchanges/requests/staffing, employee/catalog/admin/report/
+forecast interactive workflows, cross-family QA and final current delivery.
+Batch and actual EMS/CTI transport remain excluded, with affected partner
+mutations explicitly deferred rather than counted as working.
+The next concrete M03 baseline is ordinary recorded station-exit cancellation,
+design52-v0.2 with52-config-v0.1 and reviewed52-UI-v0.2. Controlling source
+clears only exit time/user; new DTO/capability/fixture/native envelope and
+measurable tests are proposals, not implemented or approved. A prior
+coordinated exit consumed the employee fence; clearing data does not restore
+authority. Separately authorized operator reconciliation/reopening remains
+necessary; this proposal does not authorize provisioning/live operations.
+Architecture and UI source/contract review completed statically; no new
+application code, runtime tests, Docker operation or live check was performed.
+Docs-only publication validation: standard evidence verifier passed with the
+documented legacy duplicate route (31 CSVs,10000 references,454 source hashes,
+436 local links,293 line references,20 historical capture hashes); no report
+file was rewritten. Assigned-doc checks passed:29 unique mission rows, acyclic
+dependencies,473 local links,19 Markdown/8 HTML anchors and10 explicit paths.
+One pre-existing user-report anchor was not read under the preservation scope;
+source #L references follow existing repository conventions, not rendered-page proof.
+Implementation is approval-gated, owner USER: accept/amend the roadmap scope
+and explicitly approve52-v0.2/config/UI before canonical materialization.
+Next safe action: validate/publish these plan/design/parent-checkpoint scopes,
+then carry the accepted decision to the architect and disjoint consumers.
+Development completion requires accepted action coverage, implemented/tested
+verticals, integrated populated demo, global QA and delivery; release also
+requires separate real identity/operations/live evidence and business sign-off.
+
 SHF-DOCKER-LOCAL-51 current step: local Desktop Linux engine29.4.3 and
 Compose5.1.3 responded successfully; historical engine HTTP500 is superseded
 by fresh availability evidence. Git main/direct remote matched4fea20e,
