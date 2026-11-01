@@ -31,6 +31,37 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 TEST environments are RUNNING. M02 source is published asdc743e2b; live Oracle
 is blocked by missing process configuration. Full rewrite remains incomplete.**
 
+Current continuation after17:59 reminder: M26 operator-readiness code is
+implemented as standalone oracle-test-readiness.mts. Initial49 focused tests
+and561 impacted mocked/static cases passed; correct fixture-directory TAP
+capture verified2084/2084 before final lifecycle hardening. Final66 focused
+tests and bare2101/2101 passed, zero failures/cancellations/skips/todos; TSC passed.
+An earlier counter probe ran from backend instead of backend/fixture-slice and
+reported zero tests; this was a harness CWD error, not accepted suite evidence.
+The new command reads process ENV only, requires independently operator-pinned
+current identity/alias proof, performs at most one identity SELECT and optional
+two owner-metadata queries, then verifies rollback/lease-close/pool-drain.
+It never queries business rows, invokes functions, consumes authority, writes
+data, provisions namespaces or grants release readiness. Real CLI currently
+exits2 BLOCKED/MISSING_CONFIG: all eight required keys absent, pool/connection/
+query counts0. Final IPC summaries are strictly guarded; CLI waits for actual
+child exit/close within the same five-second budget before emitting PASS.
+The missing-config run confirmed childExitAck=true and no remaining readiness
+processes. Late pool/lease cleanup failures are explicitly recorded, not hidden.
+No excluded credential files were accessed or reconstructed.
+New tool is host/source-operated, not yet packaged in Docker runtime closure.
+M04 early-exit source contract54-v0.1 and UI54-UI-review-v0.1 are written and
+reviewed proposals. Source proves event INSERT plus optional mood plus exit,
+not one ordinary-exit UPDATE or real manager authentication. Business decisions
+B-D1 actor/provenance, B-D2 mandatory remark, B-D3 event time/length and B-D4
+status/report/no-mood policy remain unresolved. Automatic continuation does
+not authorize stronger unverified policy or fabricate missing facts.
+Current approved TEST worlds remain running; their state was not reset.
+Next action: publish standalone preflight and reviewed M04 prerequisites,
+then obtain protected TEST process configuration and concrete B-D1-D4 decisions
+before new early-exit canonical/business implementation. Full project and
+Oracle-connected/production release remain blocked, not marked complete.
+
 Current approval update,2026-11-01 at13:56+02: user explicitly approved
 remainder-v0.1,52-v0.2,52-config-v0.1 and52-UI-v0.2, and requested automatic
 continuation of subsequent missions plus live TEST/provisioning/release work.

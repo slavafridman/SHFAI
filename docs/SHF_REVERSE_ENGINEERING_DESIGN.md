@@ -7506,3 +7506,245 @@ Live provisioning/release permission does not manufacture those prerequisites,
 authorize production data mutation, new DDL or bypass production authentication.
 Broader business missions, real identity, UAT, full WCAG and native live
 compatibility remain outstanding; no full-project completion is asserted.
+
+## 54. M04 bounded first early station exit — §54-v0.1 / SOURCE-backed APP/API/UI DRAFT
+
+**Task:** M04-EARLYEXIT-SOURCE-54; **date:** 1 November 2026; **owner:** system_architect, caller routes review.
+**Status:** REVIEW proposal, not user-approved/canonical/implemented; isolated analysis delivered despite absent live ENV.
+Exclusive append; §§13–53, C52/source/apps, plan, inventories, tooling/schema/dependencies and all old scopes remain frozen.
+S=inspected source; D=existing evidence/caller checkpoint; P=target proposal; U=unverified. All target shapes below are P.
+D caller: C52/M02 completed checkpoint and populated Docker worlds; no Git/status/runtime recheck or parity claim here.
+D frozen README/§53 toolchain: Node24.21.0/npm11.19.0/TS5.9.3, Angular21.2.25/CLI21.2.27/Material-CDK21.2.14,
+Vitest4.0.9/oracledb26.0.0; Oracle11g Thick Client19.3 is documented, not current support/runtime certification. No version choice/change here.
+Catalog absent in docs listing: use baseline WF-01–23/inventories and completion-plan M01/G01 form-default uncertainty; no new catalog.
+
+### 54.1 Deciding source, actor and unresolved payload semantics
+
+- S `old/SHF/src/bzq/shf/actions/AttendanceDataAction.java:181–260`: agent_exit reloads day, evaluates site policy, forwards earlyExit;
+  EarlyExit calls addEvent, then optional positive mood and exitStation in separate try/catch blocks, then success forward even on errors.
+- S `old/SHFWeb/WebContent/WEB-INF/struts-config.xml:338–343,784–787`: ordinary activity attend_exit_station versus EarlyExit activity aa;
+  addEventForm is EmployeeEventBean (:38–39). aa is a legacy activity literal, NOT recovered manager-approval authority.
+- S `old/SHFWeb/WebContent/jsp/employee_earlyExit.jsp:78–112`: hidden day/date/time/employee/mood; reason select EARLY_EXIT;
+  manager dropdown and remark textarea. `js/agentAttendance.js:49–59` confirmation prepends selected manager text to remark.
+  Neither JSP/JS nor inspected WEB-INF/validation.xml:1–51 tests nonblank manager/remark; inherited BaseForm behavior U, not source-enforced.
+- S `old/SHF/src/bzq/shf/model/AttendanceDataModel.java:2444–2508` populateApproveManager: jobsToConfirmExit at derived moked;
+  active status3 employees in moked itself OR immediate child unit, returning concatenated names, not authenticated approvals/unique IDs.
+  `actions/BaseAction.java:86–132,166–177` checks session activity and stamps session operator names; no manager credential check here.
+- S `taglib/EventReasonTag.java:28–49`, `utils/SHFConstants.java:25–32`: reason options filtered by type7; empty00 conditional on tag setting.
+  `forms/EventReasonForm.java:19–32` exposes branch/reported/reportRequested/SER_TYPE; these are NOT manager/remark obligation flags.
+- S `model/EmployeeDataModel.java:1098–1160`: only future-date validation; date + hour parsed, parse failure substitutes now.
+  INSERT SHF_EMPLOYEE_EVENTS uses existing SHF_EMPLOYEE_EVENT_ID.NEXTVAL and all eleven listed columns (§54.4), not generic eventType7.
+  EVENT_TYPE binds selected reason; EVENT_TIME binds parsed date/hour; EMPLOYEE_ID is card's numeric employee ID, not personal-ID prefix.
+- S `bean/EmployeeEventBean.java:20–58,278–324`: date,time,hour distinct; primitive length/status default0 is Java state, not approved policy.
+  JSP supplies time, addEvent consumes hour; effective BaseForm conversion/defaults remain U. Do not silently copy fallback/current or shift-end time.
+- S `model/AttendanceDataModel.java:1884–1955`: exit requires existing attendance, no exit, nonnull station arrival; SET only exit time/user.
+  `:2622–2665` mood uses entryCode2 UPDATE or INSERT and swallows failures; positive agentMood means this is a third effect.
+- U default `bzq.db.DBAccess` constructor/autocommit/close effects: imports visible, implementation not found in inspected SHF/APPLib listings.
+  Separate new DBAccess instances do NOT prove atomicity. Native route remains deferred until effect/ownership certification, not “two atomic updates”.
+- D baseline §8.5/§9 and oracle-transaction-function.csv: SHF_INS_AND_RETURN_LASTID autonomously INSERTs/COMMITs ledger.
+  No call visible in this selected branch; prohibit it and every mutating validator/function here. Hidden effects are U, not certified absent.
+
+P select MANAGEMENT-actor early-exit command, separate from self-employee login; Administrator covers application action only in approved mock mode.
+Required reason AND nonblank operator remark, server-bound event-manager provenance; no client manager/password/name or selected-worker impersonation.
+This strengthens unverified legacy enforcement, not recovered conditional semantics. Business owner must approve this stricter first subset explicitly.
+If actual reason/unit obligations require credential-verified manager, different attribution, report, other-description or mood: defer, never null/omit them.
+Mood assessment required: positive/source-required OR unknown blocks this no-mood subset; explicit not-required must have reviewed provenance.
+Source only shows positive-code condition, not a mandatory mood policy; no arbitrary agentMood=0 default or dropped mood record.
+
+### 54.2 Pure business admission and seams
+
+HTTP → centralized access → EarlyExitApplication → pure typed decide → read-only facts / owned UoW; Oracle and abstract partner ports separate.
+S threshold: Java integer `(end-now)/1000/60 > B`; for positive delta floor whole minutes, early iff `now <= E-(B+1)*60000`.
+At equality early; +1ms ordinary. B=0 means exactly60s early,59.999s ordinary; no “any instant before E” rewrite or pre-floor to seconds.
+P classification uses full serverClock instant then second-resolution persisted exit; preservation/readback never rounds original facts.
+B and A nonnegative safe integers with current unit/site provenance, no missing/end/site fallback; negative/malformed/unknown policy defers.
+P one employee/day, today in configured businessTimeZone, simple activity4, resolved unique effective employee/site/unit and existing attendance.
+Require coherent station arrival<=now, exit pair both null, coherent nullable stage pair, preserved briefing/P2 and complete before-image.
+Now in `[S-60min,E+Amin]` AND early interval above AND exclusive approved `[windowStart,windowEnd)`; no historic/backdated/future corrections.
+Civil timestamps must resolve uniquely; overnight, DST transition/crossing/ambiguous/nonexistent time, split/overlap/dependency ambiguity defer.
+Read dependency families in fixed batches per one employee/day, each max100 rows, cap+1 detects overflow and defers; no paging/bulk command.
+GET/preview:0 DML/NEXTVAL/event/mood/ledger/functions/locks/allowance/fence writes/partner calls; read-only facts and ephemeral preparation only.
+PartnerReviewPort assess(scope,signal) returns `{assessment:"not-required"|"required"|"unknown",reviewReference,expiresAt}`; required/unknown defer BEFORE token/admission/DML.
+No broker/CTI transport or fabricated completion; abstract transport implementation and partner-required workflows remain excluded.
+
+### 54.3 Exact dedicated API and temporary capability revision for approval
+
+P B=/api/v1/employees/{employeeId}/shift-days/{shiftDayId}/station-early-exit; GET B/context, POST B/validations, POST B/commands only.
+GET no body/query; validations body EXACT Draft54; commands EXACT Command54; no old-exit parser/DTO/query relaxation or status/retry endpoint.
+Reuse §52.3 exact IDs/Instant/civil/token/fingerprint/UUID grammar,16KiB/depth8 duplicate/unknown-key rejection, strict Origin/headers/no-store/5s budget.
+No JSON null/omission/coercion for draft fields; reasonId positive1–10 decimal digits, accepted only from fresh type7 catalog in exact scope.
+Remark1–512 Unicode scalar values, no controls except LF, unpaired surrogate/NUL/bidi controls rejected; whitespace-only rejected.
+Do not trim/normalize accepted content; validate encoded COMPLETE rendered provenance+remark against certified byte/character column limits, no replacement/truncation.
+```typescript
+type Draft54 = {reasonId:string;remark:string};
+type Blocker54 = StationExitBlockerV1 | "EARLY_EXIT_REQUIRED" | "MANAGER_POLICY_UNRESOLVED" | "EVENT_POLICY_UNRESOLVED" |
+  "MOOD_REQUIRED" | "MOOD_UNKNOWN" | "PARTNER_REVIEW_REQUIRED" | "OUTSIDE_EARLY_EXIT_WINDOW" | "DEPENDENCY_SCOPE_DEFERRED";
+type Manager54 = {subject:string;displayName:string;verification:"synthetic-not-credential-verified";policyReference:string};
+type Event54 = {reasonId:string;employeeId:DecimalId;shiftDayId:ShiftDayId;eventLocal:LocalDateTime;
+  lengthMinutes:number;status:number;remark:string;creationUser:string;creationLocal:LocalDateTime;otherEventDesc:string|null};
+type Context54 = {employeeId:DecimalId;shiftDayId:ShiftDayId;orgUnitId:string;planned:{startLocal:LocalDateTime;endLocal:LocalDateTime};
+  recorded:CancellationRecordedV1;serverTime:{instant:Instant;local:LocalDateTime;businessTimeZone:string};
+  policy:{maxEarlyWholeMinutes:number;maxAfterEndMinutes:number};manager:Manager54;
+  reasons:Array<{reasonId:string;label:string|null}>;moodAssessment:"not-required"|"required"|"unknown";
+  eligibility:"eligible"|"deferred";blockers:Blocker54[];dataSource:"isolated-fixture"|"oracle-test"};
+type Validation54 = {employeeId:DecimalId;shiftDayId:ShiftDayId;state:"ready";event:Event54;manager:Manager54;
+  exitLocal:LocalDateTime;earlyWholeMinutes:number;evaluatedAt:Instant;expiresAt:Instant;businessTimeZone:string;
+  validationToken:ValidationToken;fingerprint:Fingerprint;warnings:["EARLY_EXIT_EVENT_AND_EXIT"];confirmationRequired:true;
+  dataSource:"isolated-fixture"|"oracle-test"};
+type Command54 = {commandId:CommandUUID;draft:Draft54;validationToken:ValidationToken;fingerprint:Fingerprint;
+  warningConfirmation:{accepted:true;code:"EARLY_EXIT_EVENT_AND_EXIT"};operationConfirmation:{accepted:true}};
+type Receipt54 = {commandId:CommandUUID;employeeId:DecimalId;shiftDayId:ShiftDayId;eventId:DecimalId;event:Event54;
+  recorded:CancellationRecordedV1 & {stationArrivalLocal:LocalDateTime;stationExitLocal:LocalDateTime};
+  businessTimeZone:string;replayed:false;receiptPersistence:"none";partnerCompletion:"not-invoked"} &
+  ({outcome:"simulated";dataSource:"isolated-fixture";commitAcknowledgedAt:null;readBackVerifiedAt:null} |
+   {outcome:"oracle-test-committed";dataSource:"oracle-test";commitAcknowledgedAt:Instant;readBackVerifiedAt:Instant});
+```
+P lengthMinutes/status must be resolved nonnegative safe integers fitting CURRENT columns; otherEventDesc required key, null only if reviewed not-applicable.
+P eventLocal/creationLocal/exitLocal use one server instant converted to civil seconds, length from floored E-now minutes; status requires business decision.
+Validation timestamps/length are server-sampled preview, NOT promised final values; command resamples once under ownership/rechecks early/window,
+finalizes time/length by the bound rule, then inserts/updates. Fingerprint binds preview AND finalization rule; non-time policy/draft drift rejects.
+Show “זמן ומשך סופיים יחושבו בשרת בעת השליחה”; second resolution must not precede recorded arrival, otherwise defer, no hidden rounding fix.
+Rendered remark=`מפעיל סינתטי: ${manager.displayName} | הערה: ${draft.remark}`; creationUser=authenticated operator displayName.
+This is proposed provenance encoding/time/length, NOT exact legacy Hebrew prefix recovery/defaults; approve each deviation before fixtures/consumers.
+200 context may be deferred; absent required context facts→existing source/dependency problem, not invented values.200 validations only complete Event54;
+200 receipt only confirmed effect. Preparation TTL<=30s/earliest boundary; cap+1 reason-catalog overflow defers, never partial select/pagination.
+Bind actor/resource/source/draft/rendered event/clock decision/policy/full originals/reviews/config digest; drift/expiry invalidates token AND both consents.
+Problems reuse §52.3 envelope/effect/nextAction and status mappings; exact new blockers: EARLY_EXIT_REQUIRED, MANAGER_POLICY_UNRESOLVED,
+EVENT_POLICY_UNRESOLVED, MOOD_REQUIRED, MOOD_UNKNOWN, PARTNER_REVIEW_REQUIRED, OUTSIDE_EARLY_EXIT_WINDOW, DEPENDENCY_SCOPE_DEFERRED.
+They map COMMAND_SCOPE_DEFERRED409/stop; input422 correct-and-validate; already exit409/stop; stale409/prepare-again; dependency503/stop.
+After possible dispatch UNKNOWN uses COMMAND_OUTCOME_UNKNOWN503/effect=unknown/nextAction=reconcile with mandatory global quarantine and no retry/resend; stop applies only to classified pre-effect business defer, never UNKNOWN; no success on failed consent/validation.
+P principal/API/provider remain EXACT existing contracts.mts shape (§53.2); synthetic subject synthetic:administrator, roles[Administrator], employeeId=null.
+Identity GET /api/v1/identity stays `{principal:{subject,provider,synthetic,displayName,roles,capabilities,employeeId,resourceScope:{orgUnitIds}},dataSource}`.
+Only proposed capset revision `54-cap-v0.1`: existing ordered R7 (§53.2) then attendance-station-early-exit:prepare, attendance-station-early-exit:commit,
+attendance-station-early-exit:test-oracle-write (native only; fixture R7+first2). GET/check require prepare, dispatch commit plus native write capability.
+Backend exact unit membership, selected-resource policy and manager provenance authoritative; no grant from displayed manager/roles/frontend.
+Preserve AuthenticationProvider/AccessPolicy seam; explicit dev/isolated test mock enable only; production/NODE_ENV reject before ports/listen;
+auth errors NEVER Administrator fallback; outside mock configured real provider or explicit failure. Real-auth operational release remains unfinished.
+
+### 54.4 Private Oracle candidate allowlist, facts certificate and irreversible attempt
+
+P ONLY future native operation `native-station-early-exit-v0.1`, coordinator attribution station-early-exit, unchanged global employee key.
+Locked SET allowlist SHIFTER.SHF_ATTENDANCE:[STATION_EXIT_TIME,STATION_EXIT_USER]; existing row only, no attendance INSERT/DELETE.
+INSERT allowlist SHIFTER.SHF_EMPLOYEE_EVENTS:[EVENT_ID,EVENT_TYPE,EMPLOYEE_ID,EVENT_TIME,EMPLOYEE_DAY_ID,EVENT_LENGTH,REMARK,
+STATUS,CREATION_USER,CREATION_TIME,OTHER_EVENT_DESC]; EVENT_ID only existing SHIFTER.SHF_EMPLOYEE_EVENT_ID.NEXTVAL after BOTH admissions.
+These are source column/sequence candidates, not current physical types/grants/metadata certification; historical schema-map eleven columns is D only.
+P `54-native-packet-v0.1` exact private shape `{version,operation,employeeId,shiftDayId,orgUnitId,expectedDaySource,readIdentity,writeIdentity,
+metadataProvider,certificate,partnerReview,approval,freezeOwner,recoveryOwner,writerFreezeConfirmed,singleExecutorConfirmed,windowStart,windowEnd,allowanceFile}`.
+version/operation literals above; identities/SOURCE/text/window grammars §52.4; true confirmations; metadataProvider dba-v1|owner-hybrid-v1 ONLY.
+P certificate EXACT `{version:"shf-early-exit-certificate-v1",operation,tableScope,updateColumns,insertColumns,sequence,columns,
+constraintsDigest,grantsDigest,effectsDigest,completeOriginalsDigest,bindingScopeDigest,eventPolicyReference,moodReviewReference,managerPolicyReference}`.
+tableScope exactly attendance/events; update/insert/sequence exactly allowlist; columns fixed ordered entries for each physical column:
+`{table,name,oracleType,precision:number|null,scale:number|null,maxBytes:number|null,maxChars:number|null,lengthSemantics:"BYTE"|"CHAR"|null,nullable:boolean}`.
+No invented VARCHAR/NUMBER/DATE bounds. CurrentFactsPort supplies current target/accounts, columns/constraints, effective direct+role grants,
+triggers/called routines/autonomous/commit effects and sequence identity, matched certificate digests + reviewed policy references before native readiness.
+Require SELECT on scoped facts, UPDATE only allowlist, INSERT only event columns and sequence SELECT; no CREATE/DDL/function execution/broker grant.
+Missing/expired/unknown effects or grants rejects; no inherited C52 two-view waiver. Native configuration/ENV key materialization deferred to M26 packet review.
+P fixture composition uses reviewed synthetic manifest with complete originals/policy/explicit no-mood/not-required partner; no Oracle/native loader/fallback.
+No new config accepted now: modes stay OFF; future exact config branch/Origins/own packet must be reviewed before native consumer implementation.
+After fresh auth/facts/two consents: global consume THEN early-exit own unused allowance; branded owned handles required by direct UoW too.
+Whole-attempt marker/guard/allowance irreversible even acquisition failure0effects, rollback/success/UNKNOWN; no reset/provision/release/reopen.
+Prior consumed old exit/C52/any kind blocks across employee's days/processes/UUIDs/restart; F1 fuse remains untouched. External writers need exclusion.
+P autoCommit=false single owned connection: lock/reload full originals/redecide, INSERT event and guarded UPDATE exit rows exactly1 each then COMMIT.
+Failure either side→rollback both business effects; NEXTVAL gaps survive rollback and are disclosed, not event creation or transaction-ledger proof.
+S source lacks this shared UoW. Until current hidden effects/default access certified, no native atomic guarantee or legacy execution; test doubles only.
+Pre-DML/pre-COMMIT synchronous deadline/cancellation/drain/owned-handle guards; independently identity-checked readback verifies event payload + exit + ALL preservation.
+ACK/readback loss/uncertain rollback→UNKNOWN/global interlock/no resend. Fixture installation all-or-none labeled simulated; no partner receipt.
+
+### 54.5 54-UI-DRAFT-v0.1, focused acceptance and bounded handoff
+
+P dedicated attendance/detail route /employees/{E}/shift-days/{D}/station-early-exit; Hebrew RTL Material/CDK M3, no new palette/technology.
+Facts/source/server-zone/readonly manager “מפעיל סינתטי — לא אומתה סיסמת מנהל”, reason “סיבת יציאה מוקדמת”, required remark “הערה”.
+Show structured bounded Event54 preview incl status/length/other description, event+exit warning, representability error; never editable operator/date/worker identity.
+Two initially unchecked separate consents: “הבנתי שייווצר אירוע ותירשם יציאה מוקדמת”; “אני מאשר/ת את כל הפעולה בהקשר ובמקור המוצגים”.
+Loading/checking/deferred/no-access/stale/confirmation-failed/pending/simulated/confirmed/UNKNOWN distinct; no premature result or failed-confirmation success.
+Cancel before dispatch0effects restores filters/page/scroll/opener; safe initial focus/Escape/trap, no nested dialog; pending cannot cancel committed effect/retry.
+Generation/history/reopen drift clears token+consents; UNKNOWN readback loss persists shared all-kind interlock, readonly recovery only, no operator UI.
+Hebrew labels/status/error-summary, LTR-isolated IDs/time, keyboard and320/390/1440px/200% zoom/WCAG2.2AA review through caller, not claimed tested.
+TDD E54-01: B=0/B>0 boundary -1ms/equality/+1ms, full clock vs persisted seconds, window/midnight/DST/arrival/order; ordinary parser unchanged.
+E54-02: reason wrong type/unit/stale, manager-policy unknown/credential-required/synthetic-worker mismatch, required remark whitespace/control/byte edge.
+E54-03: unresolved status/time/default/other-description/mood/partner blocks BEFORE token; all GET/check/consent-only/cancel counters=0effects.
+E54-04: sequence only after two handles; INSERT/UPDATE0/1/>1 faults all-or-none, rollback sequence gap, preserve every old attendance/day/overlay column.
+E54-05: ACK/readback loss/abort each boundary/drain/direct foreign handle; UNKNOWN blocks all kinds and prior-consumed exit NEVER reopened.
+E54-06: exact grants/config/production/auth/no fallback and Hebrew preview/two consents/focus/history; frozen old wire/proof/digest arrays unchanged.
+**Checks:** scoped file/range source inspection and append reread only; no executable static checker available via current tools; no hash/diff claim.
+**NOT RUN:** compiler/unit/API/browser/build/Docker/Oracle/DNS/metadata/client/broker/legacy/batch; design-only task/tools, absent authorized live ENV.
+**Approval contents:** §54-v0.1 APP/API,54-cap-v0.1,54-UI-DRAFT-v0.1 plus explicit management-only/mandatory remark/time/length/provenance deviations;
+status/other-description policy and no-mood manifest require named business decision, not an invented default. Native packet acceptance remains separate M26.
+**Owners/next:** caller routes UI/material-business review now; architect resolves returned policy decisions in next version, then explicit user approval
+before allowed serialized canonical gate/consumer handshake. DBA/effect owner supplies current facts later; no indefinite wait or automatic permission inference.
+First practical source follow-up: caller requests permitted DBAccess/BaseForm implementation/effect explanation from legacy-library owner;
+architect incorporates it and business status/obligation decisions in §54-v0.2 before consumer work; missing library evidence keeps native deferred.
+
+### 54.7 Source-backed UI review — 54-UI-review-v0.1 (P; prerequisite reviewed, not implementation approval)
+
+**Task:** M04-EARLYEXIT-UI-54; **date:** 1 November 2026; **status:** READY reviewed proposal / business decisions blocked.
+Exclusive append to existing DESIGN only; no agents, implementation, canonical DTO, plan/status, Git, operator or environment edits.
+User approval of remainder/future automatic missions is D, NOT specific approval of stronger §54 business policy or this artifact.
+Scope stays one management-actor selected synthetic employee/day; no scope redesign to manufacture approval or arbitrary employee impersonation.
+Existing M02 TEST2035/802 and three healthy §53 worlds are caller-reported D, unchanged/not rerun; old guards/readership remain frozen.
+Read project instructions, agent brief and existing ui-design-engineer skill; catalog absent in docs listing; baseline WF-03 controls this review.
+
+#### Evidence and severity-ordered findings (S observed / P proposal / U unknown)
+S AttendanceDataAction.java:181–260: early threshold/forward; EarlyExit attempts event, optional positive mood, then exit separately.
+S AttendanceDataModel.java:2444–2508: configured eligible active employees in moked/direct child return concatenated names, not verified approvals.
+S employee_earlyExit.jsp:78–112 and agentAttendance.js:49–59: manager select/remark; JS prefixes selected name, with confirmation but no required test.
+S BaseAction.java:86–132,166–177: activity/session operator stamping; validation.xml:1–51 has no early-exit required-remark rule.
+S EmployeeDataModel.java:1098–1160: future-date check, date+hour parsing/current-time fallback, sequence-backed eleven-column event INSERT.
+S EmployeeEventBean.java:20–58: primitive length/status and separate date/time/hour; Java initial0 is NOT a known event-status/length policy.
+S AttendanceDataModel.java:1884–1955,2622–2665: guarded exit UPDATE; mood UPDATE/INSERT catches failures; separate DBAccess effects remain U.
+Critical: dropdown/displayName/Administrator/native plugin capability code cannot establish real verified manager authentication (B-D1).
+High: mandatory remark/operator-provenance/time/derived length/status choices are stronger/new business rules, not source fidelity (B-D1–D4).
+High: source success forward after errors and swallowed mood failure are defects for decision, never requirements to reproduce.
+High: shared INSERT+UPDATE atomicity is P for new owned adapter only; current metadata/default DBAccess effects not certified.
+Contract ambiguity RESOLVED by §54.3 documentation correction: reuse §52.3 COMMAND_OUTCOME_UNKNOWN503/effect=unknown/nextAction=reconcile, mandatory global quarantine and no retry/resend; stop is classified pre-effect business defer only. Draft fields and B-D1–D4 remain pending, not approved.
+
+#### Exact business decision matrix — business owner answers these four rows, caller records each answer
+| ID | Decision required before code | Conservative alternative / consequence |
+|---|---|---|
+| B-D1 | Approve MANAGEMENT-only selected-worker action under exact direct-unit/scoped policy, using server-bound synthetic operator provenance, NOT selected eligible-manager approval; approve rendered prefix and creationUser mapping. Or require eligible-manager attribution/real verified approval and specify authority. | Keep eligible-name semantics as unverified attribution only if explicitly chosen; no credential claim. Unknown actual actor/approval policy defers; synthetic employeeId remains null. |
+| B-D2 | Approve required nonblank remark of 1–512 Unicode scalars, §54.3 rejected controls/no normalization, and certified complete rendered-field storage limit. Or explicitly permit source-compatible optional text. | A simpler later draft could allow legacy null/empty text where certified supported; current Draft54 cannot accept null. Do not implement optionality by weakening its validator. |
+| B-D3 | Approve one full server instant finalized under ownership for event/creation/exit, persisted civil seconds; approve length=floor((effective end-now)/minute), not primitive0; retain Java whole-minute early boundary. Or specify authoritative legacy event-time/length meaning. | Preserve nullable/unsupported source values only where actual columns/policy permit; never infer hour from hidden time, silently parse-fallback, backdate or accept browser clock edits. Unresolved meaning defers. |
+| B-D4 | Specify initial event status and OTHER_EVENT_DESC applicability/null, reason/unit report/other-description obligations, and evidenced no-mood/not-required partner policy for this subset; no default0. | Retain certified nullable legacy fields only by explicit choice; unsupported status/required-or-unknown mood/report/partner obligations defer, not implicit0/no-op/swallowed failure. |
+These are specific business choices, not another whole-future-project approval or a rollup of every DTO field.
+Business owner owns B-D1–D4; architect translates answers into a versioned canonical baseline without inventing public fields.
+NoImplementation until these stronger decisions AND that versioned canonical/consumer handoff are recorded; reviewed UI prerequisite is now delivered.
+
+#### Screen, form, review and navigation specifications (P; existing Angular Material/CDK + Material 3)
+Reuse §54.5 dedicated attendance/detail route and approved shell/components; desktop facts+form, narrow single column, CSS logical RTL spacing.
+Persistent warnings: “מצב מקומי/בדיקה — מנהל מערכת סינתטי, ללא אימות זהות אמיתי”; separately native “כתיבה בפועל למסד TEST” or fixture “הדמיה בלבד — ללא כתיבה למסד”.
+Heading “יציאה מוקדמת מעמדה”; readonly selected employee/day/direct unit, plan, recorded station/stage/briefing and source; never manager credential input.
+Readonly Manager54 presentation “מפעיל סינתטי — לא אישור מנהל מאומת”; display verification/policyReference as attribution, not approval badge.
+Select “סיבת יציאה מוקדמת” from fresh scoped type7 catalog; no arbitrary code/default00 or invented label; unknown label shows isolated code honestly.
+Remark “הערה (חובה בהצעה זו)”, helper “1–512 תווי Unicode; אין להשמיט דרישות עסקיות”; preserve accepted text unchanged, encode as text not HTML.
+Client count uses Unicode scalars, not UTF16 length; server owns nonblank/control/catalog/provenance/encoded full-field storage checks; no truncation.
+Readonly structured Event54 preview: chosen reason, worker/day, event/creation/exit times, rendered remark/operator, length, status and other description.
+Minute-oriented business display with full civil seconds available; “זמן ומשך סופיים יחושבו בשרת בעת השליחה”; timezone and expiry always visible.
+Token/fingerprint/command codes are server/client protocol values, never editors; no raw proof/credential/metadata payload or editable TTL/time.
+Review warning explains BOTH event INSERT and existing exit UPDATE, all preserved fields, no mood/partner operation, and native rollback sequence gaps.
+Two separate initially unchecked consents exactly §54.5, bound to entire actor/resource/source/draft/preview; primary “אישור כל הפעולה”.
+Editing reason/remark, source/actor/day change, late validation response, expiry or policy drift clears preparation AND both consents; retains draft/context.
+Cancel/Escape before dispatch sends zero command, restores origin filters/page/scroll/opener; no nested dialog; Back/Forward never submits.
+Loading skeleton announces status; empty reason catalog disables prepare; unavailable required facts show honest problem/deferred, never placeholder0.
+Deferred mood required/unknown, partner required/unknown, actor/event policy unknown: explain blocker in Hebrew; no hidden helper or “continue anyway”.
+Validation errors stay associated with fields and summary; stale says “האימות פג — השינויים נשמרו”, requires explicit revalidation, no timed auto-command.
+Pending disables all attendance kinds through existing shared guard; dialog close/navigation cannot promise cancellation of dispatched effects.
+Malformed/late/wrong-source receipt, ACK loss or uncertain outcome: “תוצאת הפעולה אינה ידועה; נדרש בירור”, retain global UNKNOWN across history/reload.
+No retry/new UUID/readback/poll/reconciliation button that clears ownership; no automatic reselect/reopen to evade consumed allowance.
+Success only typed matching Receipt54: simulated with null ACKs versus verified native TEST receipt; retain C52 receipt/restoration behavior unchanged.
+
+#### Accessibility acceptance criteria and exact API/backend handoff
+Hebrew lang/dir=rtl; bdi/LTR isolate identifiers/dates/numbers; DOM reading/tab order follows facts→reason→remark→prepare→review→consents→confirm.
+Route focus to heading; Material dialog labelled/described, safe initial heading focus, trap Tab/Shift+Tab, Escape pre-dispatch, restore visible opener/fallback heading.
+Associate errors using aria-describedby/invalid state, focus first invalid field via summary; polite loading/success live region, assertive blocking error once.
+Verify keyboard-only and screen-reader names/state, visible unobscured focus, 4.5:1 text/3:1 relevant UI contrast, >=24px targets or documented exceptions.
+Verify 320/390/1440px, 200% zoom and 400%/320-CSS-px reflow without lost actions, reduced motion, long Hebrew and mixed-direction strings; WCAG2.2AA target only.
+API dependency ONLY proposed §54.3 Context54/Draft54/Validation54/Command54/Receipt54 + 54-cap-v0.1; no invented public fields/endpoints.
+GET Origin optional when absent in standard Chromium; validate when supplied. POST strict Origin and literal Sec-Fetch-Dest `empty`, not absent/blank.
+Preserve exact typed guards/duplicate-key bounds/no-store/JSON-problem truthful errors; proxy forwards unchanged with ONE nosniff value, no retries/readbacks.
+Backend owns full server clock, authorization/unit/reason policy, TTL<=30s, fresh finalization, global held guard+own irreversible fence after every attempt.
+Native new owned UoW proves INSERT+UPDATE/COMMIT/readback/preservation; sequence gaps survive rollback, not durable exactly-once proof or recoverable ledger.
+M04 metadata/effects certificate covers new event columns/sequence/purpose/reviews; source null/default semantics unknown until certified; absent ENV keeps native blocked.
+Preserve DTO50/C52, other operation caps/guards and §53 worlds; no 20-new-API expansion or claim source/test/environment scope covers all requested workflows.
+Checks DONE: scoped source/design range inspection and appended-section reread only; static/compiler/unit/API/browser/build/Docker tests NOT RUN (design-only).
+Oracle/DNS/EMS/legacy/client/metadata/operator preflight NOT RUN: excluded here, ENV missing; no UAT/WCAG/production/full-project compliance claim.
+Next: parent records state and publishes this written baseline with operator-preflight code handoff; business owner answers B-D1–D4, architect versions canonical.

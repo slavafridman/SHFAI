@@ -1,5 +1,135 @@
 # SHF backend: seven reads, isolated arrivals, and default-off controlled native TEST arrivals
 
+## Standalone Oracle TEST readiness (operator-only, 2026-11-01)
+
+From `D:\AIProjects\SHFAI\backend\fixture-slice` in Windows PowerShell:
+
+```powershell
+node oracle-test-readiness.mts
+node --test test/oracle-test-readiness.test.mts
+npm run typecheck
+```
+
+This is a **check**, not a server/native API entrypoint. It is not part of the
+M02 server closure, container packaging, authentication provider or business
+feature. Do not add it to closure selection without packaging-owner approval.
+The November 1 authorization permits only the existing approved TEST target's
+identity and the explicitly selected metadata review. It does not approve
+provisioning, coordinator/allowance consumption, business reads/writes or release.
+Existing baselines remain **52-v0.2 / C52-v0.2 / 52-config-v0.1** unchanged.
+`oracle-test-readiness-v1` is an operator-tool-private packet/summary version,
+not a new public contract or replacement cancellation certificate.
+
+### Process inputs — key names only, no working configuration examples
+
+Required ENV names: `SHF_APP_ENV`, `SHF_ORACLE_CONFIG`,
+`SHF_ORACLE_CONNECT_STRING`, `SHF_ORACLE_USER`, `SHF_ORACLE_PASSWORD`,
+`SHF_ORACLE_CLIENT_LIB_DIR`, `TNS_ADMIN`, `SHF_ORACLE_READINESS_PROOF`.
+Optional names: `NODE_ENV`, `SHF_ORACLE_READINESS_METADATA`.
+Presence output is limited to these names and booleans; no values are emitted.
+Provide secrets privately through the operator's approved process launcher;
+never put passwords, accounts, endpoint values, hashes/certificates or binding
+tuples into chat, documentation, fixtures copied from reality or command arguments.
+
+The application environment must explicitly be TEST; production/conflicting
+environments are rejected before factories. The existing runtime configuration
+validator requires the isolated TEST read-only profile. Every native business
+mode must be disabled. Its authentication configuration must be valid, but this
+tool does not authenticate an application actor, construct Administrator or
+fall back on authentication errors. Existing native ENV namespaces/writer flags
+and unknown readiness names are rejected by key presence, without reading values.
+Supply only the readiness configuration in a clean operator process.
+
+Client and TNS configuration directories must be explicitly provided local
+absolute Windows directories. Only the repository-approved alias spellings are
+accepted. The actual factory checks Node24, Windows, driver26.0.0 and
+Thick Client19.3 using the existing factory; it never installs/discovers clients.
+The driver necessarily resolves the operator-selected runtime TNS configuration;
+the tool itself does not open it. The independent operator attestation must
+bind that exact runtime alias/configuration to the original approved endpoint.
+Do not select an unreviewed/new endpoint or point these directories at excluded
+project/private operator artifacts. No file is an input to the tool.
+
+`SHF_ORACLE_READINESS_PROOF` is strict JSON (duplicate/extra keys rejected,
+16KiB bound), with these **field names**:
+`version`, `purpose`, `environment`, `independentOperatorPinned`,
+`frozenIdentityReference`, `runtimeAliasBindingReference`, `runtimeAlias`,
+`windowStart`, `windowEnd`, `readIdentity`, `endpointProof`, `serviceName`.
+The private version is `oracle-test-readiness-v1`, purpose is `metadata-review`,
+environment is `test`, and the independent-pinning confirmation must be true.
+The two nonempty reference fields must be distinct. They refer to the original
+frozen C52 read identity and separately reviewed exact current runtime alias
+binding. They are **operator attestations, not cryptographic verification**.
+The operator must supply these independently reviewed facts from the authorized
+private binding, without giving the tool the binding itself. The tool never
+reads/reconstructs employee/day IDs, certificates, original values or authority.
+If those facts cannot be established independently, do not supply a packet:
+the correct result is BLOCKED with zero connections, not learning from Oracle.
+
+`readIdentity` and `endpointProof` reuse the existing pure private native
+identity/address-set parsers. Supported original identity fields are
+`database`, `host`, `service`, `user`, `schema`, or the typed target fields
+`database`, `user`, `schema`, `target`. Typed target field names are `kind`,
+`instanceSid`, `endpointProof`, or `kind`, `serviceName`, `host`.
+Endpoint proof field names are `kind`, `revision`, `connectionAliases`,
+`endpoint`, `serverHosts`; mapping field names are `kind`, `name`, `addresses`.
+Retain the original pinned strategy and exact spellings. Both service and SID
+(when selected) are checked; user/schema must be the approved selected owner.
+Separate `serviceName` pins the service even for the SID strategy.
+UTC windows must be canonical full instants and current throughout queries.
+Finite DNS lookup is only for names in the supplied proof, and its address sets
+must match the frozen sets before the first factory. No scan/reverse lookup,
+suffix guessing, autolearned identity or full native filesystem validator runs.
+
+### Execution and interpretation
+
+Absent metadata selection means identity-only. Explicit `M26` selection in
+`SHF_ORACLE_READINESS_METADATA` adds only the two named exit-column definitions
+and database/national charset dictionary entries. Fixed owner collector SQL and
+column-name binds are reused; no caller SQL/identifiers are accepted.
+One lease runs `SET TRANSACTION READ ONLY`, exactly one `SYS_CONTEXT` identity
+SELECT, then (only after exact identity agreement) the two metadata SELECTs.
+There are two statements in identity-only mode or four with M26, below the
+eight-statement ceiling. No business-row SELECT, locks, sequences, routines,
+mutation, commit, EMS or CTI operation occurs. Rollback, lease close/drop and
+pool drain must ACK before PASS. Identity drift aborts metadata and drops the
+lease after rollback. Required user privileges remain UNKNOWN; cross-owner
+triggers and role/PUBLIC privilege coverage remain the two disclosed UNKNOWN
+scopes. No waiver is turned into a certificate or external-effects assertion.
+
+The direct CLI supervises an isolated child under a five-second total budget;
+the child's shorter work budget reserves cleanup time and propagates cancellation
+and driver call timeouts. Acquisition/init/queries/drain have bounded waits,
+no retry and late-resource drop handling. A busy native lease is never returned
+to a pool. Completion and cancellation request child termination, then wait for
+an observed exit/close within the **original absolute five-second deadline**.
+`childExitAck` is true only after that observation; sending a kill is not an ACK.
+PASS requires a valid complete READ ONLY/cleanup summary **and** child exit ACK.
+Missing exit ACK or kill failure blocks with `CLI_EXIT_UNACKNOWLEDGED`; no new
+grace budget is started and no claim of zero active children is made when exit
+is unknown. Termination is **not** proof of successful Oracle rollback/drain. SIGINT/SIGTERM
+also block and terminate that check, never the existing backend/server.
+
+Output is one sanitized JSON summary: codes, whitelisted presence booleans,
+missing prerequisite names, version, attempts/statements/metadata-row counts
+and PASS/ACK booleans. IPC uses the strict private `oracle-test-readiness-v1`
+projection: unknown fields/codes/keys, invalid counts/booleans or unsafe
+diagnostic strings block with `CLI_INVALID_SUMMARY`, without printing payloads.
+Late pool/lease cleanup settlement records sanitized unacknowledged progress;
+even a late successful close does not promote an expired cleanup to ACK/PASS.
+Raw error messages/stacks/SQL/identity/paths are discarded;
+only allowlisted Oracle diagnostic code formats survive. Exit0 means this
+read-only check passed, **not** native readiness, certification, provisioning
+or release. Exit2 is BLOCKED, including missing configuration and unavailable
+runtime/driver/client. Tests inject pools and endpoint resolution without real
+Oracle/network access. Static/mock checks do not establish live compatibility.
+
+With all readiness process ENV keys absent, the expected actual CLI result is
+`BLOCKED`, `codes:["MISSING_CONFIG"]`, eight missing required keys, all ten
+presence booleans false, pool/connection/query counts zero and
+`childExitAck:true`. The operator needs approved configuration/proof, not an
+Oracle-fault diagnosis or a claim that the project is complete.
+
 ## B52 native implementation — offline SOURCESTABLE
 
 Approved baselines: **52-v0.2 / C52-v0.2**, **52-config-v0.1**, **52-UI-v0.2**
