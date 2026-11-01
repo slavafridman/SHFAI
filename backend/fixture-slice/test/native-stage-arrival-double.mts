@@ -7,6 +7,7 @@ import type { NativeBinding } from "../native-stage-arrival-config.mts";
 import { nativeMarker } from "../native-stage-arrival-config.mts";
 import type { NativeConnection, NativePool } from "../oracle-stage-arrival-uow.mts";
 import { OracleStageArrivalUow } from "../oracle-stage-arrival-uow.mts";
+import { syntheticCoordinator } from "./native-coordinator-provision.mts";
 import { OracleReadSession } from "../oracle-session.mts";
 import type { OraclePool, OracleConnection } from "../oracle-session.mts";
 import { nativeTables, policyKey } from "../oracle-stage-arrival-snapshot.mts";
@@ -155,7 +156,8 @@ export class NativeOracleDouble {
     }, close: async () => { await this.point("write:pool-close"); },
   };
   async application() {
-    const uow = new OracleStageArrivalUow(this.writePool, new OracleReadSession(this.readPool), this.binding);
+    const uow = new OracleStageArrivalUow(this.writePool, new OracleReadSession(this.readPool), this.binding,
+      syntheticCoordinator(this.directory, this.binding));
     await uow.initialize();
     const app = new OracleStageArrivalApplication(uow, this.binding, this.clock, "UTC", ["T001"]);
     const principal = await new SyntheticAdministratorProvider(nativeConfig).authenticate({ authorization: null });

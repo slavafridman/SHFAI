@@ -31,6 +31,9 @@ type ArrivalRights =
   | "attendance-stage-arrival:test-oracle-write"
   | "attendance-station-arrival:prepare" | "attendance-station-arrival:commit"
   | "attendance-station-arrival:test-oracle-write";
+type LateArrivalRights =
+  | "attendance-station-arrival-late:prepare" | "attendance-station-arrival-late:commit"
+  | "attendance-station-arrival-late:test-oracle-write";
 type ExitRights = "attendance-station-exit:prepare" | "attendance-station-exit:commit"
   | "attendance-station-exit:test-oracle-write";
 type ManagementRights = "shift-management:prepare" | "shift-management:create"
@@ -48,8 +51,8 @@ type ParameterName =
   NonNullable<StationExitProblemV1["invalidParameters"]>[number]["name"];
 type UnknownProblem = Extract<StationExitProblemV1, { code: "COMMAND_OUTCOME_UNKNOWN" }>;
 type ContractChecks = [
-  Assert<Equal<CapabilityV1, Read7 | ArrivalRights | ExitRights | ManagementRights>>,
-  Assert<Equal<Exclude<CapabilityV1, Read7 | ArrivalRights | ManagementRights>, ExitRights>>,
+  Assert<Equal<CapabilityV1, Read7 | ArrivalRights | LateArrivalRights | ExitRights | ManagementRights>>,
+  Assert<Equal<Exclude<CapabilityV1, Read7 | ArrivalRights | LateArrivalRights | ManagementRights>, ExitRights>>,
   Assert<Equal<Extract<CapabilityV1, `shift-management:${string}`>, ManagementRights>>,
   Assert<Equal<Extract<CapabilityV1, `attendance-station-exit:${string}`>, ExitRights>>,
   Assert<Equal<Extract<CapabilityV1, `attendance-stage-arrival:${string}`>,

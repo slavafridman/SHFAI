@@ -51,10 +51,71 @@ in the parent's follow-up staging. No unrelated report content was read.
 Current resume: approved49-v0.1 implementation, bounded offline integration
 verification and scoped tooling/checker publication are complete.
 This is not full-project, live Oracle, UAT, WCAG conformance or release approval.
-Next development gate: proposed50-v0.1 native first station arrival with
-lateness is source-backed and UI-reviewed, but BLOCKED on explicit user
-approval. No50 canonical/application implementation is authorized yet.
+Current development: user explicitly approved50-v0.1 on2026-11-01 at09:31+02,
+including the shared coordinator for every native writer and intentional
+old-native-startup precondition. Implementation is authorized; live TEST
+execution, operator provisioning/reopening and deployment are not.
+Canonical50 and backend/frontend implementation are source-stable and
+verified offline; scoped publication is next. The initial compiler gate
+required a tightly coupled exact-capability assertion repair in the existing
+exit contract test; after repair TSC and all six canonical suites passed.
+Preserve existing49 application behavior/read-only profiles, proof/digest/
+allowance identities and consumed F1 fuse. No password rotation gate.
 The chronological component checkpoints below retain their original limits.
+
+SHF-50-NOV01 current verification: mandatory global local-filesystem employee
+fence is enforced across F1/ordinaryF2/lateF2/exit/49 startup and direct mutation
+seams, independently of day/profile/UUID. Existing per-operation allowances
+remain mandatory; the consumed F1 fuse was not accessed. Native configuration
+without the coordinator now rejects as approved; read-only/fixtures remain
+unchanged. Late API/UI use system time, closed reason selection, null-only
+remarks, subminute0 warning, two consents, five-field UPDATE and independent
+readback before receipt. Unknown requirements/outcomes defer or quarantine,
+never fake partner completion or automatically reopen authority.
+Independent QA found QA50-B01 (DST-crossing plan eligible) and QA50-Q02
+(two coordinator scenarios registered repeatedly). Both were fixed with
+specific domain/application regressions and top-level test registration.
+Independent retest passed54/54 and6 uniquely registered coordinator tests;
+exact DST context is deferred, validation rejects and source/fence untouched.
+Correct full count is1863, not1872: twelve duplicate registrations removed
+and three regressions added. Final backend TSC/full1863 and frontend748 in
+55 files/app/spec TSC passed. Late Chrome five worlds and existing management
+four worlds passed; native>=1 success/defer/UNKNOWN use actual Node/UoW over
+protocol doubles, late0/1 browser fixture evidence is labeled typed HTTP.
+All dev/test/production builds and one TEST full Validation passed.
+Auxiliary helper TS2688 was a missing existing typeRoots command setting;
+proper strict Preserve/Bundler compilation of both helpers passed, no install.
+Historical frontend verification retained4286 lines/155 headings intact.
+Packaging dev stylesheet maps needed explicit dev-only allowlist fixes.
+Forty focused packaging checks and independent35 artifact groups passed.
+All three extracted profile/startup gate checks passed,126 runtime modules
+match current source; dev has71 browser assets/43 maps, test/production28
+assets/zero maps. Artifacts are local developer packages, not deployment:
+dev2226896 bytes/204 entries, test722170/162, production722188/162.
+TEST SHA2567917B25F99B55B24BDC65E18580A6E98A26D4A1A748B4FC306D00DFE33A5904A.
+Missing coordinator reader has zero IO; fully enabled startup negative tests
+use20 virtual allowance-path filesystem calls, not real namespace access.
+No live Oracle/EMS/DNS, operator provisioning, native late0 live proof,
+power-loss/distributed guarantee, UAT/full WCAG or release is established.
+Canonical/backend/UI/packaging scopes total99 publication paths including
+the existing design and parent-only checkpoint; actual manifests reconcile
+59 backend,35 frontend,three packaging andtwo docs. Index/conflicts empty,
+last direct remote main matched7b11bd2; these new bytes are not published yet.
+Publication preflight on1November passed exact99-path reconciliation,
+918 relative imports/452 local document links, credential-pattern scan,
+two owned PowerShell parser checks and all three stage/ZIP byte comparisons.
+Standard structural verifier passed31 CSVs/10000 references/454 source hashes/
+430 links/288 anchors, retaining the documented duplicate-route anomaly;
+all20 historical captures unchanged, report write suppressed.
+Current external31 paths remain untouched; checkpoint external hunks are
+excluded from staging. Suites/builds/live operations were not repeated.
+Initial zero-context checkpoint insertion was misplaced in the index;
+corrected parent-only staging against HEAD preserves external133/2 hunks.
+Final staged privacy/whitespace,918 imports/443 local links and strict
+compilation of both protocol helpers passed using existing dependencies.
+Staged design is50.9 append-only; frontend history has zero deletions.
+Next action: normal scoped commit/push, verify direct remote=HEAD and0/0,
+empty index and preserved external changes; parent records publication next.
 
 Approved49-v0.1 canonical gate and both consumer handshakes are complete.
 B49 owner exclusively implements noncanonical backend CRUD/CSV rules,

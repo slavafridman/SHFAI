@@ -100,6 +100,21 @@ export const nativeStationArrivalAccessPolicy = {
     this.requirePrepare(p); stationArrivalAccessPolicy.requireCommit(p);
   },
 };
+export const nativeLateStationArrivalAccessPolicy = {
+  requirePrepare(p: import("./contracts.mts").PrincipalV1) {
+    try { validatePrincipal(p); } catch { stageFail("UNAUTHENTICATED"); }
+    if (!p.synthetic || p.provider !== "synthetic" || p.employeeId !== null ||
+        !p.capabilities.includes("attendance-station-arrival-late:prepare") ||
+        !p.capabilities.includes("attendance-station-arrival-late:test-oracle-write")) stageFail("FORBIDDEN");
+  },
+  requireCommit(p: import("./contracts.mts").PrincipalV1) {
+    this.requirePrepare(p);
+    if (!p.capabilities.includes("attendance-station-arrival-late:commit")) stageFail("FORBIDDEN");
+  },
+  authorizedTeamIds(p: import("./contracts.mts").PrincipalV1) {
+    return stageArrivalAccessPolicy.authorizedTeamIds(p);
+  },
+};
 export const stationExitAccessPolicy = {
   requirePrepare(p: import("./contracts.mts").PrincipalV1) {
     if (!p.synthetic || p.provider !== "synthetic" || p.employeeId !== null ||

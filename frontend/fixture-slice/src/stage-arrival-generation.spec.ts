@@ -38,7 +38,7 @@ for (const native of [false, true]) describe(`${native ? 'Native' : 'F1'} genera
       op.accepted.setValue(true); op.approve(); await closed;
     }
   }
-  afterEach(() => { TestBed.resetTestingModule(); history.replaceState({}, ''); sessionStorage.removeItem('shfNativeArrivalSafety');
+  afterEach(() => { TestBed.resetTestingModule(); history.replaceState({}, ''); sessionStorage.removeItem('shfNativeCommandSafety'); sessionStorage.removeItem('shfNativeArrivalSafety');
     sessionStorage.removeItem('shfStageArrivalSafety'); sessionStorage.removeItem('shfStationArrivalSafety'); });
   async function setup() {
     history.replaceState({}, '');

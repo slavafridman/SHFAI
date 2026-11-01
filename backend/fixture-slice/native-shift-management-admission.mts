@@ -18,6 +18,8 @@ import { shiftFail, shiftUnknown } from "./shift-management-errors.mts";
 import { shiftManagementAccessPolicy } from "./access-policy.mts";
 import { unitCode } from "./current-shifts-validation.mts";
 import { parseShiftJson } from "./shift-management-validation.mts";
+import { NativeCommandCoordinator } from "./native-command-coordinator.mts";
+import type { NativeCommandAdmissionV1 } from "./native-command-coordinator-contracts.mts";
 
 type NativeReference = Extract<ShiftAdmissionReferenceV1, { mode: "test-oracle-controlled" }>;
 export interface NativeShiftAdmissionOptions {
@@ -96,6 +98,8 @@ function readNamespace(path: string): { raw: string; file: Stats } {
   finally { if (fd !== undefined) closeSync(fd); }
 }
 class NativeShiftFileBoundary implements ShiftAdmissionBoundary {
+  readonly globals = new WeakMap<ShiftConsumedAdmissionV1, NativeCommandAdmissionV1>();
+  private readonly coordinator: NativeCommandCoordinator;
   readonly mode = "test-oracle-controlled";
   private readonly options: Readonly<NativeShiftAdmissionOptions>;
   private readonly markerPath: string;
@@ -107,7 +111,9 @@ class NativeShiftFileBoundary implements ShiftAdmissionBoundary {
   };
   private blocked = false;
   private owned: { handle: ShiftConsumedAdmissionV1; file: Stats } | undefined;
-  constructor(options: NativeShiftAdmissionOptions) {
+  constructor(options: NativeShiftAdmissionOptions, coordinator: NativeCommandCoordinator) {
+    if (!(coordinator instanceof NativeCommandCoordinator)) shiftFail("LIVE_WRITES_DISABLED");
+    this.coordinator = coordinator;
     this.options = freezeShift(structuredClone(options));
     const namespacePath = verifiedNativeAllowancePath(join(options.authorityDirectory, "namespace.json"));
     if (dirname(namespacePath) !== options.authorityDirectory) shiftFail("LIVE_WRITES_DISABLED");
@@ -158,6 +164,11 @@ class NativeShiftFileBoundary implements ShiftAdmissionBoundary {
   }
   consume(handle: ShiftConsumedAdmissionV1): void {
     assertShiftWorkAllowed(); this.assertAvailable(handle.employeeId);
+    let global: NativeCommandAdmissionV1;
+    try { global = this.coordinator.consumeSync({ employeeId: handle.employeeId,
+      operation: handle.kind, commandId: handle.commandId }); }
+    catch { return shiftFail("LIVE_WRITES_DISABLED"); }
+    this.globals.set(handle, global);
     this.blocked = true; // No error can reopen authority in this process.
     let fd: number | undefined, namespaceFd: number | undefined;
     try {
@@ -222,9 +233,18 @@ class NativeShiftFileBoundary implements ShiftAdmissionBoundary {
   }
 }
 export class NativeShiftAdmission extends ShiftAdmissionKernel<NativeReference> {
-  constructor(options: NativeShiftAdmissionOptions) {
+  private readonly nativeBoundary: NativeShiftFileBoundary;
+  readonly coordinator: NativeCommandCoordinator;
+  constructor(options: NativeShiftAdmissionOptions, coordinator: NativeCommandCoordinator) {
     validateOptions(options); // No filesystem IO before every structural gate.
-    const boundary = new NativeShiftFileBoundary(options);
+    const boundary = new NativeShiftFileBoundary(options, coordinator);
     super(options.reference, { now: () => new Date() }, boundary);
+    this.nativeBoundary = boundary; this.coordinator = coordinator;
+  }
+  globalFor(attempt: ShiftConsumedAdmissionV1): NativeCommandAdmissionV1 {
+    const global = this.nativeBoundary.globals.get(attempt);
+    if (!global) shiftFail("LIVE_WRITES_DISABLED");
+    this.coordinator.bindingFor(global, attempt.employeeId, attempt.kind);
+    return global;
   }
 }

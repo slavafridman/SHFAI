@@ -28,6 +28,14 @@ Assert-Delivery ($LASTEXITCODE -ne 0) 'source output collision rejected before c
 
 # Dot-sourcing defines functions only; it cannot start an application build.
 . $builder -Profile dev
+Assert-Delivery (Test-ShifterBrowserAsset 'attendance-page.css.map' 'dev') 'known Angular component map accepted only for dev'
+Assert-Delivery (Test-ShifterBrowserAsset 'employee-name.css.map' 'dev') 'known inline employee component map accepted for dev'
+Assert-Delivery (Test-ShifterBrowserAsset 'minute-picker.css.map' 'dev') 'known inline minute component map accepted for dev'
+Assert-Delivery (-not (Test-ShifterBrowserAsset 'attendance-page.css.map' 'test')) 'component map rejected for test'
+Assert-Delivery (-not (Test-ShifterBrowserAsset 'attendance-page.css.map' 'production')) 'component map rejected for production'
+foreach ($name in @('unknown.css.map', '../attendance-page.css.map', 'Attendance-page.css.map', 'private.json')) {
+    Assert-Delivery (-not (Test-ShifterBrowserAsset $name 'dev')) "browser allowlist rejects unknown/noncanonical asset: $name"
+}
 $script:OwnedOutput = Join-Path $root '.shifter-developer-delivery/checks/output'
 $OutputDirectory = $script:OwnedOutput
 $profileRoot = Join-Path $script:OwnedOutput 'dev'

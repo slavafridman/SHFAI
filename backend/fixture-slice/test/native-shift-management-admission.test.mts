@@ -11,6 +11,7 @@ import { shiftProblem, shiftUnknown } from "../shift-management-errors.mts";
 import { syncBuiltinESMExports } from "node:module";
 import { spawnSync } from "node:child_process";
 import { OracleShiftManagementUow } from "../oracle-shift-management-uow.mts";
+import { syntheticCoordinator } from "./native-coordinator-provision.mts";
 
 function fixture() {
   const protocol = nativeProtocolFixture();
@@ -24,8 +25,9 @@ function fixture() {
     canonicalDirectory: directory, employeeScope: nativeShiftEmployeeScope("1"),
     identityRevision: options.reference.identityRevision, state: "ready",
   }), { flag: "wx" });
-  const admission = new NativeShiftAdmission(options);
-  return { ...protocol, directory, options, admission,
+  const coordinator = syntheticCoordinator(directory, { employeeId: "1", writeIdentity: { database: "SYNTHETIC", schema: "SHIFTER" } });
+  const admission = new NativeShiftAdmission(options, coordinator);
+  return { ...protocol, directory, options, admission, coordinator,
     close: () => rmSync(directory, { recursive: true, force: true }) };
 }
 async function binding(f: ReturnType<typeof fixture>): Promise<ShiftCommandBindingV1> {
@@ -46,10 +48,10 @@ test("native preparation is volatile-only; consumption persists one shared emplo
     assert.deepEqual(readdirSync(f.directory), before);
     const attempt = await f.admission.consume(input);
     assert.equal(f.admission.planFor(attempt).planDigest, f.plan.planDigest);
-    assert.equal(readdirSync(f.directory).length, 2);
-    assert.throws(() => new NativeShiftAdmission(f.options), { code: "COMMAND_SCOPE_DEFERRED" });
+    assert.equal(readdirSync(f.directory).length, 3);
+    assert.throws(() => new NativeShiftAdmission(f.options, f.coordinator), { code: "COMMAND_SCOPE_DEFERRED" });
     assert.throws(() => new NativeShiftAdmission({ ...f.options, expectedKind: "create", expectedRows: 1,
-      expectedPlanDigest: "f".repeat(64), reference: { ...f.options.reference, operatorScopeRevision: "new-config-uuid" } }),
+      expectedPlanDigest: "f".repeat(64), reference: { ...f.options.reference, operatorScopeRevision: "new-config-uuid" } }, f.coordinator),
     { code: "COMMAND_SCOPE_DEFERRED" });
   } finally { f.close(); }
 });
@@ -61,7 +63,7 @@ test("native UNKNOWN survives object restart; no new UUID/opkind/reference can r
     if (problem.effect !== "unknown") throw Error("Test expected UNKNOWN");
     await f.admission.finish(attempt, { kind: "unknown", problem });
     await assert.rejects(f.admission.prepare(f.plan), { code: "COMMAND_SCOPE_DEFERRED" });
-    assert.throws(() => new NativeShiftAdmission(f.options), { code: "COMMAND_SCOPE_DEFERRED" });
+    assert.throws(() => new NativeShiftAdmission(f.options, f.coordinator), { code: "COMMAND_SCOPE_DEFERRED" });
   } finally { f.close(); }
 });
 test("native prepare and wrong binding/consent use zero filesystem authority IO", async () => {
@@ -87,8 +89,11 @@ test("native consumed namespace remains blocked in an actual new Node process", 
     const moduleUrl = new URL("../native-shift-management-admission.mts", import.meta.url).href;
     const code = `import { readFileSync } from "node:fs";
       import { NativeShiftAdmission } from ${JSON.stringify(moduleUrl)};
+      import { NativeCommandCoordinator } from ${JSON.stringify(new URL("../native-command-coordinator.mts", import.meta.url).href)};
       const options = JSON.parse(readFileSync(0,"utf8"));
-      try { new NativeShiftAdmission(options); process.exitCode=9; }
+      const coordinator = new NativeCommandCoordinator(${JSON.stringify({ directory: join(f.directory, "global-coordinator"),
+        targetScope: "synthetic-local-target" })}, { database: "SYNTHETIC", schema: "SHIFTER" });
+      try { new NativeShiftAdmission(options, coordinator); process.exitCode=9; }
       catch (error) {
         if (error.code === "COMMAND_SCOPE_DEFERRED") console.log("blocked");
         else process.exitCode=10;
@@ -119,7 +124,7 @@ test("crash-before-terminal and malformed zero-byte marker are both permanently 
   const f = fixture();
   try {
     writeFileSync(join(f.directory, `employee-${nativeShiftEmployeeScope("1")}.consumed`), "", { flag: "wx" });
-    assert.throws(() => new NativeShiftAdmission(f.options), { code: "COMMAND_SCOPE_DEFERRED" });
+    assert.throws(() => new NativeShiftAdmission(f.options, f.coordinator), { code: "COMMAND_SCOPE_DEFERRED" });
   } finally { f.close(); }
 });
 test("changed namespace after preview denies consumption and never provisions a replacement", async () => {
@@ -128,7 +133,7 @@ test("changed namespace after preview denies consumption and never provisions a 
     const input = await binding(f);
     writeFileSync(join(f.directory, "namespace.json"), '{"changed":true}');
     await assert.rejects(f.admission.consume(input), { code: "COMMAND_SCOPE_DEFERRED" });
-    assert.deepEqual(readdirSync(f.directory), ["namespace.json"]);
+    assert.deepEqual(readdirSync(f.directory), ["global-coordinator", "namespace.json"]);
     await assert.rejects(f.admission.prepare(f.plan), { code: "COMMAND_SCOPE_DEFERRED" });
   } finally { f.close(); }
 });
@@ -137,7 +142,7 @@ test("copied namespace cannot silently change authority directory to escape a sp
   try {
     await f.admission.consume(await binding(f));
     writeFileSync(join(copied, "namespace.json"), readFileSync(join(f.directory, "namespace.json")));
-    assert.throws(() => new NativeShiftAdmission({ ...f.options, authorityDirectory: copied }),
+    assert.throws(() => new NativeShiftAdmission({ ...f.options, authorityDirectory: copied }, f.coordinator),
       { code: "LIVE_WRITES_DISABLED" });
   } finally { f.close(); rmSync(copied, { recursive: true, force: true }); }
 });
@@ -149,7 +154,7 @@ test("wrong kind/rows/actor/scope/plan cannot mint native authority tokens", asy
       { ...f.plan, planDigest: "d".repeat(64) }, { ...f.plan, effects: f.plan.effects.slice(0, 1) },
       { ...f.plan, authorizedTeamIds: ["OTHER"] },
     ]) await assert.rejects(f.admission.prepare(plan));
-    assert.deepEqual(readdirSync(f.directory), ["namespace.json"]);
+    assert.deepEqual(readdirSync(f.directory), ["global-coordinator", "namespace.json"]);
   } finally { f.close(); }
 });
 test("invalid native options fail before any filesystem examination", () => {
@@ -171,25 +176,25 @@ test("persistent consumed authority composes with the actual SQL kernel; ACK alo
   const f = fixture();
   try {
     const input = await binding(f), attempt = await f.admission.consume(input);
-    const uow = new OracleShiftManagementUow(f.pool, f.evidence, f.admission, f.scope);
-    const ack = await uow.run({ ...f.selection, admission: attempt }, f.work);
+    const uow = new OracleShiftManagementUow(f.pool, f.evidence, f.admission, f.scope, f.coordinator);
+    const ack = await uow.run({ ...f.selection, admission: attempt, globalAdmission: f.admission.globalFor(attempt) }, f.work);
     assert.equal(ack.effects.length, 2); assert.equal(f.inspect().commits, 1);
     assert.ok(!("outcome" in ack));
     // Explicit isolated readback-loss outcome. No real native receipt is invented.
     const problem = shiftProblem(shiftUnknown(), "isolated-readback-loss", input.commandId);
     if (problem.effect !== "unknown") throw Error("Test expected UNKNOWN");
     await f.admission.finish(attempt, { kind: "unknown", problem });
-    assert.throws(() => new NativeShiftAdmission(f.options), { code: "COMMAND_SCOPE_DEFERRED" });
+    assert.throws(() => new NativeShiftAdmission(f.options, f.coordinator), { code: "COMMAND_SCOPE_DEFERRED" });
   } finally { f.close(); }
 });
 test("confirmed native SQL rollback still consumes the one-attempt authority across restart", async () => {
   const f = fixture();
   try {
     const input = await binding(f), attempt = await f.admission.consume(input);
-    const uow = new OracleShiftManagementUow(f.pool, f.evidence, f.admission, f.scope);
+    const uow = new OracleShiftManagementUow(f.pool, f.evidence, f.admission, f.scope, f.coordinator);
     f.faults.insert2 = true;
     let captured: unknown;
-    await assert.rejects(uow.run({ ...f.selection, admission: attempt }, f.work), asyncReject);
+    await assert.rejects(uow.run({ ...f.selection, admission: attempt, globalAdmission: f.admission.globalFor(attempt) }, f.work), asyncReject);
     function asyncReject(error: unknown) {
       captured = error;
       const problem = shiftProblem(error, "isolated-rollback", input.commandId);
@@ -199,7 +204,7 @@ test("confirmed native SQL rollback still consumes the one-attempt authority acr
     if (problem.effect === "unknown") throw Error("Test expected ordinary rejection");
     await f.admission.finish(attempt, { kind: "rejected", problem });
     assert.equal(f.inspect().commits, 0); assert.equal(f.inspect().sequenceCalls, 2);
-    assert.throws(() => new NativeShiftAdmission(f.options), { code: "COMMAND_SCOPE_DEFERRED" });
+    assert.throws(() => new NativeShiftAdmission(f.options, f.coordinator), { code: "COMMAND_SCOPE_DEFERRED" });
   } finally { f.close(); }
 });
 test("isolated verified-receipt DTO settlement neither persists/replays the receipt nor reopens native authority", async () => {
@@ -219,7 +224,7 @@ test("isolated verified-receipt DTO settlement neither persists/replays the rece
       { code: "INVALID_SOURCE_DATA" });
     await f.admission.finish(attempt, { kind: "verified", receipt });
     assert.throws(() => f.admission.planFor(attempt), { code: "STALE_PREPARATION" });
-    assert.throws(() => new NativeShiftAdmission(f.options), { code: "COMMAND_SCOPE_DEFERRED" });
+    assert.throws(() => new NativeShiftAdmission(f.options, f.coordinator), { code: "COMMAND_SCOPE_DEFERRED" });
     const marker = readdirSync(f.directory).find(name => name.endsWith(".consumed")); assert.ok(marker);
     const contents = readFileSync(join(f.directory, marker), "utf8");
     assert.match(contents, /VERIFIED\n$/); assert.ok(!contents.includes(input.commandId) && !contents.includes("effects"));
@@ -231,7 +236,7 @@ test("lost consumed marker cannot reopen the already consumed operator namespace
     await f.admission.consume(await binding(f));
     const marker = readdirSync(f.directory).find(name => name.endsWith(".consumed")); assert.ok(marker);
     rmSync(join(f.directory, marker)); // Explicit isolated lost-journal fault.
-    assert.throws(() => new NativeShiftAdmission(f.options), { code: "COMMAND_SCOPE_DEFERRED" });
-    assert.deepEqual(readdirSync(f.directory), ["namespace.json"]);
+    assert.throws(() => new NativeShiftAdmission(f.options, f.coordinator), { code: "COMMAND_SCOPE_DEFERRED" });
+    assert.deepEqual(readdirSync(f.directory), ["global-coordinator", "namespace.json"]);
   } finally { f.close(); }
 });

@@ -38,6 +38,7 @@ export class OracleStationExitApplication {
     this.identityReference = exitIdentityReference(this.binding);
     if (uow.identityReference !== this.identityReference || uow.businessTimeZone !== zone)
       throw Error("Exit identity reference/zone mismatch");
+    uow.coordinator.assertAvailableSync(this.binding.employeeId);
     this.grants = [...grants]; this.allowance = new NativeAllowance(this.binding);
     if (!grants.includes(this.binding.orgUnitId)) throw Error("Exit exact grant required");
     this.allowance.assertUnused();
@@ -59,11 +60,13 @@ export class OracleStationExitApplication {
   }
   async assertReady(signal?: AbortSignal) {
     checkStageBudget(signal);
+    await this.uow.coordinator.assertAvailable(this.binding.employeeId, signal);
     const f = await this.uow.read(signal);
     this.ready(f, this.clock.now()); checkStageBudget(signal);
   }
   async context(p: unknown, target: unknown, signal?: AbortSignal): Promise<StationExitContextV1> {
     const { s } = this.admit(p, target); checkStageBudget(signal);
+    await this.uow.coordinator.assertAvailable(s.employeeId, signal);
     const f = await this.uow.read(signal), now = this.clock.now(), c = exitTiming(f, now, this.zone, this.binding);
     checkStageBudget(signal);
     const a = f.rows.SHF_ATTENDANCE;
@@ -78,6 +81,7 @@ export class OracleStationExitApplication {
   }
   async validate(p: unknown, target: unknown, input: unknown, signal?: AbortSignal): Promise<StationExitValidationV1> {
     const { p: principal, s } = this.admit(p, target); exitDraft(input); checkStageBudget(signal);
+    await this.uow.coordinator.assertAvailable(s.employeeId, signal);
     this.allowance.assertUnused();
     const snapshot = await this.uow.read(signal), now = this.clock.now(), c = this.ready(snapshot, now);
     checkStageBudget(signal);
@@ -115,6 +119,8 @@ export class OracleStationExitApplication {
     this.attemptedCommand = { id: cmd.commandId, payload };
     this.tokens.delete(cmd.validationToken);
     try {
+      const globalAdmission = await this.uow.coordinator.consume({ employeeId: s.employeeId,
+        operation: "station-exit", commandId: cmd.commandId }, signal);
       this.allowance.consume();
       const result = await this.uow.execute(prep.snapshot, current => {
         this.admit(principal, s, true); checkStageBudget(signal);
@@ -122,7 +128,7 @@ export class OracleStationExitApplication {
         if (fresh.getTime() < prep.issued || fresh.getTime() >= prep.expires) stageFail("STALE_PREPARATION");
         const c = this.ready(current, fresh);
         return { local: c.local, actor: principal.subject };
-      }, signal);
+      }, globalAdmission, signal);
       this.knownCommitted = true; this.tokens.clear();
       const a = prep.snapshot.rows.SHF_ATTENDANCE;
       if (!a?.STATION_ARRIVAL_TIME) stageFail("COMMAND_OUTCOME_UNKNOWN");

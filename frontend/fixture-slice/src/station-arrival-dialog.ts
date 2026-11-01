@@ -8,8 +8,14 @@ import type { ArrivalSelection } from './stage-arrival-contract';
 import type { StationArrivalValidationV1 } from './station-arrival-contract';
 import type { NativeStationArrivalContextV1, NativeStationArrivalValidationV1 } from '../../../backend/fixture-slice/oracle-station-arrival-contracts.mts';
 import type { StationExitContextV1, StationExitValidationV1 } from './station-exit-contract';
+import type { NativeLateStationValidationV1, NativeLateStationContextV1 } from './station-arrival-late-contract';
+import type { StationContext } from './station-arrival-contract';
 
 export type StationArrivalDialogData =
+  | { kind: 'native-late-warning'; selection: ArrivalSelection; reason: string; reasonCode: string;
+      context: StationContext | NativeLateStationContextV1; validation: NativeLateStationValidationV1 }
+  | { kind: 'native-late-confirmation'; selection: ArrivalSelection; reason: string; reasonCode: string;
+      context: NativeLateStationContextV1; validation: NativeLateStationValidationV1 }
   | { kind: 'fixture-warning'; name: string; planned: string; reason: string; validation: StationArrivalValidationV1 }
   | { kind: 'native-confirmation'; selection: ArrivalSelection; context: NativeStationArrivalContextV1;
       validation: NativeStationArrivalValidationV1 }
@@ -27,7 +33,18 @@ export class StationArrivalDialog {
   readonly ref = inject(MatDialogRef<StationArrivalDialog, boolean>);
   readonly accepted = new FormControl(false, { nonNullable: true });
   readonly time = displayTime;
-  readonly labels = this.data.kind === 'native-exit-confirmation' ? {
+  readonly labels = this.data.kind === 'native-late-warning' ? {
+    title: 'אזהרת איחור לעמדה — טרם נרשמה הגעה',
+    ackId: 'station-warning-ack', cancelId: 'station-warning-cancel', confirmId: 'station-warning-review',
+    consent: 'קראתי את אזהרת האיחור המוצגת לרשומה זו',
+    cancel: 'ביטול — ללא רישום', primary: 'מעבר לסקירת כל הפעולה',
+  } : this.data.kind === 'native-late-confirmation' ? {
+    title: 'אישור רישום הגעה באיחור במסד TEST',
+    ackId: 'native-station-operation-ack', cancelId: 'native-station-operation-cancel',
+    confirmId: 'native-station-operation-confirm',
+    consent: 'קראתי ואני מאשר/ת את כל פעולת הכתיבה למסד TEST',
+    cancel: 'ביטול — ללא עדכון', primary: 'אישור רישום הגעה באיחור ב־TEST',
+  } : this.data.kind === 'native-exit-confirmation' ? {
     title: 'אישור רישום יציאה מעמדה במסד TEST',
     ackId: 'native-exit-operation-ack', cancelId: 'native-exit-operation-cancel',
     confirmId: 'native-exit-operation-confirm',

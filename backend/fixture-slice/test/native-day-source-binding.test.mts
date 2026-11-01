@@ -11,6 +11,7 @@ import { exitBinding, exitEnvironment, exitIdentityReference } from "../native-s
 import { OracleReadSession } from "../oracle-session.mts";
 import type { OraclePool } from "../oracle-session.mts";
 import { OracleStageArrivalUow } from "../oracle-stage-arrival-uow.mts";
+import { syntheticCoordinator } from "./native-coordinator-provision.mts";
 import { OracleStationArrivalUow } from "../oracle-station-arrival-uow.mts";
 import { OracleStationExitUow } from "../oracle-station-exit-uow.mts";
 import { OracleStageArrivalApplication } from "../oracle-stage-arrival-application.mts";
@@ -105,14 +106,14 @@ function fixture(kind: Kind, provider: NativeMetadataProvider = "dba-v1") {
     async application() {
       const b = binding(), session = new OracleReadSession(readPool);
       if ("metadataDigest" in b) {
-        const uow = new OracleStageArrivalUow(writePool, session, b); await uow.initialize();
+        const uow = new OracleStageArrivalUow(writePool, session, b, syntheticCoordinator(d.directory, b)); await uow.initialize();
         return { uow, app: new OracleStageArrivalApplication(uow, b, d.clock, "UTC", ["T001"]) };
       }
       if ("stationMetadataDigest" in b) {
-        const uow = new OracleStationArrivalUow(writePool, session, b, "UTC"); await uow.initialize();
+        const uow = new OracleStationArrivalUow(writePool, session, b, "UTC", syntheticCoordinator(d.directory, b)); await uow.initialize();
         return { uow, app: new OracleStationArrivalApplication(uow, b, d.clock, "UTC", ["T001"]) };
       }
-      const uow = new OracleStationExitUow(writePool, session, b, "UTC"); await uow.initialize();
+      const uow = new OracleStationExitUow(writePool, session, b, "UTC", syntheticCoordinator(d.directory, b)); await uow.initialize();
       return { uow, app: new OracleStationExitApplication(uow, b, d.clock, "UTC", ["T001"]) };
     } };
 }

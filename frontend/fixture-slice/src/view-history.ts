@@ -5,6 +5,7 @@ import { StageArrivalSession } from './stage-arrival-session';
 import { StationArrivalSession } from './station-arrival-session';
 import { StationExitSession } from './station-exit-session';
 import { ShiftManagementSession } from './shift-management-session';
+import { NativeCommandSession } from './native-command-session';
 
 type Slots = Pick<ListNavigation, 'origin' | 'searchOrigin' | 'attendanceOrigin' | 'schedule' | 'scheduleDetail' |
   'detailOrigin' | 'scheduleUpstream'>;
@@ -26,6 +27,7 @@ export class ViewHistory {
   private readonly station = inject(StationArrivalSession);
   private readonly exit = inject(StationExitSession);
   private readonly management = inject(ShiftManagementSession);
+  private readonly global = inject(NativeCommandSession);
   private readonly entries = new Map<string, Entry>();
   private current: string | null = null;
   private target: string | null = null;
@@ -36,6 +38,7 @@ export class ViewHistory {
   constructor() {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationStart) {
+        this.global.merge(event.restoredState);
         this.arrival.merge(event.restoredState);
         this.station.merge(event.restoredState);
         this.exit.merge(event.restoredState);
@@ -72,7 +75,7 @@ export class ViewHistory {
         const provenance = typeof origin === 'string' &&
           ['current-shifts', 'shift-search', 'my-shifts', 'attendance', 'shift-day-diagnostic'].includes(origin) ? { origin } : {};
         history.replaceState({ ...provenance, navigationId: event.id, shfView: token,
-          ...this.arrival.marker(), ...this.station.marker(), ...this.exit.marker(), ...this.management.marker() }, '');
+          ...this.arrival.marker(), ...this.station.marker(), ...this.exit.marker(), ...this.management.marker(), ...this.global.marker() }, '');
       }
     });
   }

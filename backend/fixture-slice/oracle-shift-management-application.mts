@@ -35,6 +35,7 @@ import { OracleShiftItemsReader } from "./oracle-shift-items-reader.mts";
 import { OracleEmployeeCardReader } from "./oracle-employee-card-reader.mts";
 import { OracleAttendanceReader } from "./oracle-attendance-reader.mts";
 import { limitedMetadataWarning } from "./native-metadata-limited.mts";
+import { nativeCoordinatorFromEnvironment } from "./native-command-coordinator.mts";
 
 type Binding = Omit<NativeManagementConfiguration, "writer">;
 type Metadata = Awaited<ReturnType<typeof certifyShiftManagementMetadata>>;
@@ -118,12 +119,17 @@ export class OracleShiftManagementSnapshot implements ShiftSnapshotPort<ShiftSna
 }
 export class OracleShiftManagementApplication extends ShiftManagementApplication {
   readonly dataSource = "oracle-test";
+  private readonly nativeAdmission: NativeShiftAdmission;
   constructor(snapshots: OracleShiftManagementSnapshot, uow: OracleShiftManagementUow,
     admission: NativeShiftAdmission, binding: Binding) {
     if (!(snapshots instanceof OracleShiftManagementSnapshot) || !(uow instanceof OracleShiftManagementUow) ||
         !(admission instanceof NativeShiftAdmission)) throw Error("Concrete native management adapters required");
     const policy = shiftManagementAccessPolicy("test-oracle-controlled"), generation = randomBytes(32).toString("base64url");
-    super({ snapshots, uow, admission, policy, clock: systemClock, businessTimeZone: binding.authority.businessTimeZone,
+    if (uow.coordinator !== admission.coordinator) throw Error("Native coordinator mismatch");
+    uow.coordinator.assertAvailableSync(binding.source.employeeId);
+    super({ snapshots, uow: { reference: uow.reference,
+      run: (selection, work, signal) => uow.run({ ...selection, globalAdmission: admission.globalFor(selection.admission) }, work, signal) },
+      admission, policy, clock: systemClock, businessTimeZone: binding.authority.businessTimeZone,
       authGeneration: () => generation, selectedScope: { employeeId: binding.source.employeeId, orgUnitId: binding.source.orgUnitId },
       csvIdentity: { read: (p, id, signal) => snapshots.readCsvIdentity(p, id, signal),
         snapshot: (p, selection, full, signal) => {
@@ -131,12 +137,36 @@ export class OracleShiftManagementApplication extends ShiftManagementApplication
           if (!policy.authorizedTeamIds(p).includes(binding.source.orgUnitId)) shiftFail("SHIFT_DAY_NOT_FOUND");
           return snapshots.readForCsv(selection, full, signal);
         } } });
+    this.nativeAdmission = admission;
+  }
+  private async available(employeeId: string, signal?: AbortSignal) {
+    try { await this.nativeAdmission.coordinator.assertAvailable(employeeId, signal); }
+    catch { shiftFail("LIVE_WRITES_DISABLED"); }
+  }
+  async context(...args: Parameters<ShiftManagementApplication["context"]>) {
+    shiftManagementAccessPolicy("test-oracle-controlled").requirePrepare(args[0]);
+    await this.available(args[1].employeeId, args[2]);
+    return super.context(...args);
+  }
+  async prepare(...args: Parameters<ShiftManagementApplication["prepare"]>) {
+    shiftManagementAccessPolicy("test-oracle-controlled").requirePrepare(args[0]);
+    await this.available(args[1], args[3]);
+    return super.prepare(...args);
+  }
+  async previewCsv(...args: Parameters<ShiftManagementApplication["previewCsv"]>) {
+    shiftManagementAccessPolicy("test-oracle-controlled").requireCsvPreview(args[0]);
+    await this.available(args[1], args[4]);
+    return super.previewCsv(...args);
   }
 }
 export async function startNativeManagement(env: NodeJS.ProcessEnv, configuration: unknown, factories?: BackendPoolFactories) {
   const config = validateRuntimeConfig(configuration);
   if (config.authenticationMode !== "synthetic") throw Error("Explicit isolated synthetic management provider required");
   const native = parseNativeManagementEnvironment(env, config);
+  const coordinator = await nativeCoordinatorFromEnvironment(env, [
+    { employeeId: native.source.employeeId, writeIdentity: native.writeIdentity },
+  ]);
+  if (!coordinator) shiftFail("LIVE_WRITES_DISABLED");
   const origins = managementOrigins(env.SHF_SHIFT_MANAGEMENT_ORIGINS), port = managementPort(env.SHF_ORACLE_PORT);
   const resolver = factories?.resolveEndpoint ?? (async (name: string, signal: AbortSignal) => {
     signal.throwIfAborted(); const rows = await lookup(name, { all: true, verbatim: true });
@@ -154,7 +184,7 @@ export async function startNativeManagement(env: NodeJS.ProcessEnv, configuratio
     const { writer: _secrets, ...binding } = native;
     const snapshots = new OracleShiftManagementSnapshot(session, binding, metadata);
     await snapshots.read({ employeeId: binding.source.employeeId, shiftDayId: binding.source.selectedDayId });
-    const admission = new NativeShiftAdmission(binding.authority);
+    const admission = new NativeShiftAdmission(binding.authority, coordinator);
     let activeMetadata = metadata;
     const uow = new OracleShiftManagementUow(writer, {
       operation: "native-shift-management-v0.1", reference: binding.source.reference,
@@ -171,7 +201,7 @@ export async function startNativeManagement(env: NodeJS.ProcessEnv, configuratio
         return current;
       },
       membershipGuard: current => nativeShiftMembershipGuard(current, binding.source, activeMetadata.schemas),
-    }, admission, binding.execution);
+    }, admission, binding.execution, coordinator);
     const app = new OracleShiftManagementApplication(snapshots, uow, admission, binding);
     const runtime = await createRuntime(config, new OracleDetailReader(session), undefined, {
       reader: new OracleCurrentReader(session), searchReader: new OracleSearchReader(session),

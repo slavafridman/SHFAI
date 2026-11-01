@@ -11,6 +11,7 @@ import { OracleReadSession } from "../oracle-session.mts";
 import type { OraclePool } from "../oracle-session.mts";
 import type { NativePool } from "../oracle-stage-arrival-uow.mts";
 import { OracleStationArrivalUow } from "../oracle-station-arrival-uow.mts";
+import { syntheticCoordinator } from "./native-coordinator-provision.mts";
 import { OracleStationArrivalApplication } from "../oracle-station-arrival-application.mts";
 import { SyntheticAdministratorProvider } from "../synthetic-identity.mts";
 import { stationConfig } from "./native-station-arrival-double.mts";
@@ -127,7 +128,8 @@ function fixture(provider: NativeMetadataProvider) {
   return { d, certify, async application() {
     // Reconstruct after any synthetic metadata edit so the privately supplied
     // reviewed certificate is immutable in the UoW under test.
-    const current = new OracleStationArrivalUow(writePool, new OracleReadSession(readPool), d.binding, "UTC");
+    const current = new OracleStationArrivalUow(writePool, new OracleReadSession(readPool), d.binding, "UTC",
+      syntheticCoordinator(d.directory, d.binding));
     await current.initialize();
     const app = new OracleStationArrivalApplication(current, d.binding, d.clock, "UTC", ["T001"]);
     const principal = await new SyntheticAdministratorProvider(stationConfig).authenticate({ authorization: null });

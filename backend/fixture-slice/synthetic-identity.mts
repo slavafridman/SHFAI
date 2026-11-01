@@ -48,6 +48,10 @@ import type { OracleStationExitApplication } from "./oracle-station-exit-applica
 import { shiftManagementMode } from "./shift-management-config.mts";
 import { shiftManagementActorCapabilities } from "./shift-management-capabilities.mts";
 import { ShiftManagementApplication } from "./shift-management-application.mts";
+import { lateMode, legacyRuntimeShape } from "./native-station-arrival-late-config.mts";
+import type { OracleLateStationArrivalApplication } from "./oracle-station-arrival-late-application.mts";
+import { lateDraft, lateCommand } from "./native-station-arrival-late-validation.mts";
+import { nativeLateStationArrivalAccessPolicy } from "./access-policy.mts";
 
 export interface CurrentRuntimeOptions {
   reader: CurrentShiftReadPort;
@@ -62,6 +66,7 @@ export interface CurrentRuntimeOptions {
   nativeStationArrival?: OracleStationArrivalApplication;
   nativeStationExit?: OracleStationExitApplication;
   shiftManagement?: ShiftManagementApplication;
+  nativeLateStationArrival?: OracleLateStationArrivalApplication;
 }
 
 export class SyntheticAdministratorProvider implements AuthenticationProvider {
@@ -72,8 +77,11 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
   private readonly nativeStationArrivalEnabled: boolean;
   private readonly nativeExitEnabled: boolean;
   private readonly managementEnabled: boolean;
+  private readonly lateEnabled: boolean;
   constructor(configuration: unknown) {
     const config = validateRuntimeConfig(configuration);
+    configuration = legacyRuntimeShape(configuration);
+    this.lateEnabled = lateMode(config) === "test-oracle-controlled";
     if (config.authenticationMode !== "synthetic") throw new Error("Synthetic provider disabled");
     this.orgUnitIds = [...config.syntheticOrgUnitIds];
     this.stageArrivalEnabled = validateStageArrivalMode(configuration) === "isolated-fixture";
@@ -96,7 +104,9 @@ export class SyntheticAdministratorProvider implements AuthenticationProvider {
         ...(this.stationArrivalEnabled || this.nativeStationArrivalEnabled ? ["attendance-station-arrival:prepare" as const, "attendance-station-arrival:commit" as const] : []),
         ...(this.nativeStationArrivalEnabled ? ["attendance-station-arrival:test-oracle-write" as const] : []),
         ...(this.nativeExitEnabled ? ["attendance-station-exit:prepare" as const, "attendance-station-exit:commit" as const,
-          "attendance-station-exit:test-oracle-write" as const] : [])], employeeId: null,
+          "attendance-station-exit:test-oracle-write" as const] : []),
+        ...(this.lateEnabled ? ["attendance-station-arrival-late:prepare" as const,
+          "attendance-station-arrival-late:commit" as const, "attendance-station-arrival-late:test-oracle-write" as const] : [])], employeeId: null,
       resourceScope: { orgUnitIds: [...this.orgUnitIds] },
     };
   }
@@ -108,10 +118,19 @@ export async function createRuntime(
   currentOptions?: CurrentRuntimeOptions,
 ) {
   const config = validateRuntimeConfig(configuration);
+  const late = lateMode(configuration);
+  configuration = legacyRuntimeShape(configuration);
   const stageMode = validateStageArrivalMode(configuration);
   const station = stationMode(configuration);
   const exitMode = stationExitMode(configuration);
   const managementMode = shiftManagementMode(configuration);
+  if (late === "test-oracle-controlled") {
+    const { OracleLateStationArrivalApplication } = await import("./oracle-station-arrival-late-application.mts");
+    if (!(currentOptions?.nativeLateStationArrival instanceof OracleLateStationArrivalApplication) ||
+        currentOptions?.nativeStageArrival || currentOptions?.nativeStationArrival || currentOptions?.nativeStationExit ||
+        currentOptions?.stageArrivalStore || currentOptions?.shiftManagement)
+      throw Error("Exclusive concrete native late TEST application required");
+  } else if (currentOptions?.nativeLateStationArrival) throw Error("Late application requires enabled mode");
   if (managementMode === "test-oracle-controlled") {
     const { OracleShiftManagementApplication } = await import("./oracle-shift-management-application.mts");
     if (!(currentOptions?.shiftManagement instanceof OracleShiftManagementApplication))
@@ -124,7 +143,7 @@ export async function createRuntime(
   if (managementMode === "disabled" && currentOptions?.shiftManagement)
     throw Error("Management application requires explicit mode");
   if (currentOptions && Object.keys(currentOptions).some(k => !["reader", "clock", "searchReader", "myShiftsReader",
-    "shiftItemsReader", "employeeCardReader", "attendanceReader", "stageArrivalStore", "nativeStageArrival", "nativeStationArrival", "nativeStationExit", "shiftManagement"].includes(k)))
+    "shiftItemsReader", "employeeCardReader", "attendanceReader", "stageArrivalStore", "nativeStageArrival", "nativeStationArrival", "nativeStationExit", "shiftManagement", "nativeLateStationArrival"].includes(k)))
     throw new Error("Unsupported backend adapter");
   if (currentOptions?.stageArrivalStore && stageMode !== "isolated-fixture")
     throw new Error("Stage-arrival store requires explicit isolated mode");
@@ -238,7 +257,7 @@ export async function createRuntime(
       ].includes(error.code)) throw error;
       throw new SliceError("DEPENDENCY_UNAVAILABLE");
     }
-    validatePrincipal(principal, managementMode !== "disabled" ? "shift-management" :
+    validatePrincipal(principal, late === "test-oracle-controlled" ? "native-late" : managementMode !== "disabled" ? "shift-management" :
       exitMode === "test-oracle-controlled" ? "native-exit" :
       station === "test-oracle-controlled" ? "native-station" : station === "isolated-fixture" ? "joint-fixture" : stageMode);
     if (principal.provider !== config.authenticationMode) throw new SliceError("UNAUTHENTICATED");
@@ -270,6 +289,25 @@ export async function createRuntime(
       return currentOptions.nativeStationExit.commit(p, target, input, signal);
     },
     attendanceStageArrivalMode: stageMode,
+    attendanceStationArrivalLateMode: late,
+    stationArrivalLateContext: (p: PrincipalV1, target: import("./stage-arrival-contracts.mts").StageArrivalSelectionV1,
+      signal?: AbortSignal) => {
+      if (late === "disabled" || !currentOptions?.nativeLateStationArrival) stageFail("LIVE_WRITES_DISABLED");
+      nativeLateStationArrivalAccessPolicy.requirePrepare(p);
+      return currentOptions.nativeLateStationArrival.context(p, target, signal);
+    },
+    stationArrivalLateValidate: (p: PrincipalV1, target: import("./stage-arrival-contracts.mts").StageArrivalSelectionV1,
+      input: unknown, signal?: AbortSignal) => {
+      if (late === "disabled" || !currentOptions?.nativeLateStationArrival) stageFail("LIVE_WRITES_DISABLED");
+      nativeLateStationArrivalAccessPolicy.requirePrepare(p);
+      return currentOptions.nativeLateStationArrival.validate(p, target, lateDraft(input), signal);
+    },
+    stationArrivalLateCommand: (p: PrincipalV1, target: import("./stage-arrival-contracts.mts").StageArrivalSelectionV1,
+      input: unknown, signal?: AbortSignal) => {
+      if (late === "disabled" || !currentOptions?.nativeLateStationArrival) stageFail("LIVE_WRITES_DISABLED");
+      nativeLateStationArrivalAccessPolicy.requireCommit(p);
+      return currentOptions.nativeLateStationArrival.command(p, target, lateCommand(input), signal);
+    },
     attendanceStationArrivalMode: station,
     stationArrivalContext: (p: unknown, target: unknown, signal?: AbortSignal) => {
       if (!stationArrival) stageFail("LIVE_WRITES_DISABLED");

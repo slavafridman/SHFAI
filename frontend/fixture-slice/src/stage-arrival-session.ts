@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { uuid, type ArrivalSelection } from './stage-arrival-contract';
+import { NativeCommandSession } from './native-command-session';
 
 /** Volatile selection and conservative uncertainty guard. No receipt/token cache.
  * After reload opaque markers deliberately block ALL F1 selections: no personal
@@ -17,7 +18,7 @@ export class StageArrivalSession {
   private readonly nativeSlot = 'shfNativeArrivalSafety';
   private readonly fixtureSlot = 'shfStageArrivalSafety';
   private readonly settled = new Set<string>();
-  constructor() {
+  constructor(private readonly global: NativeCommandSession = new NativeCommandSession()) {
     this.merge(history.state);
     try {
       const raw = sessionStorage.getItem(this.fixtureSlot);
@@ -69,7 +70,7 @@ export class StageArrivalSession {
   }
   uncertain() { return this.unresolved.size > 0; }
   affectsEmployee(employeeId: string | null) {
-    return [...this.unresolved].some(attempt => {
+    return this.global.affectsEmployee(employeeId) || [...this.unresolved].some(attempt => {
       const raw = this.attemptBindings.get(attempt);
       if (!raw || !employeeId) return true;
       const b: string[] = JSON.parse(raw);
@@ -78,7 +79,7 @@ export class StageArrivalSession {
   }
   nativeUncertain() { return this.native.size > 0; }
   crossAffects(s: ArrivalSelection | null) {
-    return [...this.unresolved].some(attempt => {
+    return this.global.affectsEmployee(s?.employeeId ?? null) || [...this.unresolved].some(attempt => {
       const raw = this.attemptBindings.get(attempt);
       if (!s || !raw) return true;
       const b: string[] = JSON.parse(raw);
@@ -87,7 +88,7 @@ export class StageArrivalSession {
     });
   }
   affects(s: ArrivalSelection | null) {
-    return !!s && [...this.unresolved].some(attempt =>
+    return this.global.affectsEmployee(s?.employeeId ?? null) || !!s && [...this.unresolved].some(attempt =>
       !this.attemptBindings.has(attempt) || (() => {
         const binding: string[] = JSON.parse(this.attemptBindings.get(attempt)!);
         if (binding[0] === 'oracle-test') return s.dataSource === 'oracle-test' &&
@@ -97,9 +98,12 @@ export class StageArrivalSession {
       })());
   }
   recorded(s: ArrivalSelection) { return this.terminal.has(this.key(s)); }
-  blocked(s?: ArrivalSelection | null) { return this.unresolved.size > 0 || !!s && this.terminal.has(this.key(s)); }
+  blocked(s?: ArrivalSelection | null) { return this.global.affectsEmployee(s?.employeeId ?? null) || this.unresolved.size > 0 || !!s && this.terminal.has(this.key(s)); }
   begin(s: ArrivalSelection, attempt: string) {
     if (!uuid(attempt) || this.blocked(s)) return false;
+    if (s.dataSource === 'oracle-test' && !this.global.begin(s.employeeId, attempt)) {
+      this.unresolved.add(attempt); this.native.add(attempt); return false;
+    }
     this.unresolved.add(attempt);
     this.attemptBindings.set(attempt, this.key(s));
     if (s.dataSource === 'oracle-test') this.native.add(attempt);
@@ -129,6 +133,7 @@ export class StageArrivalSession {
       if (committed) this.terminal.add(this.key(s));
       this.settled.add(attempt);
       this.attemptBindings.delete(attempt);
+      if (s.dataSource === 'oracle-test' && !this.global.resolve(s.employeeId, attempt)) return false;
       return true;
     } catch {
       this.unresolved.add(attempt);

@@ -7,6 +7,7 @@ import type { NativePool, NativeConnection } from "../oracle-stage-arrival-uow.m
 import type { OraclePool } from "../oracle-session.mts";
 import { OracleReadSession } from "../oracle-session.mts";
 import { OracleStationArrivalUow } from "../oracle-station-arrival-uow.mts";
+import { syntheticCoordinator } from "./native-coordinator-provision.mts";
 import { OracleStationArrivalApplication } from "../oracle-station-arrival-application.mts";
 import { stationTables } from "../oracle-station-arrival-snapshot.mts";
 import type { NativeRow } from "../oracle-stage-arrival-snapshot.mts";
@@ -40,6 +41,7 @@ export class StationOracleDouble {
   exceptions = "0";
   baseExceptions = "0";
   extraCandidates: Array<{ day: NativeRow; change: NativeRow | null }> = [];
+  lateReasons?: NativeRow[]; // Explicit isolated §50 protocol extension only.
   hook?: (event: string) => Promise<void> | void;
   async point(event: string) { this.events.push(event); await this.hook?.(event); }
   constructor(realClock = false) {
@@ -89,7 +91,7 @@ export class StationOracleDouble {
   dispose() { rmSync(this.directory, { force: true, recursive: true }); }
   private async query(sql: string, binds: BindParameters, source: "read" | "write") {
     this.sql.push({ sql, binds: structuredClone(binds), source });
-    const tag = /\/\* ((?:native|station):[^*]+) \*\//.exec(sql)?.[1] ?? (sql.startsWith("SET") ? "readonly" : "probe");
+    const tag = /\/\* ((?:native|station|station-late):[^*]+) \*\//.exec(sql)?.[1] ?? (sql.startsWith("SET") ? "readonly" : "probe");
     await this.point(`${source}:${tag}`);
     if (tag === "readonly") return [];
     if (sql.includes("nls_session_parameters")) return [{ calendar: "GREGORIAN" }];
@@ -103,6 +105,16 @@ export class StationOracleDouble {
     if (tag.startsWith("station:metadata:")) return structuredClone(this.proof[Number(tag.split(":")[2])]);
     if (tag.startsWith("station:privilege:")) return [];
     if (tag.startsWith("station:lock:")) return [{ key: 1 }];
+    if (tag === "station-late:lock:SHF_EVENT_REASON") return (this.lateReasons ?? []).map(r => ({ key: r.REASON_ID }));
+    if (tag === "station-late:lock:SHF_DAY_CHANGES") return this.rows.SHF_DAY_CHANGES ? [{ key: "6201" }] : [];
+    if (tag === "station-late:lock:SHF_EMPLOYEE_REPORTS" || tag === "station-late:lock:SHF_EMPLOYEE_EXCEPTIONS" ||
+        tag === "station-late:lock:SHF_EMPLOYEE_EXCEPTIONS_BASE") return [];
+    if (tag.startsWith("station-late:lock:")) return [{ key: 1 }];
+    if (tag === "station-late:reasons") {
+      if (!this.lateReasons) throw Error("Late protocol not configured");
+      return structuredClone(this.lateReasons);
+    }
+    if (tag.startsWith("station-late:dependency:")) return [];
     if (tag === "station:marker" || tag === "station:prefix") return [{ employeeId: "9001" }];
     if (tag === "station:reports") return [{ count: this.reports }];
     if (tag === "station:exceptions") return [{ count: this.exceptions }];
@@ -111,7 +123,9 @@ export class StationOracleDouble {
       const candidates = [{ day: this.rows.SHF_EMPLOYEE_DAY!, change: this.rows.SHF_DAY_CHANGES }, ...this.extraCandidates];
       return candidates.map(c => Object.fromEntries([
         ...Object.entries(c.day).map(([k, v]) => [`d_${k}`, v]),
-        ...stationTables.SHF_DAY_CHANGES.map(k => [`c_${k}`, c.change?.[k] ?? null]),
+        ...(this.lateReasons ? this.proof[0].filter(r => record(r) && r.tableName === "SHF_DAY_CHANGES")
+          .map(r => { if (!record(r) || typeof r.columnName !== "string") throw Error("Isolated invalid column"); return r.columnName; }) :
+          stationTables.SHF_DAY_CHANGES).map(k => [`c_${k}`, c.change?.[k] ?? null]),
       ]));
     }
     if (tag.startsWith("native:row:")) {
@@ -135,12 +149,16 @@ export class StationOracleDouble {
       let staged: NativeRow | null = null, active = false;
       return { callTimeout: 0,
         execute: async (sql, binds) => {
-          if (!sql.includes("station:update")) return { rows: await this.query(sql, binds, "write") };
+          if (!sql.includes("station:update") && !sql.includes("station-late:update")) return { rows: await this.query(sql, binds, "write") };
           this.sql.push({ sql, binds: structuredClone(binds), source: "write" }); active = true;
           try {
             await this.point("write:update");
             if (this.count === 1 && record(binds)) staged = { ...this.rows.SHF_ATTENDANCE!,
               STATION_ARRIVAL_TIME: String(binds.newStationLocal), STATION_ARRIVAL_USER: String(binds.actor) };
+            if (staged && record(binds) && sql.includes("station-late:update")) {
+              staged.LATE_REASON_ID = String(binds.lateReason); staged.LATE_MINUTES = String(binds.lateMinutes);
+              staged.LATE_REMARK = null;
+            }
             await this.point("write:updated"); return { rowsAffected: this.count };
           } finally { active = false; }
         },
@@ -158,7 +176,8 @@ export class StationOracleDouble {
     }, close: async () => { await this.point("write:pool-close"); },
   };
   async application(zone = "UTC") {
-    const uow = new OracleStationArrivalUow(this.writePool, new OracleReadSession(this.readPool), this.binding, zone);
+    const uow = new OracleStationArrivalUow(this.writePool, new OracleReadSession(this.readPool), this.binding, zone,
+      syntheticCoordinator(this.directory, this.binding));
     await uow.initialize();
     const app = new OracleStationArrivalApplication(uow, this.binding, this.clock, zone, ["T001"]);
     const principal = await new SyntheticAdministratorProvider(stationConfig).authenticate({ authorization: null });

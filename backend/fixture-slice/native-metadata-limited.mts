@@ -24,7 +24,7 @@ export const limitedMetadataCoverage = Object.freeze({
 });
 export const limitedCollectorMethod = "user-tab-cols-visible-v1";
 export type LimitedOperation = "native-stage-arrival-v0.1" | "native-station-arrival-v0.1" | "native-station-exit-v0.1"
-  | "native-shift-management-v0.1";
+  | "native-shift-management-v0.1" | "native-station-arrival-late-v0.1";
 export const limitedObservationNames = ["columns", "constraints", "constraintColumns", "policies",
   "tablePrivileges", "columnPrivileges", "dependencies"] as const;
 export type ParsedMetadataRow = Record<string, string | number | null>;
@@ -102,7 +102,8 @@ function validateConstraintPositions(constraints: ParsedMetadataRow[], members: 
 }
 export function parseLimitedMetadataEvidence(v: unknown, operation: LimitedOperation,
   tableScope: readonly string[]): LimitedMetadataEvidence {
-  if (!["native-stage-arrival-v0.1", "native-station-arrival-v0.1", "native-station-exit-v0.1", "native-shift-management-v0.1"].includes(operation) ||
+  if (!["native-stage-arrival-v0.1", "native-station-arrival-v0.1", "native-station-exit-v0.1", "native-shift-management-v0.1",
+    "native-station-arrival-late-v0.1"].includes(operation) ||
       !tableScope.length || new Set(tableScope).size !== tableScope.length ||
       tableScope.some(t => !/^[A-Z][A-Z0-9_]{0,29}$/.test(t)) ||
       !exact(v, ["version", "provider", "owner", "operation", "tableScope", "waiverId", "collectorMethod",
@@ -175,6 +176,7 @@ export function validateLimitedMetadataStartup(env: NodeJS.ProcessEnv, config: u
     ["attendanceStageArrivalMode", "SHF_NATIVE_STAGE_BINDING", "SHF_TEST_ORACLE_STAGE_WRITE_ENABLED", "SHF_NATIVE_STAGE_"],
     ["attendanceStationArrivalMode", "SHF_NATIVE_STATION_BINDING", "SHF_TEST_ORACLE_STATION_WRITE_ENABLED", "SHF_NATIVE_STATION_"],
     ["attendanceStationExitMode", "SHF_NATIVE_EXIT_BINDING", "SHF_TEST_ORACLE_EXIT_WRITE_ENABLED", "SHF_NATIVE_EXIT_"],
+    ["attendanceStationArrivalLateMode", "SHF_NATIVE_LATE_BINDING", "SHF_TEST_ORACLE_STATION_LATE_WRITE_ENABLED", "SHF_NATIVE_LATE_"],
   ];
   const active = modes.filter(([mode]) => config[mode] === "test-oracle-controlled");
   const selected = active.some(([, key]) => {

@@ -5,6 +5,9 @@ import { fingerprint, instantFor } from "./stage-arrival-domain.mts";
 import { stageFail } from "./stage-arrival-errors.mts";
 import { nativeMarker, selectedMetadataProvider, expectedNativeDaySource } from "./native-stage-arrival-config.mts";
 import type { StationBinding } from "./native-station-arrival-config.mts";
+type StationPersistenceBinding = Omit<StationBinding, "operation"> & {
+  operation: "native-station-arrival-v0.1" | "native-station-arrival-late-v0.1";
+};
 import { nativeIdentity, nativeMetadataQueries, nativeMetadataDigest, collectNativeMetadata, nativeTables, one, expression } from "./oracle-stage-arrival-snapshot.mts";
 import type { NativeQuery, NativeRow, NativeSchema, NativeColumn } from "./oracle-stage-arrival-snapshot.mts";
 import { stationBlockers, stationOverlap } from "./oracle-station-arrival-domain.mts";
@@ -27,21 +30,24 @@ export const stationTables = {
   SHF_EMPLOYEE_EXCEPTIONS_BASE: ["AGENT_DAY_ID"],
 } as const;
 export const stationMetadataSql = nativeMetadataQueries(Object.keys(stationTables));
-export async function stationSafety(q: NativeQuery, b: StationBinding): Promise<NativeSchema> {
+export async function stationSafety(q: NativeQuery, b: StationPersistenceBinding,
+  tables: Readonly<Record<string, readonly string[]>> = stationTables,
+  updateColumns: readonly string[] = ["STATION_ARRIVAL_TIME", "STATION_ARRIVAL_USER"],
+  fullProjection = false): Promise<NativeSchema> {
   const provider = selectedMetadataProvider(b);
   if (provider !== "dba-v1" && (b.writeIdentity.user !== "SHIFTER" || b.writeIdentity.schema !== "SHIFTER"))
     stageFail("LIVE_WRITES_DISABLED");
   await nativeIdentity(q, b.writeIdentity);
-  const facts = await collectNativeMetadata(q, b, b.operation, Object.keys(stationTables), b.stationMetadataDigest,
-    proof => nativeMetadataDigest(provider, b.operation, Object.keys(stationTables), proof), "station");
+  const facts = await collectNativeMetadata(q, b, b.operation, Object.keys(tables), b.stationMetadataDigest,
+    proof => nativeMetadataDigest(provider, b.operation, Object.keys(tables), proof), "station");
   const schema: NativeSchema = {};
-  for (const [table, required] of Object.entries(stationTables)) {
+  for (const [table, required] of Object.entries(tables)) {
     const columns: NativeColumn[] = [];
     for (const r of facts.columns) {
       if (!record(r) || r.tableName !== table) continue;
       if (typeof r.columnName !== "string" || !/^[A-Z][A-Z0-9_]{0,29}$/.test(r.columnName) ||
           typeof r.dataType !== "string") stageFail("INVALID_SOURCE_DATA");
-      if (table !== "SHF_ATTENDANCE" && !required.some(c => c === r.columnName)) continue;
+      if (!fullProjection && table !== "SHF_ATTENDANCE" && !required.some(c => c === r.columnName)) continue;
       const kind = r.dataType === "DATE" ? "date" : r.dataType === "NUMBER" ? "number" :
         ["VARCHAR2", "CHAR", "NVARCHAR2", "NCHAR"].includes(r.dataType) ? "text" : null;
       if (kind === null || r.virtualColumn !== "NO" || columns.some(c => c.name === r.columnName))
@@ -66,7 +72,7 @@ export async function stationSafety(q: NativeQuery, b: StationBinding): Promise<
   const user = b.writeIdentity.user;
   if (user !== "SHIFTER" && !facts.tablePrivileges.some(r => record(r) && r.tableName === "SHF_ATTENDANCE" &&
       r.grantee === user && r.privilege === "UPDATE") &&
-      !["STATION_ARRIVAL_TIME", "STATION_ARRIVAL_USER"].every(column =>
+      !updateColumns.every(column =>
         facts.columnPrivileges.some(r => record(r) && r.tableName === "SHF_ATTENDANCE" && r.columnName === column &&
           r.grantee === user && r.privilege === "UPDATE"))) stageFail("LIVE_WRITES_DISABLED");
   for (const [table, columns] of Object.entries(schema)) {

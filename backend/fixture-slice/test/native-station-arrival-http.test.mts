@@ -17,11 +17,13 @@ import { CurrentFixtureReader } from "../current-shifts-fixture.mts";
 import { sampleCurrentFixture } from "../current-shifts-sample.mts";
 import { nativeConfig } from "./native-stage-arrival-double.mts";
 import { stationBinding } from "../native-station-arrival-config.mts";
+import { syntheticCoordinatorEnvironment } from "./native-coordinator-provision.mts";
 
 const base = `/api/v1/employees/${stationSelection.employeeId}/shift-days/${stationSelection.shiftDayId}/station-arrival`;
 const origin = "http://localhost:4521";
 function env(d: StationOracleDouble): NodeJS.ProcessEnv {
   return { SHF_APP_ENV: "test", SHF_ORACLE_CONFIG: JSON.stringify(stationConfig), SHF_ORACLE_PORT: "0",
+    SHF_NATIVE_COMMAND_COORDINATOR_CONFIG: syntheticCoordinatorEnvironment(d.directory, d.binding),
     SHF_ORACLE_CONNECT_STRING: "CTIDBT_WFMT", SHF_ORACLE_USER: d.binding.readIdentity.user,
     SHF_ORACLE_PASSWORD: "synthetic-double-not-a-secret", SHF_ORACLE_CLIENT_LIB_DIR: "synthetic-unused",
     SHF_TEST_ORACLE_STATION_WRITE_ENABLED: "true", SHF_STATION_ARRIVAL_ORIGINS: JSON.stringify([origin]),

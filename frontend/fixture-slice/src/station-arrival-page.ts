@@ -12,8 +12,12 @@ import { SliceApi } from './api';
 import { displayTime, type IdentityResponseV1 } from './contract';
 import { actorBinding, type ArrivalSelection } from './stage-arrival-contract';
 import { stationIdentity, stationSource, stationContext, stationValidation, stationReceipt, stationProblem,
-  type StationContext, type StationValidation, type StationReceipt, type StationCommand,
+  type StationContext as OrdinaryContext, type StationValidation as OrdinaryValidation,
+  type StationReceipt as OrdinaryReceipt, type StationCommand as OrdinaryCommand,
   type StationArrivalValidationV1 } from './station-arrival-contract';
+import { lateIdentity, lateContext, lateValidation, lateReceipt, lateProblem, lateCommand,
+  type NativeLateStationContextV1, type NativeLateStationValidationV1,
+  type NativeLateStationReceiptV1, type NativeLateStationCommitV1 } from './station-arrival-late-contract';
 import { StationArrivalSession } from './station-arrival-session';
 import { ShiftManagementSession } from './shift-management-session';
 import { StageArrivalSession } from './stage-arrival-session';
@@ -23,6 +27,24 @@ import { ViewHistory } from './view-history';
 import { StationArrivalDialog, type StationArrivalDialogData } from './station-arrival-dialog';
 type State = 'chooser' | 'loading' | 'denied' | 'ready' | 'ineligible' | 'validating' |
   'warning' | 'review' | 'committing' | 'success' | 'error' | 'expired' | 'unknown' | 'recovery';
+type StationContext = OrdinaryContext | NativeLateStationContextV1;
+type StationValidation = OrdinaryValidation | NativeLateStationValidationV1;
+type StationReceipt = OrdinaryReceipt | NativeLateStationReceiptV1;
+type StationCommand = OrdinaryCommand | NativeLateStationCommitV1;
+function lateValidationForContext(v: unknown, c: StationContext, s: ArrivalSelection): v is NativeLateStationValidationV1 {
+  return lateContext(c, s) && lateValidation(v, c);
+}
+function ordinaryValidationForContext(v: unknown, c: StationContext, s: ArrivalSelection): v is OrdinaryValidation {
+  return stationContext(c, s) && stationValidation(v, c);
+}
+function lateReceiptForContext(v: unknown, c: StationContext, cmd: StationCommand, prep: StationValidation,
+  s: ArrivalSelection): v is NativeLateStationReceiptV1 {
+  return lateContext(c, s) && lateValidation(prep, c) && lateCommand(cmd) && lateReceipt(v, c, cmd, prep);
+}
+function ordinaryReceiptForContext(v: unknown, c: StationContext, cmd: StationCommand, prep: StationValidation,
+  s: ArrivalSelection): v is OrdinaryReceipt {
+  return stationContext(c, s) && stationValidation(prep, c) && !lateCommand(cmd) && stationReceipt(v, c, cmd, prep);
+}
 @Component({
   selector: 'shf-station-arrival',
   imports: [WorkspaceShell, RouterLink, MatButtonModule, MatFormFieldModule, MatSelectModule, ReactiveFormsModule],
@@ -59,15 +81,19 @@ export class StationArrivalPage {
   private acknowledged = '';
   private deadline = 0;
   private restoring = false;
+  private reasonSnapshot: { code: string; label: string | null } | null = null;
   private work?: Subscription;
   private identityWork?: Subscription;
   private warning?: MatDialogRef<StationArrivalDialog, boolean>;
   private operation?: MatDialogRef<StationArrivalDialog, boolean>;
   private operationApproved = false;
-  nativeMode() { return stationSource(this.principal()) === 'oracle-test' || this.selection()?.dataSource === 'oracle-test'; }
+  readonly lateMode = this.route.snapshot.data['stationLate'] === true;
+  private expiryTimer?: ReturnType<typeof setTimeout>;
+  private source() { return this.lateMode ? lateIdentity(this.principal()) ? 'oracle-test' : null : stationSource(this.principal()); }
+  nativeMode() { return this.lateMode || this.source() === 'oracle-test' || this.selection()?.dataSource === 'oracle-test'; }
   constructor() {
     effect(() => {
-      const pending = this.nativeMode() || !['ready', 'error', 'expired'].includes(this.state()) || this.halted() || this.blocked();
+      const pending = (this.nativeMode() && !this.lateMode) || !['ready', 'error', 'expired'].includes(this.state()) || this.halted() || this.blocked();
       if (pending && this.reason.enabled) this.reason.disable({ emitEvent: false });
       else if (!pending && this.reason.disabled) this.reason.enable({ emitEvent: false });
     });
@@ -84,6 +110,7 @@ export class StationArrivalPage {
       if (this.context()?.eligibility === 'eligible' && !this.blocked() && !this.halted()) this.state.set('ready');
     });
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(params => {
+      if (this.lateMode) this.reason.setValue(null, { emitEvent: false });
       this.invalidate(); this.context.set(null); this.receipt.set(null);
       const restored = this.journey.saved<{ stationSelection: ArrivalSelection | null }>();
       this.restoring = !!restored;
@@ -98,8 +125,26 @@ export class StationArrivalPage {
       this.alive = false; this.invalidate(); this.identityWork?.unsubscribe();
       // Unsubscription is NOT proof of cancellation: opaque safety survives.
     });
+    if (this.lateMode) {
+      const resume = () => {
+        if (!this.validation() || this.state() === 'committing') return;
+        if (this.bound !== this.binding() || this.prepared !== JSON.stringify(this.validation())) {
+          this.invalidate(); this.state.set('expired'); this.message.set('ההקשר השתנה. יש לבדוק ולאשר מחדש.');
+        } else this.expired();
+      };
+      const escape = (e: KeyboardEvent) => {
+        if (e.key !== 'Escape' || this.dialog.openDialogs.length || document.querySelector('[role="listbox"]')) return;
+        e.preventDefault(); this.cancel();
+      };
+      window.addEventListener('focus', resume); document.addEventListener('visibilitychange', resume);
+      this.host.nativeElement.addEventListener('keydown', escape);
+      this.destroy.onDestroy(() => {
+        window.removeEventListener('focus', resume); document.removeEventListener('visibilitychange', resume);
+        this.host.nativeElement.removeEventListener('keydown', escape);
+      });
+    }
   }
-  allowed() { return this.identityState() === 'ready' && stationIdentity(this.principal()); }
+  allowed() { return this.identityState() === 'ready' && (this.lateMode ? lateIdentity(this.principal()) : stationIdentity(this.principal())); }
   readonly management = inject(ShiftManagementSession);
   blocked() { return this.management.affectsEmployee(this.selection()?.employeeId ?? null) ||
     this.session.blocked(this.selection()) || this.stage.affects(this.selection()) || this.exit.affects(this.selection()); }
@@ -110,6 +155,7 @@ export class StationArrivalPage {
   }
   private active(gen: number) { return this.alive && gen === this.generation; }
   private invalidate() {
+    clearTimeout(this.expiryTimer);
     this.generation++; this.work?.unsubscribe();
     const warning = this.warning; this.warning = undefined; warning?.close(false);
     const operation = this.operation; this.operation = undefined; operation?.close(false); this.operationApproved = false;
@@ -117,15 +163,17 @@ export class StationArrivalPage {
   }
   private sameSelection(s: ArrivalSelection) {
     const p = this.principal();
-    return this.allowed() && p !== null && s.dataSource === stationSource(p) && s.actor === actorBinding(p) &&
+    return this.allowed() && p !== null && s.dataSource === this.source() && s.actor === actorBinding(p) &&
       p.principal.resourceScope.orgUnitIds.includes(s.orgUnitId) &&
       JSON.stringify(s) === JSON.stringify(this.session.selection);
   }
   private binding() {
-    return JSON.stringify(['station-arrival', this.generation, this.selection(), this.session.selection,
+    return JSON.stringify([this.lateMode ? 'station-arrival-late' : 'station-arrival', this.generation, this.selection(), this.session.selection,
       this.principal(), this.context(), this.reason.value]);
   }
   recheck() {
+    const option = this.context()?.lateReasonOptions.find(r => r.code === this.reason.value);
+    this.reasonSnapshot = option ? { code: option.code, label: option.label } : null;
     this.invalidate(); this.identityWork?.unsubscribe(); this.context.set(null); this.receipt.set(null);
     this.principal.set(null); this.identityState.set('loading'); this.reviewOffered.set(false);
     this.halted.set(false); this.state.set('loading');
@@ -133,10 +181,11 @@ export class StationArrivalPage {
     this.identityWork = this.api.identity().subscribe({
       next: value => {
         if (!this.active(gen)) return;
-        if (!stationIdentity(value)) {
+        if (!(this.lateMode ? lateIdentity(value) : stationIdentity(value))) {
           this.identityState.set('error'); this.state.set('denied');
           this.message.set('נדרשת זהות סינתטית תקפה עם הרשאות ומקור מדויקים: fixture משותף או native station TEST. אין מעבר אוטומטי לסימולציה.'); return;
         }
+        if (!lateIdentity(value) && !stationIdentity(value)) return;
         this.principal.set(value); this.identityState.set('ready');
         if (this.unresolved()) { this.recovery(); return; }
         const s = this.selection();
@@ -157,14 +206,20 @@ export class StationArrivalPage {
     if (!s || !this.sameSelection(s) || this.unresolved()) return;
     const gen = this.generation; this.state.set('loading');
     // Always fresh F2 context. Never reuse an F1 response/preparation/receipt.
-    this.work = this.api.stationArrivalContext(s.employeeId, s.shiftDayId).subscribe({
+    this.work = (this.lateMode ? this.api.stationArrivalLateContext(s.employeeId, s.shiftDayId) :
+      this.api.stationArrivalContext(s.employeeId, s.shiftDayId)).subscribe({
       next: value => {
         if (!this.active(gen)) return;
-        if (!this.sameSelection(s) || !stationContext(value, s)) { this.fail('הקשר לא עקבי או מקור שגוי. הפעולה חסומה.'); this.halted.set(true); return; }
+        if (!this.sameSelection(s) || !(this.lateMode ? lateContext(value, s) : stationContext(value, s))) { this.fail('הקשר לא עקבי או מקור שגוי. הפעולה חסומה.'); this.halted.set(true); return; }
+        if (!lateContext(value, s) && !stationContext(value, s)) return;
+        if (this.lateMode && this.reason.value !== null &&
+          !value.lateReasonOptions.some(r => r.code === this.reason.value && r.code === this.reasonSnapshot?.code &&
+            r.label === this.reasonSnapshot.label)) this.reason.setValue(null, { emitEvent: false });
         this.context.set(structuredClone(value));
         this.state.set(value.eligibility === 'eligible' && value.withinArrivalWindow && !this.session.recorded(s) ? 'ready' : 'ineligible');
         this.message.set(this.session.recorded(s) ? 'הפעולה כבר אושרה. הקשר חדש לקריאה בלבד; אין רישום נוסף ואין UNKNOWN חדש.' :
           value.eligibility === 'already-recorded' ? 'הגעה לעמדה כבר רשומה — מצב נצפה לקריאה בלבד, לא קבלה משוחזרת ולא שיוך לפקודה.' :
+          this.lateMode && value.eligibility === 'deferred' ? 'הרישום נדחה לתת־הקבוצה הזו — נדרשת הכרעת בעל/ת התהליך. אין עקיפה או השלמת שותף חיצוני.' :
           value.eligibility === 'eligible' && value.withinArrivalWindow
           ? 'הקשר חדש מהשרת — טרם נשלחה פקודת רישום.' : 'הרשומה אינה כשירה או מחוץ לחלון. אין הוספה, דריסה או כניסה חוזרת.');
         afterNextRender(() => {
@@ -177,12 +232,13 @@ export class StationArrivalPage {
   late() {
     const c = this.context();
     // Presentation only; backend decides classification and warning/minutes.
-    return !this.nativeMode() && !!c && c.serverTime.local > c.planned.startLocal;
+    return this.lateMode || !this.nativeMode() && !!c && c.serverTime.local > c.planned.startLocal;
   }
   reasonLabel() { return this.context()?.lateReasonOptions.find(r => r.code === this.reason.value)?.label ?? 'תיאור לא זמין'; }
   canValidate() {
     return this.allowed() && !this.halted() && !this.blocked() && this.context()?.eligibility === 'eligible' &&
-      this.context()?.withinArrivalWindow && ['ready', 'error', 'expired'].includes(this.state());
+      this.context()?.withinArrivalWindow && ['ready', 'error', 'expired'].includes(this.state()) &&
+      (!this.lateMode || this.context()?.lateReasonOptions.some(r => r.code === this.reason.value) === true);
   }
   validate() {
     if (!this.canValidate()) return;
@@ -195,17 +251,27 @@ export class StationArrivalPage {
     this.invalidate();
     const gen = this.generation, binding = this.binding(), started = performance.now();
     this.state.set('validating'); this.message.set('בדיקה טהורה — ללא שינוי, ללא קבלה וללא ביקורת עסקית.');
-    this.work = this.api.stationArrivalValidate(s.employeeId, s.shiftDayId, { lateReasonCode: this.nativeMode() ? null : this.reason.value }).subscribe({
+    if (this.lateMode && (this.reason.value === null || !lateContext(c, s))) return;
+    this.work = (this.lateMode && this.reason.value !== null ?
+      this.api.stationArrivalLateValidate(s.employeeId, s.shiftDayId, { lateReasonCode: this.reason.value, lateRemark: null }) :
+      this.api.stationArrivalValidate(s.employeeId, s.shiftDayId, { lateReasonCode: this.nativeMode() ? null : this.reason.value })).subscribe({
       next: value => {
         if (!this.active(gen)) return;
-        if (binding !== this.binding() || !stationValidation(value, c) ||
+        const valid = this.lateMode ? lateContext(c, s) && lateValidation(value, c) :
+          stationContext(c, s) && stationValidation(value, c);
+        if (binding !== this.binding() || !valid ||
+          (!lateValidationForContext(value, c, s) && !ordinaryValidationForContext(value, c, s)) ||
           (value.confirmationRequired ? this.reason.value === null : this.reason.value !== null)) {
           this.fail('תשובת הבדיקה אינה תואמת להקשר ולטיוטה. יש לרענן הקשר.'); this.halted.set(true); return;
         }
         this.validation.set(structuredClone(value)); this.prepared = JSON.stringify(value); this.bound = binding;
         this.deadline = started + Date.parse(value.expiresAt) - Date.parse(value.evaluatedAt);
         if (this.expired()) return;
-        if (value.dataSource === 'isolated-fixture' && value.confirmationRequired) this.showWarning(value, gen, binding);
+        if (this.lateMode) this.expiryTimer = setTimeout(() => {
+          if (this.active(gen) && this.state() !== 'committing') this.expired();
+        }, Math.max(0, this.deadline - performance.now()));
+        if (lateContext(c, s) && lateValidation(value, c) && this.lateMode) this.showWarning(value, gen, binding);
+        else if (value.dataSource === 'isolated-fixture' && value.confirmationRequired) this.showWarning(value, gen, binding);
         else this.review();
       },
       error: e => { if (this.active(gen)) this.handleError(e); },
@@ -214,13 +280,16 @@ export class StationArrivalPage {
   private review() {
     this.reviewOffered.set(true); this.state.set('review');
     this.message.set('יש לסקור ולאשר את כל הפעולה. עד כה לא נרשמה הגעה.');
+    if (this.lateMode) this.focusAfterRender('#station-review-title');
   }
-  private showWarning(v: StationArrivalValidationV1, gen: number, binding: string) {
+  private showWarning(v: StationArrivalValidationV1 | NativeLateStationValidationV1, gen: number, binding: string) {
     this.state.set('warning');
     const opener = this.host.nativeElement.querySelector<HTMLElement>('#station-validate');
     const ref = this.dialog.open<StationArrivalDialog, StationArrivalDialogData, boolean>(StationArrivalDialog, {
-      data: { kind: 'fixture-warning', name: this.selection()!.name, planned: this.context()!.planned.startLocal,
-        reason: this.reasonLabel(), validation: structuredClone(v) },
+      data: v.dataSource === 'oracle-test' ? { kind: 'native-late-warning', selection: this.selection()!,
+        reason: this.reasonLabel(), reasonCode: this.reason.value!, context: this.context()!, validation: structuredClone(v) } :
+        { kind: 'fixture-warning', name: this.selection()!.name, planned: this.context()!.planned.startLocal,
+          reason: this.reasonLabel(), validation: structuredClone(v) },
       direction: 'rtl', width: '560px', maxWidth: 'calc(100vw - 24px)', maxHeight: 'calc(100dvh - 24px)',
       panelClass: 'shf-arrival-dialog', restoreFocus: false, autoFocus: '#station-warning-cancel',
       enterAnimationDuration: 0, exitAnimationDuration: 0, ariaLabel: 'אזהרת איחור לעמדה — ללא רישום',
@@ -235,12 +304,13 @@ export class StationArrivalPage {
       } else if (accepted !== true || !instance.confirmed || !instance.accepted.value) {
         this.invalidate(); this.state.set('ready'); this.message.set('האזהרה בוטלה. לא נשלחה פקודה.');
       } else if (!this.expired()) { this.acknowledged = binding; this.review(); }
-      this.restoreOpener(opener);
+      if (this.state() !== 'review') this.restoreOpener(opener);
     });
   }
   private expired() {
     if (this.validation() && performance.now() < this.deadline) return false;
     this.invalidate(); this.state.set('expired'); this.message.set('תוקף הבדיקה פג. יש לבדוק ולסקור מחדש. לא נשלחה פקודה.');
+    if (this.lateMode) this.focusAfterRender('#station-validate');
     return true;
   }
   confirm() {
@@ -256,7 +326,10 @@ export class StationArrivalPage {
     const base = {
       validationToken: v.validationToken, fingerprint: v.fingerprint,
     };
-    const command: StationCommand = this.nativeMode() ? {
+    const command: StationCommand = this.lateMode && this.reason.value !== null ? {
+      ...base, commandId: crypto.randomUUID(), draft: { lateReasonCode: this.reason.value, lateRemark: null },
+      confirmation: { accepted: true, warningCodes: ['STATION_ARRIVAL_LATE'] }, operationConfirmation: { accepted: true },
+    } : this.nativeMode() ? {
       ...base, commandId: crypto.randomUUID(), draft: { lateReasonCode: null }, confirmation: null,
       operationConfirmation: { accepted: true },
     } : {
@@ -269,11 +342,16 @@ export class StationArrivalPage {
     this.state.set('committing'); this.message.set(this.nativeMode() ?
       'פקודת כתיבה למסד TEST נשלחה. אין לשלוח שוב. עזיבה אינה ביטול.' : 'פקודת סימולציה נשלחה. אין לשלוח שוב. עזיבה אינה ביטול.');
     this.keepConfirmVisible();
-    this.work = this.api.stationArrivalCommand(s.employeeId, s.shiftDayId, command).subscribe({
+    const request = lateCommand(command) ? this.api.stationArrivalLateCommand(s.employeeId, s.shiftDayId, command) :
+      this.api.stationArrivalCommand(s.employeeId, s.shiftDayId, command);
+    this.work = request.subscribe({
       next: value => {
         if (!this.active(gen) || this.state() !== 'committing') return;
         if (binding !== this.binding() || !this.sameSelection(s) || this.prepared !== JSON.stringify(this.validation()) ||
-          !stationReceipt(value, c, command, v) || !this.session.resolve(s, command.commandId)) { this.unknown(); return; }
+          !(this.lateMode ? lateContext(c, s) && lateValidation(v, c) && lateCommand(command) && lateReceipt(value, c, command, v) :
+            stationContext(c, s) && stationValidation(v, c) && !lateCommand(command) && stationReceipt(value, c, command, v)) ||
+          (!lateReceiptForContext(value, c, command, v, s) && !ordinaryReceiptForContext(value, c, command, v, s)) ||
+          !this.session.resolve(s, command.commandId)) { this.unknown(); return; }
         this.receipt.set(structuredClone(value)); this.validation.set(null); this.state.set('success');
         this.message.set(this.nativeMode() ?
           'השרת אישר COMMIT ובדיקה חוזרת תואמת של הגעה לעמדה במסד TEST. שינוי בדיקה אמיתי, לא סימולציה; שותף חיצוני לא הופעל.' :
@@ -283,7 +361,8 @@ export class StationArrivalPage {
       error: e => {
         if (!this.active(gen) || this.state() !== 'committing') return;
         if (binding !== this.binding() || !this.sameSelection(s) || !(e instanceof HttpErrorResponse) ||
-          !this.problemMedia(e) || !stationProblem(e.error, e.status, command.commandId, s.dataSource) ||
+          !this.problemMedia(e) || !(this.lateMode ? lateProblem(e.error, e.status, command.commandId) : stationProblem(e.error, e.status, command.commandId, s.dataSource)) ||
+          !lateProblem(e.error, e.status, command.commandId) && !stationProblem(e.error, e.status, command.commandId, s.dataSource) ||
           e.error.effect === 'unknown' || ['COMMAND_IN_PROGRESS', 'COMMAND_ID_CONFLICT'].includes(e.error.code) ||
           !this.session.resolve(s, command.commandId, false)) { this.unknown(); return; }
         this.handleError(e, command.commandId);
@@ -293,13 +372,22 @@ export class StationArrivalPage {
   }
   private showOperation(s: ArrivalSelection, c: StationContext, v: StationValidation) {
     if (this.operation) return;
-    if (c.dataSource !== 'oracle-test' || v.dataSource !== 'oracle-test') {
+    if (c.dataSource !== 'oracle-test' || v.dataSource !== 'oracle-test' ||
+      !(this.lateMode ? lateContext(c, s) && lateValidation(v, c) : stationContext(c, s) && stationValidation(v, c))) {
       this.invalidate(); this.fail('מקור הבדיקה השתנה. נדרשת בדיקה חדשה.'); return;
     }
     const gen = this.generation, binding = this.bound;
     const opener = this.host.nativeElement.querySelector<HTMLElement>('#station-confirm');
+    let data: StationArrivalDialogData;
+    if (this.lateMode && lateContext(c, s) && lateValidation(v, c)) data = {
+      kind: 'native-late-confirmation', selection: structuredClone(s), context: structuredClone(c),
+      reason: this.reasonLabel(), reasonCode: this.reason.value!, validation: structuredClone(v),
+    };
+    else if (stationContext(c, s) && stationValidation(v, c) && c.dataSource === 'oracle-test' && v.dataSource === 'oracle-test')
+      data = { kind: 'native-confirmation', selection: structuredClone(s), context: structuredClone(c), validation: structuredClone(v) };
+    else return;
     const ref = this.dialog.open<StationArrivalDialog, StationArrivalDialogData, boolean>(StationArrivalDialog, {
-      data: { kind: 'native-confirmation', selection: structuredClone(s), context: structuredClone(c), validation: structuredClone(v) },
+      data,
       direction: 'rtl', width: '560px', maxWidth: 'calc(100vw - 24px)', maxHeight: 'calc(100dvh - 24px)',
       panelClass: 'shf-arrival-dialog', restoreFocus: false, autoFocus: '#native-station-operation-cancel',
       enterAnimationDuration: 0, exitAnimationDuration: 0, ariaLabel: 'אישור רישום הגעה לעמדה במסד TEST',
@@ -324,12 +412,14 @@ export class StationArrivalPage {
   }
   private handleError(e: unknown, commandId: string | null = null) {
     this.invalidate();
-    if (e instanceof HttpErrorResponse && this.problemMedia(e) && stationProblem(e.error, e.status, commandId,
-      this.selection()?.dataSource ?? 'isolated-fixture')) {
-      this.message.set(`${e.error.code} — ${e.error.effect === 'rolled-back' ? 'השרת אישר ביטול מלא' : 'השרת דחה לפני שינוי'}. אין ניסיון חוזר אוטומטי.`);
+    if (e instanceof HttpErrorResponse && this.problemMedia(e) &&
+      (this.lateMode ? lateProblem(e.error, e.status, commandId) :
+        stationProblem(e.error, e.status, commandId, this.selection()?.dataSource ?? 'isolated-fixture')) &&
+      (lateProblem(e.error, e.status, commandId) || stationProblem(e.error, e.status, commandId, this.selection()?.dataSource ?? 'isolated-fixture'))) {
+      this.message.set(`${e.error.code} · מזהה בקשה ${e.error.requestId} — ${e.error.effect === 'rolled-back' ? 'השרת אישר ביטול מלא של השינויים הרגילים; אין הסקה לגבי השפעות צופים לא ידועות' : 'השרת דחה לפני שינוי'}. אין ניסיון חוזר אוטומטי.`);
       this.state.set('error'); this.halted.set(e.error.nextAction === 'stop' || e.error.nextAction === 'prepare-again');
       if (e.error.nextAction === 'prepare-again') this.context.set(null); // Fresh context required, not old F1/F2 prep.
-      if (e.status === 422 && !this.nativeMode()) {
+      if (e.status === 422 && (!this.nativeMode() || this.lateMode)) {
         this.reason.enable({ emitEvent: false }); this.reason.setErrors({ server: true });
         this.reason.markAsTouched(); this.focusAfterRender('#station-reason');
       }
@@ -379,7 +469,10 @@ export class StationArrivalPage {
     void this.router.navigate(['/employees', s.employeeId, 'shift-days', s.shiftDayId, 'stage-arrival']);
   }
   cancel() {
-    if (this.state() === 'committing') return;
+    if (this.state() === 'committing') {
+      if (!this.lateMode) return;
+      this.unknown();
+    }
     this.invalidate(); this.journey.back('/attendance');
   }
 }

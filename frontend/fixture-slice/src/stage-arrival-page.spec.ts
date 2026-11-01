@@ -43,6 +43,7 @@ describe('F1 Angular / synthetic HTTP only', () => {
     r.flush(arrivalValidationFixture(late), wire); render(); noCommand();
   }
   beforeEach(async () => {
+    sessionStorage.removeItem('shfNativeCommandSafety');
     sessionStorage.removeItem('shfStageArrivalSafety'); sessionStorage.removeItem('shfStationArrivalSafety');
     history.replaceState({}, '');
     TestBed.configureTestingModule({ providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()] });
@@ -50,7 +51,7 @@ describe('F1 Angular / synthetic HTTP only', () => {
     harness = await RouterTestingHarness.create();
   });
   afterEach(() => { TestBed.inject(MatDialog).closeAll(); http.verify({ ignoreCancelled: true }); vi.restoreAllMocks(); history.replaceState({}, '');
-    sessionStorage.removeItem('shfStageArrivalSafety'); sessionStorage.removeItem('shfStationArrivalSafety'); });
+    sessionStorage.removeItem('shfStageArrivalSafety'); sessionStorage.removeItem('shfStationArrivalSafety'); sessionStorage.removeItem('shfNativeCommandSafety'); });
   it('direct route is safe chooser: no arbitrary employee request or command form', async () => {
     await start(false); expect(page.state()).toBe('chooser'); noCommand(); http.expectNone(base + '/context');
     expect(harness.routeNativeElement!.querySelector('#arrival-validate')).toBeNull();

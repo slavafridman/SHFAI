@@ -12,10 +12,30 @@ import type { StationArrivalDraftV1, StationArrivalCommitV1 } from '../../../bac
 import type { NativeStationArrivalCommitV1 } from '../../../backend/fixture-slice/oracle-station-arrival-contracts.mts';
 import { environment } from './environments/environment';
 import { emptyExitDraft, exitCommand, type StationExitCommitV1 } from './station-exit-contract';
+import { lateDraft, lateCommand, type NativeLateStationDraftV1, type NativeLateStationCommitV1 } from './station-arrival-late-contract';
 
 @Injectable({ providedIn: 'root' })
 export class SliceApi {
   private readonly http = inject(HttpClient);
+  stationArrivalLateContext(employeeId: string, shiftDayId: string) {
+    return this.http.get<unknown>(this.lateBase(employeeId, shiftDayId) + '/context',
+      { cache: 'no-store', timeout: 5000, observe: 'response' }).pipe(map(r => this.arrivalBody(r, 1048576)));
+  }
+  stationArrivalLateValidate(employeeId: string, shiftDayId: string, draft: NativeLateStationDraftV1) {
+    if (!lateDraft(draft)) throw Error('Invalid late draft');
+    return this.http.post<unknown>(this.lateBase(employeeId, shiftDayId) + '/validations', draft,
+      { cache: 'no-store', timeout: 5000, observe: 'response', headers: { 'Content-Type': 'application/json' } })
+      .pipe(map(r => this.arrivalBody(r, 16384)));
+  }
+  stationArrivalLateCommand(employeeId: string, shiftDayId: string, command: NativeLateStationCommitV1) {
+    if (!lateCommand(command)) throw Error('Invalid late command');
+    return this.http.post<unknown>(this.lateBase(employeeId, shiftDayId) + '/commands', command,
+      { cache: 'no-store', timeout: 5000, observe: 'response', headers: { 'Content-Type': 'application/json' } })
+      .pipe(map(r => this.arrivalBody(r, 16384)));
+  }
+  private lateBase(employeeId: string, shiftDayId: string) {
+    return `${environment.apiBasePath}/v1/employees/${employeeId}/shift-days/${shiftDayId}/station-arrival-late`;
+  }
   stationExitContext(employeeId: string, shiftDayId: string) {
     return this.http.get<unknown>(this.exitBase(employeeId, shiftDayId) + '/context',
       { cache: 'no-store', timeout: 5000, observe: 'response' }).pipe(map(r => this.arrivalBody(r, 65536)));

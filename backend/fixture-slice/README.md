@@ -2815,3 +2815,160 @@ npm test
 Tests use independently supplied synthetic source and alphanumeric identifier
 observations. They do not prove current operational source/ownership/readiness.
 Parent/operator retains actual packet admission and all operational GO gates.
+
+## §50-v0.1 native late station arrival and shared coordinator
+
+Implementation baseline: approved §§50.1–50.9 / Q50-A01, 1 November 2026.
+This is backend implementation and isolated verification, **not live Oracle,
+DNS, partner transport, operational provisioning or release approval**.
+Existing read/fixture profiles, old ordered capabilities, old metadata
+certificates and independent operation allowances remain separate.
+
+### Mandatory additional native admission
+
+Every native F1, ordinary F2, late F2, exit and §49 writer now requires
+`SHF_NATIVE_COMMAND_COORDINATOR_CONFIG` containing **exactly**
+`{"directory":"<operator-provisioned canonical local absolute directory>","targetScope":"<fixed target scope>"}`.
+No default, automatic directory creation, new UUID scope, reseed, reset,
+release or retry exists. Missing or invalid configuration/manifest/existing
+employee guard denies before pools and listening, including profileless
+attendance startup and direct native management startup. The operator must
+exclude uncoordinated/legacy writers and other hosts.
+
+The existing external directory contains:
+
+* `namespace.json`: exact canonical `NativeCommandCoordinatorNamespaceV1`;
+* `employee-<key>.json`: existing exact `NativeCommandCoordinatorGuardV1`;
+* `employee-<key>.attempted`: exclusively created **only on command admission**.
+
+`key` is lowercase SHA-256 of UTF-8
+`JSON.stringify(["shf-native-command-coordinator-v1",targetScope,employeeId])`.
+Day, operation, profile, actor and process are deliberately absent from that
+key. Namespace database/schema must match the frozen writer target. Paths,
+ancestors, regular-file/link counts, inode identity, contents and bounded
+reads are checked. Exclusive marker write+fsync precedes rewriting+fsync of
+the existing guard inode; both precede the old independent operation allowance
+and business mutation. Every native mutation/COMMIT requires the opaque
+process-owned, operation/command-bound handle and synchronous final checks.
+
+Keep **both records forever after every attempt**, including successful
+readback, proved ordinary rollback and UNKNOWN. Partial IO can consume
+admission with zero business effects. Observed owned-record loss/replacement
+quarantines the instance; reintroducing the record does not revive its handle.
+Fsync/inode checks are **not distributed or power-loss exactly-once proof**.
+Simultaneous loss/ready restoration of both records, or trusted configuration
+replacement, can be undetectable. Suspected storage loss requires stopping
+all writers and operator reconciliation. Coding approval does not authorize
+reprovisioning or reopening any global/old operation fence.
+
+### Dedicated late API and configuration
+
+Default off: `attendanceStationArrivalLateMode` is omitted/`"disabled"`, or
+explicitly `"test-oracle-controlled"` in an exclusive isolated TEST,
+synthetic-Administrator, Oracle-inquiry configuration. F1, ordinary F2, exit,
+§49 and fixtures cannot be enabled alongside it. Production mock startup
+remains forbidden; authentication/configuration errors never fall back.
+The exact ordered grants are R7 followed by:
+
+* `attendance-station-arrival-late:prepare`
+* `attendance-station-arrival-late:commit`
+* `attendance-station-arrival-late:test-oracle-write`
+
+Private writer inputs use `SHF_TEST_ORACLE_STATION_LATE_WRITE_ENABLED=true`,
+`SHF_NATIVE_LATE_BINDING`, and `SHF_NATIVE_LATE_{CONNECT_STRING,USER,PASSWORD,CLIENT_LIB_DIR}`.
+Use explicit `SHF_STATION_ARRIVAL_LATE_ORIGINS` loopback origins, independent
+read-account configuration and the shared coordinator above. No credentials
+are inherited, embedded or published by an example. The late binding uses
+`operation:"native-station-arrival-late-v0.1"`, `lateMetadataDigest`, and an
+independent `station-arrival-late-...` allowance. A separately reviewed late
+metadata certificate covers the reason catalog and preservation columns.
+Limited metadata retains **only** the existing two explicitly waived UNKNOWN
+scopes and requires its existing TEST opt-in/waiver, with a new late certificate.
+
+Base:
+`/api/v1/employees/{employeeId}/shift-days/{shiftDayId}/station-arrival-late`
+
+* `GET /context`: bounded pure inquiry, advisory eligibility, no token.
+* `POST /validations`: exactly `{lateReasonCode:"<decimal ID>",lateRemark:null}`.
+  Returns the required late warning singleton and derived minutes.
+* `POST /commands`: exact canonical late command, including both the singleton
+  warning consent and `operationConfirmation:{accepted:true}`.
+
+No submitted time/minutes, free remark, correction, reset, status/replay or
+ordinary-F2 fallback. Fresh backend systemClock classifies the full instant:
+same business date and `start < now <= end`; minutes are nonnegative floor,
+including subminute `"0"`. Both plan endpoints must be on that date and uniquely
+resolvable. Transition-crossing plans defer even with unique endpoints/current
+time: civil duration and endpoint offsets plus bounded intermediate offset
+checks follow the existing shift-management timing prior art.
+Preparation expires at the earliest of 120 seconds,
+next late-minute boundary, end+1ms and the frozen operational window.
+Expiration/change invalidates both consents.
+
+Selected reasons require unique safe labels, exact type2 and flags0/0.
+Unsupported/unknown catalog or contextual obligation fields defer rather
+than infer optional remark/report/mood/partner behavior. The obligation port
+is pure local assessment of the approved source subset; only not-required
+with no effects admits. No EMS transport/completion is implemented.
+
+The command locks/rechecks the existing row, originals, complete bounded
+candidates, dependencies and catalog; parameterized SQL has exactly five SET
+columns: station time/user and physical `LATE_REASON_ID`, `LATE_MINUTES`,
+`LATE_REMARK=NULL`. It preserves stage/briefing, all other attendance values,
+schedule dates/counters/source and captured dependencies. No INSERT, upsert,
+NEXTVAL, legacy helper or compensating business write. COMMIT ACK alone is
+insufficient: writer release precedes an independent identity-checked READ
+ONLY full-preservation readback. Receipts are volatile, nonreplayed and mark
+partner not-invoked. Unproved ACK/readback/rollback/attempted outcome is
+UNKNOWN/reconcile, never automatic retry.
+
+Explicit AbortSignal plus the existing ALS budget cover the whole operation
+(5000ms, not a fresh transaction/readback budget). BREAK and underlying work
+must drain before lease/pool release; HTTP shutdown preserves that ownership.
+
+### Isolated checks / UI seam
+
+```powershell
+npm run typecheck
+node --test test/oracle-station-arrival-late-contracts.test.mts test/native-command-coordinator-contracts.test.mts test/oracle-station-arrival-contracts.test.mts test/station-arrival-contracts.test.mts test/station-exit-contracts.test.mts test/shift-management-contracts.test.mts
+node --test test/native-command-coordinator.test.mts test/native-command-coordinator-startup.test.mts test/oracle-station-arrival-late-domain.test.mts test/oracle-station-arrival-late.test.mts test/oracle-station-arrival-late-metadata.test.mts test/native-station-arrival-late-http.test.mts
+npm test
+```
+
+Tests provision **synthetic TEMP namespaces only** and use isolated Oracle
+protocol doubles, actual application/UoW/HTTP factories and controlled clocks;
+native startup still uses actual systemClock. No live checks were run.
+The dedicated canonical late API is the UI integration seam; UI implementation,
+independent QA and operator/DBA evidence remain their respective owners' work.
+
+### QA50-B01 / QA50-Q02 correction — 1 November 2026
+
+The New York `2026-03-08T00:30:00`–`04:00:00` plan at backend instant
+`2026-03-08T07:30:00.000Z` now returns deferred context with
+`withinArrivalWindow:false`; validation rejects with `COMMAND_SCOPE_DEFERRED`.
+The actual application regression issues no command and proves unchanged
+synthetic coordinator records, no operation allowance, no business DML and
+unchanged rows. Domain checks retain strict +1ms/subminute0/59999ms/60000ms,
+inclusive end/minute expiry, same-date stop, gap/fold rejection and normal
+nontransition-day behavior.
+
+The two coordinator scenarios formerly registered inside each child-helper
+invocation are top-level tests, each registered once. All six coordinator
+business scenarios and the seven child invocations are retained.
+
+Current offline counts (no skips or budget changes):
+
+* Three-file timing/application/coordinator focused command: **24/24**.
+* Six-file isolated command above: **35/35**, including **6** coordinator tests.
+* Retained independent synthetic QA artifact: focused I50-16/I50-17 **2/2**,
+  complete matrix **54/54**.
+* `npm run typecheck`: PASS; `npm test`: **1863/1863**, zero failures/skips.
+  The prior reported full total1872 contained12 duplicate registrations;
+  corrected total is1872−12+3 new regression cases=1863. Do not reuse the
+  duplicate-inflated focused58 count as a unique-case count.
+* Existing 100-row isolated application case passed in the single natural
+  full run, without retries, concurrency overrides or deadline increases.
+
+These are static/synthetic checks, not Oracle/partner/live or power-loss
+guarantees. Canonical `50-v0.1` contracts, old native capabilities, proofs,
+digests, F1 fuse and read-only behavior were not changed by this correction.

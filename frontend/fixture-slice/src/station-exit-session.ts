@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { uuid, type ArrivalSelection } from './stage-arrival-contract';
+import { NativeCommandSession } from './native-command-session';
 
 /** Separate exit namespace. Only opaque attempts survive reload; no token,
  * tuple, identity, draft, receipt or authority is restored. Unknown bindings
@@ -12,7 +13,7 @@ export class StationExitSession {
   private readonly settled = new Set<string>();
   private readonly terminals = new Set<string>();
   private readonly slot = 'shfNativeStationExitSafety';
-  constructor() {
+  constructor(private readonly global: NativeCommandSession = new NativeCommandSession()) {
     this.merge(history.state);
     try {
       const raw = sessionStorage.getItem(this.slot);
@@ -42,18 +43,19 @@ export class StationExitSession {
   }
   uncertain() { return this.unresolved.size > 0; }
   affectsEmployee(employeeId: string | null) {
-    return [...this.unresolved].some(attempt => {
+    return this.global.affectsEmployee(employeeId) || [...this.unresolved].some(attempt => {
       const raw = this.bindings.get(attempt);
       return !raw || !employeeId || (JSON.parse(raw) as string[])[0] === employeeId;
     });
   }
   affects(s: ArrivalSelection | null) {
-    return [...this.unresolved].some(attempt => !s || !this.bindings.has(attempt) || this.bindings.get(attempt) === this.key(s));
+    return this.global.affectsEmployee(s?.employeeId ?? null) || [...this.unresolved].some(attempt => !s || !this.bindings.has(attempt) || this.bindings.get(attempt) === this.key(s));
   }
   recorded(s: ArrivalSelection) { return this.terminals.has(this.key(s)); }
   blocked(s: ArrivalSelection | null) { return this.affects(s) || !!s && this.recorded(s); }
   begin(s: ArrivalSelection, attempt: string) {
     if (s.dataSource !== 'oracle-test' || !uuid(attempt) || this.blocked(s) || this.settled.has(attempt)) return false;
+    if (!this.global.begin(s.employeeId, attempt)) { this.unresolved.add(attempt); return false; }
     this.unresolved.add(attempt); this.bindings.set(attempt, this.key(s));
     try { this.persist(); return true; } catch { return false; } // no dispatch, conservative marker
   }
@@ -69,6 +71,7 @@ export class StationExitSession {
     try {
       this.persist(); this.settled.add(attempt);
       if (committed) this.terminals.add(this.key(s));
+      if (!this.global.resolve(s.employeeId, attempt)) return false;
       return true;
     } catch {
       this.unresolved.add(attempt);

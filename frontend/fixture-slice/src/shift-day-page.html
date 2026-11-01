@@ -61,6 +61,11 @@
         <a id="detail-items" class="row-link" [href]="'/employees/' + data.employeeId + '/shift-days/' + data.shiftDayId + '/breaks-and-exceptions'"
           (click)="openItems($event)">הפסקות וחריגות חלקיות</a>
       }
+      @if (canOpenLate()) {
+        <a id="detail-station-late" class="row-link"
+          [routerLink]="['/employees', data.employeeId, 'shift-days', data.shiftDayId, 'station-arrival-late']"
+          (click)="openLate($event)">הגעה לעמדה באיחור — TEST</a>
+      }
       <article class="surface detail-card" aria-labelledby="result-heading">
         <div class="employee-strip">
           <span class="avatar" aria-hidden="true">ש</span>

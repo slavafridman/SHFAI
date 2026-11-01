@@ -62,7 +62,7 @@ export function validateEnvironmentProfile(value: unknown, env: NodeJS.ProcessEn
   }
   if (profile === "dev" && (value.dataSource !== "isolated-fixture" ||
       value.attendanceStageArrivalMode === "test-oracle-controlled" || value.attendanceStationArrivalMode === "test-oracle-controlled" ||
-      value.attendanceStationExitMode === "test-oracle-controlled"))
+      value.attendanceStationExitMode === "test-oracle-controlled" || value.attendanceStationArrivalLateMode === "test-oracle-controlled"))
     throw Error("DEV requires isolated fixtures; native TEST is forbidden");
 }
 

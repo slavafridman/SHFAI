@@ -62,9 +62,8 @@ for (const kind of ["create", "change", "cancel", "csv-create"] as const) {
       assert.equal(f.stats.commits, 1); assert.equal(f.stats.active, 0);
       assert.ok(f.events.indexOf("read-acquire", f.events.indexOf("commit")) > f.events.indexOf("writer-close", f.events.indexOf("commit")));
       assert.ok(Array.isArray(receipt.effects) && record(receipt.effects[0]) && record(receipt.effects[0].after));
-      const selectedContext = await object(await fetch(url + path + `/shift-days/${receipt.effects[0].after.shiftDayId}/context`));
-      if (kind === "cancel") assert.equal(selectedContext.eligibility, "already-cancelled");
-      else assert.ok(record(selectedContext.selected));
+      const selectedContext = await object(await fetch(url + path + `/shift-days/${receipt.effects[0].after.shiftDayId}/context`), 403);
+      assert.equal(selectedContext.code, "LIVE_WRITES_DISABLED"); assert.equal(selectedContext.effect, "none");
     } finally { if (server) await stopBackendServer(server); f.close(); }
   });
 }
@@ -81,10 +80,10 @@ for (const fault of ["commitAck", "readbackIdentity", "readbackMismatch"] as con
       assert.equal(problem.code, "COMMAND_OUTCOME_UNKNOWN"); assert.equal(problem.effect, "unknown");
       assert.equal(f.stats.commits, 1);
       assert.equal((await object(await fetch(url + path + "/preparations", { method: "POST",
-        headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ draft: f.draft }) }), 409)).code,
-      "COMMAND_SCOPE_DEFERRED");
+        headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ draft: f.draft }) }), 403)).code,
+      "LIVE_WRITES_DISABLED");
       await stopBackendServer(server); server = undefined; f.faults[fault] = false;
-      await assert.rejects(startFromEnvironment(f.env, undefined, f.factories), { code: "COMMAND_SCOPE_DEFERRED" });
+      await assert.rejects(startFromEnvironment(f.env, undefined, f.factories), { code: "LIVE_WRITES_DISABLED" });
       assert.equal(f.stats.commits, 1);
     } finally { if (server) await stopBackendServer(server); f.close(); }
   });
@@ -115,7 +114,7 @@ test("native CSV full9 mismatch is returned before any prefix/day mapping; previ
     assert.equal(preview.state, "invalid"); assert.equal(preview.previewToken, null);
     assert.equal(f.sqlCalls.filter(sql => sql.includes("shf49:prefix")).length, prefixes);
     assert.equal(f.stats.commits, 0); assert.equal(f.stats.sequence, 0); assert.equal(f.stats.locks, 0);
-    assert.deepEqual(readdirSync(f.directory), ["namespace.json"]);
+    assert.deepEqual(readdirSync(f.directory), ["global-coordinator", "namespace.json"]);
   } finally { if (server) await stopBackendServer(server); f.close(); }
 });
 test("native unknown partner decision is a hard defer, never constructor-supplied not-required", async () => {
@@ -130,7 +129,7 @@ test("native unknown partner decision is a hard defer, never constructor-supplie
     const rejected = await object(await fetch(url + path + "/preparations", { method: "POST",
       headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ draft: f.draft }) }), 422);
     assert.equal(rejected.code, "BUSINESS_VALIDATION_FAILED");
-    assert.equal(f.stats.sequence, 0); assert.equal(f.stats.locks, 0); assert.deepEqual(readdirSync(f.directory), ["namespace.json"]);
+    assert.equal(f.stats.sequence, 0); assert.equal(f.stats.locks, 0); assert.deepEqual(readdirSync(f.directory), ["global-coordinator", "namespace.json"]);
   } finally { if (server) await stopBackendServer(server); f.close(); }
 });
 test("invalid native flag/auth/cert/scope/origin/endpoint inputs fail before pool or authority consumption", async () => {
@@ -147,7 +146,7 @@ test("invalid native flag/auth/cert/scope/origin/endpoint inputs fail before poo
     for (const patch of changes) await assert.rejects(startFromEnvironment({ ...f.env, ...patch }, undefined, f.factories));
     await assert.rejects(startFromEnvironment(f.env, undefined, { ...f.factories, resolveEndpoint: async () => ["127.0.0.2"] }));
     assert.equal(f.stats.readPools, 0); assert.equal(f.stats.nativePools, 0); assert.equal(f.stats.commits, 0);
-    assert.deepEqual(readdirSync(f.directory), ["namespace.json"]);
+    assert.deepEqual(readdirSync(f.directory), ["global-coordinator", "namespace.json"]);
   } finally { f.close(); }
 });
 test("failed actual metadata observation closes both pools without listening or consuming authority", async () => {
@@ -156,7 +155,7 @@ test("failed actual metadata observation closes both pools without listening or 
     f.faults.metadata = true;
     await assert.rejects(startFromEnvironment(f.env, undefined, f.factories));
     assert.equal(f.stats.poolCloses, 2); assert.equal(f.stats.commits, 0); assert.equal(f.stats.sequence, 0);
-    assert.deepEqual(readdirSync(f.directory), ["namespace.json"]);
+    assert.deepEqual(readdirSync(f.directory), ["global-coordinator", "namespace.json"]);
   } finally { f.close(); }
 });
 const deferred = () => { let resolve: () => void = () => {};

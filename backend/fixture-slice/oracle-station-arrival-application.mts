@@ -36,6 +36,7 @@ export class OracleStationArrivalApplication {
     this.identityReference = stationIdentityReference(this.binding);
     if (uow.identityReference !== this.identityReference || uow.businessTimeZone !== zone)
       throw Error("Station identity reference/zone mismatch");
+    uow.coordinator.assertAvailableSync(this.binding.employeeId);
     this.grants = [...grants]; this.allowance = new NativeAllowance(this.binding);
     if (!grants.includes(this.binding.orgUnitId)) throw Error("Station exact grant required");
     this.allowance.assertUnused();
@@ -61,11 +62,13 @@ export class OracleStationArrivalApplication {
   }
   async assertReady(signal?: AbortSignal) {
     checkStageBudget(signal);
+    await this.uow.coordinator.assertAvailable(this.binding.employeeId, signal);
     const f = await this.uow.read(signal), now = this.clock.now();
     this.window(now); this.eligible(f, stationOnTime(f, now, this.zone).local); checkStageBudget(signal);
   }
   async context(p: unknown, target: unknown, signal?: AbortSignal): Promise<NativeStationArrivalContextV1> {
     const { s } = this.admit(p, target); checkStageBudget(signal);
+    await this.uow.coordinator.assertAvailable(s.employeeId, signal);
     const f = await this.uow.read(signal), now = this.clock.now(); this.window(now);
     const c = stationOnTime(f, now, this.zone); checkStageBudget(signal);
     const a = f.rows.SHF_ATTENDANCE;
@@ -82,6 +85,7 @@ export class OracleStationArrivalApplication {
   }
   async validate(p: unknown, target: unknown, input: unknown, signal?: AbortSignal): Promise<NativeStationArrivalValidationV1> {
     const { p: principal, s } = this.admit(p, target); nativeStationDraft(input); checkStageBudget(signal);
+    await this.uow.coordinator.assertAvailable(s.employeeId, signal);
     this.allowance.assertUnused();
     const snapshot = await this.uow.read(signal), now = this.clock.now(); this.window(now);
     const c = stationOnTime(snapshot, now, this.zone); this.eligible(snapshot, c.local); checkStageBudget(signal);
@@ -110,6 +114,8 @@ export class OracleStationArrivalApplication {
     this.window(now);
     checkStageBudget(signal);
     this.tokens.delete(cmd.validationToken);
+    const globalAdmission = await this.uow.coordinator.consume({ employeeId: s.employeeId,
+      operation: "station-arrival", commandId: cmd.commandId }, signal);
     this.allowance.consume(); // Separate operation-bound single-attempt fuse, before acquisition.
     const result = await this.uow.execute(prep.snapshot, current => {
       this.admit(principal, s, true); checkStageBudget(signal);
@@ -121,7 +127,7 @@ export class OracleStationArrivalApplication {
       const actor = principal.subject;
       if (actor !== "synthetic:administrator" || Buffer.byteLength(actor) > 100) stageFail("FORBIDDEN");
       checkStageBudget(signal); return { local: c.local, actor };
-    }, signal);
+    }, globalAdmission, signal);
     this.knownCommitted = true;
     try { checkStageBudget(signal); } catch { stageFail("COMMAND_OUTCOME_UNKNOWN"); }
     const before = prep.snapshot.rows.SHF_ATTENDANCE;

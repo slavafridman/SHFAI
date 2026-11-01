@@ -12,6 +12,8 @@ import { checkStageBudget } from "./stage-arrival-memory.mts";
 import { record } from "./contract-validation.mts";
 import { StageArrivalError, stageFail } from "./stage-arrival-errors.mts";
 import { same } from "./stage-arrival-domain.mts";
+import { NativeCommandCoordinator } from "./native-command-coordinator.mts";
+import type { NativeCommandAdmissionV1 } from "./native-command-coordinator-contracts.mts";
 
 function mapped(e: unknown): StageArrivalError {
   if (e instanceof StageArrivalError) return e;
@@ -29,6 +31,7 @@ type Transaction = {
 // Dedicated exit writer; never upgrades the read-only session, runs arrival
 // command rules, or treats a hash/row lock as an operational writer freeze.
 export class OracleStationExitUow {
+  readonly coordinator: NativeCommandCoordinator;
   readonly dataSource = "oracle-test";
   private readonly pool: NativePool;
   private readonly reads: OracleReadSession;
@@ -37,11 +40,15 @@ export class OracleStationExitUow {
   private schema?: NativeSchema;
   get identityReference() { return exitIdentityReference(this.binding); }
   get businessTimeZone() { return this.zone; }
-  constructor(pool: NativePool, reads: OracleReadSession, binding: ExitBinding, zone: string) {
+  constructor(pool: NativePool, reads: OracleReadSession, binding: ExitBinding, zone: string,
+    coordinator: NativeCommandCoordinator) {
+    if (!(coordinator instanceof NativeCommandCoordinator)) stageFail("LIVE_WRITES_DISABLED");
+    this.coordinator = coordinator;
     this.pool = pool; this.reads = reads; this.binding = exitBinding(binding); this.zone = zone;
     new Intl.DateTimeFormat("en", { timeZone: zone });
   }
   async initialize(signal?: AbortSignal) {
+    await this.coordinator.assertAvailable(this.binding.employeeId, signal);
     this.schema = await this.transaction(tx => exitSafety(tx.query, this.binding), signal);
   }
   async read(signal?: AbortSignal): Promise<ExitSnapshot> {
@@ -141,7 +148,9 @@ export class OracleStationExitUow {
     return result.value;
   }
   async execute(before: ExitSnapshot, decide: (current: ExitSnapshot) => { local: string; actor: string },
-    signal?: AbortSignal) {
+    globalAdmission: NativeCommandAdmissionV1, signal?: AbortSignal) {
+    const binding = this.coordinator.bindingFor(globalAdmission, this.binding.employeeId, "station-exit");
+    const mutationGuard = () => this.coordinator.assertMutationAllowed(globalAdmission, binding);
     const expectedSchema = this.schema;
     if (!expectedSchema) stageFail("LIVE_WRITES_DISABLED");
     const proposed = await this.transaction(async tx => {
@@ -161,10 +170,10 @@ export class OracleStationExitUow {
       if (!same(before, current)) stageFail("STALE_PREPARATION");
       const next = decide(current);
       const update = exitUpdate(schema, current, this.binding, next.local, next.actor);
-      const count = await tx.update(update.sql, update.binds, () => { decide(current); checkStageBudget(signal); });
+      const count = await tx.update(update.sql, update.binds, () => { decide(current); checkStageBudget(signal); mutationGuard(); });
       if (count === 0) stageFail("STALE_PREPARATION");
       if (count !== 1) stageFail("INVALID_SOURCE_DATA");
-      await tx.commit(() => { decide(current); checkStageBudget(signal); });
+      await tx.commit(() => { decide(current); checkStageBudget(signal); mutationGuard(); });
       return { ...next, acknowledged: new Date().toISOString() };
     }, signal);
     try {

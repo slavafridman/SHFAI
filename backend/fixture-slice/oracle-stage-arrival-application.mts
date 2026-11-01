@@ -65,6 +65,7 @@ export class OracleStageArrivalApplication {
     this.uow = uow; this.binding = nativeBinding(binding); this.clock = clock; this.zone = zone;
     this.identityReference = nativeIdentityBindingReference(this.binding);
     if (this.identityReference !== uow.identityReference) throw Error("Native identity reference mismatch");
+    uow.coordinator.assertAvailableSync(this.binding.employeeId);
     this.grants = [...grants]; this.allowance = new NativeAllowance(this.binding);
     if (!this.grants.includes(this.binding.orgUnitId)) throw Error("Native exact grant required");
     this.allowance.assertUnused();
@@ -89,12 +90,14 @@ export class OracleStageArrivalApplication {
   }
   async assertReady(signal?: AbortSignal) {
     checkStageBudget(signal);
+    await this.uow.coordinator.assertAvailable(this.binding.employeeId, signal);
     const snapshot = await this.uow.read(signal), now = this.clock.now();
     this.window(now); this.eligible(snapshot); nativeOnTime(snapshot, now, this.zone);
     checkStageBudget(signal);
   }
   async context(p: unknown, target: unknown, signal?: AbortSignal): Promise<NativeStageArrivalContextV1> {
     const { s } = this.admit(p, target);
+    await this.uow.coordinator.assertAvailable(s.employeeId, signal);
     checkStageBudget(signal);
     const f = await this.uow.read(signal), now = this.clock.now();
     this.window(now);
@@ -111,6 +114,7 @@ export class OracleStageArrivalApplication {
   }
   async validate(p: unknown, target: unknown, input: unknown, signal?: AbortSignal): Promise<NativeStageArrivalValidationV1> {
     const { p: principal, s } = this.admit(p, target); nativeDraft(input);
+    await this.uow.coordinator.assertAvailable(s.employeeId, signal);
     checkStageBudget(signal);
     this.allowance.assertUnused();
     const snapshot = await this.uow.read(signal), now = this.clock.now();
@@ -146,6 +150,8 @@ export class OracleStageArrivalApplication {
     this.tokens.delete(cmd.validationToken);
     // Consume BEFORE acquisition, including failed/UNKNOWN attempts. UUIDs,
     // process restarts and memory receipt lookups cannot reopen this allowance.
+    const globalAdmission = await this.uow.coordinator.consume({ employeeId: s.employeeId,
+      operation: "stage-arrival", commandId: cmd.commandId }, signal);
     this.allowance.consume();
     const result = await this.uow.execute(prep.snapshot, current => {
       this.admit(principal, s, true);
@@ -160,7 +166,7 @@ export class OracleStageArrivalApplication {
       if (actor !== "synthetic:administrator" || Buffer.byteLength(actor) > 100) stageFail("FORBIDDEN");
       checkStageBudget(signal);
       return { local: c.local, actor };
-    }, signal);
+    }, globalAdmission, signal);
     this.knownCommitted = true;
     try { checkStageBudget(signal); } catch { stageFail("COMMAND_OUTCOME_UNKNOWN"); }
     return { commandId: cmd.commandId, ...s, outcome: "oracle-test-committed", dataSource: "oracle-test",

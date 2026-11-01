@@ -119,7 +119,7 @@ export function nativeMetadataDigest(provider: NativeMetadataProvider, operation
   tables: readonly string[], proof: unknown): string {
   parseMetadataProvider(provider);
   if (provider === "owner-test-limited-v1") return limitedMetadataDigest(proof, operation, tables);
-  if (!["native-stage-arrival-v0.1", "native-station-arrival-v0.1"].includes(operation) ||
+  if (!["native-stage-arrival-v0.1", "native-station-arrival-v0.1", "native-station-arrival-late-v0.1"].includes(operation) ||
       !Array.isArray(proof) || proof.length !== 9 || proof.some(rows => !Array.isArray(rows)))
     stageFail("LIVE_WRITES_DISABLED");
   // Legacy DBA certificates remain byte-for-byte compatible. The explicit

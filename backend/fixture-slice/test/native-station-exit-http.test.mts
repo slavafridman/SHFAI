@@ -19,11 +19,13 @@ import { sampleStageArrivalConfig } from "../stage-arrival-sample.mts";
 import { exitProblem } from "../station-exit-errors.mts";
 import { StageArrivalError } from "../stage-arrival-errors.mts";
 import { setTimeout as sleep } from "node:timers/promises";
+import { syntheticCoordinatorEnvironment } from "./native-coordinator-provision.mts";
 
 const route = `/api/v1/employees/${exitSelection.employeeId}/shift-days/${exitSelection.shiftDayId}/station-exit`;
 const origin = "http://localhost:4521";
 function env(d: ExitOracleDouble): NodeJS.ProcessEnv {
   return { SHF_APP_ENV: "test", SHF_ORACLE_CONFIG: JSON.stringify(exitConfig), SHF_ORACLE_PORT: "0",
+    SHF_NATIVE_COMMAND_COORDINATOR_CONFIG: syntheticCoordinatorEnvironment(d.directory, d.binding),
     SHF_ORACLE_CONNECT_STRING: "CTIDBT_WFMT", SHF_ORACLE_USER: d.binding.readIdentity.user,
     SHF_ORACLE_PASSWORD: "synthetic-double-not-a-secret", SHF_ORACLE_CLIENT_LIB_DIR: "synthetic-unused",
     SHF_TEST_ORACLE_EXIT_WRITE_ENABLED: "true", SHF_STATION_EXIT_ORIGINS: JSON.stringify([origin]),
@@ -166,7 +168,8 @@ test("exit actual entrypoint with isolated pools: identity oracle, prepare PURE0
     const result = await raw(p, route + "/commands", "POST", JSON.stringify(cmd), { Origin: origin });
     assert.equal(result.status, 200); assert.equal(result.body.outcome, "oracle-test-committed");
     assert.equal(result.body.partnerCompletion, "not-invoked");
-    assert.equal((await raw(p, route + "/context")).body.eligibility, "already-recorded");
+    const fenced = await raw(p, route + "/context");
+    assert.equal(fenced.status, 403); assert.equal(fenced.body.code, "LIVE_WRITES_DISABLED");
     assert.equal((await raw(p, route + "/commands", "POST", JSON.stringify(cmd))).body.code, "ALREADY_REGISTERED");
     assert.equal((await raw(p, route.replace("station-exit", "station-arrival") + "/context")).body.code, "LIVE_WRITES_DISABLED");
   } finally { if (server) await stopBackendServer(server); d.dispose(); }

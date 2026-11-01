@@ -111,7 +111,7 @@ test("wrong consumed handle and expired/exclusion scope fail before pool IO", as
   assert.equal(f.events.length, 0);
   const scope = { ...f.scope, windowEnd: new Date(Date.now() - 1).toISOString(),
     windowStart: new Date(Date.now() - 60000).toISOString() };
-  const expired = new OracleShiftManagementUow(f.pool, f.evidence, f.authority, scope);
+  const expired = new OracleShiftManagementUow(f.pool, f.evidence, f.authority, scope, f.uow.coordinator);
   await assert.rejects(expired.run(f.selection, async () => []), { code: "LIVE_WRITES_DISABLED" });
   assert.equal(f.events.length, 0);
 });

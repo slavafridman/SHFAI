@@ -45,6 +45,7 @@ describe('Native UI / HTTP testing double, NOT Oracle execution', () => {
     return http.expectOne(base + '/commands');
   }
   beforeEach(async () => {
+    sessionStorage.removeItem('shfNativeCommandSafety');
     history.replaceState({}, '');
     sessionStorage.removeItem('shfNativeArrivalSafety');
     TestBed.configureTestingModule({ providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()] });
@@ -52,7 +53,7 @@ describe('Native UI / HTTP testing double, NOT Oracle execution', () => {
     harness = await RouterTestingHarness.create();
   });
   afterEach(() => { TestBed.inject(MatDialog).closeAll(); http.verify({ ignoreCancelled: true }); vi.restoreAllMocks();
-    history.replaceState({}, ''); sessionStorage.removeItem('shfNativeArrivalSafety'); });
+    history.replaceState({}, ''); sessionStorage.removeItem('shfNativeArrivalSafety'); sessionStorage.removeItem('shfNativeCommandSafety'); });
   it('10/native source is not rejected by fixture9 check; distinct honest badges and no arrival time/reason input', async () => {
     await start(); expect(page.state()).toBe('ready'); expect(page.allowed()).toBe(true);
     const text = harness.routeNativeElement!.textContent!;

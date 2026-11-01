@@ -21,6 +21,8 @@ import { shiftManagementAccessPolicy } from "./access-policy.mts";
 import { requireShiftTextFits, shiftTextByteLength } from "./shift-management-text.mts";
 import { exact } from "./stage-arrival-validation.mts";
 import { unitCode } from "./current-shifts-validation.mts";
+import { NativeCommandCoordinator } from "./native-command-coordinator.mts";
+import type { NativeCommandAdmissionV1, NativeCoordinatedShiftCommandUnitOfWork } from "./native-command-coordinator-contracts.mts";
 
 type NativeReference = Extract<ShiftAdmissionReferenceV1, { mode: "test-oracle-controlled" }>;
 export interface ShiftOracleInspection { snapshot: ShiftSnapshot; core: ShiftOracleCore; schema: ShiftOracleSchema }
@@ -57,15 +59,18 @@ function mapped(error: unknown): ShiftManagementError {
       { status: 503, code: "DEPENDENCY_TIMEOUT", effect: "none", nextAction: "stop" } :
       { status: 503, code: "DEPENDENCY_UNAVAILABLE", effect: "none", nextAction: "stop" });
 }
-export class OracleShiftManagementUow implements ShiftCommandUnitOfWork<
+export class OracleShiftManagementUow implements NativeCoordinatedShiftCommandUnitOfWork<
   ShiftSnapshot, ShiftCreatePlan, ShiftOverlayPlan, ShiftSourcePlan> {
+  readonly coordinator: NativeCommandCoordinator;
   readonly reference: Readonly<NativeReference>;
   private readonly pool: NativePool;
   private readonly evidence: ShiftOracleEvidence;
   private readonly authority: ShiftOracleAuthority;
   private readonly scope: Readonly<ShiftOracleExecutionScope>;
   constructor(pool: NativePool, evidence: ShiftOracleEvidence, authority: ShiftOracleAuthority,
-    scope: ShiftOracleExecutionScope) {
+    scope: ShiftOracleExecutionScope, coordinator: NativeCommandCoordinator) {
+    if (!(coordinator instanceof NativeCommandCoordinator)) shiftFail("LIVE_WRITES_DISABLED");
+    this.coordinator = coordinator;
     const r = evidence.reference;
     if (r.mode !== "test-oracle-controlled" || r.dataSource !== "oracle-test" ||
         r.namespace !== "shift-management-v0.1" || !r.metadata ||
@@ -95,9 +100,11 @@ export class OracleShiftManagementUow implements ShiftCommandUnitOfWork<
     this.reference = freezeShift(structuredClone(r)); this.pool = pool; this.evidence = evidence;
     this.authority = authority; this.scope = freezeShift(structuredClone(scope));
   }
-  async run(selection: ShiftSelectionV1 & { admission: ShiftConsumedAdmissionV1 },
+  async run(selection: ShiftSelectionV1 & { admission: ShiftConsumedAdmissionV1; globalAdmission: NativeCommandAdmissionV1 },
     work: Parameters<ShiftCommandUnitOfWork<ShiftSnapshot, ShiftCreatePlan, ShiftOverlayPlan, ShiftSourcePlan>["run"]>[1],
     signal?: AbortSignal): Promise<ShiftTransactionAcknowledgmentV1> {
+    const globalBinding = this.coordinator.bindingFor(selection.globalAdmission, selection.employeeId, selection.admission.kind);
+    if (globalBinding.commandId !== selection.admission.commandId) shiftFail("LIVE_WRITES_DISABLED");
     const ambient = currentRequestBudget();
     const executionZone = this.scope.businessTimeZone;
     const deadline = Math.min(ambient?.deadline ?? Infinity, performance.now() + 5000);
@@ -111,6 +118,7 @@ export class OracleShiftManagementUow implements ShiftCommandUnitOfWork<
     policy.requireCommand(plan.principal, plan.kind);
     if (!same(policy.authorizedTeamIds(plan.principal), plan.authorizedTeamIds)) shiftFail("UNAUTHENTICATED");
     const guard = () => {
+      this.coordinator.assertMutationAllowed(selection.globalAdmission, globalBinding);
       assertShiftWorkAllowed(signal);
       if (closing) shiftFail("STALE_PREPARATION");
       if (cancelled || performance.now() >= deadline) shiftFail("DEPENDENCY_TIMEOUT");

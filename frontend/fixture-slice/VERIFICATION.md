@@ -1,3 +1,213 @@
+# SHF-UI-50-F2-LATE-v0.1 — 1 November 2026 source-freeze verification
+
+**Status: SOURCE-STABLE / REVIEW.** Implements caller-approved canonical
+`50-v0.1` (dedicated late DTOs and §§50.8 UI, shared native coordinator delta);
+reuses existing ordinary F2 §46 and management `49-v0.1` without changing their
+public shapes. Canonical TSC/exact-six and backend focused57/full1872 PASS were
+**reported by caller**, not rerun or claimed as frontend-owned results.
+
+## Exclusive changed source manifest — exactly 35 paths
+
+All paths below are relative to `frontend/fixture-slice/`. This is the exact
+manifest of edits made for this task, not a Git/status inventory.
+
+```text
+README.md
+VERIFICATION.md
+checks/shift-management-protocol-backend.mts
+checks/station-arrival-late-browser-check.mjs
+checks/station-arrival-late-protocol-backend.mts
+src/api.ts
+src/attendance-page.html
+src/attendance-page.ts
+src/contract.ts
+src/native-arrival-page.spec.ts
+src/native-arrival-session.spec.ts
+src/native-command-session.spec.ts
+src/native-command-session.ts
+src/native-read-views.spec.ts
+src/routes.ts
+src/shift-day-page.html
+src/shift-day-page.ts
+src/shift-management-session.ts
+src/stage-arrival-generation.spec.ts
+src/stage-arrival-page.spec.ts
+src/stage-arrival-session.ts
+src/station-arrival-dialog.html
+src/station-arrival-dialog.ts
+src/station-arrival-late-api.spec.ts
+src/station-arrival-late-contract.spec.ts
+src/station-arrival-late-contract.ts
+src/station-arrival-late-fixtures.ts
+src/station-arrival-late-navigation.spec.ts
+src/station-arrival-late-page.spec.ts
+src/station-arrival-page.html
+src/station-arrival-page.ts
+src/station-arrival-session.ts
+src/station-exit-session.ts
+src/view-history.ts
+src/workspace-shell.html
+```
+
+No backend, canonical contract, legacy, dependency/lock, public environment,
+schema or packaging edit. Existing unrelated changes are not inventoried here.
+The existing owned CDP helper was reused unchanged, including missing-Chrome
+cleanup. The existing management checker only gains the new synthetic
+coordinator environment key already emitted by its backend fixture helper.
+
+## Source and runtime boundaries
+
+- Approved design: `docs/SHF_REVERSE_ENGINEERING_DESIGN.md` §§50.1–50.9,
+  particularly §50.8 and approval recorded in §50.9.
+- Canonical erased imports:
+  `backend/fixture-slice/oracle-station-arrival-late-contracts.mts` and existing
+  identity/station-arrival/management types. No public shape changes.
+- Controlling read-only legacy evidence:
+  `old/SHF/src/bzq/shf/model/AttendanceDataModel.java:947–990` (LATE_* supplement
+  and INSERT fallback), `:1054–1115` (station write before warning/finally),
+  `old/SHF/src/bzq/shf/utils/SHFUtils.java:65–70` (truncation/overflow).
+  The approved modern subset deliberately does NOT reproduce those write-before-
+  warning/upsert defects, editable minutes, free remark or optional mood.
+- `station-arrival-late-contract.ts` validates the full server instant at
+  exact-start/subsecond/minute boundaries. Oracle DATE may equal planned start
+  after second truncation for strict late0; validation still requires the full
+  evaluated instant to be strictly later. It never submits a client timestamp.
+- Native browser composition explicitly injects synthetic read/write pools,
+  inquiry ports and obligation assessment; uses actual HTTP/domain/application/
+  UoW/coordinator and real backend `systemClock`. It does NOT use
+  `startFromEnvironment`, real driver factories or an endpoint resolver; there
+  is no environment inheritance, DNS or infrastructure access in this seam.
+  The four management worlds additionally exercise actual environment startup
+  with an explicit synthetic whitelist and read/native/resolveEndpoint doubles.
+  No `.test.mts` module is imported by the added late helper.
+- Coordinator namespace/employee guard provisioning is ONLY the established
+  synthetic helper beneath each owned TEMP protocol world. It is not real
+  operator provisioning, a reopened allowance or authorization to live writes.
+
+## Exact final checks — all from `frontend/fixture-slice`
+
+| Command | Observed final result / classification |
+|---|---|
+| `npm test -- --include src/station-arrival-late*.spec.ts --include src/native-command-session.spec.ts` | **5 files / 36 tests PASS**; focused Angular/mock HTTP/guard/session tests |
+| `npm test -- --include src/station-arrival-late*.spec.ts --include src/native-command-session.spec.ts --include src/native-read-views.spec.ts --include src/shift-day-page.spec.ts` | Earlier widening **7 files / 134 PASS**, before two final boundary/catalog tests |
+| `npm test` | Final **55 files / 748 PASS**, exit0; baseline698 + 50 added cases; jsdom/mock HTTP, not browser geometry |
+| `npm run typecheck` | PASS; executes `tsc --noEmit -p tsconfig.app.json` |
+| `npx tsc --noEmit -p tsconfig.spec.json` | PASS |
+| `npx tsc --noEmit --strict --module preserve --moduleResolution bundler --target es2024 --allowImportingTsExtensions --verbatimModuleSyntax --erasableSyntaxOnly --types node --typeRoots ../../backend/fixture-slice/node_modules/@types checks/station-arrival-late-protocol-backend.mts checks/shift-management-protocol-backend.mts` | PASS; strict mixed-consumer helper check, existing Node typings reused |
+| `npm run build:dev -- --output-path .angular/ui50-dev` | PASS |
+| `npm run check:profile -- dev .angular/ui50-dev/browser` | PASS; exact public keys appEnv/apiBasePath |
+| `npm run build:test -- --output-path .angular/ui50-test` | PASS |
+| `npm run check:profile -- test .angular/ui50-test/browser` | PASS; exact public keys appEnv/apiBasePath |
+| `npm run build:production -- --output-path .angular/ui50-production` | PASS |
+| `npm run check:profile -- production .angular/ui50-production/browser` | PASS; exact public keys appEnv/apiBasePath |
+| `node checks/station-arrival-late-browser-check.mjs .angular/ui50-production/browser` | **Five owned Chrome worlds PASS**, final repeat with Shift+Tab and exact vertical/RTL horizontal origin restoration |
+| `node checks/shift-management-protocol-browser-check.mjs .angular/ui50-production/browser` | **create/change/cancel/csv-create, four fresh native protocol worlds PASS**; 1 commit each, sequence1/0/0/2, separate readback, zero active leases, explicit cleanup; output test0 is NOT four additional Vitest tests |
+| `node --test checks/owned-protocol-browser.test.mjs` | **1 PASS**; missing Chrome ENOENT removes owned profile |
+
+### What the browser proof actually observed
+
+1. **Typed HTTP fixture0/fixture1:** actual Angular selection, exact dedicated
+   requests/guards, strict late minutes0/1, two unchecked consents, Cancel0,
+   Space/Enter, safe initial cancel focus, Tab/Shift+Tab containment, pending0
+   optimistic success/repeat-disable, matching simulated receipt.
+   These are NOT actual native0/1 persistence results.
+2. **Actual native ≥1:** fresh synthetic world, future end, real systemClock;
+   Angular → forwarding proxy → actual Node HTTP/application/domain/native UoW.
+   Exactly one existing-row UPDATE with five SET columns; all other attendance,
+   day/overlay/employee/context facts preserved; committed response matched the
+   canonical guard and independent readback. No partner invoked.
+3. **Actual native deferral:** unknown obligation assessment produced pure
+   deferred context and disabled preparation, zero command/mutation/allowance.
+4. **Actual native UNKNOWN:** double applied COMMIT, then deliberately lost ACK.
+   HTTP503 COMMAND_OUTCOME_UNKNOWN; no UI receipt/success or retry. Return and
+   reload stayed quarantined. An explicit read-only fence probe returned exact
+   HTTP403 LIVE_WRITES_DISABLED: coordinator availability is a fail-closed
+   gate, NOT an invented prior-command status/reconciliation endpoint.
+5. Hebrew synthetic/non-credential notices, read-only dates, RTL, no page
+   horizontal overflow; fixture1 also checked at360×800. Modal fits viewport;
+   exact attendance date, opener, vertical and RTL table scroll restored.
+6. Component tests additionally cover all five native writer families for
+   same employee/different day/actor/source/fresh UUID, old opaque native
+   markers after upgrade, corrupt storage, absent/failed identity, stale
+   generations, foreign responses, empty/changed catalog, already-recorded
+   observation and all seven read views under late identity without fallback.
+
+## Failed iterations retained, not presented as passing first attempts
+
+- Initial focused contract command
+  `npm test -- --include src/station-arrival-late-contract.spec.ts` failed
+  compilation: an intentionally foreign ordinary-F2 test needed a correctly
+  typed empty native catalog, and the synthetic receipt needed explicit null
+  exit. Repaired; focused5/5 passed.
+- Initial focused UI widening with
+  `npm test -- --include src/station-arrival-late*.spec.ts --include src/native-station-arrival-page.spec.ts --include src/shift-management-native-interlock.spec.ts`
+  first rejected unknown-typed test flush, then exposed one old ordinary-F2
+  pending-cancel compatibility assertion. Normal F2 semantics were retained;
+  widened42/42 passed. New jsdom scroll limitations were isolated in test stubs,
+  not counted as browser geometry.
+- First full suite had67 failures (643 PASS), caused by old F1 test cleanup not
+  clearing the new opaque shared key and local storage-failure state reporting.
+  Five affected files were repaired and108/108 focused tests passed. Next full
+  run had one local-namespace uncertainty compatibility assertion; shared
+  employee blocking was kept while local namespace status remained separate.
+  Subsequent full710,730,746 and final748 passed as tests were added.
+- Early browser runs diagnosed incorrect synthetic filter defaults, SQL matcher
+  counting comments/string literals, and a checker expecting a problem instead
+  of a legitimate deferred context. These were checker defects, not backend
+  fixes. The retained-fence expectation was grounded in coordinator source
+  (`deny→LIVE_WRITES_DISABLED`) rather than an invented status API.
+- One final concurrent-heavy-workload browser run ended in conservative UI
+  UNKNOWN while the typed fixture0 server had constructed a canned200 behind
+  its held-response gate; the precise timeout cause was not instrumented.
+  This is consistent with the bounded HTTP budget, not proof of that cause.
+  The unchanged command contract never inferred success.
+  Serial rerun passed. The checker now releases its synthetic held response
+  immediately after the pending/repeat-disabled observation, eliminating
+  unnecessary CDP focus/readiness trips under the unchanged5000ms budget.
+  Final five-world proof passed again; no timeout or production guard weakened.
+- An early selected-day test used a zero-delay sleep rather than navigation
+  completion and failed once; it now awaits actual NavigationEnd, then passes.
+- Standalone helper TSC probes with `--module nodenext --target es2023
+  --skipLibCheck` were incompatible with strict backend ES2024 sources; the
+  next strict ES2024 probe lacked frontend-local Node typings, and NodeNext+
+  verbatim then conflicted with frontend `.ts` module interpretation. The
+  final exact mixed-consumer command above uses existing backend Node typings
+  and supported bundler/preserve interpretation and passes. No dependency or
+  backend source was changed to silence these configuration failures.
+- One bounded legacy-code search used unsupported shell brace syntax; corrected
+  to explicit paths. Python is unavailable; no installation attempted.
+
+## Cleanup, limitations, owners and next action
+
+Owned Chrome/profile, synthetic late/management pools, proxy listeners and
+TEMP coordinator/allowance worlds are closed/removed on success and failure.
+The existing missing-Chrome cleanup checker also passed. Build outputs remain
+only in the three explicitly isolated `.angular/ui50-*` trees for parent review;
+normal `dist` and unrelated running services were not changed.
+
+No live Oracle, real credentials/operator files, DNS/broker/EMS/CTI, legacy
+build/execution, schema, Docker, packaging, Git/status or backend write.
+No dedicated late `startFromEnvironment` browser proof, native live late0,
+full-system/UAT, screenshots/visual design sign-off, assistive-technology matrix
+or WCAG conformance was performed. Unit/keyboard/geometry checks are not a full
+accessibility certification. Existing Node MODULE_TYPELESS warnings and
+management limited-metadata UNKNOWN warnings remain visible and unmodified.
+
+**Implementation blockers: none observed in this bounded frontend slice.**
+Backend/live startup, operator provision/reconciliation, broader business
+requirements and production authentication remain owned by backend/caller/
+authorized operator/business owner, outside this handoff. A corrupt/unbound
+browser marker intentionally overblocks; browser safety cannot replace the
+server's persistent coordinator and independently consumed operation allowance.
+Real-clock browser cases explicitly defer near a UTC date boundary rather
+than changing the real clock.
+
+**Next:** caller/QA reviews the frozen35-path frontend manifest and canonical
+50-v0.1 evidence. Publication/release and any separately authorized environment
+validation belong to the caller. This is not full-project completion/readiness.
+
+---
+
 # SHF-STATION-EXIT-UI-28 — frontend verification (28 October 2026)
 
 ## Approved Vitest4.0.9 patch — 29 October, SOURCE-STABLE / delivery PASS
@@ -4284,3 +4494,39 @@ native-live/Oracle/DNS/broker/EMS, full WCAG/UAT, release readiness. No private
 config/publication ENV or credentials used for execution. No new product defect
 or implementation blocker found. Parent owns review/aggregation and optional
 probe disposition; next action is review these two bounded harness fixes.
+
+## SHF-UI-50 auxiliary TS2688 command-setup verification — 1 November 2026
+
+**DONE — validation-command setup only, no product or checker code change.**
+Uses already approved `50-v0.1` and existing `49-v0.1`; no new approval,
+contract field, dependency, manifest, lock, tsconfig or backend change.
+The frontend lacks local Node declarations; reuse the installed backend
+`@types/node` through explicit `--typeRoots`, as in the prior strict U49
+Preserve/Bundler check. Do not install packages to resolve this command error.
+
+Exact command executed from `D:\AIProjects\SHFAI\frontend\fixture-slice`:
+
+```powershell
+node node_modules/typescript/bin/tsc --noEmit --strict --target ES2024 --module Preserve --moduleResolution Bundler --typeRoots ../../backend/fixture-slice/node_modules/@types --types node --allowImportingTsExtensions --verbatimModuleSyntax --erasableSyntaxOnly checks/shift-management-protocol-backend.mts checks/station-arrival-late-protocol-backend.mts
+```
+
+Observed **one compiler invocation / two helper entrypoints: PASS, exit0,
+zero diagnostics** with existing Node24.21.0 / TypeScript5.9.3. This is a
+static strict mixed-consumer check, not execution of the backend or browser
+worlds. No casts, guards or code changes were needed. The corrected command
+includes the previously omitted Node type-root path; TS2688 did not recur.
+
+Documentation retention was compared only against
+`HEAD:frontend/fixture-slice/VERIFICATION.md`. All 4,286 historical lines were
+already present below the new U50 report except the renamed first heading.
+Restored that original heading surgically; no historical section was deleted
+or rewritten, and the existing U50 report/35-path historical source manifest
+and other user edits remain. This follow-up changes **one path only:
+`frontend/fixture-slice/VERIFICATION.md`**; it does not extend that product
+manifest. Appended this follow-up instead of replacing historical evidence.
+
+Browser checks, focused runtime tests and full suites/builds were **not rerun**:
+neither checker nor product code changed. No Git/status, live Oracle, EMS,
+private configuration, credentials, environment or provisioning changes.
+No blocker; caller/DevOps should use the exact command above for the auxiliary
+check. Earlier U50 browser and suite results remain historical, not new runs.

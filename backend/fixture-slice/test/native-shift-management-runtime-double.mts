@@ -13,6 +13,7 @@ import { observeShiftManagementMetadata } from "../oracle-shift-management-metad
 import type { ShiftManagementMetadataOptions } from "../oracle-shift-management-metadata.mts";
 import { readNativeShiftSource } from "../oracle-shift-management-source.mts";
 import { parseNativeManagementEnvironment } from "../native-shift-management-config.mts";
+import { syntheticCoordinatorEnvironment } from "./native-coordinator-provision.mts";
 import { nativeShiftEmployeeScope } from "../native-shift-management-admission.mts";
 import { planShifts, effectiveShift } from "../shift-management-rules.mts";
 import { managementPrincipal } from "./shift-management-helpers.mts";
@@ -96,6 +97,8 @@ export async function nativeRuntimeFixture(kind: ShiftOperationKindV1) {
     SHF_TEST_ORACLE_SHIFT_WRITE_ENABLED: "true", SHF_TEST_ORACLE_METADATA_LIMITED_ENABLED: "true",
     SHF_SHIFT_MANAGEMENT_ORIGINS: '["http://localhost:16040"]', SHF_NATIVE_SHIFT_BINDING: JSON.stringify(binding) };
   let native = parseNativeManagementEnvironment(env, config);
+  env.SHF_NATIVE_COMMAND_COORDINATOR_CONFIG = syntheticCoordinatorEnvironment(directory,
+    { employeeId: native.source.employeeId, writeIdentity: native.writeIdentity });
   let snapshot = (await readNativeShiftSource((sql, binds, bound) => q(f.data, sql, binds, bound),
     metadata, native.source, { employeeId: "1", shiftDayId: binding.selectedDayId })).snapshot;
   const before = snapshot.days[0] ? effectiveShift(snapshot, snapshot.days[0]) : null;

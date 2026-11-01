@@ -4,22 +4,27 @@ import { validateStageArrivalMode } from "./stage-arrival-validation.mts";
 import { stationMode } from "./station-arrival-validation.mts";
 import { stationExitMode } from "./native-station-exit-config.mts";
 import { shiftManagementMode } from "./shift-management-config.mts";
+import { lateMode, legacyRuntimeShape } from "./native-station-arrival-late-config.mts";
 
 type OracleMode = { dataSource: "oracle-read-only"; oracleTestScopeConfirmed: true };
 export type OracleStartupConfig =
   | (Omit<Extract<StartupConfig, { authenticationMode: "synthetic" }>, "dataSource"> & OracleMode)
   | (Omit<Extract<StartupConfig, { authenticationMode: "real" }>, "dataSource"> & OracleMode);
-export type RuntimeConfig = StartupConfig | OracleStartupConfig;
+export type RuntimeConfig = (StartupConfig | OracleStartupConfig) & {
+  attendanceStationArrivalLateMode?: "disabled" | "test-oracle-controlled";
+};
 export function validateRuntimeConfig(value: unknown): RuntimeConfig {
-  shiftManagementMode(value);
-  stationExitMode(value);
-  stationMode(value);
-  validateStageArrivalMode(value);
-  if (!record(value) || value.dataSource !== "oracle-read-only") return validateConfig(value);
+  const late = lateMode(value), old = legacyRuntimeShape(value);
+  shiftManagementMode(old);
+  stationExitMode(old);
+  stationMode(old);
+  validateStageArrivalMode(old);
+  if (!record(value) || value.dataSource !== "oracle-read-only") return validateConfig(old);
   if (value.oracleTestScopeConfirmed !== true || value.deploymentClass === "production")
     throw new Error("Explicit isolated Oracle test scope required");
-  const common = validateConfig({ ...value, dataSource: "isolated-fixture" });
-  return { ...common, dataSource: "oracle-read-only", oracleTestScopeConfirmed: true };
+  const common = validateConfig({ ...record(old) && old, dataSource: "isolated-fixture" });
+  return { ...common, dataSource: "oracle-read-only", oracleTestScopeConfirmed: true,
+    ...(Object.hasOwn(value, "attendanceStationArrivalLateMode") ? { attendanceStationArrivalLateMode: late } : {}) };
 }
 export interface OracleEnvironment {
   connectString: string;

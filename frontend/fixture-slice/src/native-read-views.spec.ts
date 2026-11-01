@@ -9,6 +9,7 @@ import { nativeIdentityFixture } from './native-arrival-fixtures';
 import { nativeStationIdentityFixture } from './native-station-arrival-fixtures';
 import { exitIdentityFixture } from './station-exit-fixtures';
 import { managementIdentityFixture } from './shift-management-fixtures';
+import { lateIdentityFixture } from './station-arrival-late-fixtures';
 import { fixtureRow } from './test-fixtures';
 import { contextFixture, listFixture } from './current-shifts-fixtures';
 import { searchContextFixture, searchListFixture } from './shift-search-fixtures';
@@ -31,12 +32,12 @@ describe('Exact native identity families preserve ALL seven existing read views 
     http = TestBed.inject(HttpTestingController); h = await RouterTestingHarness.create();
   });
   afterEach(() => { http.verify({ ignoreCancelled: true }); history.replaceState({}, ''); });
-  for (const mode of ['stage', 'station', 'exit', 'management'] as const)
+  for (const mode of ['stage', 'station', 'late', 'exit', 'management'] as const)
   for (const name of Object.keys(paths) as (keyof typeof paths)[]) for (const coherent of [true, false]) {
     it(`${mode}/${name}: ${coherent ? 'Oracle read DTO works' : 'fixture read DTO is refused without fallback'} under native identity`, async () => {
       await h.navigateByUrl(paths[name]);
       const p = mode === 'stage' ? nativeIdentityFixture() : mode === 'station' ? nativeStationIdentityFixture() :
-        mode === 'management' ? managementIdentityFixture() : exitIdentityFixture();
+        mode === 'late' ? lateIdentityFixture() : mode === 'management' ? managementIdentityFixture() : exitIdentityFixture();
       p.principal.resourceScope.orgUnitIds = ['TEST-U', 'TEST-V'];
       http.expectOne('/api/v1/identity').flush(p);
       const source = coherent ? 'oracle-read-only' as const : 'isolated-fixture' as const;
@@ -69,6 +70,7 @@ describe('Exact native identity families preserve ALL seven existing read views 
       expect(!!(page.row?.() ?? page.result?.())).toBe(coherent);
       expect(h.routeNativeElement!.textContent).toContain(mode === 'management' ? 'ניהול משמרות: כתיבה מבוקרת במסד TEST' : 'Controlled TEST Oracle write');
       http.expectNone(r => r.url.includes('/stage-arrival/'));
+      http.expectNone(r => r.url.includes('/station-arrival-late/'));
     });
   }
 });

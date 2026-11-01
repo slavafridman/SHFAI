@@ -1,6 +1,23 @@
 <h2 mat-dialog-title>{{ labels.title }}</h2>
 <mat-dialog-content dir="rtl">
-  @if (data.kind === 'native-exit-confirmation') {
+  @if (data.kind === 'native-late-warning' || data.kind === 'native-late-confirmation') {
+    <p><strong>כתיבה בפועל למסד TEST</strong> — שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור.</p>
+    <p>מנהל מערכת סינתטי אינו העובד/ת שנבחר/ה; לא בוצע אימות סיסמה אמיתית.</p>
+    <p>{{ data.selection.name }} · עובד/ת <bdi dir="ltr">{{ data.selection.employeeId }}</bdi>
+      · יום <bdi dir="ltr">{{ data.selection.shiftDayId }}</bdi> · צוות <bdi dir="ltr">{{ data.selection.orgUnitId }}</bdi>
+      · מקור <bdi dir="ltr">{{ data.selection.dataSource }}</bdi></p>
+    <p>תחילה: <bdi dir="ltr">{{ time(data.context.planned.startLocal) }}</bdi>.
+      נכון ל־<bdi dir="ltr">{{ time(data.validation.evaluatedLocal) }}</bdi> באזור <bdi>{{ data.validation.businessTimeZone }}</bdi>.</p>
+    <p>איחור שחושב בשרת: {{ data.validation.warnings[0].minutes }} דקות
+      @if (data.validation.warnings[0].minutes === '0') { — איחור של פחות מדקה }
+      · סיבה: {{ data.reason }} · קוד <bdi dir="ltr">{{ data.reasonCode }}</bdi>.</p>
+    <p>ללא הערה (NULL) בלבד. מקרים המחייבים הערה, דיווח, מצב רוח או שותף חיצוני, או שדרישתם אינה ידועה, נדחים ואינם מושלמים במסך זה.</p>
+    <p>ישתנו בדיוק חמישה שדות: זמן הגעה לעמדה, חותמת מפעיל, סיבת איחור, דקות איחור והערה NULL.
+      כל שאר נתוני הנוכחות והתכנון יישמרו. הזמן הסופי נקבע בשרת; שינוי דקות מחייב בדיקה ושני אישורים חדשים.</p>
+    <p>תוקף הבדיקה: <bdi dir="ltr">{{ data.validation.expiresAt }}</bdi>. ללא הפעלת שותף חיצוני; זו אינה כניסה אמיתית ל־CTI.
+      @if (data.kind === 'native-late-warning') { קריאת האזהרה שולחת אפס פקודות ומעבירה לסקירה בלבד. }
+      @else { לאחר שליחה אין לשלוח שוב. עזיבה אינה ביטול. הצלחה רק לאחר אישור COMMIT ובדיקה חוזרת עצמאית תואמת. }</p>
+  } @else if (data.kind === 'native-exit-confirmation') {
     <p><strong>כתיבה בפועל למסד TEST</strong> — שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור. ללא CTI או הפעלת שותף חיצוני.</p>
     <p>מנהל מערכת סינתטי אינו העובד/ת שנבחר/ה; לא בוצע אימות סיסמה אמיתית.</p>
     <p>{{ data.selection.name }} · עובד/ת <bdi dir="ltr">{{ data.selection.employeeId }}</bdi>

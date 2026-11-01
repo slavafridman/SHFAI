@@ -7,6 +7,7 @@ import { NativeOracleDouble, nativeConfig, nativeSelection, cleanNative } from "
 import { nativeBinding } from "../native-stage-arrival-config.mts";
 import { nativeCommand, validNativeReceipt } from "../native-stage-arrival-validation.mts";
 import { startFromEnvironment, stopBackendServer } from "../server.mts";
+import { syntheticCoordinatorEnvironment } from "./native-coordinator-provision.mts";
 import { record } from "../contract-validation.mts";
 import { NativeAllowance } from "../oracle-stage-arrival-application.mts";
 import { BackendDrainPendingError, BackendLifecycle } from "../backend-lifecycle.mts";
@@ -27,7 +28,8 @@ function environment(d: NativeOracleDouble): NodeJS.ProcessEnv {
     SHF_TEST_ORACLE_STAGE_WRITE_ENABLED: "true", SHF_STAGE_ARRIVAL_ORIGINS: JSON.stringify([origin]),
     SHF_NATIVE_STAGE_CONNECT_STRING: "CTIDBT_WFMT", SHF_NATIVE_STAGE_USER: "SHIFTER",
     SHF_NATIVE_STAGE_PASSWORD: "synthetic-double-not-a-secret", SHF_NATIVE_STAGE_CLIENT_LIB_DIR: "synthetic-unused-path",
-    SHF_NATIVE_STAGE_BINDING: JSON.stringify(d.binding) };
+    SHF_NATIVE_STAGE_BINDING: JSON.stringify(d.binding),
+    SHF_NATIVE_COMMAND_COORDINATOR_CONFIG: syntheticCoordinatorEnvironment(d.directory, d.binding) };
 }
 function factories(d: NativeOracleDouble): BackendPoolFactories {
   let active = 0, closing = false;
@@ -335,6 +337,7 @@ test("D02 actual read-only entrypoint drains an active query before its sole poo
   try {
     const e = environment(d);
     e.SHF_ORACLE_CONFIG = JSON.stringify({ ...nativeConfig, attendanceStageArrivalMode: "disabled" });
+    delete e.SHF_NATIVE_COMMAND_COORDINATOR_CONFIG;
     for (const key of Object.keys(e)) if (key.startsWith("SHF_NATIVE_STAGE_") ||
         key === "SHF_TEST_ORACLE_STAGE_WRITE_ENABLED" || key === "SHF_STAGE_ARRIVAL_ORIGINS") delete e[key];
     server = await startFromEnvironment(e, undefined, factories(d));

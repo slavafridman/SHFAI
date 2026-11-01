@@ -2,13 +2,15 @@
   [persistentIdentity]="true" [pinned]="true" [simulationNotice]="allowed() && !nativeMode()" (recheck)="recheck()">
   <div class="station-page" dir="rtl">
     <div class="breadcrumb"><a routerLink="/attendance" (click)="$event.preventDefault(); cancel()">חזרה לבירור נוכחות / למקור</a></div>
-    <h1 tabindex="-1">{{ nativeMode() ? 'הגעה לעמדה — TEST' : allowed() ? 'הגעה לעמדה — סימולציה' : 'הגעה לעמדה — מקור טרם אומת' }}</h1>
+    <h1 tabindex="-1">{{ lateMode ? 'הגעה לעמדה באיחור — TEST' : nativeMode() ? 'הגעה לעמדה — TEST' : allowed() ? 'הגעה לעמדה — סימולציה' : 'הגעה לעמדה — מקור טרם אומת' }}</h1>
     <aside class="isolation surface" role="note">
       @if (nativeMode()) {
         <strong>כתיבה בפועל למסד TEST</strong>
         <p>שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור. ללא CTI או הפעלת שותף חיצוני.
           מנהל מערכת סינתטי אינו העובד/ת שנבחר/ה; לא בוצע אימות סיסמה אמיתית.</p>
-        <p>הגעה בזמן בלבד — ללא רישום איחור, ללא ביצוע F1 וללא שינוי תדריך.</p>
+        @if (lateMode) {
+          <p>ללא הערה (NULL) בלבד. מקרים המחייבים הערה, דיווח, מצב רוח או שותף חיצוני, או שדרישתם אינה ידועה, נדחים ואינם מושלמים במסך זה.</p>
+        } @else { <p>הגעה בזמן בלבד — ללא רישום איחור, ללא ביצוע F1 וללא שינוי תדריך.</p> }
       } @else if (allowed()) {
       <strong><bdi dir="ltr">FIXTURE LOCAL ONLY</bdi> · סימולציה מבודדת בלבד · לא כניסה אמיתית לעמדה</strong>
       <p>ללא Oracle, ללא CTI, ללא הפעלת שותף חיצוני וללא אימות סיסמה אמיתי.
@@ -21,7 +23,7 @@
     <p id="station-status" role="status" aria-live="polite">{{ message() }}</p>
     @if (state() === 'loading') { <p>טוענים זהות והקשר חדש מהשרת…</p> }
     @if (state() === 'chooser') {
-      <section class="surface"><h2>לא נבחרה רשומה</h2><p>יש לבחור במפורש רשומה סינתטית בבירור נוכחות. טעינה מחדש אינה משחזרת פקודה או קבלה.</p>
+      <section class="surface"><h2>לא נבחרה רשומה מאומתת</h2><p>יש לבחור במפורש רשומה סינתטית בבירור נוכחות. טעינה מחדש אינה משחזרת פקודה או קבלה.</p>
         <a mat-stroked-button routerLink="/attendance">בחירת רשומה בבירור נוכחות</a></section>
     }
     @if (state() === 'unknown' || state() === 'recovery') {
@@ -36,7 +38,9 @@
     }
     @if (context(); as c) {
       <section class="surface">
-        <h2>נוכחות לפני הפעולה — לקריאה בלבד</h2>
+        <h2>נתוני שרת לקריאה בלבד</h2>
+        <p>נכון ל־<bdi dir="ltr">{{ time(c.serverTime.local) }}</bdi> באזור <bdi>{{ c.serverTime.businessTimeZone }}</bdi>; זו תמונת מצב, לא שעון חי.</p>
+        @if (lateMode) { <p>דקות איחור: ייקבעו בבדיקת השרת.</p> }
         <div class="facts">
           <div><h3>הגעה לבמה / שלב — אינה תנאי להגעה לעמדה</h3><bdi dir="ltr">{{ c.recorded.stageArrivalLocal === null ? 'NULL — לא נרשמה' : time(c.recorded.stageArrivalLocal) }}</bdi></div>
           <div><h3>הגעה לעמדה</h3><bdi dir="ltr">{{ c.recorded.stationArrivalLocal === null ? 'NULL — לא נרשמה' : time(c.recorded.stationArrivalLocal) }}</bdi></div>
@@ -58,10 +62,10 @@
       </section>
       @if (late() && c.eligibility === 'eligible') {
         <section class="surface">
-          <mat-form-field appearance="outline"><mat-label>סיבת איחור לעמדה</mat-label>
+          <mat-form-field appearance="outline"><mat-label>סיבת איחור לעמדה — חובה</mat-label>
             <mat-select id="station-reason" [formControl]="reason">
               <mat-option [value]="null">יש לבחור סיבה — ללא ברירת מחדל</mat-option>
-              @for (r of c.lateReasonOptions; track r.code) { <mat-option [value]="r.code">{{ r.label ?? 'תיאור לא זמין' }} · {{ r.code }}</mat-option> }
+              @for (r of c.lateReasonOptions; track r.code) { <mat-option [value]="r.code">{{ r.label ?? 'תיאור לא זמין' }} — קוד {{ r.code }}</mat-option> }
             </mat-select>
             <mat-hint>הדקות נקבעות בשרת בלבד. ללא הערה חופשית.</mat-hint>
             @if (reason.invalid) { <mat-error>יש לבחור סיבה תקפה ולבדוק מחדש. הטיוטה נשמרה.</mat-error> }
@@ -71,20 +75,27 @@
       }
       <div class="actions">
         <button id="station-validate" mat-stroked-button type="button" [disabled]="!canValidate()" [disabledInteractive]="true"
-          (click)="validate()">בדיקת רישום — ללא שינוי</button>
+          aria-describedby="station-check-help" (click)="validate()">{{ lateMode ? 'בדיקת רישום איחור — ללא שינוי' : 'בדיקת רישום — ללא שינוי' }}</button>
+        <p id="station-check-help">נדרשים רשומה מאומתת, מקור והרשאות, חלון כשיר וסיבה מהרשימה לאיחור. UNKNOWN חוסם כתיבה לכל יום של אותו עובד; גדר השרת מתמשכת וסמכותית.</p>
       </div>
     }
     @if (validation(); as v) {
       @if (state() === 'review') {
         <section class="surface review" aria-labelledby="station-review-title">
-          <h2 id="station-review-title">סקירת כל הפעולה — טרם נרשמה הגעה</h2>
+          <h2 id="station-review-title" tabindex="-1">סקירת כל הפעולה — טרם נרשמה הגעה</h2>
           <p>רישום הגעה לעמדה בלבד ברשומת הנוכחות הקיימת שנבחרה. אין ביצוע F1, הוספה, שינוי יציאה או תדריך.</p>
           <p>ההגעה לבמה תישמר: <bdi dir="ltr">{{ context()!.recorded.stageArrivalLocal === null ? 'NULL' : time(context()!.recorded.stageArrivalLocal) }}</bdi>.</p>
           <p>זמן שנבדק: <bdi dir="ltr">{{ time(v.evaluatedLocal) }}</bdi> · <bdi>{{ v.businessTimeZone }}</bdi>.
             הזמן הסופי ייקבע מחדש בשרת; שינוי בתנאים יחייב בדיקה חדשה.</p>
-          @if (v.confirmationRequired) { <p>אזהרת האיחור לעמדה נקראה: {{ v.warnings[0].minutes }} דקות · סיבה {{ reasonLabel() }}.</p> }
+          @if (v.confirmationRequired) { <p>אזהרת האיחור לעמדה נקראה: {{ v.warnings[0].minutes }} דקות
+            @if (lateMode && v.warnings[0].minutes === '0') { — איחור של פחות מדקה }
+            · סיבה {{ reasonLabel() }} · קוד {{ reason.value }} · הערה NULL.</p> }
           @else { <p>ללא איחור בבדיקה. סיבה: NULL. עדיין נדרש אישור מפורש של כל הפעולה.</p> }
-          @if (nativeMode()) {
+          @if (lateMode) {
+            <p>ישתנו בדיוק חמישה שדות: זמן הגעה לעמדה, חותמת מפעיל, סיבת איחור, דקות איחור והערה NULL.
+              במה, תדריך, יציאה וכל שאר נתוני הנוכחות והתכנון יישמרו. תוקף <bdi dir="ltr">{{ v.expiresAt }}</bdi>.
+              אין קבלה מתמשכת; שותף חיצוני לא יופעל. שינוי דקות מחייב בדיקה ושני אישורים חדשים.</p>
+          } @else if (nativeMode()) {
             <p>ישתנו בדיוק שני שדות: זמן הגעה לעמדה וחותמת מפעיל, שניהם נקבעים בשרת.
               ההגעה לבמה והתדריך יישמרו ללא שינוי. אין קבלה מתמשכת; שותף חיצוני לא יופעל.</p>
           } @else { <p>קבלת F2 וביקורת בזיכרון בלבד. שותף חיצוני לא יופעל.</p> }
@@ -93,13 +104,19 @@
     }
     @if (reviewOffered()) {
       <button id="station-confirm" mat-flat-button type="button" [disabled]="state() !== 'review'" [disabledInteractive]="true" (click)="confirm()">
-        {{ state() === 'committing' ? 'ממתינים לתוצאה — אין לשלוח שוב' : nativeMode() ? 'אישור רישום הגעה לעמדה במסד TEST' : 'אישור סימולציה — הגעה לעמדה בלבד' }}</button>
+        {{ state() === 'committing' ? 'ממתינים לתוצאה — אין לשלוח שוב' : lateMode ? 'סקירה ואישור כתיבה ב־TEST' : nativeMode() ? 'אישור רישום הגעה לעמדה במסד TEST' : 'אישור סימולציה — הגעה לעמדה בלבד' }}</button>
     }
     @if (receipt(); as r) {
       <section class="surface receipt"><h2>{{ r.dataSource === 'oracle-test' ? 'קבלת F2 — שינוי מאושר במסד TEST' : 'קבלת F2 — סימולציה מקומית בלבד' }}</h2>
         <p>הגעה לעמדה: <bdi dir="ltr">{{ time(r.recorded.stationArrivalLocal) }}</bdi></p>
         <p>הגעה לבמה נשמרה: <bdi dir="ltr">{{ r.recorded.stageArrivalLocal === null ? 'NULL' : time(r.recorded.stageArrivalLocal) }}</bdi></p>
         <p>מזהה פקודה <bdi dir="ltr">{{ r.commandId }}</bdi> · <bdi dir="ltr">{{ r.outcome }}</bdi></p>
+        @if (lateMode && r.recorded.stationLate; as late) {
+          <p>הגעה לעמדה באיחור נרשמה במסד TEST; השרת אישר COMMIT ובדיקה חוזרת עצמאית תואמת.
+            סיבה <bdi dir="ltr">{{ late.reasonCode }}</bdi> · {{ late.minutes }} דקות
+            @if (late.minutes === '0') { — איחור של פחות מדקה }
+            · הערה NULL. אין השלמת שותף חיצוני.</p>
+        }
         @if (r.dataSource === 'oracle-test') {
           <p>אישור COMMIT: <bdi dir="ltr">{{ r.commitAcknowledgedAt }}</bdi></p>
           <p>אימות קריאה חוזרת: <bdi dir="ltr">{{ r.readBackVerifiedAt }}</bdi></p>
@@ -116,7 +133,8 @@
       @if (!nativeMode() && selection() && allowed() && !session.affects(selection()) && !stage.affects(selection()) && state() !== 'committing') {
         <button id="station-to-stage" mat-button type="button" (click)="openStage()">הגעה לבמה — הקשר חדש בלבד</button>
       }
-      <button id="station-back" mat-button type="button" [disabled]="state() === 'committing'" (click)="cancel()">חזרה ללא רישום נוסף</button>
+      <button id="station-back" mat-button type="button" [disabled]="!lateMode && state() === 'committing'"
+        (click)="cancel()">חזרה ללא רישום נוסף — עזיבה אינה ביטול פקודה שנשלחה</button>
     </div>
   </div>
 </shf-workspace-shell>

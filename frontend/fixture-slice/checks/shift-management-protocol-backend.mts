@@ -33,7 +33,7 @@ export async function startManagementProtocolWorld(kind: ShiftOperationKindV1, o
     "SHF_ORACLE_USER", "SHF_ORACLE_PASSWORD", "SHF_ORACLE_CLIENT_LIB_DIR", "SHF_NATIVE_SHIFT_CONNECT_STRING",
     "SHF_NATIVE_SHIFT_USER", "SHF_NATIVE_SHIFT_PASSWORD", "SHF_NATIVE_SHIFT_CLIENT_LIB_DIR",
     "SHF_TEST_ORACLE_SHIFT_WRITE_ENABLED", "SHF_TEST_ORACLE_METADATA_LIMITED_ENABLED",
-    "SHF_SHIFT_MANAGEMENT_ORIGINS", "SHF_NATIVE_SHIFT_BINDING"] as const;
+    "SHF_SHIFT_MANAGEMENT_ORIGINS", "SHF_NATIVE_SHIFT_BINDING", "SHF_NATIVE_COMMAND_COORDINATOR_CONFIG"] as const;
   assert.deepEqual(Object.keys(f.env).sort(), [...keys].sort(), "only whitelisted synthetic test environment");
   const env: NodeJS.ProcessEnv = Object.fromEntries(keys.map(k => [k, f.env[k]]));
   env.SHF_SHIFT_MANAGEMENT_ORIGINS = JSON.stringify([origin]);

@@ -14,6 +14,13 @@ import { changedOverlay, planShifts } from "../shift-management-rules.mts";
 import { record } from "../contract-validation.mts";
 import { shiftFail } from "../shift-management-errors.mts";
 import { fingerprint } from "../stage-arrival-domain.mts";
+import { syntheticCoordinator } from "./native-coordinator-provision.mts";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { after } from "node:test";
+const coordinatorDirectories = new Set<string>();
+after(() => { for (const path of coordinatorDirectories) rmSync(path, { recursive: true, force: true }); });
 export const oracleScope = () => ({ employeeId: "1", orgUnitId: "J01",
   rangeStart: "2027-01-03T00:00:00", rangeEnd: "2027-01-10T00:00:00" });
 const column = (name: string, kind: ShiftOracleColumn["kind"], nullable = true): ShiftOracleColumn =>
@@ -231,8 +238,13 @@ export function nativeProtocolFixture(kind: ShiftOperationKindV1 = "csv-create",
   const scope = { employeeId: "1", orgUnitId: "J01", businessTimeZone: "UTC",
     windowStart: new Date(Date.now() - 60000).toISOString(), windowEnd: new Date(Date.now() + 60000).toISOString(),
     writerExclusion: { confirmed: true as const, owner: "ISOLATED-PROTOCOL-DOUBLE" }, maximumRows: domainPlan.effects.length };
-  const uow = new OracleShiftManagementUow(pool, evidence, authority, scope);
-  const selection = { employeeId: "1", shiftDayId: kind === "change" || kind === "cancel" ? "7" : null, admission: handle };
+  const directory = mkdtempSync(join(tmpdir(), "shf50-management-protocol-"));
+  coordinatorDirectories.add(directory);
+  const coordinator = syntheticCoordinator(directory, { employeeId: "1", writeIdentity: { database: "SYNTHETIC", schema: "SHIFTER" } });
+  const globalAdmission = coordinator.consumeSync({ employeeId: "1", operation: kind, commandId: handle.commandId });
+  const uow = new OracleShiftManagementUow(pool, evidence, authority, scope, coordinator);
+  const selection = { employeeId: "1", shiftDayId: kind === "change" || kind === "cancel" ? "7" : null,
+    admission: handle, globalAdmission };
   const work: Parameters<OracleShiftManagementUow["run"]>[1] = async locked => {
     const current = await locked.readLockedSnapshot(), effects: ShiftRecordedEffectV1[] = [];
     for (let i = 0; i < domainPlan.entries.length; i++) {

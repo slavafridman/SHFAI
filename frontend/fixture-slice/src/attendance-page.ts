@@ -27,6 +27,7 @@ import { StageArrivalSession } from './stage-arrival-session';
 import { arrivalSource, actorBinding } from './stage-arrival-contract';
 import { StationArrivalSession } from './station-arrival-session';
 import { stationSource } from './station-arrival-contract';
+import { lateIdentity } from './station-arrival-late-contract';
 import { exitIdentity } from './station-exit-contract';
 import { StationExitSession } from './station-exit-session';
 
@@ -298,6 +299,22 @@ export class AttendancePage {
     return source !== null && this.result()?.dataSource === (source === 'oracle-test' ? 'oracle-read-only' : 'isolated-fixture') &&
       !!row.shiftDayId && row.planned.startLocal !== null && row.planned.endLocal !== null &&
       this.principal()!.principal.resourceScope.orgUnitIds.includes(row.employee.unit.code);
+  }
+  canOpenLate(row: AttendanceRowV1) {
+    return lateIdentity(this.principal()) && this.result()?.dataSource === 'oracle-read-only' &&
+      !!row.shiftDayId && row.planned.startLocal !== null && row.planned.endLocal !== null &&
+      this.principal()!.principal.resourceScope.orgUnitIds.includes(row.employee.unit.code);
+  }
+  openLate(row: AttendanceRowV1, event: MouseEvent) {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
+    event.preventDefault();
+    if (!this.canOpenLate(row) || !this.result()?.items.includes(row)) return;
+    this.station.selection = { employeeId: row.employee.employeeId, shiftDayId: row.shiftDayId!,
+      attendanceKey: { shiftDayId: row.shiftDayId! }, orgUnitId: row.employee.unit.code,
+      name: `${row.employee.firstName} ${row.employee.lastName}`, startLocal: row.planned.startLocal!,
+      endLocal: row.planned.endLocal!, dataSource: 'oracle-test', actor: actorBinding(this.principal()!) };
+    void this.router.navigate(['/employees', row.employee.employeeId, 'shift-days', row.shiftDayId, 'station-arrival-late'],
+      { state: { origin: 'attendance' } });
   }
   canOpenExit(row: AttendanceRowV1) {
     return exitIdentity(this.principal()) && this.result()?.dataSource === 'oracle-read-only' &&

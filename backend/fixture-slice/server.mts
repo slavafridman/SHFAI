@@ -19,7 +19,7 @@ import { validateStageArrivalMode } from "./stage-arrival-validation.mts";
 import { createStageArrivalFixture } from "./stage-arrival-fixture.mts";
 import { systemClock } from "./read-current-shifts.mts";
 import { validateStageArrivalHttpOptions } from "./stage-arrival-http.mts";
-import { nativeEnvironment } from "./native-stage-arrival-config.mts";
+import { nativeEnvironment, nativeTargetReference, resolveNativeEndpointProof } from "./native-stage-arrival-config.mts";
 import type { NativePool } from "./oracle-stage-arrival-uow.mts";
 import type { OracleEnvironment } from "./runtime-config.mts";
 import { backendLifecycle, waitForBackendDrain, BackendDrainPendingError } from "./backend-lifecycle.mts";
@@ -29,6 +29,9 @@ import { stationEnvironment } from "./native-station-arrival-config.mts";
 import { validateLimitedMetadataStartup, limitedMetadataWarning } from "./native-metadata-limited.mts";
 import { stationExitMode, exitEnvironment } from "./native-station-exit-config.mts";
 import { shiftManagementMode } from "./shift-management-config.mts";
+import { nativeCoordinatorFromEnvironment } from "./native-command-coordinator.mts";
+import { lateMode, lateEnvironment, legacyRuntimeShape } from "./native-station-arrival-late-config.mts";
+import { same } from "./stage-arrival-domain.mts";
 
 const resources = new WeakMap<Server, Array<OraclePool | NativePool>>();
 const shutdowns = new WeakMap<Server, Promise<void>>();
@@ -72,11 +75,18 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
   factories?: BackendPoolFactories) {
   const oracleMode = environment.SHF_ORACLE_CONFIG !== undefined;
   const config = loadEnvironmentConfig(environment);
-  if (shiftManagementMode(config) === "isolated-fixture") {
+  const oldConfig = legacyRuntimeShape(config);
+  const late = lateMode(config);
+  if (shiftManagementMode(oldConfig) === "isolated-fixture") {
     const { startManagementFixture } = await import("./shift-management-runtime.mts");
     return startManagementFixture(environment, config, fixtureClock);
   }
-  if (shiftManagementMode(config) === "test-oracle-controlled") {
+  if (shiftManagementMode(oldConfig) === "test-oracle-controlled") {
+    const { parseNativeManagementEnvironment } = await import("./native-shift-management-config.mts");
+    const target = parseNativeManagementEnvironment(environment, config);
+    await nativeCoordinatorFromEnvironment(environment, [
+      { employeeId: target.source.employeeId, writeIdentity: target.writeIdentity },
+    ]);
     const { startNativeManagement } = await import("./oracle-shift-management-application.mts");
     const started = await startNativeManagement(environment, config, factories);
     resources.set(started.server, started.pools);
@@ -85,9 +95,9 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
   const limitedMetadata = validateLimitedMetadataStartup(environment, config);
   if (config.deploymentClass === "production" || config.authenticationMode !== "synthetic")
     throw new Error("Executable backend requires explicit isolated synthetic mode");
-  const stageMode = validateStageArrivalMode(config);
-  const station = stationMode(config);
-  const exitMode = stationExitMode(config);
+  const stageMode = validateStageArrivalMode(oldConfig);
+  const station = stationMode(oldConfig);
+  const exitMode = stationExitMode(oldConfig);
   if (environment.SHF_STATION_EXIT_FIXTURE !== undefined) throw Error("Exit has no fixture command source");
   if (exitMode === "disabled" && environment.SHF_STATION_EXIT_ORIGINS !== undefined)
     throw Error("Exit origins require enabled native exit");
@@ -123,6 +133,34 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
   const native = nativeEnvironment(environment, stageMode === "test-oracle-controlled");
   const nativeStation = stationEnvironment(environment, station === "test-oracle-controlled");
   const nativeExit = exitEnvironment(environment, exitMode === "test-oracle-controlled");
+  const nativeLate = lateEnvironment(environment, late === "test-oracle-controlled");
+  let stationArrivalLateOrigins: readonly string[] | undefined;
+  if (nativeLate) {
+    const origins: unknown = JSON.parse(environment.SHF_STATION_ARRIVAL_LATE_ORIGINS ?? "null");
+    if (!Array.isArray(origins) || !origins.length || origins.some(o => typeof o !== "string"))
+      throw Error("Explicit native late Origin allowlist required");
+    const parsed = origins.map(o => { if (typeof o !== "string") throw Error("Invalid late Origin"); return o; });
+    validateStageArrivalHttpOptions({ stationArrivalLateOrigins: parsed });
+    stationArrivalLateOrigins = Object.freeze(parsed);
+  }
+  const coordinator = await nativeCoordinatorFromEnvironment(environment,
+    [native?.binding, nativeStation?.binding, nativeExit?.binding, nativeLate?.binding].filter(b => b !== undefined));
+  if (nativeLate) {
+    const target = nativeTargetReference(nativeLate.binding.readIdentity).target;
+    if (target.kind === "sid") {
+      const expected = target.endpointProof;
+      const actual = await resolveNativeEndpointProof({ kind: expected.kind, revision: expected.revision,
+        connectionAliases: expected.connectionAliases, endpoint: { kind: expected.endpoint.kind, name: expected.endpoint.name },
+        serverHosts: expected.serverHosts.map(host => ({ kind: host.kind, name: host.name })) },
+      factories?.resolveEndpoint ?? (async (name, signal) => {
+        signal.throwIfAborted();
+        const { lookup } = await import("node:dns/promises");
+        const results = await lookup(name, { all: true, verbatim: true });
+        signal.throwIfAborted(); return results.map(r => r.address);
+      }));
+      if (!same(actual, expected)) throw Error("Late endpoint proof mismatch");
+    }
+  }
   if (nativeExit && !stationExitOrigins?.length) throw Error("Explicit native exit Origin allowlist required");
   if (nativeStation && !stationArrivalOrigins?.length) throw Error("Explicit native station Origin allowlist required");
   let stageArrivalOrigins: readonly string[] | undefined;
@@ -180,13 +218,15 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
       let nativeStageArrival;
       let nativeStationArrival;
       let nativeStationExit;
+      let nativeLateStationArrival;
       if (native) {
         // Separate account/UoW, never the read pool or injected fixture Clock.
         const [{ createNativePool, OracleStageArrivalUow }, { OracleStageArrivalApplication }] = await Promise.all([
           import("./oracle-stage-arrival-uow.mts"), import("./oracle-stage-arrival-application.mts"),
         ]);
         writePool = await (factories?.native ?? createNativePool)(native.writer);
-        const uow = new OracleStageArrivalUow(writePool, session, native.binding);
+        if (!coordinator) throw Error("Native coordinator required");
+        const uow = new OracleStageArrivalUow(writePool, session, native.binding, coordinator);
         await uow.initialize();
         nativeStageArrival = new OracleStageArrivalApplication(uow, native.binding, systemClock,
           config.businessTimeZone, config.syntheticOrgUnitIds);
@@ -200,7 +240,8 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
           import("./oracle-station-arrival-application.mts"),
         ]);
         writePool = await (factories?.native ?? createNativePool)(nativeStation.writer);
-        const uow = new OracleStationArrivalUow(writePool, session, nativeStation.binding, config.businessTimeZone);
+        if (!coordinator) throw Error("Native coordinator required");
+        const uow = new OracleStationArrivalUow(writePool, session, nativeStation.binding, config.businessTimeZone, coordinator);
         await uow.initialize();
         nativeStationArrival = new OracleStationArrivalApplication(uow, nativeStation.binding, systemClock,
           config.businessTimeZone, config.syntheticOrgUnitIds);
@@ -212,17 +253,32 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
           import("./oracle-station-exit-application.mts"),
         ]);
         writePool = await (factories?.native ?? createNativePool)(nativeExit.writer);
-        const uow = new OracleStationExitUow(writePool, session, nativeExit.binding, config.businessTimeZone);
+        if (!coordinator) throw Error("Native coordinator required");
+        const uow = new OracleStationExitUow(writePool, session, nativeExit.binding, config.businessTimeZone, coordinator);
         await uow.initialize();
         nativeStationExit = new OracleStationExitApplication(uow, nativeExit.binding, systemClock,
           config.businessTimeZone, config.syntheticOrgUnitIds);
         await nativeStationExit.assertReady();
       }
+      if (nativeLate) {
+        const [{ createNativePool }, { OracleLateStationArrivalUow }, { OracleLateStationArrivalApplication },
+          { BoundedLateStationObligations }] = await Promise.all([
+          import("./oracle-stage-arrival-uow.mts"), import("./oracle-station-arrival-late-uow.mts"),
+          import("./oracle-station-arrival-late-application.mts"), import("./station-arrival-late-obligations.mts"),
+        ]);
+        if (!coordinator) throw Error("Native coordinator required");
+        writePool = await (factories?.native ?? createNativePool)(nativeLate.writer);
+        const uow = new OracleLateStationArrivalUow(writePool, session, nativeLate.binding, config.businessTimeZone, coordinator);
+        await uow.initialize();
+        nativeLateStationArrival = new OracleLateStationArrivalApplication(uow, nativeLate.binding, systemClock,
+          config.businessTimeZone, config.syntheticOrgUnitIds, new BoundedLateStationObligations());
+        await nativeLateStationArrival.assertReady();
+      }
       runtime = await createRuntime(config, new OracleDetailReader(session), undefined,
         { reader: new OracleCurrentReader(session), searchReader: new OracleSearchReader(session),
           myShiftsReader: new OracleMyShiftsReader(session), shiftItemsReader: new OracleShiftItemsReader(session),
           employeeCardReader: new OracleEmployeeCardReader(session), attendanceReader: new OracleAttendanceReader(session),
-          nativeStageArrival, nativeStationArrival, nativeStationExit });
+          nativeStageArrival, nativeStationArrival, nativeStationExit, nativeLateStationArrival });
     } else if (stageMode === "isolated-fixture") {
       if (["SHF_FIXTURE_ROWS", "SHF_CURRENT_SHIFTS_FIXTURE", "SHF_SHIFT_SEARCH_FIXTURE",
         "SHF_MY_SHIFTS_FIXTURE", "SHF_SHIFT_ITEMS_FIXTURE", "SHF_EMPLOYEE_CARD_FIXTURE",
@@ -271,7 +327,7 @@ export async function startFromEnvironment(environment: NodeJS.ProcessEnv, fixtu
     await closePools([...(pool ? [pool] : []), ...(writePool ? [writePool] : [])]).catch(() => {});
     throw error;
   }
-  const server = createLoopbackServer(runtime, { stageArrivalOrigins, stationArrivalOrigins, stationExitOrigins });
+  const server = createLoopbackServer(runtime, { stageArrivalOrigins, stationArrivalOrigins, stationExitOrigins, stationArrivalLateOrigins });
   try {
     await new Promise<void>((resolve, reject) => {
       server.once("error", reject);

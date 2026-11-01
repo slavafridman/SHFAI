@@ -141,6 +141,23 @@ function Write-ShifterZip([string]$Stage, [string]$Zip, [string[]]$EntryNames) {
     } finally { $archive.Dispose() }
 }
 
+function Test-ShifterBrowserAsset([string]$Name, [string]$SelectedProfile) {
+    if ($Name -cmatch '^(?:index\.html|(?:main|polyfills|chunk|styles)(?:-[A-Za-z0-9]+)?\.(?:js|css)(?:\.map)?)$') {
+        return $true
+    }
+    # Angular development emits separate component stylesheet source maps.
+    # Explicit current stylesheet names only; never allow arbitrary JSON/maps.
+    $componentMaps = @(
+        'arrival-focus.css.map', 'attendance-calendar.css.map', 'attendance-page.css.map',
+        'current-shifts-page.css.map', 'employee-card-page.css.map', 'my-shifts-page.css.map',
+        'shift-day-page.css.map', 'shift-items-page.css.map', 'shift-management-dialog.css.map',
+        'shift-management-page.css.map', 'shift-search-page.css.map', 'stage-arrival-page.css.map',
+        'station-arrival-dialog.css.map', 'station-arrival-page.css.map', 'station-exit-page.css.map',
+        'workspace-shell.css.map', 'employee-name.css.map', 'minute-picker.css.map'
+    )
+    return $SelectedProfile -ceq 'dev' -and $componentMaps -ccontains $Name
+}
+
 function Invoke-ShifterBuild {
     if (-not $OutputDirectory) { $OutputDirectory = $script:OwnedOutput }
     $fullOutput = [IO.Path]::GetFullPath($OutputDirectory)
@@ -249,7 +266,7 @@ console.log('PASS installed approved package versions; no install or driver impo
         # The Angular browser output is flat today. New output layouts need review.
         foreach ($asset in Get-ChildItem -LiteralPath $browser -Force) {
             if ($asset.PSIsContainer -or $asset.Attributes -band [IO.FileAttributes]::ReparsePoint -or
-                $asset.Name -notmatch '^(?:index\.html|(?:main|polyfills|chunk|styles)(?:-[A-Za-z0-9]+)?\.(?:js|css)(?:\.map)?)$') {
+                -not (Test-ShifterBrowserAsset $asset.Name $Profile)) {
                 throw "Unexpected browser asset; packaging review required: $($asset.Name)"
             }
             Copy-Item -LiteralPath $asset.FullName -Destination (Join-Path $browserStage $asset.Name)
@@ -270,22 +287,30 @@ console.log('PASS installed approved package versions; no install or driver impo
         if ($LASTEXITCODE -ne 0) { throw 'Cannot record source HEAD.' }
         $sourceChanges = @(& git -C $script:Repository diff --name-only HEAD -- backend frontend)
         if ($LASTEXITCODE -ne 0) { throw 'Cannot record scoped source changes.' }
+        $untrackedSource = @(& git -C $script:Repository ls-files --others --exclude-standard -- backend/fixture-slice frontend/fixture-slice)
+        if ($LASTEXITCODE -ne 0) { throw 'Cannot record scoped untracked source names.' }
+        $packagingChanges = @(& git -C $script:Repository diff --name-only HEAD -- scripts/Build-Shifter.ps1 scripts/Test-Build-Shifter.ps1 scripts/DeveloperDistribution.README.md backend/fixture-slice/config-examples)
+        if ($LASTEXITCODE -ne 0) { throw 'Cannot record assigned packaging changes.' }
+        $validationArgument = if ($Validation) { ' -Validation' } else { '' }
         $provenance = @(
             '# PROVISIONAL developer artifact - not a release',
             "Source HEAD: $head",
             "Scoped tracked backend/frontend changes against HEAD: $($sourceChanges -join ',')",
-            'Source scope: tracked fixture-slice import closure and selected browser build; unrelated files excluded.',
+            "Scoped untracked fixture-slice source names: $($untrackedSource -join ',')",
+            "Assigned tracked packaging changes against HEAD: $($packagingChanges -join ',')",
+            'Source scope: current fixture-slice import closure and selected browser build; uncommitted bytes are not published source.',
             "Profile: $Profile; full source validation requested: $Validation",
             "Runtime modules: $($closure.Count)",
             'Prerequisites: native Windows; Node 24.21.0; npm 11.19.0; external runtime dependencies.',
             'Oracle driver 26.0.0 / Thick Client 19.3 / Oracle 11g require separately authorized external setup and verification.',
             'Same-origin /api serving and any private operator packet/configuration are external prerequisites, not ZIP contents.',
+            'Native writes additionally require externally approved SHF_NATIVE_COMMAND_COORDINATOR_CONFIG; no namespace is provisioned or packaged. Read-only mode is unchanged.',
             'Production is a fail-closed developer artifact; real authentication is not implemented.',
             'Independent QA and final closure match remain required. No deployment/native-live approval.',
             '',
             'Source checkout commands (no install performed):',
             'powershell.exe -NoProfile -File scripts\Test-Build-Shifter.ps1',
-            "powershell.exe -NoProfile -File scripts\Build-Shifter.ps1 -Profile $Profile -Validation",
+            "powershell.exe -NoProfile -File scripts\Build-Shifter.ps1 -Profile $Profile$validationArgument",
             '',
             'Payload bytes / SHA256 (excluding this self-describing BUILD.md):'
         )
@@ -301,36 +326,113 @@ console.log('PASS installed approved package versions; no install or driver impo
         $productionCheck = @'
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
-import {join} from 'node:path';
+import {join, resolve, dirname} from 'node:path';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import dns from 'node:dns';
+import dnsp from 'node:dns/promises';
 import net from 'node:net';
-import {syncBuiltinESMExports} from 'node:module';
+import {syncBuiltinESMExports, registerHooks} from 'node:module';
 const {startFromEnvironment} = await import(pathToFileURL(join(process.argv[1], 'server.mts')));
 const {RealAuthenticationNotConfiguredError} = await import(pathToFileURL(join(process.argv[1], 'environment-profiles.mts')));
+const {nativeCoordinatorFromEnvironment} = await import(pathToFileURL(join(process.argv[1], 'native-command-coordinator.mts')));
 let forbiddenIO = 0;
 const forbidden = () => { forbiddenIO++; throw Error('Forbidden startup IO'); };
-for (const name of ['readFile','readFileSync','open','openSync','writeFile','writeFileSync','existsSync','stat','statSync','access','accessSync'])
+for (const name of ['readFile','readFileSync','open','openSync','writeFile','writeFileSync','existsSync','stat','statSync','access','accessSync',
+  'lstat','lstatSync','realpath','realpathSync','readSync','writeSync','fstatSync','fsyncSync','ftruncateSync','closeSync',
+  'mkdir','mkdirSync','unlink','unlinkSync','rm','rmSync','rename','renameSync'])
   fs[name] = forbidden;
-for (const name of ['readFile','open','writeFile','stat','access']) fsp[name] = forbidden;
+fs.realpathSync.native = forbidden;
+for (const name of ['readFile','open','writeFile','stat','access','lstat','realpath','mkdir','unlink','rm','rename']) fsp[name] = forbidden;
 dns.lookup = forbidden; dns.resolve = forbidden;
+dnsp.lookup = forbidden; dnsp.resolve = forbidden;
 net.connect = forbidden; net.createConnection = forbidden;
+net.Server.prototype.listen = forbidden;
 syncBuiltinESMExports();
+const hooks = registerHooks({resolve(specifier, context, next) {
+  if (specifier === 'oracledb') return forbidden();
+  return next(specifier, context);
+}});
 const real = {deploymentClass:'production', authenticationMode:'real',
   syntheticAdministratorEnabled:false, realProviderId:'', dataSource:'oracle-read-only',
   businessTimeZone:'UTC', attendanceStageArrivalMode:'disabled'};
 let calls = 0;
 const factories = {read:async()=>{calls++; throw Error('Forbidden pool');},
-  native:async()=>{calls++; throw Error('Forbidden pool');}};
+  native:async()=>{calls++; throw Error('Forbidden pool');},
+  resolveEndpoint:async()=>{calls++; throw Error('Forbidden endpoint resolver');}};
 await assert.rejects(startFromEnvironment({SHF_APP_ENV:'production',
   SHF_ORACLE_CONFIG:JSON.stringify(real)}, undefined, factories), RealAuthenticationNotConfiguredError);
 await assert.rejects(startFromEnvironment({SHF_APP_ENV:'production',
   SHF_ORACLE_CONFIG:JSON.stringify({...real, authenticationMode:'synthetic',
     syntheticAdministratorEnabled:true})}, undefined, factories), /Production prohibits synthetic/);
+const readonly = {deploymentClass:'isolated-test-demo', authenticationMode:'synthetic',
+  syntheticAdministratorEnabled:true, syntheticOrgUnitIds:['T001'], dataSource:'oracle-read-only',
+  oracleTestScopeConfirmed:true, businessTimeZone:'UTC', attendanceStageArrivalMode:'disabled'};
+const oldNative = {...readonly, attendanceStageArrivalMode:'test-oracle-controlled'};
+for (const profile of ['test', undefined]) {
+  const env = {SHF_ORACLE_CONFIG:JSON.stringify(oldNative),
+    ...(profile === undefined ? {} : {SHF_APP_ENV:profile})};
+  await assert.rejects(startFromEnvironment(env, undefined, factories), /Explicit native TEST write enablement/);
+}
+await assert.rejects(startFromEnvironment({SHF_APP_ENV:'test', SHF_ORACLE_CONFIG:JSON.stringify(readonly),
+  SHF_NATIVE_COMMAND_COORDINATOR_CONFIG:'{}'}, undefined, factories),
+  e => e?.code === 'LIVE_WRITES_DISABLED');
+// Exercise the strict coordinator reader without a namespace or allowance path.
+// No native target: absent key is a no-op; a stray key is fail-closed.
+assert.equal(await nativeCoordinatorFromEnvironment({}, []), undefined);
+await assert.rejects(nativeCoordinatorFromEnvironment({}, [
+  {employeeId:'9001', writeIdentity:{database:'SYNTHETIC_TEST', schema:'SYNTHETIC_SCHEMA'}},
+]), e => e?.code === 'LIVE_WRITES_DISABLED');
+// Fully enabled OLD native config: only allowance-path validation is emulated.
+// No namespace is created/read; any path outside this literal whitelist fails.
+const syntheticDirectory = resolve('C:/shf-packaging-synthetic-only');
+const allowanceFile = join(syntheticDirectory, 'operator-allowance');
+const ancestors = new Set();
+for (let p = syntheticDirectory; ; p = dirname(p)) {
+  ancestors.add(p);
+  if (dirname(p) === p) break;
+}
+const repoBoundary = resolve(process.argv[1], '../..');
+let syntheticPathCalls = 0;
+fs.lstatSync = path => {
+  syntheticPathCalls++;
+  if (ancestors.has(path)) return {isDirectory:()=>true, isSymbolicLink:()=>false};
+  if (path === allowanceFile) throw Object.assign(Error('Synthetic absent allowance'), {code:'ENOENT'});
+  return forbidden();
+};
+fs.realpathSync.native = path => {
+  syntheticPathCalls++;
+  if (path === syntheticDirectory || path === repoBoundary) return path;
+  return forbidden();
+};
+syncBuiltinESMExports();
+const identity = {database:'SYNTHETIC_TEST', host:'synthetic-host', service:'synthetic-service',
+  user:'SYNTHETIC_WRITER', schema:'SYNTHETIC_SCHEMA'};
+const binding = {marker:'SHF_TEST_ARRIVAL_20261020_B', employeeId:'9001', shiftDayId:'6201', orgUnitId:'T001',
+  readIdentity:identity, writeIdentity:identity, metadataDigest:'0'.repeat(64),
+  approval:'synthetic-approval', freezeOwner:'synthetic-freeze', recoveryOwner:'synthetic-recovery',
+  writerFreezeConfirmed:true, noExternalEffectsConfirmed:true, singleExecutorConfirmed:true,
+  windowStart:'2026-10-01T00:00:00.000Z', windowEnd:'2026-12-01T00:00:00.000Z', allowanceFile};
+const enabled = {SHF_ORACLE_CONFIG:JSON.stringify(oldNative), SHF_ORACLE_PORT:'0',
+  SHF_TEST_ORACLE_STAGE_WRITE_ENABLED:'true', SHF_NATIVE_STAGE_CONNECT_STRING:'CTIDBT_WFMT',
+  SHF_NATIVE_STAGE_USER:'SYNTHETIC_WRITER', SHF_NATIVE_STAGE_PASSWORD:'synthetic-only',
+  SHF_NATIVE_STAGE_CLIENT_LIB_DIR:'synthetic-unused', SHF_NATIVE_STAGE_BINDING:JSON.stringify(binding),
+  SHF_STAGE_ARRIVAL_ORIGINS:'["http://localhost:4521"]'};
+for (const profile of ['test', undefined]) {
+  for (const coordinator of [undefined, '{}']) {
+    await assert.rejects(startFromEnvironment({...enabled,
+      ...(profile === undefined ? {} : {SHF_APP_ENV:profile}),
+      ...(coordinator === undefined ? {} : {SHF_NATIVE_COMMAND_COORDINATOR_CONFIG:coordinator})},
+      undefined, factories), e => e?.code === 'LIVE_WRITES_DISABLED');
+  }
+}
+assert(syntheticPathCalls > 0, 'native binding allowance validation was actually reached');
 assert.equal(calls, 0);
 assert.equal(forbiddenIO, 0);
-console.log('PASS extracted entrypoint import; production rejects missing real provider and synthetic mode; zero pools/file IO/DNS/network');
+hooks.deregister();
+console.log('PASS extracted entrypoint import; production missing-real/synthetic; old native test/profileless missing/malformed coordinator rejects; zero pools/real file IO/DNS/network/driver imports');
+console.log('PASS synthetic allowance-path validation calls=' + syntheticPathCalls +
+  '; missing coordinator reader zero IO; no namespace IO/provisioning/reset');
 '@
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         Write-ShifterZip $stage $zip @($expected)
@@ -372,6 +474,7 @@ console.log('PASS extracted entrypoint import; production rejects missing real p
         Write-Host 'PASS raw ZIP names: canonical forward slashes; zero backslashes/traversal/absolute paths/duplicates/case collisions'
         Write-Host "ARTIFACT .shifter-developer-delivery/$Profile/shifter-developer-$Profile.zip"
         Write-Host "ZIP bytes=$((Get-Item -LiteralPath $zip).Length); files=$($files.Count); expanded bytes=$bytes"
+        Write-Host "ZIP SHA256=$((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash)"
     } catch {
         # No success artifact survives any command, closure or ZIP assertion failure.
         foreach ($path in @($zip, $stage, $build, $extracted)) { Remove-ShifterOwned $path $profileRoot }

@@ -13,6 +13,7 @@ import { OracleReadSession } from "../oracle-session.mts";
 import type { OraclePool } from "../oracle-session.mts";
 import type { NativePool } from "../oracle-stage-arrival-uow.mts";
 import { OracleStageArrivalUow } from "../oracle-stage-arrival-uow.mts";
+import { syntheticCoordinator, syntheticCoordinatorEnvironment } from "./native-coordinator-provision.mts";
 import { OracleStationArrivalUow } from "../oracle-station-arrival-uow.mts";
 import { OracleStationExitUow } from "../oracle-station-exit-uow.mts";
 import { OracleStageArrivalApplication } from "../oracle-stage-arrival-application.mts";
@@ -165,6 +166,7 @@ function fixture(kind: Kind, realClock = false) {
     environment(): NodeJS.ProcessEnv {
       const prefix = kind === "stage" ? "STAGE" : kind === "station" ? "STATION" : "EXIT";
       return { SHF_APP_ENV: "test", SHF_ORACLE_CONFIG: JSON.stringify(config), SHF_ORACLE_PORT: "0",
+        SHF_NATIVE_COMMAND_COORDINATOR_CONFIG: syntheticCoordinatorEnvironment(d.directory, binding()),
         SHF_ORACLE_CONNECT_STRING: "CTIDBT_WFMT", SHF_ORACLE_USER: d.binding.readIdentity.user,
         SHF_ORACLE_PASSWORD: "synthetic-only-not-a-secret", SHF_ORACLE_CLIENT_LIB_DIR: "synthetic-unused",
         SHF_TEST_ORACLE_METADATA_LIMITED_ENABLED: "true", [`SHF_TEST_ORACLE_${prefix}_WRITE_ENABLED`]: "true",
@@ -177,14 +179,14 @@ function fixture(kind: Kind, realClock = false) {
     async application() {
       const b = binding(), session = new OracleReadSession(readPool);
       if ("metadataDigest" in b) {
-        const uow = new OracleStageArrivalUow(writePool, session, b); await uow.initialize();
+        const uow = new OracleStageArrivalUow(writePool, session, b, syntheticCoordinator(d.directory, b)); await uow.initialize();
         return { uow, app: new OracleStageArrivalApplication(uow, b, d.clock, "UTC", ["T001"]) };
       }
       if ("stationMetadataDigest" in b) {
-        const uow = new OracleStationArrivalUow(writePool, session, b, "UTC"); await uow.initialize();
+        const uow = new OracleStationArrivalUow(writePool, session, b, "UTC", syntheticCoordinator(d.directory, b)); await uow.initialize();
         return { uow, app: new OracleStationArrivalApplication(uow, b, d.clock, "UTC", ["T001"]) };
       }
-      const uow = new OracleStationExitUow(writePool, session, b, "UTC"); await uow.initialize();
+      const uow = new OracleStationExitUow(writePool, session, b, "UTC", syntheticCoordinator(d.directory, b)); await uow.initialize();
       return { uow, app: new OracleStationExitApplication(uow, b, d.clock, "UTC", ["T001"]) };
     },
   };

@@ -51,8 +51,20 @@ export function validateConfig(value: unknown): StartupConfig {
       value.realProviderId.trim().length === 0 || value.syntheticOrgUnitIds !== undefined) return fail();
   return structuredClone(value) as StartupConfig;
 }
-export function validatePrincipal(value: unknown, stageMode?: "disabled" | "isolated-fixture" | "test-oracle-controlled" | "joint-fixture" | "native-station" | "native-exit" | "shift-management"): asserts value is PrincipalV1 {
+export function validatePrincipal(value: unknown, stageMode?: "disabled" | "isolated-fixture" | "test-oracle-controlled" | "joint-fixture" | "native-station" | "native-exit" | "shift-management" | "native-late"): asserts value is PrincipalV1 {
   const fail = (): never => { throw new SliceError("UNAUTHENTICATED"); };
+  if (stageMode === "native-late" || record(value) && Array.isArray(value.capabilities) &&
+      value.capabilities.some(c => typeof c === "string" && c.startsWith("attendance-station-arrival-late:"))) {
+    if (stageMode !== undefined && stageMode !== "native-late" || !record(value) ||
+        !Array.isArray(value.capabilities) || value.capabilities.length !== 10 ||
+        value.capabilities[7] !== "attendance-station-arrival-late:prepare" ||
+        value.capabilities[8] !== "attendance-station-arrival-late:commit" ||
+        value.capabilities[9] !== "attendance-station-arrival-late:test-oracle-write") return fail();
+    validatePrincipal({ ...value, capabilities: [...value.capabilities.slice(0, 7),
+      "attendance-station-arrival:prepare", "attendance-station-arrival:commit",
+      "attendance-station-arrival:test-oracle-write"] }, "native-station");
+    return;
+  }
   const management = stageMode === "shift-management" || record(value) && Array.isArray(value.capabilities) &&
     value.capabilities.some(c => typeof c === "string" && c.startsWith("shift-management:"));
   if (management) {

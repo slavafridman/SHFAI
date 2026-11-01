@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { uuid, type ArrivalSelection } from './stage-arrival-contract';
+import { NativeCommandSession } from './native-command-session';
 
 /** Opaque F2 safety only. Never serialize actor/tuple, tokens, reasons or receipt.
  * A reload has no binding evidence, so an unresolved marker stops fixture work.
@@ -14,7 +15,7 @@ export class StationArrivalSession {
   private readonly terminals = new Set<string>();
   private readonly slot = 'shfStationArrivalSafety';
   private readonly nativeSlot = 'shfNativeStationArrivalSafety';
-  constructor() {
+  constructor(private readonly global: NativeCommandSession = new NativeCommandSession()) {
     this.merge(history.state);
     try {
       const raw = sessionStorage.getItem(this.slot);
@@ -52,7 +53,7 @@ export class StationArrivalSession {
   }
   uncertain() { return this.unresolved.size > 0; }
   crossAffects(s: ArrivalSelection | null) {
-    return [...this.unresolved].some(attempt => {
+    return this.global.affectsEmployee(s?.employeeId ?? null) || [...this.unresolved].some(attempt => {
       const raw = this.bindings.get(attempt);
       if (!s || !raw) return true;
       const b: string[] = JSON.parse(raw);
@@ -60,19 +61,22 @@ export class StationArrivalSession {
     });
   }
   affectsEmployee(employeeId: string | null) {
-    return [...this.unresolved].some(attempt => {
+    return this.global.affectsEmployee(employeeId) || [...this.unresolved].some(attempt => {
       const raw = this.bindings.get(attempt);
       return !raw || !employeeId || (JSON.parse(raw) as string[])[1] === employeeId;
     });
   }
   affects(s: ArrivalSelection | null) {
-    return !!s && [...this.unresolved].some(attempt =>
+    return this.global.affectsEmployee(s?.employeeId ?? null) || !!s && [...this.unresolved].some(attempt =>
       !this.bindings.has(attempt) || this.bindings.get(attempt) === this.key(s));
   }
   recorded(s: ArrivalSelection) { return this.terminals.has(this.key(s)); }
   blocked(s: ArrivalSelection | null) { return s ? this.affects(s) || this.recorded(s) : this.uncertain(); }
   begin(s: ArrivalSelection, attempt: string) {
     if (!['isolated-fixture', 'oracle-test'].includes(s.dataSource) || !uuid(attempt) || this.blocked(s) || this.settled.has(attempt)) return false;
+    if (s.dataSource === 'oracle-test' && !this.global.begin(s.employeeId, attempt)) {
+      this.unresolved.add(attempt); this.native.add(attempt); return false;
+    }
     this.unresolved.add(attempt); this.bindings.set(attempt, this.key(s));
     if (s.dataSource === 'oracle-test') this.native.add(attempt);
     try { this.persist(); return true; } catch {
@@ -97,6 +101,7 @@ export class StationArrivalSession {
     try {
       this.persist(); this.settled.add(attempt);
       if (committed) this.terminals.add(this.key(s));
+      if (s.dataSource === 'oracle-test' && !this.global.resolve(s.employeeId, attempt)) return false;
       return true;
     } catch {
       this.unresolved.add(attempt); if (s.dataSource === 'oracle-test') this.native.add(attempt);

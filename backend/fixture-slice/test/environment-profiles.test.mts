@@ -10,6 +10,7 @@ import { SyntheticAdministratorProvider } from "../synthetic-identity.mts";
 import { oracleEnvironment } from "../runtime-config.mts";
 import { config } from "./fixtures.mts";
 import { NativeOracleDouble, nativeConfig } from "./native-stage-arrival-double.mts";
+import { syntheticCoordinatorEnvironment } from "./native-coordinator-provision.mts";
 
 const dev = { ...config, deploymentClass: "local-development" };
 const production = { deploymentClass: "production", authenticationMode: "real",
@@ -216,7 +217,8 @@ test("TEST native profile starts only with unchanged independent double opt-in a
     SHF_TEST_ORACLE_STAGE_WRITE_ENABLED: "true", SHF_STAGE_ARRIVAL_ORIGINS: '["http://localhost:4521"]',
     SHF_NATIVE_STAGE_CONNECT_STRING: "CTIDBT_WFMT", SHF_NATIVE_STAGE_USER: d.binding.writeIdentity.user,
     SHF_NATIVE_STAGE_PASSWORD: "synthetic-double-only", SHF_NATIVE_STAGE_CLIENT_LIB_DIR: "unused-double",
-    SHF_NATIVE_STAGE_BINDING: JSON.stringify(d.binding) };
+    SHF_NATIVE_STAGE_BINDING: JSON.stringify(d.binding),
+    SHF_NATIVE_COMMAND_COORDINATOR_CONFIG: syntheticCoordinatorEnvironment(d.directory, d.binding) };
   try {
     const server = await startFromEnvironment(env, undefined, {
       read: async () => { reads++; return d.readPool; },

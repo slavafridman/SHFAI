@@ -7,11 +7,13 @@ import { nativeCommand } from "../native-stage-arrival-validation.mts";
 import { sampleStageArrivalConfig, sampleStageArrivalFacts } from "../stage-arrival-sample.mts";
 import { existsSync } from "node:fs";
 import { request } from "node:http";
+import { syntheticCoordinatorEnvironment } from "./native-coordinator-provision.mts";
 
 const origin = "http://localhost:4521";
 const route = "/api/v1/employees/9001/shift-days/6201/stage-arrival";
 function environment(d: NativeOracleDouble): NodeJS.ProcessEnv {
   return { SHF_ORACLE_CONFIG: JSON.stringify(nativeConfig), SHF_ORACLE_PORT: "0",
+    SHF_NATIVE_COMMAND_COORDINATOR_CONFIG: syntheticCoordinatorEnvironment(d.directory, d.binding),
     SHF_ORACLE_CONNECT_STRING: "CTIDBT_WFMT", SHF_ORACLE_USER: "SHIFTER",
     SHF_ORACLE_PASSWORD: "synthetic-double-not-a-secret", SHF_ORACLE_CLIENT_LIB_DIR: "synthetic-unused-client-path",
     SHF_TEST_ORACLE_STAGE_WRITE_ENABLED: "true", SHF_STAGE_ARRIVAL_ORIGINS: JSON.stringify([origin]),
@@ -155,6 +157,7 @@ test("N07 existing read-only actual entrypoint remains seven rights, Oracle sour
   try {
     const e = environment(d);
     e.SHF_ORACLE_CONFIG = JSON.stringify({ ...nativeConfig, attendanceStageArrivalMode: "disabled" });
+    delete e.SHF_NATIVE_COMMAND_COORDINATOR_CONFIG;
     for (const key of Object.keys(e)) if (key.startsWith("SHF_NATIVE_STAGE_") ||
         key === "SHF_TEST_ORACLE_STAGE_WRITE_ENABLED" || key === "SHF_STAGE_ARRIVAL_ORIGINS") delete e[key];
     server = await startFromEnvironment(e, undefined, factories(d));

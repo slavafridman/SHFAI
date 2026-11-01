@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { commandId } from './shift-management-contract';
+import { NativeCommandSession } from './native-command-session';
 
 /** One UI safety namespace across all management flows, NOT server authority.
  * Only opaque attempt IDs survive reload. Unknown bindings block all employees.
@@ -9,7 +10,7 @@ export class ShiftManagementSession {
   private readonly attempts = new Map<string, { employeeId: string; binding: string } | null>();
   private readonly settled = new Set<string>();
   private readonly slot = 'shfShiftManagementSafety';
-  constructor() {
+  constructor(private readonly global: NativeCommandSession = new NativeCommandSession()) {
     this.merge(history.state);
     try {
       const raw = sessionStorage.getItem(this.slot);
@@ -27,10 +28,11 @@ export class ShiftManagementSession {
   }
   marker() { return this.attempts.size ? { shfManagementSafety: [...this.attempts.keys()] } : {}; }
   affectsEmployee(employeeId: string | null) {
-    return [...this.attempts.values()].some(b => !b || !employeeId || b.employeeId === employeeId);
+    return this.global.affectsEmployee(employeeId) || [...this.attempts.values()].some(b => !b || !employeeId || b.employeeId === employeeId);
   }
   begin(employeeId: string, binding: string, id: string) {
     if (!commandId(id) || this.settled.has(id) || this.affectsEmployee(employeeId)) return false;
+    if (!this.global.begin(employeeId, id)) return false;
     this.attempts.set(id, { employeeId, binding });
     try { this.persist(); return true; } catch { return false; }
   }
@@ -38,7 +40,7 @@ export class ShiftManagementSession {
     const b = this.attempts.get(id);
     if (!b || b.employeeId !== employeeId || b.binding !== binding) return false;
     this.attempts.delete(id);
-    try { this.persist(); this.settled.add(id); return true; } catch {
+    try { this.persist(); this.settled.add(id); return this.global.resolve(employeeId, id); } catch {
       this.attempts.set(id, b);
       try { this.persist(); } catch { /* Retain conservative in-memory quarantine. */ }
       return false;

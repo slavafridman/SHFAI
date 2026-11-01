@@ -15,6 +15,9 @@ import { WorkspaceShell } from './workspace-shell';
 import { ListNavigation } from './list-navigation';
 import { ViewHistory } from './view-history';
 import { EmployeeName } from './employee-name';
+import { lateIdentity } from './station-arrival-late-contract';
+import { StationArrivalSession } from './station-arrival-session';
+import { actorBinding } from './stage-arrival-contract';
 import {
   detail, displayTime, id, identity, problem,
   type EmployeeShiftDayResponseV1, type IdentityResponseV1,
@@ -42,6 +45,7 @@ const COPY = {
   styleUrl: './shift-day-page.scss',
 })
 export class ShiftDayPage {
+  private readonly station = inject(StationArrivalSession);
   readonly journey = inject(ViewHistory);
   private readonly api = inject(SliceApi);
   private readonly navigation = inject(ListNavigation);
@@ -263,6 +267,25 @@ export class ShiftDayPage {
       this.load(pair, true);
   }
   canReadItems(): boolean { return this.canRead() && !!this.principal()?.principal.capabilities.includes('shift-items:read'); }
+  canOpenLate(): boolean {
+    const row = this.row(), p = this.principal();
+    return this.state() === 'success' && (this.fromList() || this.fromSchedule()) && !this.fromDiagnostic() &&
+      lateIdentity(p) && row !== null && row.dataSource === 'oracle' &&
+      row.effectiveShift.startLocal !== null && row.effectiveShift.endLocal !== null &&
+      p.principal.resourceScope.orgUnitIds.includes(row.employee.orgUnitId);
+  }
+  openLate(event: MouseEvent): void {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
+    event.preventDefault();
+    const row = this.row(), p = this.principal();
+    if (!this.canOpenLate() || !row || !p || row.effectiveShift.startLocal === null || row.effectiveShift.endLocal === null) return;
+    this.station.selection = { employeeId: row.employeeId, shiftDayId: row.shiftDayId,
+      attendanceKey: { shiftDayId: row.shiftDayId }, orgUnitId: row.employee.orgUnitId,
+      name: `${row.employee.firstName} ${row.employee.lastName}`,
+      startLocal: row.effectiveShift.startLocal, endLocal: row.effectiveShift.endLocal,
+      dataSource: 'oracle-test', actor: actorBinding(p) };
+    void this.router.navigate(['/employees', row.employeeId, 'shift-days', row.shiftDayId, 'station-arrival-late']);
+  }
   fromItems(): boolean { return !!this.journey.parentPath()?.endsWith('/breaks-and-exceptions'); }
   openItems(event: MouseEvent): void {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;

@@ -26,6 +26,10 @@
       @if (identity.dataSource === 'oracle' && identity.principal.capabilities.includes('attendance-station-arrival:test-oracle-write')) {
         <strong class="source-label"> · כתיבה בפועל למסד TEST. Controlled TEST Oracle write — הגעה לעמדה בלבד; שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור. בירורים נשארים לקריאה בלבד; פקודות במה מושבתות.</strong>
       }
+      @if (identity.dataSource === 'oracle' && identity.principal.capabilities.includes('attendance-station-arrival-late:test-oracle-write')) {
+        <strong class="source-label"> · כתיבה בפועל למסד TEST — <bdi dir="ltr">Controlled TEST Oracle write</bdi> — הגעה לעמדה באיחור בלבד, ללא הערה (NULL).
+          שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור. בירורים נשארים לקריאה בלבד; אין כניסה אמיתית ל־CTI או השלמת שותף חיצוני.</strong>
+      }
       @if (identity.dataSource === 'oracle' && identity.principal.capabilities.includes('attendance-station-exit:test-oracle-write')) {
         <strong class="source-label"> · כתיבה בפועל למסד TEST. Controlled TEST Oracle write — יציאה רגילה מעמדה בלבד; שינוי נתוני בדיקה אמיתי, לא סימולציה ולא ייצור. ללא CTI או הפעלת שותף חיצוני. שבעת הבירורים נשארים לקריאה בלבד; שתי פקודות ההגעה מושבתות.</strong>
       }

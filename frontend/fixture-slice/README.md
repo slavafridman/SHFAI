@@ -1,4 +1,54 @@
-# SHF-STATION-EXIT-UI-28 — ordinary native station exit
+# SHF-UI-50-F2-LATE-v0.1 — SOURCE-STABLE frontend handoff
+
+Implemented the **approved canonical `50-v0.1`**, including §§50.1–50.9 and
+the all-native employee coordinator UI interlock. Approval was explicitly
+conveyed on 1 November 2026; this is frontend implementation, not live-operation
+permission or release approval. Public DTOs and backend sources are unchanged.
+
+- Dedicated `/employees/:employeeId/shift-days/:shiftDayId/station-arrival-late`
+  journey from an explicitly selected attendance row or bound selected-day
+  detail. An unbound URL/reload cannot select an employee or restore authority.
+- Exact Oracle identity **R7 + late3**, dedicated context/validation/command
+  clients and runtime guards. Ordinary native F2 remains on-time-only and is
+  never a late fallback. Existing read/fixture journeys remain compatible.
+- Closed, initially unselected server reason; NULL remark only. Server minutes
+  and timestamps are read-only, including strict subsecond/minutes0 lateness.
+  Unknown remark/report/mood/partner requirements defer rather than complete.
+- Two separate initially unchecked Material dialogs; Cancel/Escape sends zero
+  commands and clears both consents. Minute expiry, actor/source/selection or
+  catalog drift invalidates preparation. Pending is not success; UNKNOWN has
+  no retry/reset. Only a canonical ACK + independent readback receipt is shown.
+- Opaque native UUID quarantine is shared across F1/F2/late/exit/§49 for the
+  employee across day/actor/source changes. Reload lacks employee binding and
+  conservatively blocks all native work. No token, receipt, reason, employee or
+  private operator field is persisted. **The server's persistent fence, not
+  browser storage, is authoritative.**
+- Hebrew/RTL, mixed-direction full dates, existing blue Material surfaces,
+  responsive dialogs, keyboard/focus and exact volatile origin restoration.
+
+**Observed checks:** app/spec TypeScript PASS; **55 files / 748 frontend tests
+PASS** (698 baseline + 50 added cases); all three dev/test/production builds and
+public-profile checks PASS; five late browser worlds PASS (typed HTTP late0/1,
+actual native-UoW protocol ≥1 success/deferral/committed lost-ACK UNKNOWN);
+four management protocol worlds PASS; missing-Chrome owned cleanup test PASS.
+Exact commands, historical failed iterations, the **35-path exclusive source
+manifest**, distinctions and unrun checks are in [VERIFICATION.md](VERIFICATION.md).
+
+Retained tooling: Node24.21.0/npm11.19.0, Angular21.2.25,
+Material/CDK21.2.14, TypeScript5.9.3, Vitest4.0.9. No dependencies installed or
+changed. Build outputs are isolated under `.angular/ui50-{dev,test,production}`;
+owned Chrome profiles, protocol pools, proxy listeners and synthetic authority/
+coordinator TEMP worlds are closed/removed by the checkers.
+
+No live Oracle, DNS resolution, EMS/CTI/broker, legacy execution, real operator
+provisioning, schema, packaging or backend edits. Native protocol proof uses
+injected synthetic ports and real `systemClock`, **not native-live data**.
+No full-project/UAT/WCAG/readiness claim. Next owner: caller/QA reviews this
+frozen frontend manifest against canonical50 and separately owns publication.
+
+---
+
+# Historical SHF-STATION-EXIT-UI-28 — ordinary native station exit
 
 Implements approved **§47 v0.1 / §47.7**, user acceptance 28 October 2026
 11:08 +02:00 (“Agree and continue”), against the architect-owned type-only

@@ -8,6 +8,7 @@ import { NativeOracleDouble, nativeConfig, nativeSelection, cleanNative } from "
 import { startFromEnvironment, stopBackendServer } from "../server.mts";
 import { OracleStageArrivalApplication } from "../oracle-stage-arrival-application.mts";
 import { OracleStageArrivalUow } from "../oracle-stage-arrival-uow.mts";
+import { syntheticCoordinator, syntheticCoordinatorEnvironment } from "./native-coordinator-provision.mts";
 import { OracleReadSession } from "../oracle-session.mts";
 import { StageArrivalError } from "../stage-arrival-errors.mts";
 import { nativeCommand } from "../native-stage-arrival-validation.mts";
@@ -106,7 +107,8 @@ function environment(d: NativeOracleDouble): NodeJS.ProcessEnv {
     SHF_TEST_ORACLE_STAGE_WRITE_ENABLED: "true", SHF_STAGE_ARRIVAL_ORIGINS: '["http://localhost:4521"]',
     SHF_NATIVE_STAGE_CONNECT_STRING: "CTIDBT_WFMT.WORLD", SHF_NATIVE_STAGE_USER: d.binding.writeIdentity.user,
     SHF_NATIVE_STAGE_PASSWORD: "synthetic-double-not-a-secret", SHF_NATIVE_STAGE_CLIENT_LIB_DIR: "synthetic-unused-path",
-    SHF_NATIVE_STAGE_BINDING: JSON.stringify(d.binding) };
+    SHF_NATIVE_STAGE_BINDING: JSON.stringify(d.binding),
+    SHF_NATIVE_COMMAND_COORDINATOR_CONFIG: syntheticCoordinatorEnvironment(d.directory, d.binding) };
 }
 const denied = (e: unknown) => e instanceof StageArrivalError && e.code === "LIVE_WRITES_DISABLED" && e.effect === "none";
 for (const field of ["database", "instance", "host", "user", "schema"] as const)
@@ -274,7 +276,7 @@ for (const mismatch of ["kind", "database", "instance", "endpoint", "revision", 
       const write = mismatch === "kind" ? { ...r, target: { kind: "service-reference", serviceName: "synthetic_instance",
         host: "node.synthetic.test" } } : w;
       assert.throws(() => new OracleStageArrivalUow(d.writePool, new OracleReadSession(d.readPool),
-        { ...d.binding, writeIdentity: parseNativeIdentity(write) }));
+        { ...d.binding, writeIdentity: parseNativeIdentity(write) }, syntheticCoordinator(d.directory, d.binding)));
       assert.equal(d.events.length, 0); assert.equal(existsSync(d.binding.allowanceFile), false);
     } finally { d.dispose(); }
   });
@@ -297,7 +299,8 @@ for (const pool of ["read", "write"] as const)
       const d = new NativeOracleDouble();
       try {
         configure(d);
-        const uow = new OracleStageArrivalUow(d.writePool, new OracleReadSession(d.readPool), d.binding);
+        const uow = new OracleStageArrivalUow(d.writePool, new OracleReadSession(d.readPool), d.binding,
+          syntheticCoordinator(d.directory, d.binding));
         if (pool === "read") await uow.initialize();
         d.identityObservations![pool][field] = "synthetic_wrong";
         const before = d.sql.length;

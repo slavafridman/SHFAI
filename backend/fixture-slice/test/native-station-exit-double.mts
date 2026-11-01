@@ -7,6 +7,7 @@ import type { NativePool, NativeConnection } from "../oracle-stage-arrival-uow.m
 import type { OraclePool } from "../oracle-session.mts";
 import { OracleReadSession } from "../oracle-session.mts";
 import { OracleStationExitUow } from "../oracle-station-exit-uow.mts";
+import { syntheticCoordinator } from "./native-coordinator-provision.mts";
 import { OracleStationExitApplication } from "../oracle-station-exit-application.mts";
 import { exitTables, exitMetadataDigest, exitPolicyKeys } from "../oracle-station-exit-snapshot.mts";
 import type { NativeRow } from "../oracle-stage-arrival-snapshot.mts";
@@ -161,7 +162,8 @@ export class ExitOracleDouble {
     }, close: async () => { await this.point("write:pool-close"); },
   };
   async application(zone = "UTC") {
-    const uow = new OracleStationExitUow(this.writePool, new OracleReadSession(this.readPool), this.binding, zone);
+    const uow = new OracleStationExitUow(this.writePool, new OracleReadSession(this.readPool), this.binding, zone,
+      syntheticCoordinator(this.directory, this.binding));
     await uow.initialize();
     const app = new OracleStationExitApplication(uow, this.binding, this.clock, zone, ["T001"]);
     const principal = await new SyntheticAdministratorProvider(exitConfig).authenticate({ authorization: null });
