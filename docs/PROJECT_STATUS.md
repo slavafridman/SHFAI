@@ -79,8 +79,13 @@ acceptance and retained old writer gates. Targeted readiness/related-tool
 checks passed89/89 and TSC passed. The previous full2101 pass is historical
 evidence before this narrowly scoped guard change; no new full count is claimed.
 Only readiness source/test/backend README changed; business APIs, SQL and
-running TEST-world state are untouched. Publish this verified guard fix, then
-resume when protected operator inputs and M04 business choices are supplied.
+running TEST-world state are untouched. Guard fixc1c754a2054eb2509a787ffcfb772a89cac40ab9
+was published in four authorized paths. Focused89/89, TSC, syntax/privacy/
+whitespace/doc paths and structural31/10000/454/436/293/20 checks passed.
+Direct remote matched HEAD, cached0/0, index/conflicts empty; all25 unrelated
+statuses and external checkpoint (+131/-1) were preserved. No live/service
+or full-suite operation was repeated. Resume when protected operator inputs
+and M04 business choices are supplied; no whole-project completion is claimed.
 
 Publication continuation,2026-11-01 after18:51+02: scoped guard-fix
 verification passed89/89 readiness and related-tool mocked tests, backend
