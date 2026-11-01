@@ -69,6 +69,41 @@ B-D1-D4 business decisions before new early-exit canonical/implementation.
 Full project and Oracle-connected/production release remain blocked, not
 marked complete; permissions alone do not supply these missing facts.
 
+Continuation after18:44 found and fixed a concrete readiness-profile defect:
+the tool checked a noncanonical shiftManagementMode scalar but runtime uses
+nested shiftManagement.mode. A valid native-management config could pass the
+declared read-only gate using synthetic dependencies. The canonical helper now
+rejects enabled management before endpoint resolution/pool/connection/query.
+Fifteen regressions verify native rejection, explicit-disabled/default
+acceptance and retained old writer gates. Targeted readiness/related-tool
+checks passed89/89 and TSC passed. The previous full2101 pass is historical
+evidence before this narrowly scoped guard change; no new full count is claimed.
+Only readiness source/test/backend README changed; business APIs, SQL and
+running TEST-world state are untouched. Publish this verified guard fix, then
+resume when protected operator inputs and M04 business choices are supplied.
+
+Publication continuation,2026-11-01 after18:51+02: scoped guard-fix
+verification passed89/89 readiness and related-tool mocked tests, backend
+`npm run typecheck`, both changed-module syntax checks and scoped whitespace.
+The standard structural verifier ran read-only without rewriting its report:
+31 CSV files,10000 row references,454 source hashes,436 local links,293 line
+anchors and20 historical captures checked; the documented duplicate route
+remains a source anomaly, not a new regression. Canonical nested native mode
+is runtime-validator-valid and now rejected before resolver/factory calls;
+explicit-disabled and omitted management remain accepted with synthetic proof.
+No public payload/capability/business/SQL/proof schema changed. Only readiness
+source/test, its narrow backend README grammar note and these current
+continuations are authorized for publication. External checkpoint header and
+historical Docker/report edits remain unstaged; unrelated user edits preserved.
+Pre-publication HEAD53c7545140fe6070a33ec2806ce69f22805e0973 matched the direct
+remote after normal fetch, cached0/0, index/conflicts empty. Normal scoped
+commit/push is next; publication hash will be recorded by the orchestrator.
+No live Oracle configuration was supplied and no live query or service
+operation was attempted. M02 health is historical, not reverified here.
+Full backend suite and Docker build were not rerun; no new2116/full-release
+claim. Operator owns protected read-only TEST inputs; business owner owns
+M04 B-D1-D4 decisions. Resume those prerequisites after publishing this fix.
+
 Current approval update,2026-11-01 at13:56+02: user explicitly approved
 remainder-v0.1,52-v0.2,52-config-v0.1 and52-UI-v0.2, and requested automatic
 continuation of subsequent missions plus live TEST/provisioning/release work.

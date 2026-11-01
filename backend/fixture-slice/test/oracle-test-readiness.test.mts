@@ -4,6 +4,8 @@ import { ChildProcess, fork, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import type { OracleConnection, OraclePool } from "../oracle-session.mts";
 import { isReadinessSummary, runReadinessCli, runOracleTestReadiness } from "../oracle-test-readiness.mts";
+import { validateRuntimeConfig } from "../runtime-config.mts";
+import { shiftManagementMode } from "../shift-management-config.mts";
 
 test("IPC guard rejects extra fields, secrets and invalid finite/count/ACK projections", async () => {
   const base = await runOracleTestReadiness({});
@@ -305,6 +307,77 @@ test("missing process configuration blocks before any pool or query", async () =
       },
     };
   }
+  // Startup tuple from nativeRuntimeFixture, without its native authority,
+  // filesystem or operational inputs. The independent read proof stays synthetic.
+  function managementConfiguration() {
+    return {
+      deploymentClass: "isolated-test-demo", authenticationMode: "synthetic",
+      syntheticAdministratorEnabled: true, syntheticOrgUnitIds: ["T001"],
+      dataSource: "oracle-read-only", oracleTestScopeConfirmed: true,
+      businessTimeZone: "UTC", shiftManagement: { mode: "test-oracle-controlled" },
+    };
+  }
+  test("valid nested native management: denied before endpoint resolution, pools and queries", async () => {
+    const env = environment(), p = protocol();
+    env.SHF_ORACLE_CONFIG = JSON.stringify(managementConfiguration());
+    const config = validateRuntimeConfig(JSON.parse(env.SHF_ORACLE_CONFIG));
+    assert.equal(config.dataSource, "oracle-read-only");
+    assert.equal(shiftManagementMode(config), "test-oracle-controlled");
+    const result = await runOracleTestReadiness(env, p.deps);
+    assert.equal(result.status, "BLOCKED");
+    assert.deepEqual(result.codes, ["INVALID_READ_PROFILE"]);
+    assert.deepEqual(p.resolutions, []);
+    assert.deepEqual(p.log, []);
+    assert.equal(result.poolAttempts + result.connectionAttempts + result.queries, 0);
+  });
+  for (const [name, configuration] of [
+    ["explicit nested disabled", { ...managementConfiguration(), shiftManagement: { mode: "disabled" } }],
+    ["omitted default disabled", (() => {
+      const { shiftManagement, ...configuration } = managementConfiguration();
+      return configuration;
+    })()],
+  ] as const) test(`valid management ${name}: accepted with independent synthetic read proof`, async () => {
+    const env = environment(), p = protocol();
+    env.SHF_ORACLE_CONFIG = JSON.stringify(configuration);
+    const config = validateRuntimeConfig(JSON.parse(env.SHF_ORACLE_CONFIG));
+    assert.equal(config.dataSource, "oracle-read-only");
+    assert.equal(shiftManagementMode(config), "disabled");
+    const result = await runOracleTestReadiness(env, p.deps);
+    assert.equal(result.status, "PASS");
+    assert.deepEqual(result.codes, ["READ_ONLY_CHECK_PASSED_NOT_RELEASE"]);
+    assert.equal(result.poolAttempts, 1);
+    assert.equal(result.connectionAttempts, 1);
+    assert.equal(result.queries, 4);
+    assert.deepEqual(p.resolutions, ["unit-endpoint.invalid", "unit-server.invalid"]);
+    assert.deepEqual(p.log, ["factory", "acquire", "readOnly", "identity", "columns", "charset", "rollback", "close", "drain"]);
+  });
+  for (const key of [
+    "attendanceStageArrivalMode", "attendanceStationArrivalMode", "attendanceStationArrivalLateMode",
+    "attendanceStationExitMode", "attendanceStationExitCancellationMode", "shiftManagementMode",
+  ]) test(`existing native mode ${key}: still blocked before endpoint resolution and pools`, async () => {
+    const env = environment(), p = protocol();
+    const { shiftManagement, ...configuration } = managementConfiguration();
+    env.SHF_ORACLE_CONFIG = JSON.stringify({ ...configuration, [key]: "test-oracle-controlled" });
+    const result = await runOracleTestReadiness(env, p.deps);
+    assert.equal(result.status, "BLOCKED");
+    assert.deepEqual(p.resolutions, []);
+    assert.deepEqual(p.log, []);
+    assert.equal(result.poolAttempts + result.connectionAttempts + result.queries, 0);
+  });
+  for (const key of [
+    "SHF_TEST_ORACLE_STAGE_WRITE_ENABLED", "SHF_TEST_ORACLE_STATION_WRITE_ENABLED",
+    "SHF_TEST_ORACLE_STATION_LATE_WRITE_ENABLED", "SHF_TEST_ORACLE_EXIT_WRITE_ENABLED",
+    "SHF_TEST_ORACLE_EXIT_CANCELLATION_WRITE_ENABLED", "SHF_TEST_ORACLE_SHIFT_WRITE_ENABLED",
+  ]) test(`existing writer flag ${key}: key presence still blocks before endpoint resolution and pools`, async () => {
+    const env = environment(), p = protocol();
+    env[key] = "false"; // Even false is a stray native key in this independent tool.
+    const result = await runOracleTestReadiness(env, p.deps);
+    assert.equal(result.status, "BLOCKED");
+    assert.deepEqual(result.codes, ["STRAY_CONFIG"]);
+    assert.deepEqual(p.resolutions, []);
+    assert.deepEqual(p.log, []);
+    assert.equal(result.poolAttempts + result.connectionAttempts + result.queries, 0);
+  });
   test("full injected handler: pinned identity, READ ONLY, two metadata queries, rollback and drain", async () => {
     const p = protocol(), result = await runOracleTestReadiness(environment(), p.deps);
     assert.deepEqual(result.codes, ["READ_ONLY_CHECK_PASSED_NOT_RELEASE"]);

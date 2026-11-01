@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { win32 } from "node:path";
 import { isIP } from "node:net";
 import { oracleEnvironment, validateRuntimeConfig } from "./runtime-config.mts";
+import { shiftManagementMode } from "./shift-management-config.mts";
 import type { OracleEnvironment } from "./runtime-config.mts";
 import { createOraclePool } from "./oracle-session.mts";
 import type { OracleConnection, OraclePool } from "./oracle-session.mts";
@@ -283,6 +284,7 @@ export async function runOracleTestReadiness(env: NodeJS.ProcessEnv,
     const config = validateRuntimeConfig(json(env.SHF_ORACLE_CONFIG!));
     const profile: Record<string, unknown> = { ...config };
     if (config.dataSource !== "oracle-read-only" || config.deploymentClass !== "isolated-test-demo" ||
+      shiftManagementMode(config) !== "disabled" ||
       ["attendanceStageArrivalMode", "attendanceStationArrivalMode", "attendanceStationArrivalLateMode",
         "attendanceStationExitMode", "attendanceStationExitCancellationMode", "shiftManagementMode"]
         .some(k => profile[k] !== undefined && profile[k] !== "disabled"))

@@ -34,7 +34,10 @@ tuples into chat, documentation, fixtures copied from reality or command argumen
 The application environment must explicitly be TEST; production/conflicting
 environments are rejected before factories. The existing runtime configuration
 validator requires the isolated TEST read-only profile. Every native business
-mode must be disabled. Its authentication configuration must be valid, but this
+mode must be disabled. Management uses the canonical nested `shiftManagement.mode`:
+explicit `"disabled"` or omitted default is accepted; `"test-oracle-controlled"`
+is rejected before endpoint resolution and pool creation. Its authentication
+configuration must be valid, but this
 tool does not authenticate an application actor, construct Administrator or
 fall back on authentication errors. Existing native ENV namespaces/writer flags
 and unknown readiness names are rejected by key presence, without reading values.
