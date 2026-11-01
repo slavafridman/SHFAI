@@ -28,7 +28,7 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 ### SHF-RESUME-29 — current resume checkpoint
 
 **State: approved52 IMPLEMENTED AND PUBLISHED; populated implemented-workflow
-TEST environments are RUNNING. M02 source publication pending; live Oracle
+TEST environments are RUNNING. M02 source is published asdc743e2b; live Oracle
 is blocked by missing process configuration. Full rewrite remains incomplete.**
 
 Current approval update,2026-11-01 at13:56+02: user explicitly approved
@@ -135,8 +135,21 @@ two owned uncertain references describe one late-form stale-submission hazard.
 Zero unclassified/ownerless inventory rows is verified discovery accounting,
 not full application parity or business acceptance. Remaining mission APIs
 and workflows are not implemented by this analysis.
-Next action: publish M02 runtime/Docker/doc and M01 evidence scopes, preserving
-existing TEST worlds and user edits. Oracle live lane remains ENV-blocked:
+M02 publicationdc743e2b643a120825c416d989049450df5f2be6 committed exactly31
+runtime/Docker/script/doc paths. Syntax5/PowerShell5,146 imports,25 links/
+21 anchors,29 acyclic mission IDs and standard31CSV/10000 references/
+454 hashes/20 captures passed. All three ZIP/stage comparisons and148 runtime
+module bytes passed after commit; current READONLY148+six packaging modules
+matched actual container bytes. Direct remote matched HEAD, cached0/0,
+index/conflicts empty; unrelated statuses, README introduction and external
+checkpoint (+131/-1) were preserved. No build, service reset or native query
+occurred during publication. Source provenance retains its honest precommit
+7ec8e729 identity; mixed writer image states remain explicit.
+Next action: operator supplies approved private TEST process configuration
+and current target/client/identity/operation scope so bounded live readiness
+can resume; meanwhile the remaining roadmap business missions require their
+source-backed baseline/canonical/implementation/QA cycle. Full development
+and production release are not complete. Oracle live lane remains ENV-blocked:
 no approved connection/client/current identity/operation binding is available
 to this process, so no live query/provisioning/release check is claimed.
 M02 scoped publication preflight on2026-11-01 passed Node syntax5,
