@@ -3611,3 +3611,64 @@ Current offline counts (no skips or budget changes):
 These are static/synthetic checks, not Oracle/partner/live or power-loss
 guarantees. Canonical `50-v0.1` contracts, old native capabilities, proofs,
 digests, F1 fuse and read-only behavior were not changed by this correction.
+
+## Oracle demo launcher: blank unit prompt and safe failures
+
+From `D:\AIProjects\SHFAI`, use your already-configured Windows PowerShell
+terminal (do not repeat or paste your database password):
+
+```powershell
+powershell.exe -NoProfile -File scripts\Start-ShifterOracleDemo.ps1
+```
+
+At **Authorized TEST unit code**, enter the actual team/organizational code
+you are authorized to read: the legacy administrative **`ORG_UNIT_ID`**,
+not an employee/worker ID, database login user or TNS target. If you do not
+know that code, ask an authorized operator which real TEST team code to use;
+the launcher cannot guess or discover it. Enter alone does **not** select all
+units. There is no default, wildcard, parent privilege or rights bypass.
+Synthetic test codes used in tests are not recommendations for a real unit.
+
+Interactive blank/whitespace answers now print fixed English/Hebrew guidance
+and re-prompt, with **three total attempts maximum**. After that,
+`DEMO_UNIT_REQUIRED` exits with status1 before Node or any Oracle connection.
+Explicit blank/whitespace `-OrgUnitId` arguments fail immediately without
+prompting. `-NonInteractive` never prompts and requires the unit and prepared
+process inputs. To skip the unit prompt, supply `-OrgUnitId` followed by your
+actual authorized code; the text placeholder **"<actual authorized TEST team code>"**
+is explanatory only, not a value or command to copy. Codes remain exact,
+case-preserving, 1–8 characters, without whitespace, wildcards or lists;
+numeric codes are allowed when they really identify your authorized team.
+Existing process password input is reused without another password prompt.
+
+The earlier blank-looking prompt followed by a generic error is **likely**
+explained by an empty answer: isolated reproduction showed validation failed
+before Node/pool startup. The supplied unit was not visible in the report,
+so this is **not confirmed for that operator run**, and does not establish
+an Oracle/database-login or password failure.
+
+Failures now write one fixed, safe stderr diagnostic and exit1:
+`Oracle demo [<allowlisted code>]: <constant action>`.
+No arbitrary exception text, stack, paths, input values or secrets are echoed.
+Configuration rejection and missing/invalid unit, client directory, TNS
+directory or `oci.dll` are identified before connecting. Input-helper failures
+use `DEMO_INPUT_SETUP_FAILED` without exposing helper diagnostics.
+`DEMO_NODE_STARTUP_FAILED` preserves the Node host's own sanitized output;
+it alone does not establish a database login failure. Unknown failures use
+the fixed `DEMO_LAUNCHER_FAILED` message, never success-shaped fallback data.
+There is no automatic connection retry, broader scope or configuration-file
+loading. Authentication, API contracts, pool/client behavior, read-only
+guards and environment restoration remain unchanged.
+
+Verification for **SHF-ORACLE-DEMO-LAUNCHER-UX** (2026-11-02):
+`powershell.exe -NoProfile -File scripts\Test-Start-ShifterOracleDemo.ps1`
+passes **258 static/synthetic assertions**, retaining the previous107
+assertions and adding151, including parsing both scripts, bounded blank
+retries, exact case/numeric scope, noninteractive rejection, input restoration,
+safe exception translation and actual child-process stderr/exit checks.
+The blank-answer regression failed before the fix. No real Node host, pool
+or Oracle connection was invoked by this suite. Backend TypeScript/full2189
+and Node host51 tests were not repeated: backend source and Node argv are
+unchanged. Live client/TNS/Oracle and browser verification remain the
+authorized operator's next step in their prepared terminal, not a claim
+that live startup has succeeded here.

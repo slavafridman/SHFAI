@@ -65,6 +65,35 @@ supplies the authorized exact TEST unit and verifies status/browser reads.
 Full legacy functionality/release remains open; no live-host URL is claimed
 before startup succeeds in that credential-bearing operator session.
 
+Oracle demo launcher incident,2026-11-02 at10:51: operator output showed the
+unit prompt followed by a generic PowerShell failure. Blank unit input
+reproduces this before Node/Oracle; the actual entered answer is not visible,
+so no database/password failure is inferred. Launcher now explains blank
+input, retries interactive entry at most three times and fails noninteractive
+or explicit-empty input with DEMO_UNIT_REQUIRED. A fixed allowlisted error
+code/action replaces the generic wrapper, without exposing exception/user/
+password/path details. Exact authorized unit scope and all native/auth gates
+remain unchanged; no default unit or wildcard was introduced.
+Updated PowerShell regression passed258/258 including parsing and real child
+stderr/exit tests. No backend TypeScript, Node argv or pool behavior changed;
+the prior2189 full/51 host results were not rerun. No live connection was made.
+Publication verification reran the isolated258 assertions successfully, with
+project-local synthetic scratch cleaned; both scripts parsed. Scoped whitespace,
+safe diagnostics and troubleshooting-path checks passed. The standard document
+verifier remains not run because its reference is policy-excluded; no alternate
+access was attempted. No Oracle/driver/network, Docker, build, service or full
+backend checks were run. Existing populated worlds18080-18082 were untouched;
+no running real-data host at18083 is claimed.
+Scoped commit/normal push is authorized for the two launcher scripts, only the
+new final backend README troubleshooting section and this incident paragraph.
+Pre-publication HEAD was0ffc9756409a8810763191f077e064215c148221; fetch confirmed
+cached0/0 and an empty index/conflict list. External Header/DockerReport131/-1
+and all25 unrelated user statuses remain outside the scoped publication.
+Next action after publication: operator enters their authorized actual
+ORG_UNIT_ID in their prepared terminal and verifies startup/read-only UI.
+Unknown code requires the scope owner; employee ID, database username and
+TNS alias are not organizational units. Live verification remains operator-owned.
+
 Current diagnostic/test correction,2026-11-02: the user's sanitized output
 confirms five Oracle connection/client/TNS inputs are configured in their own
 PowerShell. Strict readiness still lacks app profile/config and independently
