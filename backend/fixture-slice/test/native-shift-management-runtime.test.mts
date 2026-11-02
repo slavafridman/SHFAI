@@ -31,20 +31,23 @@ function command(url: string, f: Awaited<ReturnType<typeof nativeRuntimeFixture>
   });
 }
 for (const kind of ["create", "change", "cancel", "csv-create"] as const) {
-  test(`actual native environment factory and HTTP ${kind} only return receipt after separate readback`, async () => {
+  test(`actual native environment factory and HTTP ${kind} only return receipt after separate readback`, async t => {
     const f = await nativeRuntimeFixture(kind);
     let server: Awaited<ReturnType<typeof startFromEnvironment>> | undefined;
     try {
       server = await startFromEnvironment(f.env, undefined, f.factories);
+      f.mark("server-ready");
       const address = server.address(); assert.ok(address && typeof address !== "string");
       const url = `http://127.0.0.1:${address.port}`;
       const context = await object(await fetch(url + path + "/context"));
+      f.mark("context-ready");
       assert.equal(context.mode, "test-oracle-controlled"); assert.equal(context.dataSource, "oracle-test");
       const preparation = kind === "csv-create" ?
         await object(await fetch(url + path + "/csv-previews", { method: "POST",
           headers: { origin, "content-type": "text/csv; charset=utf-8" }, body: f.csv })) :
         await object(await fetch(url + path + "/preparations", { method: "POST",
           headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ draft: f.draft }) }));
+      f.mark("preparation-ready");
       assert.equal(f.stats.commits, 0); assert.equal(f.stats.locks, 0); assert.equal(f.stats.sequence, 0);
       const warningCodes = kind === "csv-create" ? [] : (() => {
         assert.ok(Array.isArray(preparation.effects)); return preparation.effects.flatMap(effect => {
@@ -55,8 +58,18 @@ for (const kind of ["create", "change", "cancel", "csv-create"] as const) {
         fingerprint: preparation.fingerprint, operationConfirmation: { accepted: true }, acknowledgedWarningCodes: warningCodes,
         ...(kind === "csv-create" ? { previewToken: preparation.previewToken } :
           { validationToken: preparation.validationToken, draft: f.draft }) };
-      const receipt = await object(await fetch(url + path + (kind === "csv-create" ? "/csv-commands" : "/commands"),
-        { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify(body) }));
+      const response = await fetch(url + path + (kind === "csv-create" ? "/csv-commands" : "/commands"),
+        { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify(body) });
+      f.mark("command-response");
+      if (response.status !== 200) {
+        const problem: unknown = await response.clone().json();
+        // Only allowlisted diagnostic facts; never the full response or tokens.
+        t.diagnostic(JSON.stringify({ status: response.status,
+          dependencyTimeout: record(problem) && problem.code === "DEPENDENCY_TIMEOUT",
+          outcomeUnknown: record(problem) && problem.code === "COMMAND_OUTCOME_UNKNOWN",
+          rolledBack: record(problem) && problem.effect === "rolled-back" }));
+      }
+      const receipt = await object(response);
       assert.equal(receipt.outcome, "oracle-test-committed"); assert.equal(receipt.dataSource, "oracle-test");
       assert.equal(receipt.partnerCompletion, "not-invoked");
       assert.equal(f.stats.commits, 1); assert.equal(f.stats.active, 0);
@@ -64,7 +77,10 @@ for (const kind of ["create", "change", "cancel", "csv-create"] as const) {
       assert.ok(Array.isArray(receipt.effects) && record(receipt.effects[0]) && record(receipt.effects[0].after));
       const selectedContext = await object(await fetch(url + path + `/shift-days/${receipt.effects[0].after.shiftDayId}/context`), 403);
       assert.equal(selectedContext.code, "LIVE_WRITES_DISABLED"); assert.equal(selectedContext.effect, "none");
-    } finally { if (server) await stopBackendServer(server); f.close(); }
+    } finally {
+      if (server) await stopBackendServer(server);
+      f.mark("server-stopped"); t.diagnostic(JSON.stringify(f.timing())); f.close();
+    }
   });
 }
 for (const fault of ["commitAck", "readbackIdentity", "readbackMismatch"] as const) {

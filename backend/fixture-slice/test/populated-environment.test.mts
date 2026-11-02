@@ -263,8 +263,11 @@ test("readiness rejects an unavailable port even though identity is healthy", as
     reader.read = read;
   } finally { await stopBackendServer(s.server); }
 });
-for (const stalled of ["headers", "body"] as const) {
-  test(`readiness total deadline aborts stalled inquiry ${stalled} and releases owned sockets`, { timeout: 3000 }, async t => {
+for (const stalled of ["headers", "caller", "body"] as const) {
+  const name = stalled === "body" ? "readiness caller cancellation aborts an observed pending inquiry body" :
+    stalled === "caller" ? "readiness caller 100ms deadline shortens the default total budget" :
+    "readiness total deadline aborts stalled inquiry headers";
+  test(`${name} and releases owned sockets`, { timeout: 3000 }, async t => {
     // Capture legitimate current facts, then serve them from an owned loopback
     // double. Only GETs: no fixture commands, state reset or native imports.
     const world = await startFullTestEnvironment("READONLY", options);
@@ -275,7 +278,11 @@ for (const stalled of ["headers", "body"] as const) {
     } finally { await stopBackendServer(world.server); }
     const sockets = new Set<Socket>();
     const timers = new Set<ReturnType<typeof setTimeout>>();
+    const bodyStarted = Promise.withResolvers<void>();
+    const bodyReaderEntered = Promise.withResolvers<void>();
+    const controller = new AbortController(), reason = Error("Owned readiness body cancellation");
     let requests = 0, active = 0;
+    let bodyPending = false;
     let inquiryClosed: Promise<unknown> | undefined;
     const server = createServer((request, response) => {
       assert.equal(request.method, "GET");
@@ -283,15 +290,22 @@ for (const stalled of ["headers", "body"] as const) {
       const index = requests++;
       active++;
       response.once("close", () => { active--; });
-      if (index === 2) {
+      if (index === (stalled === "caller" ? 0 : 2)) {
         inquiryClosed = once(response, "close");
         if (stalled === "body") {
           response.writeHead(200, { "cache-control": "no-store", "x-content-type-options": "nosniff" });
-          response.write(replies[index].slice(0, 20)); // Headers arrive; body never finishes.
+          // Resolve only after the server has written headers and a partial body.
+          response.write(replies[index].slice(0, 20), () => bodyStarted.resolve());
         }
         return;
       }
-      // Identity AND first inquiry consume the same budget before the stall.
+      if (stalled === "body") {
+        // No timer-task preconditions competing with a short wall-clock deadline.
+        response.writeHead(200, { "cache-control": "no-store", "x-content-type-options": "nosniff" });
+        response.end(replies[index]);
+        return;
+      }
+      // Identity AND first inquiry consume the same default budget before the stall.
       const timer = setTimeout(() => {
         timers.delete(timer);
         response.writeHead(200, { "cache-control": "no-store", "x-content-type-options": "nosniff" });
@@ -306,26 +320,74 @@ for (const stalled of ["headers", "body"] as const) {
     server.listen(0, "127.0.0.1"); await once(server, "listening");
     const address = server.address(); assert.ok(address && typeof address !== "string");
     const started = { mode: "READONLY" as const, url: `http://127.0.0.1:${address.port}` };
-    const start = performance.now();
-    const signal = stalled === "body" ? AbortSignal.timeout(100) : undefined;
+    const timeout = AbortSignal.timeout.bind(AbortSignal), budgets: number[] = [];
+    t.mock.method(AbortSignal, "timeout", (milliseconds: number) => {
+      budgets.push(milliseconds);
+      return timeout(milliseconds);
+    });
+    const realFetch = globalThis.fetch, probeSignals: Array<AbortSignal | null | undefined> = [];
+    t.mock.method(globalThis, "fetch", async (...args: Parameters<typeof fetch>) => {
+      probeSignals.push(args[1]?.signal);
+      const response = await realFetch(...args);
+      if (stalled === "body" && String(args[0]) === started.url + paths[2]) {
+        const text = response.text.bind(response);
+        t.mock.method(response, "text", () => {
+          bodyPending = true;
+          const pending = text().finally(() => { bodyPending = false; });
+          bodyReaderEntered.resolve();
+          return pending;
+        });
+      }
+      return response;
+    });
     try {
-      await assert.rejects(checkFullTestReadiness(started, "READONLY", signal),
-        error => error instanceof DOMException && error.name === "TimeoutError" &&
+      // Start the caller's live budget only after the owned server and observers
+      // are ready; it must not include unrelated test setup.
+      const signal = stalled === "caller" ? timeout(100) :
+        stalled === "body" ? controller.signal : undefined;
+      const start = performance.now();
+      const readiness = checkFullTestReadiness(started, "READONLY", signal);
+      // Handle early rejection while waiting for the explicit body preconditions.
+      const settled = readiness.then(() => undefined, () => undefined);
+      if (stalled === "body") {
+        await Promise.race([
+          Promise.all([bodyStarted.promise, bodyReaderEntered.promise]),
+          settled.then(() => { assert.fail("Readiness ended before the partial body reader was pending"); }),
+        ]);
+        assert.equal(requests, 3);
+        assert.equal(active, 1);
+        assert.equal(bodyPending, true);
+        assert.equal(controller.signal.aborted, false);
+        controller.abort(reason);
+      }
+      await assert.rejects(readiness, error => stalled === "body" ? error === reason :
+        error instanceof DOMException && error.name === "TimeoutError" &&
           (signal === undefined || error === signal.reason));
       const elapsed = performance.now() - start;
-      t.diagnostic(`Total readiness elapsed: ${elapsed.toFixed(1)}ms; budget: ${signal ? 100 : 1000}ms`);
-      assert.ok(elapsed < (signal ? 250 : 1500), `Total elapsed ${elapsed}ms`);
-      assert.equal(requests, 3);
-      assert.ok(inquiryClosed);
-      await inquiryClosed; // Abort closes the pending HTTP request, not just its await.
+      t.diagnostic(`Total readiness elapsed: ${elapsed.toFixed(1)}ms; ${stalled === "body" ?
+        "caller cancellation after observed partial body" : `budget: ${signal ? 100 : 1000}ms`}; requests: ${requests}`);
+      if (stalled !== "body") assert.ok(elapsed < (signal ? 250 : 1500), `Total elapsed ${elapsed}ms`);
+      // Exactly one native 1000ms deadline and the SAME signal across the chain:
+      // neither completing identity/inquiry nor starting a body resets the budget.
+      assert.deepEqual(budgets, [1000]);
+      assert.ok(probeSignals.length > 0);
+      assert.ok(probeSignals.every(probeSignal => probeSignal === probeSignals[0]));
+      assert.equal(probeSignals[0]?.aborted, true);
+      if (stalled !== "caller") assert.equal(requests, 3);
+      else assert.ok(requests <= 1); // The caller can expire even before headers are requested.
+      if (stalled !== "caller") assert.ok(inquiryClosed);
+      if (inquiryClosed) await inquiryClosed; // The abort closes the request, not just its await.
       assert.equal(active, 0);
-      const controller = new AbortController(), reason = Error("Owned readiness cancellation");
-      controller.abort(reason);
-      await assert.rejects(checkFullTestReadiness(started, "READONLY", controller.signal),
-        error => error === reason);
-      assert.equal(requests, 3); // No Administrator/success fallback or new probe.
+      assert.equal(bodyPending, false);
+      const requestsBefore = requests;
+      const preAborted = new AbortController(), preAbortedReason = Error("Owned readiness cancellation");
+      preAborted.abort(preAbortedReason);
+      await assert.rejects(checkFullTestReadiness(started, "READONLY", preAborted.signal),
+        error => error === preAbortedReason);
+      assert.equal(requests, requestsBefore); // No Administrator/success fallback or new probe.
       assert.equal(driverImportAttempts(), 0);
     } finally {
+      controller.abort(reason);
       for (const timer of timers) clearTimeout(timer);
       const closed = [...sockets].map(socket => once(socket, "close"));
       await stopBackendServer(server);

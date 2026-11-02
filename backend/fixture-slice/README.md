@@ -1,5 +1,123 @@
 # SHF backend: seven reads, isolated arrivals, and default-off controlled native TEST arrivals
 
+## Shared Oracle target preparation (process only, 2026-11-02)
+
+The approved **TEST target** is shared for this step, not a production database
+authorization. The nonsecret defaults below are identical for every label:
+
+| Target profile label | `SHF_ORACLE_CONNECT_STRING` | `SHF_ORACLE_USER` |
+| --- | --- | --- |
+| `dev` | `CTIDBT_WFMT` | `shifter` |
+| `test` | `CTIDBT_WFMT` | `shifter` |
+| `production` | `CTIDBT_WFMT` | `shifter` |
+
+`CTIDBT_WFMT.WORLD` is also accepted explicitly and canonicalized to uppercase.
+This only prepares process inputs. It does **not** set `SHF_APP_ENV`,
+`SHF_ORACLE_CONFIG`, `SHF_FIXTURE_CONFIG`, authentication, datasource, write
+flags, native modes or readiness proof. Existing DEV defaults remain synthetic
+isolated fixtures. Production still requires real authentication and currently
+fails closed before Oracle inputs are examined. Sharing a TEST target does not
+permit production mutations, production synthetic login or native writers.
+Baseline **52-v0.2 / C52-v0.2 / 52-config-v0.1** remains unchanged.
+
+From the repository root in the **Windows PowerShell process that will launch
+the application**, first supply `$clientLibDir` and `$tnsAdmin` yourself as
+existing local absolute Windows directories (or inherit
+`SHF_ORACLE_CLIENT_LIB_DIR` and `TNS_ADMIN` from your approved launcher):
+
+```powershell
+. .\scripts\Set-ShifterOracleEnvironment.ps1
+Set-ShifterOracleEnvironment -Profile test -ClientLibDir $clientLibDir -TnsAdmin $tnsAdmin
+```
+
+Choose `dev`, `test` or `production` as the target label; this does not select
+the application's deployment profile. The helper uses only
+`SHF_ORACLE_CONNECT_STRING`, `SHF_ORACLE_USER`, `SHF_ORACLE_PASSWORD`,
+`SHF_ORACLE_CLIENT_LIB_DIR` and `TNS_ADMIN`. Missing/invalid directories fail
+before prompting or changing any inputs. No directory search or configuration
+file read occurs; directory existence is not native-client/TNS verification.
+All prerequisites are validated before writes; failed updates restore prior
+process values. Direct execution only warns: it cannot configure a parent shell.
+
+An inherited process `SHF_ORACLE_PASSWORD` is reused; otherwise the helper
+requires interactive `Read-Host -AsSecureString`. For unattended operation use
+`-NonInteractive` with a password already supplied through your approved private
+process launcher; absence fails without prompting. There is deliberately no
+password argument, password file or credential verification. Never paste secrets
+into commands, JSON, repository files, logs, chat or transcripts. The helper
+neither persists credentials nor writes User/Machine environment or registry.
+
+SecureString input's temporary unmanaged buffer is zeroed in `finally`.
+The driver still needs a plaintext **process environment** value: this is not
+encrypted storage, can be accessible to the same account/privileged processes,
+and is inherited by child processes. Managed strings cannot be guaranteed
+zeroed. Use a dedicated short-lived launcher, do not dump its environment, and
+clear its `SHF_ORACLE_PASSWORD` or close it after use. Clearing the parent does
+not revoke values already inherited by children. **Do not launch Docker FULL
+fixtures from this credential-bearing process or forward these inputs to them.**
+
+No driver import, startup connection, DNS, query, provisioning or release runs.
+The separate TEST-only readiness CLI still requires independent pinned identity
+and alias-binding proof, an authorized current window and explicitly supplied
+client/TNS directories. A username/password is not target proof; do not generate
+proof from these defaults or learn it from a connection. Preparation is not
+operational readiness. Focused offline check:
+`.\scripts\Test-ShifterOracleEnvironment.ps1` (static/synthetic only).
+
+## Basic Oracle connectivity vs strict readiness (2026-11-02)
+
+In the **same already-configured Windows PowerShell process**, from
+`D:\AIProjects\SHFAI\backend\fixture-slice`, run:
+
+```powershell
+node oracle-connection-check.mts --test-connectivity
+```
+
+Keep the existing process password; no password argument or new configuration
+is needed. This standalone diagnostic takes credentials/configuration only from
+the five existing process inputs: `SHF_ORACLE_CONNECT_STRING`, `SHF_ORACLE_USER`,
+`SHF_ORACLE_PASSWORD`, `SHF_ORACLE_CLIENT_LIB_DIR`, `TNS_ADMIN`. It never reads
+ENV/credential files, discovers client directories, prompts, or changes ENV.
+Only the existing TEST alias allowlist and the approved unquoted account are
+accepted. Username casing is checked without changing the supplied value.
+Client/TNS paths must be explicit local absolute Windows paths.
+
+`SHF_APP_ENV`, `SHF_ORACLE_CONFIG` and `SHF_ORACLE_READINESS_PROOF` are **not
+required**. Production/invalid environment labels, application Oracle config,
+and writer/native/coordinator key presence are rejected before driver work.
+Do not run from an application/native-writer process; the diagnostic does not
+clear flags or reinterpret application configuration.
+
+Using the existing Windows/Node24/driver26.0.0/Thick Client19.3 factory, it acquires
+one connection, executes only `SELECT 1 AS "ok" FROM dual` with `autoCommit:false`,
+checks exactly one `{ok:1}` row, then awaits rollback, connection close and pool
+drain. A supervised child has a **5-second total budget**, including exit ACK;
+termination begins at 4.5 seconds, not after an additional grace period.
+Query `callTimeout` is capped at 3000ms. Hanging cleanup or unacknowledged exit
+cannot pass. Normal database login auditing can still occur; this makes no
+application business DML, metadata, identity, procedure or integration calls.
+
+Output is sanitized JSON with booleans, fixed status/reason codes, missing key
+names and an optional regex-validated ORA/NJS/DPI code only; no input values or
+raw errors. Exit **0** = `CONNECTIVITY_OK` with query/cleanup/actual child exit
+ACKs; **1** = acknowledged `CONNECTION_FAILED`; **2** = `BLOCKED` or `UNKNOWN`
+(including timeout, invalid IPC or incomplete cleanup).
+Always `targetIdentityVerified:false`, `nativeWritesAuthorized:false`,
+`releaseReady:false`. Authentication success means the supplied credentials were
+accepted by the runtime TNS target, **not** that it is the correct physical
+server, secure production configuration, or application/native readiness.
+
+The strict readiness tool below, its independent proof requirements, native
+guards and business policy 54 remain unchanged. Basic success creates no
+readiness proof/certificate or release authority.
+Offline tests: `node --test test/oracle-connection-check.test.mts`;
+strict TypeScript: `npm run typecheck`.
+
+The canonical full backend command is `npm test`: it explicitly bounds Node
+test-file concurrency to **4** while retaining the same `test/*.test.mts`
+selector and every test. Older bare `node --test` examples below are historical
+commands/evidence, not the current resource-bounded full-suite command.
+
 ## Standalone Oracle TEST readiness (operator-only, 2026-11-01)
 
 From `D:\AIProjects\SHFAI\backend\fixture-slice` in Windows PowerShell:

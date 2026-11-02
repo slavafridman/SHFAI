@@ -31,6 +31,129 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 TEST environments are RUNNING. M02 source is published asdc743e2b; live Oracle
 is blocked by missing process configuration. Full rewrite remains incomplete.**
 
+Current diagnostic/test correction,2026-11-02: the user's sanitized output
+confirms five Oracle connection/client/TNS inputs are configured in their own
+PowerShell. Strict readiness still lacks app profile/config and independently
+pinned proof; no authentication failure or live connection was observed.
+A separate basic oracle-connection-check.mts now uses only those five process
+inputs plus explicit --test-connectivity, one constant SELECT1FROMdual,
+rollback/close/drain/child-exit ACK and five-second supervision. Connectivity
+success explicitly does not verify target identity/native authority/release.
+Focused diagnostic20 and combined operator checks101 passed. The first full
+runs were NOT green:2136/2137 total with three/four deadline-related failures.
+New-test blocking subprocess/close ownership and test-only 60ms/body timing
+assumptions were corrected with deterministic phase/cancellation assertions.
+Native production5s/readiness1s limits and every filesystem authority check
+remain unchanged. Measured installed Node default used19 concurrent file
+workers on20 CPUs; the canonical backend test command now explicitly bounds
+file concurrency to4, preserving the exact selector and all test cases.
+Final canonical npm test passed2138/2138, zero failures/cancellations/skips;
+focused141/141 and TSC passed. This is disclosed test resource management,
+not proof that native commands meet5s under unbounded parallel load.
+Actual live basic connectivity remains pending the one-command run in the
+user's configured terminal. Excluded env files remain inaccessible and were
+not loaded. Existing TEST worlds and consumed writer state were untouched.
+Next action: publish scoped diagnostic/test corrections and provide the
+single operator command; no full-project or live-release completion claim.
+
+Scoped publication verification,2026-11-02: authorized manifest is exactly the
+11 diagnostic/helper/test/document paths; HEAD was df7c9984 with empty index,
+no conflicts and cached upstream0/0 before publication. Added the current
+README command note: npm test limits file workers to4 with the selector
+unchanged. Fresh focused command was
+`node --test --test-concurrency=4 test\oracle-connection-check.test.mts test\oracle-test-readiness.test.mts test\native-shift-management-runtime.test.mts test\populated-environment.test.mts`:
+155/155 passed, zero failures/cancellations/skips. Both new MTS syntax checks,
+backend npm run typecheck and the helper's94 static/synthetic assertions
+(including both Windows PowerShell parsers) passed. The earlier2138/2138 full
+run is historical evidence from this correction, not a fresh rerun here.
+The existing evidence verifier was invoked read-only with excluded-path
+guards; it stopped before an excluded reference existence check, so a complete
+standard-verifier pass/count is NOT claimed for this step. No excluded file
+was accessed and no verification report was rewritten. Scoped manifest/privacy,
+eight local imports, single-query/no-ENV-loader/false-authority invariants and
+the new README section check passed (no new Markdown links). Node process
+count was0 after checks. Normal fetch passed; direct remote main still matched
+df7c9984 and cached upstream remained0/0. Exact staged manifest11, privacy,
+whitespace and ownership checks passed. Publication is authorized and ready
+for commit and normal push; no new
+commit/publication result is claimed in this pre-commit checkpoint. Unrelated
+checkpoint Docker/report hunks remain unstaged. Changed paths are the backend
+oracle-connection-check.mts and its test, README.md, package.json, the native
+runtime test/double, oracle-test-readiness.test.mts, populated-environment.test.mts,
+scripts Set-ShifterOracleEnvironment.ps1 and Test-ShifterOracleEnvironment.ps1,
+and this checkpoint only.
+No live Oracle, native writes, Docker operation, dependency install, build or
+full-suite repeat was performed. Operator owns the remaining live check:
+from the already-configured backend fixture terminal run
+`node oracle-connection-check.mts --test-connectivity`; share sanitized summary
+only. Target identity, native-write authority and release readiness remain
+false for this diagnostic. Production budgets, native gate and unresolved
+M04 business decisions remain unchanged.
+
+Oracle configuration request,2026-11-02: user approved one shared TEST target
+for environment configuration and explicitly requested local env password
+storage. A new empty root .env.local was prepared with current-user-only
+Windows ACL, inheritance disabled; existing .env.* Git ignore matched.
+The attempted content write was DENIED by organization content exclusion.
+No password was written or verified. Do not retry through shell, another
+agent/tool or another file to bypass that restriction. The user must populate
+the permitted local configuration manually or use an approved secret channel.
+No secret values are recorded here. Production authentication/native-write
+gates and fixture Docker isolation remain unchanged; no Oracle connection
+was attempted by this configuration step.
+
+Fresh Oracle readiness requested2026-11-02 at09:14: existing command executed
+from backend/fixture-slice with the unchanged inherited process environment.
+Result BLOCKED/MISSING_CONFIG, exit2; all eight required process inputs absent,
+pool/connection/query counts0 and childExitAck=true. No excluded local env or
+credential/reference file was accessed. This does not establish an Oracle
+network/database fault or a successful connection. Current protected-file
+restriction remains in force; user must launch with approved process inputs
+and independent current identity/window proof through a permitted channel.
+Three local isolated-fixture identity endpoints at18080/18081/18082 returned
+HTTP200 with synthetic identity. No business commands, state resets or service
+restarts occurred. Git inspection observed maindf7c998, empty index/conflicts;
+existing user changes and unpublished shared-env helper were preserved.
+Live connection/client/metadata checks remain not run. Remaining M04 business
+choices and subsequent roadmap missions are still open; local identity200 is
+not full-functionality or release acceptance.
+
+Bounded installation discovery after09:20 located one Oracle Client19.3
+x64 library directory and an existing tnsnames.ora in its network/admin
+directory, using installed-command/registry-path/binary-version metadata only.
+An older10.2 x86 client also exists and must not be selected. No TNS contents,
+excluded env files, credentials, business rows or network endpoints were read.
+Process ORACLE_HOME/TNS_ADMIN were unset. Client-file metadata is not Oracle
+connectivity, alias-content verification or full driver/database compatibility.
+The secure-prompt shared-environment launcher can now be given concrete
+operator paths; independent current identity/window proof is still required
+for the guarded live readiness command. No database connection was attempted.
+
+After the user's09:24 "done" notification, readiness was rerun once with the
+tool process's inherited environment unchanged. All eight required inputs
+remain absent in that process; exit2 MISSING_CONFIG, pool/connection/query0,
+childExitAck=true. User-terminal process variables are not inherited into
+already-running editor/tool processes; this is not evidence the user failed
+to configure their own session. Next diagnostic must run in that same
+configured terminal and return only the tool's sanitized summary, not ENV
+contents. Protected env/reference files remain excluded and were not accessed.
+
+User-supplied sanitized summary subsequently confirmed five connection/client/
+TNS inputs are present in the user's terminal; only app profile/config and
+independent readiness proof were missing. That is not failed authentication.
+A separate basic oracle-connection-check.mts was implemented to answer the
+authorized TEST-connectivity question without pretending strict readiness:
+explicit --test-connectivity, known TEST alias, one literal SELECT1FROMdual,
+rollback/close/drain/child-exit ACK within five seconds, sanitized output.
+It always reports targetIdentityVerified/nativeWritesAuthorized/releaseReady
+false and does not relax the existing strict preflight or load env files.
+Focused20 tests and TSC pass. Full regression is NOT green:2136 total,
+2133 pass/three fail after a concrete new-test subprocess ownership repair.
+Current failures are two native-management HTTP deadline outcomes and one
+60ms readiness pool-drain assertion. Isolated passing does not close these;
+no production budgets, concurrency or assertions were weakened. No live
+connection was attempted by tools; user-terminal diagnostic result is pending.
+
 Current continuation after17:59 reminder: M26 operator-readiness code is
 implemented as standalone oracle-test-readiness.mts. Initial49 focused tests
 and561 impacted mocked/static cases passed; correct fixture-directory TAP

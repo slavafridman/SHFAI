@@ -529,17 +529,73 @@ test("missing process configuration blocks before any pool or query", async () =
     assert.deepEqual(p.log.slice(-4), ["break", "rollback", "close", "drain"]);
     assert.equal(result.rollbackAck && result.leaseCloseAck && result.poolDrainAck, true);
   });
-  test("pool acquisition deadline: no query, late lease dropped, no retry", async () => {
+  test("pool acquisition deadline: no query, late lease dropped, no retry", async t => {
     const p = protocol();
+    // Date-only timer mocks do not control the production monotonic deadline.
+    // Move both scheduling and performance.now explicitly; do not rely on the
+    // OS scheduling cleanup inside a real 20ms reserve under the full runner.
+    let now = performance.now();
+    t.mock.method(performance, "now", () => now);
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    let acquired: (() => void) | undefined, dropped: (() => void) | undefined;
+    const acquiring = new Promise<void>(r => { acquired = r; });
+    const closed = new Promise<void>(r => { dropped = r; });
     let release: ((c: OracleConnection) => void) | undefined;
-    p.pool.getConnection = () => new Promise<OracleConnection>(r => { release = r; });
-    const result = await runOracleTestReadiness(environment(), { ...p.deps, budgetMs: 60 });
+    p.pool.getConnection = () => new Promise<OracleConnection>(r => {
+      p.log.push("acquire"); release = r; acquired?.();
+    });
+    const close = p.connection.close;
+    p.connection.close = async drop => { await close(drop); dropped?.(); };
+    const pending = runOracleTestReadiness(environment(), { ...p.deps, budgetMs: 60 });
+    await acquiring;
+    now += 40; t.mock.timers.tick(40);
+    const result = await pending;
     assert.equal(result.status, "BLOCKED");
+    assert.ok(result.codes.includes("DEADLINE_EXCEEDED"));
+    assert.equal(result.poolAttempts, 1);
+    assert.equal(result.connectionAttempts, 1);
     assert.equal(result.queries, 0);
     assert.equal(result.poolDrainAck, true);
+    assert.deepEqual(p.log, ["factory", "acquire", "drain"]);
     release?.(p.connection);
-    await new Promise(r => setImmediate(r));
+    await closed;
     assert.deepEqual(p.drops, [true]);
+    assert.deepEqual(p.log, ["factory", "acquire", "drain", "close"]);
+    assert.equal(result.leaseCloseAck, false); // Late disposal is not an in-budget ACK.
+    assert.equal(result.status, "BLOCKED");
+    t.diagnostic("acquisition work deadline=40ms; drain ACK at monotonic 40ms; late lease drop observed");
+  });
+  test("pool acquisition total deadline exhausted: no fake drain ACK and late lease still dropped", async t => {
+    const p = protocol();
+    let now = performance.now();
+    t.mock.method(performance, "now", () => now);
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    let acquired: (() => void) | undefined, dropped: (() => void) | undefined;
+    const acquiring = new Promise<void>(r => { acquired = r; });
+    const closed = new Promise<void>(r => { dropped = r; });
+    let release: ((c: OracleConnection) => void) | undefined;
+    p.pool.getConnection = () => new Promise<OracleConnection>(r => {
+      p.log.push("acquire"); release = r; acquired?.();
+    });
+    const close = p.connection.close;
+    p.connection.close = async drop => { await close(drop); dropped?.(); };
+    const pending = runOracleTestReadiness(environment(), { ...p.deps, budgetMs: 60 });
+    await acquiring;
+    now += 60; t.mock.timers.tick(60);
+    const result = await pending;
+    assert.equal(result.status, "BLOCKED");
+    assert.ok(result.codes.includes("DEADLINE_EXCEEDED"));
+    assert.ok(result.codes.includes("POOL_DRAIN_UNACKNOWLEDGED"));
+    assert.equal(result.poolAttempts, 1); assert.equal(result.connectionAttempts, 1);
+    assert.equal(result.queries, 0);
+    assert.equal(result.poolDrainAck, false);
+    assert.equal(result.rollbackAck, false); assert.equal(result.leaseCloseAck, false);
+    assert.deepEqual(p.log, ["factory", "acquire"]);
+    release?.(p.connection); await closed;
+    assert.deepEqual(p.drops, [true]);
+    assert.deepEqual(p.log, ["factory", "acquire", "close"]);
+    assert.equal(result.status, "BLOCKED"); assert.equal(result.poolDrainAck, false);
+    t.diagnostic("acquisition resumed at total monotonic deadline=60ms; no drain ACK; late lease drop observed");
   });
   test("drain deadline reports unknown ACK, never PASS", async () => {
     const p = protocol();

@@ -23,6 +23,14 @@ import type { NativeIdentity } from "../native-stage-arrival-config.mts";
 import { metadataWaiverId } from "../native-metadata-limited.mts";
 
 export async function nativeRuntimeFixture(kind: ShiftOperationKindV1) {
+  const started = performance.now();
+  // Bounded, synthetic phase/count diagnostics only: never SQL, bindings or identity.
+  const phases: Array<{ phase: string; ms: number }> = [];
+  const queryTiming = { calls: 0, ms: 0, maxMs: 0, maxBytes: 0 };
+  const bindTiming = { calls: 0, ms: 0, maxMs: 0, maxBytes: 0, maxBinds: 0 };
+  const mark = (phase: string) => {
+    if (phases.length < 24) phases.push({ phase, ms: Math.round(performance.now() - started) });
+  };
   const f = await sourceFixture(), directory = realpathSync.native(mkdtempSync(join(tmpdir(), "shf49-runtime-test-")));
   const date = new Date(); date.setUTCDate(date.getUTCDate() + 7); date.setUTCHours(0, 0, 0, 0);
   const day = date.toISOString().slice(0, 10), next = new Date(date); next.setUTCDate(next.getUTCDate() + 1);
@@ -52,6 +60,11 @@ export async function nativeRuntimeFixture(kind: ShiftOperationKindV1) {
   const faults = { readbackIdentity: false, readbackMismatch: false, commitAck: false, insert2: false,
     rowsAffected: 1 as number | undefined, metadata: false };
   const events: string[] = [], sqlCalls: string[] = [];
+  const lifecycle: Array<{ event: string; ms: number }> = [];
+  const event = (name: string) => {
+    events.push(name);
+    if (lifecycle.length < 24) lifecycle.push({ event: name, ms: Math.round(performance.now() - started) });
+  };
   let sqlGate: (() => Promise<void>) | undefined;
   let nextId = 100n;
   const q = async (view: Record<string, ShiftOracleRow[]>, sql: string, binds: import("oracledb").BindParameters, bound: number,
@@ -66,7 +79,12 @@ export async function nativeRuntimeFixture(kind: ShiftOperationKindV1) {
       code: "M01", label: "סינתטי", unitType: "G01" }];
     if (/FROM SHIFTER\.shf_inner_jobs/i.test(sql)) return []; // Explicit empty isolated inquiry table.
     if (faults.metadata && sql.includes("metadata:properties")) throw Error("Isolated metadata fault");
+    const queryStart = performance.now();
     const result = await f.queryOn(view, sql, binds, bound);
+    const elapsed = performance.now() - queryStart;
+    queryTiming.calls++; queryTiming.ms += elapsed;
+    queryTiming.maxMs = Math.max(queryTiming.maxMs, elapsed);
+    queryTiming.maxBytes = Math.max(queryTiming.maxBytes, Buffer.byteLength(sql));
     if (faults.readbackMismatch && readLease && stats.commits && sql.includes("shf49:days")) {
       return result.map(row => record(row) ? { ...row, REMARK: "isolated-readback-drift" } : row);
     }
@@ -131,21 +149,26 @@ export async function nativeRuntimeFixture(kind: ShiftOperationKindV1) {
     namespace: "shift-management-v0.1", canonicalDirectory: directory, employeeScope: nativeShiftEmployeeScope("1"),
     identityRevision: native.source.reference.identityRevision, state: "ready" }), { flag: "wx" });
   const readPool: OraclePool = { async getConnection() {
-    const view = structuredClone(f.data); stats.readLeases++; events.push("read-acquire");
+    const view = structuredClone(f.data); stats.readLeases++; event("read-acquire");
     return { callTimeout: 0, execute: (sql, binds, bound) => q(view, sql, binds, bound, true),
-      async break() {}, async rollback() {}, async close() { events.push("read-close"); } };
+      async break() {}, async rollback() {}, async close() { event("read-close"); } };
   }, async close() { stats.poolCloses++; } };
   const nativePool: NativePool = { async getConnection() {
-    let view = structuredClone(f.data), inserts = 0; stats.writeLeases++; events.push("writer-acquire");
+    let view = structuredClone(f.data), inserts = 0; stats.writeLeases++; event("writer-acquire");
     const connection: NativeConnection = { callTimeout: 0,
       async execute(sql, input, bound) {
         if (!record(input)) throw Error("Isolated named binds required");
+        const bindStart = performance.now();
         if (Object.keys(input).some(name => !new RegExp(`:${name}\\b`).test(sql)))
           throw Error("Isolated Oracle rejects an unused DML bind");
+        const elapsed = performance.now() - bindStart;
+        bindTiming.calls++; bindTiming.ms += elapsed; bindTiming.maxMs = Math.max(bindTiming.maxMs, elapsed);
+        bindTiming.maxBytes = Math.max(bindTiming.maxBytes, Buffer.byteLength(sql));
+        bindTiming.maxBinds = Math.max(bindTiming.maxBinds, Object.keys(input).length);
         if (sql.includes("shf49:lock:")) { stats.locks++; return { rows: [{ key: input.employeeId ?? input.dayId }] }; }
         if (sql.includes("shf49:sequence")) { stats.sequence++; return { rows: [{ dayId: String(nextId++) }] }; }
         if (/^(?:SELECT|WITH|SET)\b/.test(sql)) return { rows: await q(view, sql, input, bound) };
-        stats.active++; events.push("sql-start");
+        stats.active++; event("sql-start");
         try {
           await sqlGate?.();
           const get = (key: string) => {
@@ -169,16 +192,16 @@ export async function nativeRuntimeFixture(kind: ShiftOperationKindV1) {
             return { rowsAffected: faults.rowsAffected };
           }
           throw Error("Unexpected isolated DML");
-        } finally { stats.active--; events.push("sql-settled"); }
+        } finally { stats.active--; event("sql-settled"); }
       },
-      async commit() { events.push("commit"); stats.commits++;
+      async commit() { event("commit"); stats.commits++;
         for (const table of Object.keys(f.data)) f.data[table] = structuredClone(view[table]);
         if (faults.commitAck) throw Error("Isolated ACK loss"); },
-      async rollback() { stats.rollbacks++; view = structuredClone(f.data); },
-      async break() { stats.breaks++; events.push("break"); },
+      async rollback() { event("rollback"); stats.rollbacks++; view = structuredClone(f.data); },
+      async break() { stats.breaks++; event("break"); },
       async close() {
         if (stats.active) throw Error("Isolated unsafe lease close");
-        stats.closes++; events.push("writer-close");
+        stats.closes++; event("writer-close");
       },
     }; return connection;
   }, async close() { if (stats.active) throw Error("Isolated unsafe pool close"); stats.poolCloses++; } };
@@ -188,7 +211,11 @@ export async function nativeRuntimeFixture(kind: ShiftOperationKindV1) {
   const csv = "personalId,activityCode,date,location,startTime,endTime\n" +
     `001234567,1,${day.slice(8, 10)}/${day.slice(5, 7)}/${day.slice(0, 4)},m,09:00,10:00\n` +
     `X001234567,1,${secondDay.slice(8, 10)}/${secondDay.slice(5, 7)}/${secondDay.slice(0, 4)},m,09:00,10:00`;
-  return { ...f, env, config, binding, native, factories, draft, csv, stats, faults, events, sqlCalls,
+  mark("fixture-ready");
+  return { ...f, env, config, binding, native, factories, draft, csv, stats, faults, events, sqlCalls, mark,
+    timing: () => ({ phases, lifecycle, queries: { ...queryTiming, ms: Math.round(queryTiming.ms), maxMs: Math.round(queryTiming.maxMs) },
+      binds: { ...bindTiming, ms: Math.round(bindTiming.ms), maxMs: Math.round(bindTiming.maxMs) },
+      leases: { read: stats.readLeases, write: stats.writeLeases }, commits: stats.commits }),
     directory, pauseSql(value: typeof sqlGate) { sqlGate = value; },
     close: () => rmSync(directory, { recursive: true, force: true }) };
 }
