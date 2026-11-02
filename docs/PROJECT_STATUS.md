@@ -30,8 +30,13 @@ No live Oracle, real host start or current catalog cause was verified.
 Full backend2286/frontend846 suites were not rerun. Standard document verifier
 NOT RUN: its historical excluded reference remains policy-blocked; no alternate
 access was attempted. Unrelated clone workflow and user edits remain unstaged.
-Next action: publish seven diagnostic/help/test paths plus this checkpoint
-paragraph, then operator reruns the same -AllTestUnits command and returns
+Diagnostic package78db78f4c44c5ce799ebdb140287bc5d3aad1c44 was published
+in eight authorized paths. Syntax/parsing, TSC, imports, SQL preservation,
+privacy/whitespace and pure30-asset checks passed; no full-suite rerun.
+Direct remote matched HEAD, cached0/0, index/conflicts empty;18 unrelated/
+concurrent dirty paths and other checkpoint content remained preserved.
+Standard document verifier was not run because of its policy-excluded reference.
+Next action: operator reruns the same -AllTestUnits command and returns
 the sanitized stage/reason/counts. This is diagnostic repair, not data repair
 or permission to bypass the failed source condition.
 
