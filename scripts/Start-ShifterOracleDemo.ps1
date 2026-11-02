@@ -30,6 +30,8 @@ function Format-ShifterOracleDemoFailure {
         'DEMO_CLIENT_DIR_REQUIRED' { 'Supply the existing local absolute Oracle Client 19.3 bin directory. No Oracle connection attempted.' }
         'DEMO_TNS_REQUIRED' { 'Supply the existing local absolute TNS_ADMIN network/admin directory. No Oracle connection attempted.' }
         'DEMO_OCI_BINARY_MISSING' { 'The supplied Oracle Client directory must contain oci.dll. Nothing is installed or downloaded. No Oracle connection attempted.' }
+        'DEMO_CLIENT_AMBIGUOUS' { 'Multiple compatible local Oracle homes found; supply -ClientLibDir and -TnsAdmin explicitly. No Oracle connection attempted.' }
+        'DEMO_CLIENT_DISCOVERY_FAILED' { 'Local Oracle metadata discovery was unavailable; supply -ClientLibDir and -TnsAdmin explicitly. No Oracle connection attempted.' }
         'DEMO_INPUT_SETUP_FAILED' { 'Oracle process input preparation failed. Check approved process inputs and secure input availability; no credential verification or Oracle connection attempted.' }
         'DEMO_NODE_STARTUP_FAILED' { 'Node host could not start or stopped with an error. See its sanitized status above, if available. This code alone does not establish an Oracle login failure; no fallback or automatic retry was performed.' }
         default {
@@ -38,6 +40,168 @@ function Format-ShifterOracleDemoFailure {
         }
     }
     return "Oracle demo [$code]: $action"
+}
+
+function Test-ShifterOracleDemoDirectory {
+    param([string]$Path)
+    try {
+        return (-not [string]::IsNullOrWhiteSpace($Path) -and $Path.Length -le 4096 -and
+            $Path -ceq $Path.Trim() -and $Path -match '\A[A-Za-z]:[\\/]' -and
+            (Test-Path -LiteralPath $Path -PathType Container -ErrorAction Stop))
+    } catch { return $false }
+}
+
+function Get-ShifterOracleDemoRegisteredHomes {
+    # One known installation key, explicitly in the 64-bit view. Never enumerate
+    # registry values, profiles or credential stores; never expand registry text.
+    $base = $null
+    $key = $null
+    try {
+        $base = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
+            [Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry64)
+        $key = $base.OpenSubKey('SOFTWARE\Oracle\KEY_OraClient19Home1', $false)
+        if ($null -ne $key) {
+            $options = [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames
+            [pscustomobject]@{
+                OracleHome = $key.GetValue('ORACLE_HOME', $null, $options)
+                TnsAdmin = $key.GetValue('TNS_ADMIN', $null, $options)
+            }
+        }
+    } finally {
+        if ($null -ne $key) { $key.Dispose() }
+        if ($null -ne $base) { $base.Dispose() }
+    }
+}
+
+function Get-ShifterOracleDemoStandardHome {
+    # Bounded current-account candidate only; no recursive search or other users.
+    $drive = $env:SystemDrive
+    $user = [Environment]::UserName
+    if ($drive -match '\A[A-Za-z]:\z' -and $user -notin @('.', '..') -and
+        $user -match '\A[^\\/:*?"<>|]+\z') {
+        return "$drive\app\client\$user\product\19.0.0\client_1"
+    }
+}
+
+function Get-ShifterOracleDemoOciVersion {
+    param([string]$Path)
+    $version = [Diagnostics.FileVersionInfo]::GetVersionInfo($Path)
+    return (($version.FileMajorPart -eq 19 -and $version.FileMinorPart -eq 3) -or
+        ($version.ProductMajorPart -eq 19 -and $version.ProductMinorPart -eq 3))
+}
+
+function Get-ShifterOracleDemoOciMetadata {
+    param([string]$Path)
+    $stream = $null
+    $reader = $null
+    try {
+        # Inspect bounded PE metadata only. Never load/execute the driver.
+        $stream = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite)
+        $reader = New-Object IO.BinaryReader($stream)
+        if ($stream.Length -lt 64 -or $reader.ReadUInt16() -ne 0x5A4D) { return }
+        $stream.Position = 0x3C
+        $offset = $reader.ReadInt32()
+        if ($offset -lt 64 -or $offset -gt 1048576 -or $offset -gt ($stream.Length - 6)) { return }
+        $stream.Position = $offset
+        if ($reader.ReadUInt32() -ne 0x4550) { return }
+        $x64 = $reader.ReadUInt16() -eq 0x8664
+        [pscustomobject]@{ Version19_3 = (Get-ShifterOracleDemoOciVersion $Path); X64 = $x64 }
+    } catch { return } finally {
+        if ($null -ne $reader) { $reader.Dispose() }
+        if ($null -ne $stream) { $stream.Dispose() }
+    }
+}
+
+function Get-ShifterOracleDemoHomeCandidate {
+    param([string]$OracleHome, [string]$RegisteredTns)
+    if (-not (Test-ShifterOracleDemoDirectory $OracleHome)) { return }
+    $root = $OracleHome.TrimEnd('\', '/')
+    # ORACLE_HOME can name a home root or its BIN directory.
+    $bin = Join-Path $root 'bin'
+    if ([IO.Path]::GetFileName($root) -ieq 'bin') {
+        $bin = $root
+        $root = Split-Path $root -Parent
+    }
+    if (-not (Test-ShifterOracleDemoDirectory $bin)) { return }
+    $oci = Join-Path $bin 'oci.dll'
+    if (-not (Test-Path -LiteralPath $oci -PathType Leaf -ErrorAction Stop)) { return }
+    $metadata = Get-ShifterOracleDemoOciMetadata $oci
+    if ($null -eq $metadata -or -not $metadata.Version19_3 -or -not $metadata.X64) { return }
+    $admin = if ($RegisteredTns) { $RegisteredTns } else { Join-Path $root 'network\admin' }
+    [pscustomobject]@{ ClientLibDir = $bin; TnsAdmin = $admin }
+}
+
+function Resolve-ShifterOracleDemoPaths {
+    [CmdletBinding()]
+    param(
+        [string]$ClientLibDir = $env:SHF_ORACLE_CLIENT_LIB_DIR,
+        [string]$TnsAdmin = $env:TNS_ADMIN
+    )
+    # Explicitly bound empty values fail; never silently replace invalid input.
+    $clientSpecified = $PSBoundParameters.ContainsKey('ClientLibDir') -or
+        $null -ne [Environment]::GetEnvironmentVariable('SHF_ORACLE_CLIENT_LIB_DIR', 'Process')
+    $tnsSpecified = $PSBoundParameters.ContainsKey('TnsAdmin') -or
+        $null -ne [Environment]::GetEnvironmentVariable('TNS_ADMIN', 'Process')
+    if ($clientSpecified) {
+        if (-not (Test-ShifterOracleDemoDirectory $ClientLibDir)) {
+            throw (New-ShifterOracleDemoFailure 'DEMO_CLIENT_DIR_REQUIRED')
+        }
+        $hasOci = $false
+        try {
+            $hasOci = Test-Path -LiteralPath (Join-Path $ClientLibDir 'oci.dll') -PathType Leaf -ErrorAction Stop
+        } catch { $hasOci = $false }
+        if (-not $hasOci) {
+            throw (New-ShifterOracleDemoFailure 'DEMO_OCI_BINARY_MISSING')
+        }
+    }
+    if ($tnsSpecified -and -not (Test-ShifterOracleDemoDirectory $TnsAdmin)) {
+        throw (New-ShifterOracleDemoFailure 'DEMO_TNS_REQUIRED')
+    }
+    $source = 'explicit/process'
+    if (-not $clientSpecified -or -not $tnsSpecified) {
+        try {
+            $candidate = Get-ShifterOracleDemoHomeCandidate -OracleHome $env:ORACLE_HOME
+            $source = 'ORACLE_HOME'
+            if ($null -eq $candidate) {
+                $candidates = @()
+                foreach ($registered in @(Get-ShifterOracleDemoRegisteredHomes)) {
+                    $found = Get-ShifterOracleDemoHomeCandidate -OracleHome $registered.OracleHome -RegisteredTns $registered.TnsAdmin
+                    if ($null -ne $found) {
+                        $found | Add-Member -NotePropertyName Source -NotePropertyValue 'registry64'
+                        $candidates += $found
+                    }
+                }
+                $standard = Get-ShifterOracleDemoHomeCandidate -OracleHome (Get-ShifterOracleDemoStandardHome)
+                if ($null -ne $standard -and
+                    $standard.ClientLibDir -notin @($candidates | ForEach-Object { $_.ClientLibDir })) {
+                    $standard | Add-Member -NotePropertyName Source -NotePropertyValue 'current-account-standard'
+                    $candidates += $standard
+                }
+                $candidates = @($candidates | Sort-Object -Property ClientLibDir -Unique)
+                if ($candidates.Count -gt 1) { throw (New-ShifterOracleDemoFailure 'DEMO_CLIENT_AMBIGUOUS') }
+                if ($candidates.Count -eq 1) {
+                    $candidate = $candidates[0]
+                    $source = $candidate.Source
+                }
+            }
+            if ($null -ne $candidate) {
+                if (-not $clientSpecified) { $ClientLibDir = $candidate.ClientLibDir }
+                if (-not $tnsSpecified) {
+                    $TnsAdmin = $candidate.TnsAdmin
+                    if (-not (Test-ShifterOracleDemoDirectory $TnsAdmin) -or
+                        -not (Test-Path -LiteralPath (Join-Path $TnsAdmin 'tnsnames.ora') -PathType Leaf)) {
+                        throw (New-ShifterOracleDemoFailure 'DEMO_TNS_REQUIRED')
+                    }
+                }
+            }
+        } catch {
+            if ($_.Exception.Data['ShifterOracleDemoCode'] -cin @('DEMO_CLIENT_AMBIGUOUS', 'DEMO_TNS_REQUIRED')) { throw }
+            throw (New-ShifterOracleDemoFailure 'DEMO_CLIENT_DISCOVERY_FAILED')
+        }
+    }
+    if (-not $ClientLibDir) { throw (New-ShifterOracleDemoFailure 'DEMO_CLIENT_DIR_REQUIRED') }
+    if (-not $TnsAdmin) { throw (New-ShifterOracleDemoFailure 'DEMO_TNS_REQUIRED') }
+    [pscustomobject]@{ ClientLibDir = $ClientLibDir; TnsAdmin = $TnsAdmin; Source = $source }
 }
 
 function Assert-ShifterOracleDemoEnvironment {
@@ -100,31 +264,12 @@ function Start-ShifterOracleDemo {
         $OrgUnitId -match '[\s\p{Cc}*%?\\/,;]' -or $OrgUnitId -cin @('-1', 'null'))) {
         throw (New-ShifterOracleDemoFailure 'DEMO_UNIT_INVALID')
     }
-    if (-not $ClientLibDir) {
-        if ($NonInteractive) { throw (New-ShifterOracleDemoFailure 'DEMO_CLIENT_DIR_REQUIRED') }
-        $ClientLibDir = Read-Host -Prompt 'Existing Oracle Client 19.3 bin directory containing oci.dll (local absolute path)'
-    }
-    if (-not $TnsAdmin) {
-        if ($NonInteractive) { throw (New-ShifterOracleDemoFailure 'DEMO_TNS_REQUIRED') }
-        $TnsAdmin = Read-Host -Prompt 'Existing TNS_ADMIN network/admin directory (local absolute path)'
-    }
-    foreach ($inputDirectory in @(
-        @($ClientLibDir, 'DEMO_CLIENT_DIR_REQUIRED'), @($TnsAdmin, 'DEMO_TNS_REQUIRED')
-    )) {
-        $valid = $false
-        try {
-            $path = $inputDirectory[0]
-            $valid = -not [string]::IsNullOrWhiteSpace($path) -and $path.Length -le 4096 -and
-                $path -ceq $path.Trim() -and $path -match '\A[A-Za-z]:[\\/]' -and
-                (Test-Path -LiteralPath $path -PathType Container -ErrorAction Stop)
-        } catch { $valid = $false }
-        if (-not $valid) { throw (New-ShifterOracleDemoFailure $inputDirectory[1]) }
-    }
-    $hasOci = $false
-    try { $hasOci = Test-Path -LiteralPath (Join-Path $ClientLibDir 'oci.dll') -PathType Leaf -ErrorAction Stop } catch { $hasOci = $false }
-    if (-not $hasOci) {
-        throw (New-ShifterOracleDemoFailure 'DEMO_OCI_BINARY_MISSING')
-    }
+    $pathInputs = @{}
+    if ($PSBoundParameters.ContainsKey('ClientLibDir')) { $pathInputs.ClientLibDir = $ClientLibDir }
+    if ($PSBoundParameters.ContainsKey('TnsAdmin')) { $pathInputs.TnsAdmin = $TnsAdmin }
+    $paths = Resolve-ShifterOracleDemoPaths @pathInputs
+    $ClientLibDir = $paths.ClientLibDir
+    $TnsAdmin = $paths.TnsAdmin
     $keys = @('SHF_ORACLE_CONNECT_STRING', 'SHF_ORACLE_USER', 'SHF_ORACLE_PASSWORD',
         'SHF_ORACLE_CLIENT_LIB_DIR', 'TNS_ADMIN', 'NODE_ENV', 'SHF_APP_ENV')
     $previous = @{}

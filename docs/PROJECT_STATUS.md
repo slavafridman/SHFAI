@@ -8,6 +8,23 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ## Resume here
 
+### SHF-ORACLE-DEMO-PATHS — automatic path resolution, 2026-11-02
+
+User requested no further Oracle client/TNS path questions. The demo launcher
+now resolves explicit parameters, process path inputs, compatible ORACLE_HOME,
+then bounded64-bit registered/current-user standard candidates. Invalid
+explicit paths do not silently fall back; ambiguous compatible homes reject.
+Current installation metadata verified automatic Client19.3 x64 and TNS
+directory discovery via registry64, without reading TNS configuration contents.
+PowerShell905 assertions and shared-environment94 assertions passed, together
+with parser and scoped whitespace checks. No backend/API/auth/native-write
+change or live Oracle/driver/network test occurred; Node2252 was not rerun.
+Password hardcoding requested afterward was not implemented: credentials
+remain inherited process inputs or secure interactive input, never public
+script/Git/Docker contents. Excluded env files were not accessed or bypassed.
+Next action: publish these three assigned launcher/test/help files and only
+this checkpoint section, preserving concurrent clone-work state below.
+
 Current all-TEST-access request,2026-11-02 at11:37: user explicitly authorized
 all-unit access. Accepted55-scope-v0.1 means read-only access to all J01 teams
 in the existing approved TEST target through seven existing readers, not DBA

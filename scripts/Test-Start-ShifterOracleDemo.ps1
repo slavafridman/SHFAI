@@ -17,7 +17,7 @@ foreach ($file in @($launcher, $PSCommandPath)) {
 $keys = @('SHF_ORACLE_CONNECT_STRING', 'SHF_ORACLE_USER', 'SHF_ORACLE_PASSWORD',
     'SHF_ORACLE_CLIENT_LIB_DIR', 'TNS_ADMIN', 'NODE_ENV', 'SHF_APP_ENV', 'NODE_OPTIONS',
     'SHF_NATIVE_EXIT_CONFIG', 'SHF_ORACLE_CONFIG', 'SHF_TEST_ORACLE_STAGE_WRITE_ENABLED',
-    'SHF_ORACLE_DEMO_ORG_UNIT_ID')
+    'SHF_ORACLE_DEMO_ORG_UNIT_ID', 'ORACLE_HOME')
 $original = @{}
 foreach ($key in $keys) { $original[$key] = [Environment]::GetEnvironmentVariable($key, 'Process') }
 $directory = Join-Path $PSScriptRoot (".shf-oracle-demo-launcher-" + [Guid]::NewGuid().ToString('N'))
@@ -27,6 +27,12 @@ $script:expectedUnit = 'DEMO'
 $script:expectedAll = $false
 $script:prompts = New-Object 'System.Collections.Generic.List[string]'
 $script:answers = New-Object 'System.Collections.Generic.Queue[string]'
+$script:homes = @()
+$script:standardHome = $null
+$script:registryDenied = $false
+$script:metadataCalls = 0
+$script:expectedClient = $directory
+$script:expectedTns = $directory
 function Get-DemoSnapshot {
     $snapshot = @{}
     foreach ($key in $keys) { $snapshot[$key] = [Environment]::GetEnvironmentVariable($key, 'Process') }
@@ -51,6 +57,12 @@ function Reset-DemoSynthetic {
     $script:expectedAll = $false
     $script:answers.Clear()
     $script:prompts.Clear()
+    $script:homes = @()
+    $script:standardHome = $null
+    $script:registryDenied = $false
+    $script:metadataCalls = 0
+    $script:expectedClient = $directory
+    $script:expectedTns = $directory
 }
 function Assert-DemoRejected($action, [string]$Code) {
     $before = Get-DemoSnapshot
@@ -65,7 +77,8 @@ function Assert-DemoRejected($action, [string]$Code) {
     Assert-Demo $caught 'invalid demo input fails explicitly'
     Assert-Demo ($script:invocations -eq $calls) 'rejection happens before Node/pool/HTTP'
     Assert-DemoSnapshot $before
-    Assert-Demo (-not (($output -join "`n") -match 'isolated-synthetic-password|isolated-secure-input|RAW_EXCEPTION_SENTINEL')) 'rejected input and exception never echoed'
+    Assert-Demo (-not (($output -join "`n") -match 'isolated-synthetic-password|isolated-secure-input|RAW_EXCEPTION_SENTINEL|private-path' -or
+        ($output -join "`n") -match [regex]::Escape($directory))) 'rejected input, personal path and exception never echoed'
 }
 try {
     New-Item -ItemType Directory -Path $directory | Out-Null
@@ -75,8 +88,23 @@ try {
     $calls = $script:invocations
     . $launcher
     $nodeInvoker = ${function:Invoke-ShifterOracleDemoNode}
+    $metadataReader = ${function:Get-ShifterOracleDemoOciMetadata}
     Assert-DemoSnapshot $before
     Assert-Demo ($script:invocations -eq $calls -and $script:prompts.Count -eq 0) 'dot-source defines functions without launching or prompting'
+    # Isolated discovery seams: never inspect the operator's registry or client.
+    function Get-ShifterOracleDemoRegisteredHomes {
+        if ($script:registryDenied) { throw 'RAW_EXCEPTION_SENTINEL private-path isolated-synthetic-password' }
+        return $script:homes
+    }
+    function Get-ShifterOracleDemoStandardHome { return $script:standardHome }
+    function Get-ShifterOracleDemoOciMetadata {
+        param([string]$Path)
+        $script:metadataCalls++
+        return [pscustomobject]@{
+            Version19_3 = ($Path -notmatch 'badversion|old10')
+            X64 = ($Path -notmatch 'x86|old10')
+        }
+    }
     function Invoke-ShifterOracleDemoNode {
         param([string]$EntryPoint, [string]$Unit, [int]$ListenPort, [switch]$AllTestUnits)
         $script:invocations++
@@ -92,20 +120,174 @@ try {
         Assert-Demo ($env:NODE_ENV -ceq 'test' -and $env:SHF_APP_ENV -ceq 'test') 'explicit isolated TEST profile'
         Assert-Demo ($env:SHF_ORACLE_USER -ceq 'shifter' -and $env:SHF_ORACLE_CONNECT_STRING -ceq 'CTIDBT_WFMT.WORLD') 'approved account and alias only'
         Assert-Demo ($env:SHF_ORACLE_PASSWORD -cin @('isolated-synthetic-password', 'isolated-secure-input')) 'synthetic secret only in process environment'
+        Assert-Demo ($env:SHF_ORACLE_CLIENT_LIB_DIR -ceq $script:expectedClient -and
+            $env:TNS_ADMIN -ceq $script:expectedTns) 'only resolved paths reach child process'
         Assert-Demo (-not $env:SHF_ORACLE_CONFIG -and -not $env:SHF_NATIVE_EXIT_CONFIG) 'no inherited native or arbitrary application configuration'
         Assert-Demo ($null -eq [Environment]::GetEnvironmentVariable('SHF_ORACLE_DEMO_ORG_UNIT_ID', 'Process')) 'launcher-only unit key never reaches Node'
         if ($script:failNode) { throw 'RAW_EXCEPTION_SENTINEL isolated-synthetic-password' }
     }
     function Read-Host {
         param($Prompt, [switch]$AsSecureString, $ErrorAction)
-        if ([string]$Prompt -match '(?i)unit|org.?unit' -or
+        if (-not $AsSecureString -or [string]$Prompt -match '(?i)unit|org.?unit' -or
             [string]$Prompt -match ([string][char]0x05D9 + [char]0x05D7 + [char]0x05D9 + [char]0x05D3 + [char]0x05D4)) {
-            throw 'Unit prompts are forbidden'
+            throw 'Path and unit prompts are forbidden'
         }
         $script:prompts.Add([string]$Prompt)
         if ($AsSecureString) { return (ConvertTo-SecureString 'isolated-secure-input' -AsPlainText -Force) }
         if ($script:answers.Count -eq 0) { throw 'Unexpected isolated prompt' }
         return $script:answers.Dequeue()
+    }
+    $oracleHome = Join-Path $directory 'home19'
+    $bin = Join-Path $oracleHome 'bin'
+    $admin = Join-Path $oracleHome 'network\admin'
+    New-Item -ItemType Directory -Path $bin, $admin | Out-Null
+    New-Item -ItemType File -Path (Join-Path $bin 'oci.dll'), (Join-Path $admin 'tnsnames.ora') | Out-Null
+    Reset-DemoSynthetic
+    $env:SHF_ORACLE_CLIENT_LIB_DIR = $null
+    $env:TNS_ADMIN = $null
+    $script:homes = @([pscustomobject]@{ OracleHome = $oracleHome; TnsAdmin = $null })
+    $script:expectedAll = $true
+    $script:expectedClient = $bin
+    $script:expectedTns = $admin
+    $before = Get-DemoSnapshot
+    $output = @(Start-ShifterOracleDemo -AllTestUnits)
+    Assert-DemoSnapshot $before
+    Assert-Demo ($script:prompts.Count -eq 0) 'registered compatible home resolves both paths without any prompt'
+    Assert-Demo ($script:metadataCalls -gt 0) 'automatic client requires binary metadata validation'
+    Assert-Demo (-not (($output -join "`n") -match [regex]::Escape($directory))) 'automatic status never prints personal paths'
+    # Real PE reader, synthetic binary and fake version metadata: no installed DLL.
+    function Get-ShifterOracleDemoOciVersion { param([string]$Path) return $script:fakeVersion }
+    $pe = Join-Path $directory 'synthetic-pe.dll'
+    $bytes = New-Object byte[] 160
+    $bytes[0] = 0x4D; $bytes[1] = 0x5A; $bytes[60] = 128
+    $bytes[128] = 0x50; $bytes[129] = 0x45
+    $bytes[132] = 0x64; $bytes[133] = 0x86
+    [IO.File]::WriteAllBytes($pe, $bytes)
+    $script:fakeVersion = $true
+    $metadata = & $metadataReader $pe
+    Assert-Demo ($metadata.X64 -and $metadata.Version19_3) 'PE AMD64 header and fake 19.3 version accepted without DLL execution'
+    $script:fakeVersion = $false
+    Assert-Demo (-not (& $metadataReader $pe).Version19_3) 'incorrect version metadata not accepted as 19.3'
+    $bytes[132] = 0x4C; $bytes[133] = 0x01
+    [IO.File]::WriteAllBytes($pe, $bytes)
+    Assert-Demo (-not (& $metadataReader $pe).X64) 'PE x86 header rejected as x64'
+    $bytes[60] = 255
+    [IO.File]::WriteAllBytes($pe, $bytes)
+    Assert-Demo ($null -eq (& $metadataReader $pe)) 'out of bounds PE offset rejected safely'
+    Assert-Demo ($null -eq (& $metadataReader (Join-Path $directory 'oci.dll'))) 'empty explicit sentinel is not an automatic compatible client'
+    $otherHome = Join-Path $directory 'other19'
+    foreach ($fixtureHome in @($otherHome, (Join-Path $directory 'badversion'), (Join-Path $directory 'x86'), (Join-Path $directory 'old10'))) {
+        New-Item -ItemType Directory -Path (Join-Path $fixtureHome 'bin'), (Join-Path $fixtureHome 'network\admin') | Out-Null
+        New-Item -ItemType File -Path (Join-Path $fixtureHome 'bin\oci.dll'), (Join-Path $fixtureHome 'network\admin\tnsnames.ora') | Out-Null
+    }
+    foreach ($oracleInput in @($oracleHome, $bin)) {
+        Reset-DemoSynthetic
+        $env:SHF_ORACLE_CLIENT_LIB_DIR = $null
+        $env:TNS_ADMIN = $null
+        $env:ORACLE_HOME = $oracleInput
+        $script:registryDenied = $true
+        $paths = Resolve-ShifterOracleDemoPaths
+        Assert-Demo ($paths.ClientLibDir -ceq $bin -and $paths.TnsAdmin -ceq $admin -and
+            $paths.Source -ceq 'ORACLE_HOME') 'compatible process ORACLE_HOME root or BIN wins before registry'
+    }
+    Reset-DemoSynthetic
+    $script:registryDenied = $true
+    $env:ORACLE_HOME = $oracleHome
+    $paths = Resolve-ShifterOracleDemoPaths
+    Assert-Demo ($paths.ClientLibDir -ceq $directory -and $paths.TnsAdmin -ceq $directory -and
+        $script:metadataCalls -eq 0) 'explicit process paths win without automatic metadata or registry access'
+    $env:SHF_ORACLE_CLIENT_LIB_DIR = 'invalid-relative'
+    $env:TNS_ADMIN = '\\synthetic\share'
+    Start-ShifterOracleDemo -OrgUnitId DEMO -ClientLibDir $directory -TnsAdmin $directory -NonInteractive | Out-Null
+    foreach ($bad in @('', 'relative', '\\synthetic\share', ' C:\invalid', 'Z:\absent-shf-fixture')) {
+        Reset-DemoSynthetic
+        $env:ORACLE_HOME = $oracleHome
+        Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits -ClientLibDir $bad } 'DEMO_CLIENT_DIR_REQUIRED'
+        Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits -TnsAdmin $bad } 'DEMO_TNS_REQUIRED'
+        if ($bad) {
+            $env:SHF_ORACLE_CLIENT_LIB_DIR = $bad
+            Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits } 'DEMO_CLIENT_DIR_REQUIRED'
+            $env:SHF_ORACLE_CLIENT_LIB_DIR = $directory
+            $env:TNS_ADMIN = $bad
+            Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits } 'DEMO_TNS_REQUIRED'
+        }
+        Assert-Demo ($script:prompts.Count -eq 0 -and $script:metadataCalls -eq 0) 'invalid specified input never falls back or asks for paths'
+    }
+    foreach ($bad in @('relative', '\\synthetic\share', (Join-Path $directory 'old10'),
+        (Join-Path $directory 'x86'), (Join-Path $directory 'badversion'))) {
+        Reset-DemoSynthetic
+        $env:SHF_ORACLE_CLIENT_LIB_DIR = $null
+        $env:TNS_ADMIN = $null
+        $env:ORACLE_HOME = $bad
+        $env:SHF_ORACLE_PASSWORD = $null
+        Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits } 'DEMO_CLIENT_DIR_REQUIRED'
+        Assert-Demo ($script:prompts.Count -eq 0) 'invalid or incompatible automatic home fails before password prompt'
+    }
+    Reset-DemoSynthetic
+    $env:SHF_ORACLE_CLIENT_LIB_DIR = $null
+    $env:TNS_ADMIN = $null
+    $script:homes = @([pscustomobject]@{ OracleHome = $oracleHome; TnsAdmin = $null })
+    $script:standardHome = $oracleHome
+    $paths = Resolve-ShifterOracleDemoPaths
+    Assert-Demo ($paths.ClientLibDir -ceq $bin -and $paths.Source -ceq 'registry64') 'same standard and registered home deduplicated, registry priority retained'
+    $script:standardHome = $otherHome
+    Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits } 'DEMO_CLIENT_AMBIGUOUS'
+    $script:homes = @()
+    $paths = Resolve-ShifterOracleDemoPaths
+    Assert-Demo ($paths.ClientLibDir -ceq (Join-Path $otherHome 'bin') -and
+        $paths.Source -ceq 'current-account-standard') 'only current-account bounded standard candidate can resolve alone'
+    $script:registryDenied = $true
+    Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits } 'DEMO_CLIENT_DISCOVERY_FAILED'
+    foreach ($bad in @('relative', '\\synthetic\share', (Join-Path $directory 'old10'),
+        (Join-Path $directory 'x86'), (Join-Path $directory 'badversion'))) {
+        Reset-DemoSynthetic
+        $env:SHF_ORACLE_CLIENT_LIB_DIR = $null
+        $env:TNS_ADMIN = $null
+        $script:homes = @([pscustomobject]@{ OracleHome = $bad; TnsAdmin = $null })
+        Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits -NonInteractive } 'DEMO_CLIENT_DIR_REQUIRED'
+    }
+    Reset-DemoSynthetic
+    $env:SHF_ORACLE_CLIENT_LIB_DIR = $null
+    $env:TNS_ADMIN = $null
+    $script:homes = @(
+        [pscustomobject]@{ OracleHome = $oracleHome; TnsAdmin = $null },
+        [pscustomobject]@{ OracleHome = $otherHome; TnsAdmin = $null })
+    Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits } 'DEMO_CLIENT_AMBIGUOUS'
+    $script:homes = @([pscustomobject]@{ OracleHome = $oracleHome; TnsAdmin = $directory })
+    Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits } 'DEMO_TNS_REQUIRED'
+    $script:homes = @([pscustomobject]@{ OracleHome = $oracleHome; TnsAdmin = $admin })
+    $paths = Resolve-ShifterOracleDemoPaths
+    Assert-Demo ($paths.TnsAdmin -ceq $admin) 'narrow registry TNS_ADMIN value used only with existing tnsnames filename'
+    $env:SHF_ORACLE_PASSWORD = $null
+    Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits -NonInteractive } 'DEMO_INPUT_SETUP_FAILED'
+    Assert-Demo ($script:prompts.Count -eq 0) 'automatic noninteractive missing password fails without any prompt'
+    Reset-DemoSynthetic
+    $env:SHF_ORACLE_CLIENT_LIB_DIR = $null
+    $env:TNS_ADMIN = $null
+    $env:ORACLE_HOME = $oracleHome
+    Remove-Item -LiteralPath (Join-Path $admin 'tnsnames.ora')
+    Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits } 'DEMO_TNS_REQUIRED'
+    Assert-Demo ($script:prompts.Count -eq 0) 'automatic TNS requires filename presence without reading contents'
+    # Explicit TNS retains original directory-only contract.
+    $script:expectedAll = $true
+    $script:expectedClient = $bin
+    Start-ShifterOracleDemo -AllTestUnits -TnsAdmin $directory -NonInteractive | Out-Null
+    New-Item -ItemType File -Path (Join-Path $admin 'tnsnames.ora') | Out-Null
+    foreach ($failure in @($false, $true)) {
+        Reset-DemoSynthetic
+        $env:SHF_ORACLE_CLIENT_LIB_DIR = $null
+        $env:TNS_ADMIN = $null
+        $env:ORACLE_HOME = $oracleHome
+        $script:expectedAll = $true
+        $script:expectedClient = $bin
+        $script:expectedTns = $admin
+        $script:failNode = $failure
+        $before = Get-DemoSnapshot
+        $caught = $false
+        try { Start-ShifterOracleDemo -AllTestUnits | Out-Null } catch { $caught = $true }
+        Assert-Demo ($caught -eq $failure) 'automatic all mode preserves foreground success and failure behavior'
+        Assert-DemoSnapshot $before
+        Assert-Demo ($script:prompts.Count -eq 0) 'automatic configured all mode has zero prompts'
     }
     foreach ($environmentUnit in @($null, 'OTHER', '*', '   ')) {
         foreach ($failure in @($false, $true)) {
@@ -296,16 +478,26 @@ try {
     [Environment]::SetEnvironmentVariable('SHF_ORACLE_CLIENT_LIB_DIR', $null, 'Process')
     [Environment]::SetEnvironmentVariable('TNS_ADMIN', $null, 'Process')
     $before = Get-DemoSnapshot
-    $script:answers.Enqueue($directory)
-    $script:answers.Enqueue($directory)
+    $env:ORACLE_HOME = $oracleHome
+    $script:expectedClient = $bin
+    $script:expectedTns = $admin
+    $before = Get-DemoSnapshot
     Start-ShifterOracleDemo | Out-Null
-    Assert-Demo ($script:prompts.Count -eq 3) 'only two missing paths and one SecureString password prompt'
-    Assert-Demo ($script:answers.Count -eq 0) 'only client and TNS answers consumed'
-    Assert-Demo ($script:prompts[2] -ceq 'Oracle password (process only)') 'existing secure helper reused'
+    Assert-Demo ($script:prompts.Count -eq 1) 'only missing SecureString password may prompt after automatic paths'
+    Assert-Demo ($script:answers.Count -eq 0) 'no path answers consumed'
+    Assert-Demo ($script:prompts[0] -ceq 'Oracle password (process only)') 'existing secure helper reused'
     Assert-DemoSnapshot $before
     $source = [IO.File]::ReadAllText($launcher)
     Assert-Demo ($source -notmatch 'Start-Process|Set-Content|WriteAllText|Add-Content|npm install|Get-Credential') 'no background process, env file, install or credential vault'
     Assert-Demo ($source -notmatch "'User'|'Machine'") 'no persistent environment changes'
+    Assert-Demo ($source -match 'RegistryView\]::Registry64' -and
+        $source -match "OpenSubKey\('SOFTWARE\\Oracle\\KEY_OraClient19Home1', \`$false\)") 'registry access restricted to the known read-only 64-bit home key'
+    $registryReads = @([regex]::Matches($source, "\.GetValue\('([^']+)'"))
+    Assert-Demo ($registryReads.Count -eq 2 -and
+        (($registryReads | ForEach-Object { $_.Groups[1].Value }) -join '|') -ceq 'ORACLE_HOME|TNS_ADMIN') 'only two explicit nonsecret registry values read'
+    Assert-Demo ($source -notmatch 'GetValueNames|GetSubKeyNames|Get-ItemProperty|Get-Content|ReadAllText|ReadAllBytes|LoadLibrary|Resolve-DnsName|Test-NetConnection|-Recurse') 'no registry dump, content reads, native loading, network resolution or recursive search'
+    Assert-Demo ($source -notmatch 'C:\\Users\\' -and
+        $source -match '\[Environment\]::UserName') 'standard home derives the current username, never a personal path literal'
     Assert-Demo ($source -match '& node \$EntryPoint --test-read-only --org-unit \$Unit --port \$ListenPort') 'foreground Node argv contains scope and port only'
     Assert-Demo ($source -match '& node \$EntryPoint --test-read-only --all-test-units --port \$ListenPort') 'all foreground argv has opt-in and port only; no unit or password'
     # Exercise the actual argv branch with an isolated command double, not Node.
@@ -325,9 +517,7 @@ try {
         param($node)
         $node -is [Management.Automation.Language.CommandAst] -and $node.GetCommandName() -eq 'Read-Host'
     }, $true))
-    Assert-Demo ($prompts.Count -eq 2 -and
-        $prompts[0].Extent.Text -match 'Oracle Client' -and
-        $prompts[1].Extent.Text -match 'TNS_ADMIN') 'launcher AST has only client and TNS Read-Host calls; no unit prompt or retry'
+    Assert-Demo ($prompts.Count -eq 0) 'launcher AST has zero Read-Host calls in every mode'
     Write-Host "PASS Oracle demo launcher: $script:passed static/synthetic assertions; no live Oracle or real Node launcher invoked."
 } finally {
     foreach ($key in $keys) { [Environment]::SetEnvironmentVariable($key, $original[$key], 'Process') }

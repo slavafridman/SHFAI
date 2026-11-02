@@ -6,12 +6,13 @@ From `D:\AIProjects\SHFAI`, in **your already-configured PowerShell terminal**,
 to read all admitted TEST application teams through the existing seven readers:
 
 ```powershell
-powershell.exe -NoProfile -File scripts\Start-ShifterOracleDemo.ps1 -AllTestUnits
+powershell.exe -NoProfile -File D:\AIProjects\SHFAI\scripts\Start-ShifterOracleDemo.ps1 -AllTestUnits
 ```
 
 Approved baseline **55-scope-v0.1** means all **J01 teams**, not every database
 table, hierarchy level, DBA access, production access or write authority.
-The existing five Oracle process inputs below are still required. No unit
+The existing Oracle process inputs below are reused, with automatic nonsecret
+client/TNS path resolution when those two inputs are absent. No unit
 environment variable or unit prompt is required in this explicit mode.
 `-AllTestUnits` ignores an existing launcher unit ENV default (even malformed),
 but rejects any explicitly supplied `-OrgUnitId`, including an empty one.
@@ -64,7 +65,7 @@ ID or password. Your configured selection remains an operator scope
 attestation, not an independently verified grant or Oracle server certificate.
 Existing scoped readers still validate source hierarchy and data; an unknown
 unit does not grant broader access. Without an environment value or parameter,
-the launcher stops before any client/TNS/password prompt or Node/Oracle
+the launcher stops before path discovery, any password prompt or Node/Oracle
 connection, with the fixed safe message:
 
 `Oracle demo [DEMO_UNIT_REQUIRED]: Set SHF_ORACLE_DEMO_ORG_UNIT_ID in your launcher environment or supply -OrgUnitId; no unit prompt or connection attempted`
@@ -79,14 +80,42 @@ and this setting does not bypass password input or grant new resource authority.
 
 The five existing process inputs are reused: `SHF_ORACLE_CONNECT_STRING`,
 `SHF_ORACLE_USER`, `SHF_ORACLE_PASSWORD`, `SHF_ORACLE_CLIENT_LIB_DIR`, `TNS_ADMIN`.
-Only `CTIDBT_WFMT`/`CTIDBT_WFMT.WORLD` and account `shifter` are accepted. If
-client/TNS paths are missing, the launcher asks for the existing Client **19.3
-x64** `bin` directory containing `oci.dll` and the existing `network/admin`
-directory; optional `-ClientLibDir`/`-TnsAdmin` supply them without prompts.
-No disk search, TNS contents, env files, registry, persistent environment or
-credential store is read/changed. A missing password is requested securely by
+Only `CTIDBT_WFMT`/`CTIDBT_WFMT.WORLD` and account `shifter` are accepted.
+**The launcher never asks for paths.** Resolution uses:
+
+1. Explicit `-ClientLibDir` / `-TnsAdmin`, independently.
+2. Process `SHF_ORACLE_CLIENT_LIB_DIR` / `TNS_ADMIN`.
+3. A compatible process `ORACLE_HOME` (home root or `bin`), deriving `bin` and
+   `network/admin`.
+4. The known read-only 64-bit HKLM `SOFTWARE\Oracle\KEY_OraClient19Home1` key,
+   reading only `ORACLE_HOME` and `TNS_ADMIN`, and the one bounded standard
+   `%SystemDrive%\app\client\<current username>\product\19.0.0\client_1` candidate.
+   The username is derived from the current process, never fixed in source.
+
+Automatic candidates require an existing local absolute client directory,
+`oci.dll` **19.3 x64** version/PE metadata and, for automatic TNS selection,
+an existing directory containing the `tnsnames.ora` filename. No DLL is loaded
+and no TNS content is read by discovery. Explicit/process paths retain the
+original directory and DLL-presence checks; Node still independently verifies
+the actual driver compatibility at startup. Invalid specified paths fail without
+falling back, even when automatic candidates exist. Duplicate homes are
+deduplicated; multiple distinct compatible registered/standard homes fail
+`DEMO_CLIENT_AMBIGUOUS`. Unavailable registry discovery fails with the constant
+`DEMO_CLIENT_DISCOVERY_FAILED`, never a raw exception or personal path.
+Missing paths fail with `DEMO_CLIENT_DIR_REQUIRED` / `DEMO_TNS_REQUIRED`
+before password input or Node. There are no path questions or automatic retries.
+
+No recursive disk search, other-user profile search, TNS resolution, env file,
+credential-store read, persistent environment change or directory creation is
+performed. Resolved path inputs are process-only and restored on success or
+failure; `ORACLE_HOME` is not changed. A configured terminal therefore needs
+only the command above and has **zero prompts**, including with `-AllTestUnits`.
+A missing password is requested securely by
 the existing `Set-ShifterOracleEnvironment` helper, process-only, never argv,
 logs or files. It is a **database connection secret**, not a user-login form.
+`-NonInteractive` rejects a missing password without prompting; there is no
+stored-password fallback. Production/configuration/authentication and read-only
+gates are unchanged. Path discovery is not database identity or readiness proof.
 No Oracle client/dependency is downloaded or installed.
 
 On successful startup, open **http://127.0.0.1:18083**. Keep the terminal open;
