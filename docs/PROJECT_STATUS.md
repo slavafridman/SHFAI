@@ -53,8 +53,17 @@ not proof that native commands meet5s under unbounded parallel load.
 Actual live basic connectivity remains pending the one-command run in the
 user's configured terminal. Excluded env files remain inaccessible and were
 not loaded. Existing TEST worlds and consumed writer state were untouched.
-Next action: publish scoped diagnostic/test corrections and provide the
-single operator command; no full-project or live-release completion claim.
+Diagnostic/test corrections were published asb18dcb17201c5ec56f9cc16750402e5bb3d8fa1d,
+exactly11 files including the tested shared process-environment helper.
+Publication checks passed155 focused cases,94 PowerShell assertions, syntax,
+TSC and scoped privacy/whitespace. Direct remote matched HEAD, cached0/0,
+index/conflicts empty;25 unrelated statuses and external checkpoint payload
+were preserved. Full2138 was not repeated during publication. The documentation
+verifier was blocked by an excluded reference; no alternative access or false
+passing verification is claimed. No live Oracle attempt occurred.
+Next action: user runs oracle-connection-check.mts --test-connectivity in the
+same configured terminal and provides only sanitized JSON. Full project and
+live release remain incomplete; simple connectivity cannot authorize writes.
 
 Scoped publication verification,2026-11-02: authorized manifest is exactly the
 11 diagnostic/helper/test/document paths; HEAD was df7c9984 with empty index,
