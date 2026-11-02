@@ -30,10 +30,32 @@ export type OracleDemoOptions = {
   testReadOnly: boolean;
   port?: number;
 } & ({ orgUnitId: string; allTestUnits?: never } | { allTestUnits: true; orgUnitId?: never });
+const scopeReasons = ["EMPTY_SCOPE", "INVALID_ROW_SHAPE", "INVALID_TEAM_CODE", "INVALID_TEAM_TYPE",
+  "MISSING_OR_INVALID_PARENT", "SELF_PARENT", "DUPLICATE_TEAM", "HIERARCHY_CARDINALITY",
+  "TEAM_LABEL_INVALID", "PARENT_NOT_G01", "PARENT_LABEL_INVALID", "PARENT_LABEL_CONFLICT",
+  "FOREIGN_OR_MISSING_TEAM", "PARENT_CHANGED", "UNCLASSIFIED_SOURCE_FAILURE"] as const;
+type ScopeDiagnostic = Readonly<{
+  stage: "discovery" | "hierarchy" | "snapshot";
+  reason: typeof scopeReasons[number];
+  discoveredCount: number;
+  validatedCount: number;
+}>;
+function safeScopeDiagnostic(value: ScopeDiagnostic): ScopeDiagnostic | undefined {
+  const count = (n: unknown): n is number => typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= 1000;
+  if (!record(value) || Object.keys(value).sort().join(",") !== "discoveredCount,reason,stage,validatedCount" ||
+      !["discovery", "hierarchy", "snapshot"].includes(value.stage) || !scopeReasons.includes(value.reason) ||
+      !count(value.discoveredCount) || !count(value.validatedCount) || value.validatedCount > value.discoveredCount)
+    return undefined;
+  return Object.freeze({ stage: value.stage, reason: value.reason,
+    discoveredCount: value.discoveredCount, validatedCount: value.validatedCount });
+}
 export class DemoHostError extends Error {
   readonly oracleCode?: string;
-  constructor(code: string, cause?: unknown) {
+  readonly scopeDiagnostic?: ScopeDiagnostic;
+  constructor(code: string, cause?: unknown, scopeDiagnostic?: ScopeDiagnostic) {
     super(code);
+    if (code === "DEMO_SCOPE_INVALID" && scopeDiagnostic)
+      this.scopeDiagnostic = safeScopeDiagnostic(scopeDiagnostic);
     const detail = record(cause) && record(cause.cause) ? cause.cause : cause;
     const candidate = record(detail) ? detail.oracleCode ?? detail.code : undefined;
     if (typeof candidate === "string" && /^(?:ORA-\d{5}|NJS-\d{3}|DPI-\d{4})$/.test(candidate))
@@ -88,8 +110,12 @@ export function demoEnvironment(source: NodeJS.ProcessEnv, options: OracleDemoOp
 // 55-scope-v0.2: one snapshot, 100-row pages + 1001st sentinel; never a partial grant.
 async function discoverUnitScope(session: OracleReadSession, signal?: AbortSignal): Promise<string[]> {
   let scopeFailure: DemoHostError | undefined;
-  const invalid: (code?: string) => never = (code = "DEMO_SCOPE_INVALID") => {
-    scopeFailure = new DemoHostError(code); throw scopeFailure;
+  let discoveredCount = 0, validatedCount = 0;
+  let stage: ScopeDiagnostic["stage"] = "discovery";
+  const invalid: (reason: ScopeDiagnostic["reason"]) => never = reason => {
+    scopeFailure = new DemoHostError("DEMO_SCOPE_INVALID", undefined,
+      { stage, reason, discoveredCount, validatedCount });
+    throw scopeFailure;
   };
   try {
     return await session.read(async query => {
@@ -105,29 +131,44 @@ async function discoverUnitScope(session: OracleReadSession, signal?: AbortSigna
   FROM SHIFTER.shf_org_unit t WHERE t.unit_type_id=:teamType
 ) WHERE "scopeRow">:lowerBound AND "scopeRow"<=:upperBound
 ORDER BY "scopeRow"`, { teamType: "J01", lowerBound, upperBound }, bound);
-        if (lowerBound === 1000 && rows.length) invalid("DEMO_SCOPE_TOO_LARGE");
+        if (lowerBound === 1000 && rows.length) {
+          scopeFailure = new DemoHostError("DEMO_SCOPE_TOO_LARGE"); throw scopeFailure;
+        }
+        // Includes this page, not just the prefix before a malformed row; sentinel excluded.
+        discoveredCount += rows.length;
         for (const row of rows) {
-          if (!record(row) || Object.keys(row).sort().join(",") !== "orgUnitId,parentUnit,unitType" ||
-              !exactUnit(row.orgUnitId) || row.unitType !== "J01" || !exactUnit(row.parentUnit) ||
-              row.parentUnit === row.orgUnitId || seen.has(row.orgUnitId)) invalid();
+          if (!record(row) || Object.keys(row).sort().join(",") !== "orgUnitId,parentUnit,unitType")
+            invalid("INVALID_ROW_SHAPE");
+          if (!exactUnit(row.orgUnitId)) invalid("INVALID_TEAM_CODE");
+          if (row.unitType !== "J01") invalid("INVALID_TEAM_TYPE");
+          if (!exactUnit(row.parentUnit)) invalid("MISSING_OR_INVALID_PARENT");
+          if (row.parentUnit === row.orgUnitId) invalid("SELF_PARENT");
+          if (seen.has(row.orgUnitId)) invalid("DUPLICATE_TEAM");
           seen.add(row.orgUnitId); ids.push(row.orgUnitId); parents.set(row.orgUnitId, row.parentUnit);
+          validatedCount++;
         }
         if (rows.length < bound) break;
       }
-      if (!ids.length) invalid();
-      try {
-        const hierarchy = await teamsAndParents(query, ids);
-        if (hierarchy.teams.some(team => parents.get(team.code) !== team.parent.code)) invalid();
-      }
-      catch (error) {
-        if (record(error) && error.code === "INVALID_SOURCE_DATA") invalid();
-        throw error;
+      if (!ids.length) invalid("EMPTY_SCOPE");
+      stage = "hierarchy"; validatedCount = 0;
+      const hierarchy = await teamsAndParents(query, ids, (reason, count) => {
+        validatedCount = count;
+        // Do not throw from the observer: retain the reader's original source error.
+        scopeFailure = new DemoHostError("DEMO_SCOPE_INVALID", undefined,
+          { stage, reason, discoveredCount, validatedCount });
+      });
+      for (const team of hierarchy.teams) {
+        if (parents.get(team.code) !== team.parent.code) invalid("PARENT_CHANGED");
+        validatedCount++;
       }
       return ids;
     }, signal);
   } catch (error) {
     if (scopeFailure) throw scopeFailure;
-    if (record(error) && error.code === "INVALID_SOURCE_DATA") throw new DemoHostError("DEMO_SCOPE_INVALID");
+    if (record(error) && error.code === "INVALID_SOURCE_DATA")
+      throw new DemoHostError("DEMO_SCOPE_INVALID", undefined, {
+        stage: "snapshot", reason: "UNCLASSIFIED_SOURCE_FAILURE", discoveredCount, validatedCount,
+      });
     throw error;
   }
 }
@@ -426,6 +467,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     detach?.();
     const failure = error instanceof DemoHostError ? error : new DemoHostError("DEMO_STARTUP_FAILED", error);
     process.stderr.write(JSON.stringify({ code: failure.message,
+      ...(failure.scopeDiagnostic ? { scopeDiagnostic: failure.scopeDiagnostic } : {}),
       ...(failure.oracleCode ? { oracleCode: failure.oracleCode } : {}) }) + "\n");
     if (failure.message === "DEMO_TEST_ASSETS_REQUIRED")
       process.stderr.write("Build TEST assets explicitly: powershell.exe -NoProfile -File scripts\\Build-Shifter.ps1 -Profile test -Validation\n");

@@ -8,7 +8,9 @@ import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
 import { env, options, protocolDouble, raw } from "./oracle-demo-test-helper.mts";
-import { startOracleDemo, demoEnvironment, parseDemoArguments, loadDemoAssets, attachDemoShutdown } from "../oracle-demo-host.mts";
+import { startOracleDemo, demoEnvironment, parseDemoArguments, loadDemoAssets, attachDemoShutdown, DemoHostError } from "../oracle-demo-host.mts";
+import { SliceError } from "../errors.mts";
+import { CurrentShiftError } from "../current-shifts-errors.mts";
 import { record } from "../contract-validation.mts";
 import { loadEnvironmentConfig, RealAuthenticationNotConfiguredError } from "../environment-profiles.mts";
 
@@ -21,6 +23,138 @@ const allOptions = { testReadOnly: true, allTestUnits: true as const, port: 0 };
 const scopeRows = (count: number) => Array.from({ length: count }, (_, i) => ({
   orgUnitId: `T${String(i).padStart(3, "0")}`, unitType: "J01", parentUnit: "PARENT",
 }));
+test("safe scope diagnostic serialization boundary rejects malformed or secret-bearing objects", () => {
+  const valid = { stage: "discovery" as const, reason: "EMPTY_SCOPE" as const, discoveredCount: 0, validatedCount: 0 };
+  const failure = new DemoHostError("DEMO_SCOPE_INVALID", undefined, valid);
+  assert.deepEqual(failure.scopeDiagnostic, valid);
+  assert.ok(Object.isFrozen(failure.scopeDiagnostic));
+  for (const unsafe of [
+    { ...valid, row: "SECRET_ROW" }, { ...valid, reason: "SECRET_REASON" }, { ...valid, stage: "SECRET_STAGE" },
+    ...[NaN, Infinity, -1, 1001, 0.1, "1", null, true].flatMap(count =>
+      [{ ...valid, discoveredCount: count }, { ...valid, validatedCount: count }]),
+  ]) {
+    const error = new DemoHostError("DEMO_SCOPE_INVALID", { message: "SECRET_SQL_PASSWORD" }, unsafe as typeof valid);
+    assert.equal(error.scopeDiagnostic, undefined);
+    assert.doesNotMatch(JSON.stringify(error), /SECRET/);
+  }
+  assert.equal(new DemoHostError("DEMO_SCOPE_TOO_LARGE", undefined, valid).scopeDiagnostic, undefined);
+});
+for (const point of ["SET TRANSACTION READ ONLY", '"scopeRow"', '"grantCode"']) {
+  test(`safe scope diagnostic snapshot source failure at ${point}`, async () => {
+    const oracle = protocolDouble(scopeRows(1)), getConnection = oracle.pool.getConnection.bind(oracle.pool);
+    oracle.pool.getConnection = async () => {
+      const connection = await getConnection(), execute = connection.execute.bind(connection);
+      connection.execute = async (sql, binds, bound) => {
+        if (sql.includes(point)) throw new SliceError("INVALID_SOURCE_DATA");
+        return execute(sql, binds, bound);
+      };
+      return connection;
+    };
+    await assert.rejects(startOracleDemo(env, allOptions, { assets, read: async () => oracle.pool }), error => {
+      assert.ok(error instanceof DemoHostError);
+      assert.deepEqual(error.scopeDiagnostic, { stage: "snapshot", reason: "UNCLASSIFIED_SOURCE_FAILURE",
+        discoveredCount: point === '"grantCode"' ? 1 : 0, validatedCount: 0 });
+      return true;
+    });
+    assert.equal(oracle.closed, 1); assert.equal(oracle.rollbacks, 1); assert.equal(oracle.releases, 1);
+  });
+}
+test("safe scope diagnostic recognizes generic current-shift source codes, not raw database errors", async () => {
+  for (const source of [new CurrentShiftError("INVALID_SOURCE_DATA"),
+    { code: "ORA-01017", message: "SECRET_DATABASE_SQL_PASSWORD" }]) {
+    const oracle = protocolDouble(scopeRows(1));
+    oracle.hierarchy = () => { throw source; };
+    await assert.rejects(startOracleDemo(env, allOptions, { assets, read: async () => oracle.pool }), error => {
+      assert.ok(error instanceof DemoHostError);
+      if (source instanceof CurrentShiftError) {
+        assert.equal(error.message, "DEMO_SCOPE_INVALID");
+        assert.equal(error.scopeDiagnostic?.stage, "snapshot");
+      } else {
+        assert.equal(error.message, "DEMO_STARTUP_FAILED");
+        assert.equal(error.oracleCode, "ORA-01017"); assert.equal(error.scopeDiagnostic, undefined);
+      }
+      assert.doesNotMatch(JSON.stringify(error), /SECRET_DATABASE/);
+      return true;
+    });
+    assert.equal(oracle.closed, 1); assert.equal(oracle.releases, 1);
+  }
+});
+for (const crossChunk of [false, true]) {
+  test(`safe scope diagnostic hierarchy parent label conflict cross-chunk=${crossChunk}`, async () => {
+    const count = crossChunk ? 101 : 2, oracle = protocolDouble(scopeRows(count));
+    let queries = 0;
+    oracle.hierarchy = rows => {
+      queries++;
+      return rows.map((row, i) => ({ ...row as object,
+        label: (crossChunk ? queries === 2 : i === 1) ? "SECRET_CONFLICT_LABEL" : "First synthetic" }));
+    };
+    await assert.rejects(startOracleDemo(env, allOptions, { assets, read: async () => oracle.pool }), error => {
+      assert.ok(error instanceof DemoHostError);
+      assert.deepEqual(error.scopeDiagnostic, { stage: "hierarchy", reason: "PARENT_LABEL_CONFLICT",
+        discoveredCount: count, validatedCount: count - 1 });
+      assert.doesNotMatch(JSON.stringify(error), /SECRET_CONFLICT/); return true;
+    });
+    assert.equal(oracle.closed, 1); assert.equal(oracle.releases, 1);
+  });
+}
+for (const [label, rows, reason, validatedCount] of [
+  ["empty", [], "EMPTY_SCOPE", 0],
+  ["shape", [{ ORGANIZATIONAL: "SECRET_ROW" }], "INVALID_ROW_SHAPE", 0],
+  ["padded code", [{ ...scopeRows(1)[0], orgUnitId: " T000" }], "INVALID_TEAM_CODE", 0],
+  ["type", [{ ...scopeRows(1)[0], unitType: "G01" }], "INVALID_TEAM_TYPE", 0],
+  ["null parent", [{ ...scopeRows(1)[0], parentUnit: null }], "MISSING_OR_INVALID_PARENT", 0],
+  ["padded parent", [{ ...scopeRows(1)[0], parentUnit: " PARENT" }], "MISSING_OR_INVALID_PARENT", 0],
+  ["self", [{ ...scopeRows(1)[0], parentUnit: "T000" }], "SELF_PARENT", 0],
+  ["duplicate", [...scopeRows(1), ...scopeRows(1)], "DUPLICATE_TEAM", 1],
+  ["late page", [...scopeRows(100), { ...scopeRows(101)[100], parentUnit: null }],
+    "MISSING_OR_INVALID_PARENT", 100],
+  ["whole returned page counted", [...scopeRows(50), { ...scopeRows(100)[50], parentUnit: null },
+    ...scopeRows(100).slice(51)], "MISSING_OR_INVALID_PARENT", 50],
+  ["last admitted row", [...scopeRows(999), { ...scopeRows(1000)[999], parentUnit: null }],
+    "MISSING_OR_INVALID_PARENT", 999],
+] as Array<[string, unknown[], string, number]>) {
+  test(`safe scope diagnostic discovery ${label}`, async () => {
+    const oracle = protocolDouble(rows);
+    await assert.rejects(startOracleDemo(env, allOptions, { assets, read: async () => oracle.pool }), error => {
+      assert.ok(record(error));
+      assert.equal(error.message, "DEMO_SCOPE_INVALID");
+      assert.deepEqual(error.scopeDiagnostic, { stage: "discovery", reason,
+        discoveredCount: rows.length, validatedCount });
+      assert.doesNotMatch(JSON.stringify(error), /SECRET_ROW|T000|"PARENT"|password|SQL/);
+      return true;
+    });
+    assert.equal(oracle.closed, 1); assert.equal(oracle.rollbacks, 1); assert.equal(oracle.releases, 1);
+    assert.equal(oracle.probes, 0);
+  });
+}
+for (const [label, transform, reason, validatedCount] of [
+  ["missing", () => [], "HIERARCHY_CARDINALITY", 0],
+  ["extra", (rows: unknown[]) => [...rows, ...rows], "HIERARCHY_CARDINALITY", 0],
+  ["shape", () => [null], "INVALID_ROW_SHAPE", 0],
+  ["wrong aliases", () => [{ ORGANIZATIONAL: "SECRET_ROW" }], "INVALID_ROW_SHAPE", 0],
+  ["grant", (rows: unknown[]) => rows.map(row => ({ ...row as object, grantCode: "FOREIGN" })),
+    "FOREIGN_OR_MISSING_TEAM", 0],
+  ["parent type", (rows: unknown[]) => rows.map(row => ({ ...row as object, unitType: "J01" })), "PARENT_NOT_G01", 0],
+  ["team type", (rows: unknown[]) => rows.map(row => ({ ...row as object, teamType: "G01" })), "INVALID_TEAM_TYPE", 0],
+  ["null label", (rows: unknown[]) => rows.map(row => ({ ...row as object, teamLabel: null })), "TEAM_LABEL_INVALID", 0],
+  ["empty label", (rows: unknown[]) => rows.map(row => ({ ...row as object, teamLabel: "" })), "TEAM_LABEL_INVALID", 0],
+  ["unsafe label", (rows: unknown[]) => rows.map(row => ({ ...row as object, teamLabel: "<SECRET_LABEL>" })),
+    "TEAM_LABEL_INVALID", 0],
+  ["parent label", (rows: unknown[]) => rows.map(row => ({ ...row as object, label: null })), "PARENT_LABEL_INVALID", 0],
+  ["parent missing", (rows: unknown[]) => rows.map(row => ({ ...row as object, code: null })), "MISSING_OR_INVALID_PARENT", 0],
+  ["parent changed", (rows: unknown[]) => rows.map(row => ({ ...row as object, code: "OTHER" })), "PARENT_CHANGED", 0],
+] as Array<[string, (rows: unknown[]) => unknown[], string, number]>) {
+  test(`safe scope diagnostic hierarchy ${label}`, async () => {
+    const oracle = protocolDouble(scopeRows(1)); oracle.hierarchy = transform;
+    await assert.rejects(startOracleDemo(env, allOptions, { assets, read: async () => oracle.pool }), error => {
+      assert.ok(record(error));
+      assert.deepEqual(error.scopeDiagnostic, { stage: "hierarchy", reason, discoveredCount: 1, validatedCount });
+      assert.doesNotMatch(JSON.stringify(error), /SECRET_LABEL|T000|"PARENT"|password|SQL/);
+      return true;
+    });
+    assert.equal(oracle.closed, 1); assert.equal(oracle.releases, 1); assert.equal(oracle.probes, 0);
+  });
+}
 for (const count of [1, 50, 51, 100, 101, 1000]) {
   test(`all TEST units discovers complete ${count} grants in one bounded snapshot and reuses one pool`, async () => {
     const rows = scopeRows(count), oracle = protocolDouble(rows);
@@ -89,7 +223,12 @@ for (const [label, rows, code] of [
 ] as Array<[string, unknown[], string]>) {
   test(`all scope rejects ${label} with no partial runtime`, async () => {
     const oracle = protocolDouble(rows);
-    await assert.rejects(startOracleDemo(env, allOptions, { assets, read: async () => oracle.pool }), new RegExp(code));
+    await assert.rejects(startOracleDemo(env, allOptions, { assets, read: async () => oracle.pool }), error => {
+      assert.ok(error instanceof DemoHostError);
+      assert.equal(error.message, code);
+      if (code === "DEMO_SCOPE_TOO_LARGE") assert.equal(error.scopeDiagnostic, undefined);
+      return true;
+    });
     assert.equal(oracle.probes, 0); assert.equal(oracle.closed, 1);
     assert.equal(oracle.leases, 1); assert.equal(oracle.rollbacks, 1); assert.equal(oracle.releases, 1);
   });

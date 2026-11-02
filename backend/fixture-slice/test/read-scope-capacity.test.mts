@@ -8,6 +8,7 @@ import { OracleReadSession } from "../oracle-session.mts";
 import { startFromEnvironment } from "../server.mts";
 import { stageArrivalAccessPolicy } from "../access-policy.mts";
 import { record } from "../contract-validation.mts";
+import { CurrentShiftError } from "../current-shifts-errors.mts";
 
 // Isolated synthetic identities/query doubles only; no Oracle access.
 const ids = (n: number) => Array.from({ length: n }, (_, i) => `T${String(i).padStart(4, "0")}`);
@@ -15,6 +16,85 @@ const config = (n: number) => ({
   deploymentClass: "isolated-test-demo", authenticationMode: "synthetic",
   syntheticAdministratorEnabled: true, syntheticOrgUnitIds: ids(n),
   businessTimeZone: "Asia/Jerusalem", dataSource: "oracle-read-only", oracleTestScopeConfirmed: true,
+});
+const hierarchyRow = (code: string) => ({ grantCode: code, teamCode: code, teamLabel: "צוות סינתטי",
+  teamType: "J01", code: "PARENT", label: "הורה סינתטי", unitType: "G01" });
+for (const [label, rows, reason, validated] of [
+  ["cardinality zero", [], "HIERARCHY_CARDINALITY", 0],
+  ["cardinality extra", [hierarchyRow("A"), hierarchyRow("B"), hierarchyRow("C")], "HIERARCHY_CARDINALITY", 0],
+  ["shape", [null, hierarchyRow("B")], "INVALID_ROW_SHAPE", 0],
+  ["wrong aliases", [{ ORGANIZATIONAL: "SECRET_ROW" }, hierarchyRow("B")], "INVALID_ROW_SHAPE", 0],
+  ["bad code", [{ ...hierarchyRow("A"), grantCode: " A" }, hierarchyRow("B")], "INVALID_TEAM_CODE", 0],
+  ["wrong grant", [{ ...hierarchyRow("A"), teamCode: "X" }, hierarchyRow("B")], "FOREIGN_OR_MISSING_TEAM", 0],
+  ["foreign", [hierarchyRow("X"), hierarchyRow("B")], "FOREIGN_OR_MISSING_TEAM", 0],
+  ["null team label", [{ ...hierarchyRow("A"), teamLabel: null }, hierarchyRow("B")], "TEAM_LABEL_INVALID", 0],
+  ["empty team label", [{ ...hierarchyRow("A"), teamLabel: "" }, hierarchyRow("B")], "TEAM_LABEL_INVALID", 0],
+  ["unsafe team label", [{ ...hierarchyRow("A"), teamLabel: "<SECRET_LABEL>" }, hierarchyRow("B")], "TEAM_LABEL_INVALID", 0],
+  ["wrong team type", [{ ...hierarchyRow("A"), teamType: "G01" }, hierarchyRow("B")], "INVALID_TEAM_TYPE", 0],
+  ["parent absent", [{ ...hierarchyRow("A"), code: null }, hierarchyRow("B")], "MISSING_OR_INVALID_PARENT", 0],
+  ["parent label absent", [{ ...hierarchyRow("A"), label: null }, hierarchyRow("B")], "PARENT_LABEL_INVALID", 0],
+  ["parent label empty", [{ ...hierarchyRow("A"), label: "" }, hierarchyRow("B")], "PARENT_LABEL_INVALID", 0],
+  ["parent class", [{ ...hierarchyRow("A"), unitType: "J01" }, hierarchyRow("B")], "PARENT_NOT_G01", 0],
+  ["self", [{ ...hierarchyRow("A"), code: "A" }, hierarchyRow("B")], "SELF_PARENT", 0],
+  ["duplicate", [hierarchyRow("A"), hierarchyRow("A")], "DUPLICATE_TEAM", 1],
+  ["parent conflict", [hierarchyRow("A"), { ...hierarchyRow("B"), label: "Other synthetic" }], "PARENT_LABEL_CONFLICT", 1],
+] as Array<[string, unknown[], string, number]>) test(`private hierarchy diagnostic preserves default source failure: ${label}`, async () => {
+  const statements: unknown[] = [], reasons: unknown[] = [];
+  const query = async (sql: string, binds: unknown, bound: number) => {
+    statements.push({ sql, binds, bound }); return rows;
+  };
+  for (const observer of [undefined, (reason: string, count: number) => { reasons.push({ reason, count }); }]) {
+    await assert.rejects(teamsAndParents(query, ["A", "B"], observer), error => {
+      assert.ok(error instanceof CurrentShiftError);
+      assert.equal(error.code, "INVALID_SOURCE_DATA");
+      assert.deepEqual(Object.keys(error), ["code", "invalidParameters"]);
+      assert.doesNotMatch(JSON.stringify(error), /SECRET_LABEL|Synthetic|PARENT/);
+      return true;
+    });
+  }
+  assert.deepEqual(statements[0], statements[1]);
+  assert.deepEqual(statements[0], {
+    sql: `SELECT "grantCode","teamCode","teamLabel","teamType","code","label","unitType"
+    FROM (SELECT g.grant_id AS "grantCode", t.org_unit_id AS "teamCode",
+    t.org_unit_name AS "teamLabel", t.unit_type_id AS "teamType",
+    p.org_unit_id AS "code", p.org_unit_name AS "label", p.unit_type_id AS "unitType"
+    FROM (SELECT :team0 AS grant_id FROM dual UNION ALL SELECT :team1 AS grant_id FROM dual) g LEFT JOIN SHIFTER.shf_org_unit t ON t.org_unit_id=g.grant_id
+    LEFT JOIN SHIFTER.shf_org_unit p ON p.org_unit_id=t.parent_unit) WHERE ROWNUM <= :catalogBound`,
+    binds: { team0: "A", team1: "B", catalogBound: 3 }, bound: 3,
+  });
+  assert.deepEqual(reasons, [{ reason, count: validated }]);
+  // Even a broken observer cannot replace the original error or allow a partial result.
+  await assert.rejects(teamsAndParents(query, ["A", "B"], () => { throw Error("SECRET_CALLBACK"); }),
+    error => error instanceof CurrentShiftError && error.code === "INVALID_SOURCE_DATA");
+});
+test("private hierarchy callback keeps original labels, SQL and pre-query boundaries", async () => {
+  const calls: unknown[] = [], observed: unknown[] = [];
+  const query = async (sql: string, binds: unknown, bound: number) => {
+    calls.push({ sql, binds, bound });
+    return [{ ...hierarchyRow("אבגד1234"), teamLabel: " צוות סינתטי ", label: " הורה סינתטי " }];
+  };
+  const original = await teamsAndParents(query, ["אבגד1234"]);
+  const diagnostic = await teamsAndParents(query, ["אבגד1234"], (...args) => { observed.push(args); });
+  assert.deepEqual(original, diagnostic); assert.deepEqual(calls[0], calls[1]); assert.equal(observed.length, 0);
+  assert.equal(original.teams[0].label, " צוות סינתטי ");
+  assert.equal(original.options[0].label, " הורה סינתטי ");
+  const count = calls.length;
+  for (const invalid of [ids(1001), ["A", "A"], [" A"]])
+    await assert.rejects(teamsAndParents(query, invalid, (...args) => { observed.push(args); }));
+  assert.equal(calls.length, count); assert.equal(observed.length, 0);
+  assert.deepEqual(await teamsAndParents(query, [], (...args) => { observed.push(args); }), { options: [], teams: [] });
+  assert.deepEqual(observed, []);
+});
+test("private hierarchy parent conflict across chunks counts only the validated prefix", async () => {
+  const observed: unknown[] = [];
+  let queries = 0;
+  await assert.rejects(teamsAndParents(async (_sql, binds) => {
+    queries++;
+    return Object.entries(binds).filter(([key]) => /^team\d+$/.test(key))
+      .map(([, code]) => ({ ...hierarchyRow(String(code)), label: queries === 1 ? "First" : "SECRET_OTHER" }));
+  }, ids(101), (...args) => { observed.push(args); }), /INVALID_SOURCE_DATA/);
+  assert.equal(queries, 2);
+  assert.deepEqual(observed, [["PARENT_LABEL_CONFLICT", 100]]);
 });
 for (const n of [1, 100, 101, 1000]) test(`pure Oracle R7 admits exactly ${n} grants`, async () => {
   const c = validateRuntimeConfig(config(n));

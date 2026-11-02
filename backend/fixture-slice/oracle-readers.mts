@@ -108,19 +108,33 @@ export function scopeBinds(ids: readonly string[]) {
   const placeholders = ids.map((id, i) => { binds[`team${i}`] = id; return `:team${i}`; });
   return { binds, placeholders };
 }
-export async function teamsAndParents(query: Query, ids: readonly string[]) {
+// Private persistence diagnostic seam, not an HTTP/source contract. No row values escape.
+type HierarchyReason = "INVALID_ROW_SHAPE" | "INVALID_TEAM_CODE" | "INVALID_TEAM_TYPE" |
+  "MISSING_OR_INVALID_PARENT" | "SELF_PARENT" | "DUPLICATE_TEAM" | "HIERARCHY_CARDINALITY" |
+  "TEAM_LABEL_INVALID" | "PARENT_NOT_G01" | "PARENT_LABEL_INVALID" |
+  "PARENT_LABEL_CONFLICT" | "FOREIGN_OR_MISSING_TEAM";
+type OnHierarchyInvalid = (reason: HierarchyReason, validatedCount: number) => void;
+function hierarchyFailure(onInvalid: OnHierarchyInvalid | undefined, reason: HierarchyReason,
+  validatedCount: number): never {
+  // Observers cannot replace the original source error or permit a partial return.
+  try { onInvalid?.(reason, validatedCount); } catch { /* diagnostic only */ }
+  return sourceFailure();
+}
+export async function teamsAndParents(query: Query, ids: readonly string[], onInvalid?: OnHierarchyInvalid) {
   scopeBinds(ids); // Validate the aggregate before the first query.
   const teams: Array<{ code: string; label: string; parent: MokedOptionV1 }> = [];
   const parentMap = new Map<string, MokedOptionV1>();
   const seen = new Set<string>();
   for (let offset = 0; offset < ids.length; offset += 100) {
     const chunk = ids.slice(offset, offset + 100);
-    const group = await teamGroup(query, chunk);
+    const group = await teamGroup(query, chunk, onInvalid
+      ? (reason, count) => onInvalid(reason, offset + count) : undefined);
     for (const team of group.teams) {
-      if (seen.has(team.code)) sourceFailure();
+      if (seen.has(team.code)) hierarchyFailure(onInvalid, "DUPLICATE_TEAM", teams.length);
       seen.add(team.code);
       const previous = parentMap.get(team.parent.code);
-      if (previous && previous.label !== team.parent.label) sourceFailure();
+      if (previous && previous.label !== team.parent.label)
+        hierarchyFailure(onInvalid, "PARENT_LABEL_CONFLICT", teams.length);
       parentMap.set(team.parent.code, team.parent);
       teams.push(team);
     }
@@ -128,7 +142,7 @@ export async function teamsAndParents(query: Query, ids: readonly string[]) {
   return { options: [...parentMap.values()].sort((a, b) => compareCode(a.code, b.code)),
     teams: teams.sort((a, b) => compareCode(a.code, b.code)) };
 }
-async function teamGroup(query: Query, ids: readonly string[]) {
+async function teamGroup(query: Query, ids: readonly string[], onInvalid?: OnHierarchyInvalid) {
   const { binds, placeholders } = scopeBinds(ids);
   if (ids.length === 0) return { options: [], teams: [] };
   const grants = placeholders.map(p => `SELECT ${p} AS grant_id FROM dual`).join(" UNION ALL ");
@@ -139,18 +153,31 @@ async function teamGroup(query: Query, ids: readonly string[]) {
     FROM (${grants}) g LEFT JOIN SHIFTER.shf_org_unit t ON t.org_unit_id=g.grant_id
     LEFT JOIN SHIFTER.shf_org_unit p ON p.org_unit_id=t.parent_unit) WHERE ROWNUM <= :catalogBound`,
   { ...binds, catalogBound: ids.length + 1 }, ids.length + 1);
-  if (rows.length !== ids.length) sourceFailure();
+  if (rows.length !== ids.length) hierarchyFailure(onInvalid, "HIERARCHY_CARDINALITY", 0);
   const teams: Array<{ code: string; label: string; parent: MokedOptionV1 }> = [];
   const parentMap = new Map<string, MokedOptionV1>();
   const seen = new Set<string>();
   for (const row of rows) {
-    if (!record(row) || !unitCode(row.grantCode) || row.teamCode !== row.grantCode ||
-        !plainLabel(row.teamLabel, 1) || row.teamType !== "J01" || !mokedOption(row) ||
-        row.code === row.teamCode || !ids.includes(row.grantCode) || seen.has(row.grantCode)) sourceFailure();
+    const invalid: (reason: HierarchyReason) => never = reason => hierarchyFailure(onInvalid, reason, teams.length);
+    if (!record(row)) invalid("INVALID_ROW_SHAPE");
+    // Missing aliases already failed the predicates below; classify, never add a new accepted shape.
+    if (!["grantCode", "teamCode", "teamLabel", "teamType", "code", "label", "unitType"]
+      .every(key => key in row)) invalid("INVALID_ROW_SHAPE");
+    if (!unitCode(row.grantCode)) invalid("INVALID_TEAM_CODE");
+    if (row.teamCode !== row.grantCode) invalid("FOREIGN_OR_MISSING_TEAM");
+    if (!plainLabel(row.teamLabel, 1)) invalid("TEAM_LABEL_INVALID");
+    if (row.teamType !== "J01") invalid("INVALID_TEAM_TYPE");
+    // Same predicates/order as mokedOption; no normalization or invented labels.
+    if (!unitCode(row.code)) invalid("MISSING_OR_INVALID_PARENT");
+    if (!plainLabel(row.label, 1)) invalid("PARENT_LABEL_INVALID");
+    if (row.unitType !== "G01") invalid("PARENT_NOT_G01");
+    if (row.code === row.teamCode) invalid("SELF_PARENT");
+    if (!ids.includes(row.grantCode)) invalid("FOREIGN_OR_MISSING_TEAM");
+    if (seen.has(row.grantCode)) invalid("DUPLICATE_TEAM");
     seen.add(row.grantCode);
     const parent: MokedOptionV1 = { code: row.code, label: row.label, unitType: "G01" };
     const previous = parentMap.get(parent.code);
-    if (previous && previous.label !== parent.label) sourceFailure();
+    if (previous && previous.label !== parent.label) invalid("PARENT_LABEL_CONFLICT");
     parentMap.set(parent.code, parent);
     teams.push({ code: row.grantCode, label: row.teamLabel, parent });
   }

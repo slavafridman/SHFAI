@@ -114,6 +114,51 @@ and reports that primary code once with a fixed operator action, rather than
 replacing every host failure with `DEMO_NODE_STARTUP_FAILED`. It never echoes
 arbitrary native stderr/stdout, exception messages, stack traces or JSON fields.
 
+### Safe scope-validation diagnostics (diagnostic fix, not data repair)
+
+`DEMO_SCOPE_INVALID` now optionally carries a private `scopeDiagnostic` in the
+Node startup JSON. The launcher validates the complete four-field shape and
+renders one safe line, for example (synthetic counts only):
+
+```text
+Oracle demo [DEMO_SCOPE_INVALID]: Discovery validation failed [MISSING_OR_INVALID_PARENT]; discovered teams=1000; validated teams=999; no partial scope.
+```
+
+Stages distinguish direct catalog validation (`discovery`), the existing
+team/G01-parent validator and parent comparison (`hierarchy`), and an otherwise
+unclassified source failure from the read-session/query boundary (`snapshot`).
+Reasons are a closed enumeration: `EMPTY_SCOPE`, `INVALID_ROW_SHAPE`,
+`INVALID_TEAM_CODE`, `INVALID_TEAM_TYPE`, `MISSING_OR_INVALID_PARENT`,
+`SELF_PARENT`, `DUPLICATE_TEAM`, `HIERARCHY_CARDINALITY`, `TEAM_LABEL_INVALID`,
+`PARENT_NOT_G01`, `PARENT_LABEL_INVALID`, `PARENT_LABEL_CONFLICT`,
+`FOREIGN_OR_MISSING_TEAM`, `PARENT_CHANGED`, `UNCLASSIFIED_SOURCE_FAILURE`.
+The first failed check wins; multiple defects are not enumerated.
+
+Both counts are integers from 0 through 1000. `discoveredCount` includes the
+entire returned discovery page containing a failing row and all prior pages,
+not the unknown total catalog size. `validatedCount` counts the prefix accepted
+before the failing check in the current validation phase. It resets before
+hierarchy validation; an unclassified query failure reports only progress
+known to the host (possibly zero). Parent-comparison failures count the matched
+prefix. Neither count is a partial grant. The 1001st sentinel still produces
+`DEMO_SCOPE_TOO_LARGE` **without** a scope diagnostic.
+
+Only stage/reason enums and counts are emitted: no unit identifiers, names,
+labels, rows, SQL, connection strings or credentials. Unknown fields, invalid
+enums and noninteger/nonfinite/out-of-range counts are withheld; the launcher
+reports `RuntimeDiagnosticRequired` for a malformed supplied scope diagnostic.
+Absent diagnostics retain the existing fixed help. Actual database failures
+retain their original startup code and optional regex-validated ORA/NJS/DPI
+code; they are not reclassified as scope validation failures.
+
+Provide only the updated safe line to the authorized application/data owner
+for review of the named check. Do not infer the original operator failure's
+cause from the old generic code, repair catalog values speculatively, trim/pad
+codes, invent labels, omit orphans, retry, or fall back to another profile.
+This change performs no additional query and proves neither live connectivity
+nor data repair. Seven-reader authorization, 1000 read/100 writer bounds,
+public DTOs/problems, authentication and the current TEST browser are unchanged.
+
 ### Troubleshooting a stopped Node demonstration
 
 Use the **primary status code**, not an inferred database diagnosis:

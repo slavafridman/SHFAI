@@ -10,6 +10,31 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-ORACLE-DEMO-PATHS — automatic path resolution, 2026-11-02
 
+Operator's14:52 DEMO_SCOPE_INVALID is a source-scope validation failure,
+not identified as a credential failure. Discovery and hierarchy checks are
+unchanged; no rows are skipped, normalized or partially granted. Private
+closed diagnostics now distinguish stage/reason and bounded discovered/
+validated counts without exposing actual unit codes, labels, SQL or secrets.
+The launcher validates the diagnostic shape and prints one safe primary line;
+malformed/extra diagnostic fields are withheld with RuntimeDiagnosticRequired.
+Earlier offline host145, capacity/HTTP49, seven-reader47 and compiled-artifact1
+checks passed; PowerShell1092 assertions passed. Fresh four-MTS syntax,
+two-PowerShell parser and TSC checks passed. Fresh local imports and pure
+current TEST asset loading passed30 assets without a pool or listener.
+Supplemental SQL harness first rejected Windows line endings and then counted
+nested SELECT templates as statements; corrected AST comparison passed all
+eight SELECT-bearing nodes. Static comparison
+confirmed unchanged one discovery/five reader SQL literals; default public
+errors, capabilities, 1000-read/100-writer bounds and frontend stay unchanged.
+No live Oracle, real host start or current catalog cause was verified.
+Full backend2286/frontend846 suites were not rerun. Standard document verifier
+NOT RUN: its historical excluded reference remains policy-blocked; no alternate
+access was attempted. Unrelated clone workflow and user edits remain unstaged.
+Next action: publish seven diagnostic/help/test paths plus this checkpoint
+paragraph, then operator reruns the same -AllTestUnits command and returns
+the sanitized stage/reason/counts. This is diagnostic repair, not data repair
+or permission to bypass the failed source condition.
+
 Operator's12:54 result DEMO_SCOPE_TOO_LARGE confirms startup reached the
 Oracle team-catalog threshold in their session; actual total remains unknown,
 not an independently verified target identity. Accepted55-scope-v0.2 expands

@@ -40,12 +40,58 @@ function Get-ShifterOracleDemoHostAction {
     }
 }
 
+function ConvertTo-ShifterOracleDemoScopeDiagnostic {
+    param($Value)
+    # Accept only the complete private shape, never stringify arbitrary objects.
+    if ($null -eq $Value -or ($Value -isnot [System.Collections.IDictionary] -and
+        $Value -isnot [pscustomobject])) { return $null }
+    $keys = if ($Value -is [System.Collections.IDictionary]) { @($Value.Keys) } else {
+        @($Value.PSObject.Properties | ForEach-Object { $_.Name })
+    }
+    if ((($keys | Sort-Object -CaseSensitive) -join ',') -cne
+        'discoveredCount,reason,stage,validatedCount') { return $null }
+    $stage = $null; $reason = $null
+    foreach ($candidate in @('discovery', 'hierarchy', 'snapshot')) {
+        if ($Value.stage -is [string] -and $Value.stage -ceq $candidate) { $stage = $candidate }
+    }
+    foreach ($candidate in @('EMPTY_SCOPE', 'INVALID_ROW_SHAPE', 'INVALID_TEAM_CODE', 'INVALID_TEAM_TYPE',
+        'MISSING_OR_INVALID_PARENT', 'SELF_PARENT', 'DUPLICATE_TEAM', 'HIERARCHY_CARDINALITY',
+        'TEAM_LABEL_INVALID', 'PARENT_NOT_G01', 'PARENT_LABEL_INVALID', 'PARENT_LABEL_CONFLICT',
+        'FOREIGN_OR_MISSING_TEAM', 'PARENT_CHANGED', 'UNCLASSIFIED_SOURCE_FAILURE')) {
+        if ($Value.reason -is [string] -and $Value.reason -ceq $candidate) { $reason = $candidate }
+    }
+    if (-not $stage -or -not $reason) { return $null }
+    foreach ($count in @($Value.discoveredCount, $Value.validatedCount)) {
+        if (($count -isnot [int] -and $count -isnot [long] -and $count -isnot [double] -and
+            $count -isnot [decimal]) -or [double]::IsNaN([double]$count) -or
+            [double]::IsInfinity([double]$count) -or $count -lt 0 -or $count -gt 1000 -or
+            [Math]::Truncate([double]$count) -ne $count) { return $null }
+    }
+    if ($Value.validatedCount -gt $Value.discoveredCount) { return $null }
+    return @{ stage = $stage; reason = $reason; discoveredCount = [int]$Value.discoveredCount;
+        validatedCount = [int]$Value.validatedCount }
+}
+
 function Format-ShifterOracleDemoFailure {
     param([System.Exception]$Exception)
     # Only locally assigned codes select constant text. Never inspect raw messages.
     $code = $Exception.Data['ShifterOracleDemoCode']
     $hostAction = Get-ShifterOracleDemoHostAction $code
     if ($hostAction) {
+        if ($code -ceq 'DEMO_SCOPE_INVALID') {
+            # Validate again at the rendering boundary, including directly supplied failures.
+            $scope = ConvertTo-ShifterOracleDemoScopeDiagnostic $Exception.Data['ShifterOracleDemoScopeDiagnostic']
+            if ($scope) {
+                $stageLabel = switch -CaseSensitive ($scope.stage) {
+                    'discovery' { 'Discovery' }; 'hierarchy' { 'Hierarchy' }; 'snapshot' { 'Snapshot' }
+                }
+                return "Oracle demo [DEMO_SCOPE_INVALID]: $stageLabel validation failed [$($scope.reason)]; discovered teams=$($scope.discoveredCount); validated teams=$($scope.validatedCount); no partial scope."
+            }
+            if ($Exception.Data.Contains('ShifterOracleDemoScopeDiagnostic') -or
+                $Exception.Data['ShifterOracleDemoScopeDiagnosticInvalid']) {
+                return "Oracle demo [DEMO_SCOPE_INVALID]: $hostAction RuntimeDiagnosticRequired: scope diagnostic withheld."
+            }
+        }
         $diagnostic = $Exception.Data['ShifterOracleDemoOracleCode']
         if ($diagnostic -is [string] -and $diagnostic -cmatch '\A(?:ORA-[0-9]{5}|NJS-[0-9]{3}|DPI-[0-9]{4})\z') {
             return "Oracle demo [$code]: $hostAction Diagnostic: $diagnostic."
@@ -261,7 +307,7 @@ function Invoke-ShifterOracleDemoNode {
     param([string]$EntryPoint, [string]$Unit, [int]$ListenPort, [switch]$AllTestUnits)
     # Native foreground child: inherits process-only credentials, never argv/file.
     $preference = $ErrorActionPreference
-    $status = @{ Code = $null; OracleCode = $null }
+    $status = @{ Code = $null; OracleCode = $null; ScopeDiagnostic = $null; ScopeDiagnosticInvalid = $false }
     # Process merged output as it arrives, not after host shutdown. Never echo
     # arbitrary native text (warnings, stacks and driver messages may hold secrets).
     $safeOutput = {
@@ -269,6 +315,10 @@ function Invoke-ShifterOracleDemoNode {
         foreach ($line in ($text -split '\r?\n')) {
             try {
                 $json = ConvertFrom-Json -InputObject $line -ErrorAction Stop
+                if ($json -isnot [pscustomobject] -or
+                    @($json.PSObject.Properties.Name | Where-Object { $_ -cnotin @('code', 'oracleCode', 'scopeDiagnostic') }).Count) {
+                    continue
+                }
                 $codeProperty = $json.PSObject.Properties['code']
                 if ($null -ne $codeProperty -and $codeProperty.Value -is [string] -and
                     (Get-ShifterOracleDemoHostAction $codeProperty.Value) -and -not $status.Code) {
@@ -277,6 +327,14 @@ function Invoke-ShifterOracleDemoNode {
                     if ($null -ne $oracleProperty -and $oracleProperty.Value -is [string] -and
                         $oracleProperty.Value -cmatch '\A(?:ORA-[0-9]{5}|NJS-[0-9]{3}|DPI-[0-9]{4})\z') {
                         $status.OracleCode = $oracleProperty.Value
+                    }
+                    $scopeProperty = $json.PSObject.Properties['scopeDiagnostic']
+                    if ($null -ne $scopeProperty) {
+                        if ($status.Code -ceq 'DEMO_SCOPE_INVALID') {
+                            $status.ScopeDiagnosticInvalid = $true
+                            $status.ScopeDiagnostic = ConvertTo-ShifterOracleDemoScopeDiagnostic $scopeProperty.Value
+                            $status.ScopeDiagnosticInvalid = -not [bool]$status.ScopeDiagnostic
+                        }
                     }
                 }
             } catch { } # Non-JSON native diagnostics are deliberately withheld.
@@ -307,6 +365,8 @@ function Invoke-ShifterOracleDemoNode {
         $code = if ($status.Code) { $status.Code } else { 'DEMO_NODE_RUNTIME_ERROR' }
         $failure = New-ShifterOracleDemoFailure $code
         if ($status.OracleCode) { $failure.Data['ShifterOracleDemoOracleCode'] = $status.OracleCode }
+        if ($status.ScopeDiagnostic) { $failure.Data['ShifterOracleDemoScopeDiagnostic'] = $status.ScopeDiagnostic }
+        if ($status.ScopeDiagnosticInvalid) { $failure.Data['ShifterOracleDemoScopeDiagnosticInvalid'] = $true }
         throw $failure
     }
 }

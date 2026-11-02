@@ -529,6 +529,61 @@ try {
         Assert-Demo ([bool](Get-ShifterOracleDemoHostAction $hostCode)) "source-observed host code has fixed action $hostCode"
     }
     Assert-Demo (-not (Get-ShifterOracleDemoHostAction 'DEMO_UNTRUSTED')) 'unrecognized DEMO prefix is never trusted'
+    # Process-output double only: safe closed diagnostics, including malicious payloads.
+    function node {
+        Write-Output $script:diagnosticJson
+        $script:LASTEXITCODE = 1
+    }
+    try {
+        $reasons = @('EMPTY_SCOPE', 'INVALID_ROW_SHAPE', 'INVALID_TEAM_CODE', 'INVALID_TEAM_TYPE',
+            'MISSING_OR_INVALID_PARENT', 'SELF_PARENT', 'DUPLICATE_TEAM', 'HIERARCHY_CARDINALITY',
+            'TEAM_LABEL_INVALID', 'PARENT_NOT_G01', 'PARENT_LABEL_INVALID', 'PARENT_LABEL_CONFLICT',
+            'FOREIGN_OR_MISSING_TEAM', 'PARENT_CHANGED', 'UNCLASSIFIED_SOURCE_FAILURE')
+        foreach ($reason in $reasons) {
+            $stage = if ($reason -eq 'UNCLASSIFIED_SOURCE_FAILURE') { 'snapshot' } elseif ($reason -eq 'EMPTY_SCOPE') { 'discovery' } else { 'hierarchy' }
+            $payload = @{ stage = $stage; reason = $reason; discoveredCount = 1000; validatedCount = 999 }
+            $script:diagnosticJson = @{ code = 'DEMO_SCOPE_INVALID'; scopeDiagnostic = $payload } | ConvertTo-Json -Compress
+            $safe = ''
+            try { & $nodeInvoker -EntryPoint synthetic -AllTestUnits -ListenPort 18083 } catch {
+                $safe = Format-ShifterOracleDemoFailure $_.Exception
+            }
+            Assert-Demo ($safe -match ([regex]::Escape("[$reason]")) -and
+                $safe -match 'discovered teams=1000; validated teams=999; no partial scope') 'closed reason and bounded counts reach operator'
+            Assert-Demo ([regex]::Matches($safe, 'Oracle demo \[').Count -eq 1) 'scope diagnostic is one primary status'
+        }
+        $valid = @{ stage = 'discovery'; reason = 'MISSING_OR_INVALID_PARENT'; discoveredCount = 1; validatedCount = 0 }
+        $malformed = @(
+            $null, 'SECRET_DIAGNOSTIC', @($valid), @{},
+            ($valid + @{ row = 'SECRET_DIAGNOSTIC' })
+        )
+        foreach ($field in @('stage', 'reason', 'discoveredCount', 'validatedCount')) {
+            foreach ($value in @('SECRET_DIAGNOSTIC', $null, $true, -1, 1001, 0.5, '1', @{}, @(0, 1))) {
+                $copy = $valid.Clone(); $copy[$field] = $value
+                $malformed += $copy
+            }
+            $copy = $valid.Clone(); $copy.Remove($field); $malformed += $copy
+        }
+        $copy = $valid.Clone(); $copy.validatedCount = 2; $malformed += $copy
+        foreach ($payload in $malformed) {
+            $script:diagnosticJson = @{ code = 'DEMO_SCOPE_INVALID'; scopeDiagnostic = $payload } | ConvertTo-Json -Compress -Depth 6
+            $safe = ''
+            try { & $nodeInvoker -EntryPoint synthetic -AllTestUnits -ListenPort 18083 } catch {
+                $safe = Format-ShifterOracleDemoFailure $_.Exception
+            }
+            Assert-Demo ($safe -match 'RuntimeDiagnosticRequired' -and
+                $safe -notmatch 'SECRET_DIAGNOSTIC|discovered teams=') 'malformed scope diagnostic withheld without raw echo'
+        }
+        foreach ($number in @([double]::NaN, [double]::PositiveInfinity, [double]::NegativeInfinity)) {
+            $payload = $valid.Clone(); $payload.discoveredCount = $number
+            Assert-Demo ($null -eq (ConvertTo-ShifterOracleDemoScopeDiagnostic $payload)) 'nonfinite count rejected without string conversion'
+        }
+        $payload = @{ Stage = 'discovery'; reason = 'EMPTY_SCOPE'; discoveredCount = 0; validatedCount = 0 }
+        Assert-Demo ($null -eq (ConvertTo-ShifterOracleDemoScopeDiagnostic $payload)) 'diagnostic keys are case-sensitive'
+        $failure = New-ShifterOracleDemoFailure 'DEMO_SCOPE_INVALID'
+        $failure.Data['ShifterOracleDemoScopeDiagnostic'] = $valid + @{ row = 'SECRET_DIAGNOSTIC' }
+        $safe = Format-ShifterOracleDemoFailure $failure
+        Assert-Demo ($safe -match 'RuntimeDiagnosticRequired' -and $safe -notmatch 'SECRET_DIAGNOSTIC') 'render boundary independently rejects extra fields'
+    } finally { Remove-Item Function:node }
     # Real Windows PowerShell + native Node, but ONLY a test-owned module:
     # no host import, pool, Oracle driver, DNS or listener.
     $nativeFixture = Join-Path $directory 'native-fixture.mjs'
@@ -545,12 +600,23 @@ if (mode === "all" || mode === "UNIT") {
   await new Promise(resolve => setTimeout(resolve, 150));
   process.stdout.write("Status: http://127.0.0.1:18083/demo-status\n");
 } else {
+  if (mode.startsWith("diag-")) {
+    const stage = mode === "diag-discovery" ? "discovery" : mode === "diag-snapshot" ? "snapshot" : "hierarchy";
+    const reason = stage === "discovery" ? "MISSING_OR_INVALID_PARENT"
+      : stage === "snapshot" ? "UNCLASSIFIED_SOURCE_FAILURE" : "PARENT_LABEL_CONFLICT";
+    const scopeDiagnostic = {stage, reason, discoveredCount: 1000, validatedCount: 999};
+    if (mode === "diag-malformed") scopeDiagnostic.reason = "SECRET_NATIVE_SENTINEL";
+    if (mode === "diag-extra") scopeDiagnostic.row = {label: "SECRET_NATIVE_SENTINEL"};
+    process.stderr.write(JSON.stringify({code: "DEMO_SCOPE_INVALID", scopeDiagnostic}) + "\n");
+    process.exitCode = 1;
+  } else {
   const code = { assets: "DEMO_TEST_ASSETS_REQUIRED", scope: "DEMO_SCOPE_TOO_LARGE",
     invalid: "DEMO_SCOPE_INVALID", port: "DEMO_PORT_UNAVAILABLE", startup: "DEMO_STARTUP_FAILED",
     unknown: "DEMO_UNTRUSTED_SECRET_NATIVE_SENTINEL", malformed: "DEMO_STARTUP_FAILED" }[mode];
   if (code) process.stderr.write(JSON.stringify({code, oracleCode:
     mode === "malformed" ? "ORA-01017 SECRET_NATIVE_SENTINEL" : "ORA-01017"}) + "\n");
   process.exitCode = 1;
+  }
 }
 '@)
     $nativeRunner = Join-Path $directory 'native-runner.ps1'
@@ -587,7 +653,8 @@ try {
 Write-Output ("PREFERENCE:" + $ErrorActionPreference)
 if ($timer.ElapsedMilliseconds -ge 150) { Write-Output 'FOREGROUND_WAITED' }
 '@)
-    foreach ($mode in @('baseline-assets', 'all', 'UNIT', 'assets', 'scope', 'invalid', 'port', 'startup', 'unknown', 'malformed', 'missing')) {
+    foreach ($mode in @('baseline-assets', 'all', 'UNIT', 'assets', 'scope', 'invalid', 'port', 'startup', 'unknown', 'malformed', 'missing',
+        'diag-discovery', 'diag-hierarchy', 'diag-snapshot', 'diag-malformed', 'diag-extra')) {
         $info = New-Object Diagnostics.ProcessStartInfo
         $info.FileName = Join-Path $PSHOME 'powershell.exe'
         $info.Arguments = '-NoProfile -File "' + $nativeRunner + '" "' + $launcher + '" "' + $nativeFixture + '" ' + $mode
@@ -623,6 +690,7 @@ if ($timer.ElapsedMilliseconds -ge 150) { Write-Output 'FOREGROUND_WAITED' }
                     assets { 'DEMO_TEST_ASSETS_REQUIRED' }; scope { 'DEMO_SCOPE_TOO_LARGE' }
                     invalid { 'DEMO_SCOPE_INVALID' }; port { 'DEMO_PORT_UNAVAILABLE' }
                     unknown { 'DEMO_NODE_RUNTIME_ERROR' }; missing { 'DEMO_NODE_STARTUP_FAILED' }
+                    { $_ -like 'diag-*' } { 'DEMO_SCOPE_INVALID' }
                     default { 'DEMO_STARTUP_FAILED' }
                 }
                 Assert-Demo ($stdout -match ([regex]::Escape("Oracle demo [$expected]:")) -and
@@ -636,6 +704,16 @@ if ($timer.ElapsedMilliseconds -ge 150) { Write-Output 'FOREGROUND_WAITED' }
                 }
                 if ($mode -eq 'startup') { Assert-Demo ($stdout -match 'ORA-01017') 'safe Oracle code retained without message' }
                 if ($mode -eq 'malformed') { Assert-Demo ($stdout -notmatch 'ORA-01017') 'malformed Oracle code rejected entirely' }
+                if ($mode -cin @('diag-malformed', 'diag-extra')) {
+                    Assert-Demo ($stdout -match 'RuntimeDiagnosticRequired' -and $stdout -notmatch 'discovered teams=') 'native malformed diagnostic withheld'
+                } elseif ($mode -like 'diag-*') {
+                    $stageLabel = switch ($mode) {
+                        'diag-discovery' { 'Discovery' }; 'diag-hierarchy' { 'Hierarchy' }; 'diag-snapshot' { 'Snapshot' }
+                    }
+                    Assert-Demo ($stdout -match "$stageLabel validation failed" -and
+                        $stdout -match 'discovered teams=1000; validated teams=999; no partial scope') 'native structured diagnostic safely rendered'
+                    Assert-Demo ([regex]::Matches($stdout, 'Oracle demo \[').Count -eq 1) 'native diagnostic prints one primary status'
+                }
             }
         } finally { $child.Dispose() }
     }
