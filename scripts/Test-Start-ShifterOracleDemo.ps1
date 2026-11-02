@@ -24,6 +24,7 @@ $directory = Join-Path $PSScriptRoot (".shf-oracle-demo-launcher-" + [Guid]::New
 $script:invocations = 0
 $script:failNode = $false
 $script:expectedUnit = 'DEMO'
+$script:expectedAll = $false
 $script:prompts = New-Object 'System.Collections.Generic.List[string]'
 $script:answers = New-Object 'System.Collections.Generic.Queue[string]'
 function Get-DemoSnapshot {
@@ -47,6 +48,7 @@ function Reset-DemoSynthetic {
     $env:TNS_ADMIN = $directory
     $script:failNode = $false
     $script:expectedUnit = 'DEMO'
+    $script:expectedAll = $false
     $script:answers.Clear()
     $script:prompts.Clear()
 }
@@ -72,12 +74,18 @@ try {
     $before = Get-DemoSnapshot
     $calls = $script:invocations
     . $launcher
+    $nodeInvoker = ${function:Invoke-ShifterOracleDemoNode}
     Assert-DemoSnapshot $before
     Assert-Demo ($script:invocations -eq $calls -and $script:prompts.Count -eq 0) 'dot-source defines functions without launching or prompting'
     function Invoke-ShifterOracleDemoNode {
-        param([string]$EntryPoint, [string]$Unit, [int]$ListenPort)
+        param([string]$EntryPoint, [string]$Unit, [int]$ListenPort, [switch]$AllTestUnits)
         $script:invocations++
-        Assert-Demo ($Unit -ceq $script:expectedUnit) 'only operator supplied exact scope forwarded'
+        Assert-Demo ([bool]$AllTestUnits -eq $script:expectedAll) 'all mode forwarded only on explicit switch'
+        if ($AllTestUnits) {
+            Assert-Demo ([string]::IsNullOrEmpty($Unit)) 'all mode ignores unit ENV without mixing permissions'
+        } else {
+            Assert-Demo ($Unit -ceq $script:expectedUnit) 'only operator supplied exact scope forwarded'
+        }
         Assert-Demo ($ListenPort -eq 18083) 'default host port18083 forwarded'
         Assert-Demo ($EntryPoint.EndsWith('backend\fixture-slice\oracle-demo-host.mts') -or
             $EntryPoint.EndsWith('backend/fixture-slice/oracle-demo-host.mts')) 'source host used instead of stale backend payload'
@@ -98,6 +106,40 @@ try {
         if ($AsSecureString) { return (ConvertTo-SecureString 'isolated-secure-input' -AsPlainText -Force) }
         if ($script:answers.Count -eq 0) { throw 'Unexpected isolated prompt' }
         return $script:answers.Dequeue()
+    }
+    foreach ($environmentUnit in @($null, 'OTHER', '*', '   ')) {
+        foreach ($failure in @($false, $true)) {
+            Reset-DemoSynthetic
+            [Environment]::SetEnvironmentVariable('SHF_ORACLE_DEMO_ORG_UNIT_ID', $environmentUnit, 'Process')
+            $script:expectedAll = $true
+            $script:failNode = $failure
+            $before = Get-DemoSnapshot
+            $calls = $script:invocations
+            $caught = $false
+            $output = @()
+            try { $output = @(Start-ShifterOracleDemo -AllTestUnits -NonInteractive) } catch {
+                $caught = $true
+                $output += Format-ShifterOracleDemoFailure $_.Exception
+            }
+            Assert-Demo ($caught -eq $failure) 'all mode propagates startup failure without fallback'
+            Assert-Demo ($script:invocations -eq $calls + 1) 'all mode starts one foreground child'
+            Assert-DemoSnapshot $before
+            Assert-Demo ($script:prompts.Count -eq 0) 'configured all mode never prompts for any input'
+            Assert-Demo (-not (($output -join "`n") -match 'isolated-synthetic-password|RAW_EXCEPTION_SENTINEL|OTHER')) 'all output contains no credentials, arbitrary error or unit'
+        }
+    }
+    foreach ($explicitUnit in @('', 'DEMO', '*')) {
+        Reset-DemoSynthetic
+        Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits -OrgUnitId $explicitUnit -NonInteractive } 'DEMO_SCOPE_CONFLICT'
+    }
+    foreach ($case in @(
+        @('NODE_ENV', 'production'), @('SHF_APP_ENV', 'production'),
+        @('SHF_NATIVE_EXIT_CONFIG', '{}'), @('SHF_ORACLE_CONFIG', '{}'),
+        @('SHF_TEST_ORACLE_STAGE_WRITE_ENABLED', 'false'), @('NODE_OPTIONS', '--import=unapproved')
+    )) {
+        Reset-DemoSynthetic
+        [Environment]::SetEnvironmentVariable($case[0], $case[1], 'Process')
+        Assert-DemoRejected { Start-ShifterOracleDemo -AllTestUnits -NonInteractive } 'DEMO_ENVIRONMENT_REJECTED'
     }
     Reset-DemoSynthetic
     [Environment]::SetEnvironmentVariable('SHF_ORACLE_PASSWORD', $null, 'Process')
@@ -265,6 +307,18 @@ try {
     Assert-Demo ($source -notmatch 'Start-Process|Set-Content|WriteAllText|Add-Content|npm install|Get-Credential') 'no background process, env file, install or credential vault'
     Assert-Demo ($source -notmatch "'User'|'Machine'") 'no persistent environment changes'
     Assert-Demo ($source -match '& node \$EntryPoint --test-read-only --org-unit \$Unit --port \$ListenPort') 'foreground Node argv contains scope and port only'
+    Assert-Demo ($source -match '& node \$EntryPoint --test-read-only --all-test-units --port \$ListenPort') 'all foreground argv has opt-in and port only; no unit or password'
+    # Exercise the actual argv branch with an isolated command double, not Node.
+    function node {
+        $script:nodeArguments = @($args)
+        $script:LASTEXITCODE = 0
+    }
+    try {
+        & $nodeInvoker -EntryPoint 'synthetic-host.mts' -AllTestUnits -ListenPort 18083
+        Assert-Demo (($script:nodeArguments -join '|') -ceq 'synthetic-host.mts|--test-read-only|--all-test-units|--port|18083') 'actual all invoker sends no unit or credential argv'
+        & $nodeInvoker -EntryPoint 'synthetic-host.mts' -Unit 'UNIT' -ListenPort 18083
+        Assert-Demo (($script:nodeArguments -join '|') -ceq 'synthetic-host.mts|--test-read-only|--org-unit|UNIT|--port|18083') 'actual single invoker preserves legacy argv'
+    } finally { Remove-Item Function:node }
     $tokens = $null; $errors = $null
     $ast = [Management.Automation.Language.Parser]::ParseFile($launcher, [ref]$tokens, [ref]$errors)
     $prompts = @($ast.FindAll({

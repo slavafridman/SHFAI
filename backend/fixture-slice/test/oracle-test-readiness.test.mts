@@ -50,9 +50,22 @@ class OwnedChild extends ChildProcess {
     this.emit("exit", 2, null);
   }
 }
+test("CLI empty configuration is pure parent preflight with no child or timer", async t => {
+  let forks = 0;
+  t.mock.method(globalThis, "setTimeout", () => { throw Error("preflight must not schedule IO"); });
+  const expected = await runOracleTestReadiness({});
+  const result = await runReadinessCli({}, { forkChild: () => {
+    forks++; throw Error("preflight must not fork");
+  } });
+  assert.equal(forks, 0);
+  assert.deepEqual(result, { ...expected, childExitAck: true });
+  assert.deepEqual(result.codes, ["MISSING_CONFIG"]);
+  assert.equal(isReadinessSummary(expected), true);
+  assert.equal(result.rollbackAck || result.leaseCloseAck || result.poolDrainAck, false);
+});
 test("CLI rejects invalid owned IPC without printing payload and observes exit", async () => {
   const child = new OwnedChild();
-  const pending = runReadinessCli({}, { forkChild: () => {
+  const pending = runReadinessCli(environment(), { forkChild: () => {
     queueMicrotask(() => child.emit("message", { kind: "complete", summary: { token: "UNIT_SECRET" } }));
     return child;
   } });
@@ -67,7 +80,7 @@ test("CLI complete waits for delayed exit ACK rather than a kill request", async
   const p = protocol(), summary = await runOracleTestReadiness(environment(), p.deps);
   const child = new OwnedChild(); child.delayExit = true;
   let returned = false;
-  const pending = runReadinessCli({}, { forkChild: () => {
+  const pending = runReadinessCli(environment(), { forkChild: () => {
     queueMicrotask(() => child.emit("message", { kind: "complete", summary }));
     return child;
   } }).then(r => { returned = true; return r; });
@@ -88,11 +101,13 @@ test("CLI complete waits for delayed exit ACK rather than a kill request", async
     { ...summary, oracleCode: "ORA-12345" },
   ]) assert.equal(isReadinessSummary(bad), false);
 });
-test("actual owned missing-config fork has exited before CLI returns", async () => {
+test("actual owned fork complete/exit has exited before CLI returns", async () => {
   let hasExited = false;
-  const result = await runReadinessCli({}, { forkChild: env => {
+  // Valid parent preflight selects supervision; this owned test child alone
+  // receives empty inputs, so its IPC/exit is exercised without DNS/native IO.
+  const result = await runReadinessCli(environment(), { forkChild: () => {
     const child = fork(fileURLToPath(new URL("../oracle-test-readiness.mts", import.meta.url)), [], {
-      env, execArgv: [], stdio: ["ignore", "ignore", "ignore", "ipc"],
+      env: {}, execArgv: [], stdio: ["ignore", "ignore", "ignore", "ipc"],
     });
     child.once("exit", () => { hasExited = true; });
     return child;
@@ -109,7 +124,7 @@ test("CLI cancellation waits for actual owned exit with no retry", async () => {
   const controller = new AbortController();
   let forks = 0, returned = false;
   const requested = new Promise<void>(r => child.once("kill-request", r));
-  const pending = runReadinessCli({}, { signal: controller.signal, forkChild: () => {
+  const pending = runReadinessCli(environment(), { signal: controller.signal, forkChild: () => {
     forks++; queueMicrotask(() => controller.abort()); return child;
   } }).then(r => { returned = true; return r; });
   await requested;
@@ -125,7 +140,7 @@ test("CLI cancellation waits for actual owned exit with no retry", async () => {
 test("CLI timeout never treats kill delivery as termination ACK", async () => {
   const child = new OwnedChild(); child.delayExit = true;
   const start = performance.now();
-  const result = await runReadinessCli({}, { budgetMs: 60, forkChild: () => child });
+  const result = await runReadinessCli(environment(), { budgetMs: 60, forkChild: () => child });
   assert.ok(performance.now() - start < 500);
   assert.equal(child.hasExited, false);
   assert.equal(result.childExitAck, false);
@@ -139,7 +154,7 @@ test("CLI complete does not reset the original absolute exit deadline", async ()
   const child = new OwnedChild(); child.delayExit = true;
   let faultTimer: ReturnType<typeof setTimeout> | undefined;
   const start = performance.now();
-  const result = await runReadinessCli({}, { budgetMs: 90, forkChild: () => {
+  const result = await runReadinessCli(environment(), { budgetMs: 90, forkChild: () => {
     // Fault-controlled completion arrives during the original budget; the
     // child then deliberately withholds exit. There is no new five-second wait.
     faultTimer = setTimeout(() => child.emit("message", { kind: "complete", summary }), 25);
@@ -158,7 +173,7 @@ test("CLI kill failure cannot PASS, even if exit is subsequently observed", asyn
   const p = protocol(), summary = await runOracleTestReadiness(environment(), p.deps);
   const child = new OwnedChild(); child.failKill = true;
   const requested = new Promise<void>(r => child.once("kill-request", r));
-  const pending = runReadinessCli({}, { forkChild: () => {
+  const pending = runReadinessCli(environment(), { forkChild: () => {
     queueMicrotask(() => child.emit("message", { kind: "complete", summary })); return child;
   } });
   await requested;
@@ -171,16 +186,45 @@ test("CLI kill failure cannot PASS, even if exit is subsequently observed", asyn
 });
 test("CLI already-exited child needs no kill or extra timer", async () => {
   const child = new OwnedChild(); child.ackExit();
-  const result = await runReadinessCli({}, { forkChild: () => child });
+  const result = await runReadinessCli(environment(), { forkChild: () => child });
   assert.equal(child.hasExited, true);
   assert.equal(child.killRequested, false);
   assert.equal(result.childExitAck, true);
   assert.equal(result.status, "BLOCKED"); // no complete IPC
 });
+test("CLI complete with already-observed exit state never kills an exited child", async () => {
+  const summary = await runOracleTestReadiness({});
+  const child = new OwnedChild(); child.failKill = true;
+  const result = await runReadinessCli(environment(), { forkChild: () => {
+    queueMicrotask(() => {
+      Object.defineProperty(child, "exitCode", { value: 2 });
+      child.emit("message", { kind: "complete", summary });
+      child.emit("exit", 2, null);
+      child.emit("close", 2, null);
+    });
+    return child;
+  } });
+  assert.equal(child.killRequested, false);
+  assert.deepEqual(result, { ...summary, childExitAck: true });
+});
+test("CLI complete waits for close ACK when exit event is not delivered", async () => {
+  const summary = await runOracleTestReadiness({});
+  const child = new OwnedChild(); child.delayExit = true;
+  const requested = new Promise<void>(r => child.once("kill-request", r));
+  let returned = false;
+  const pending = runReadinessCli(environment(), { forkChild: () => {
+    queueMicrotask(() => child.emit("message", { kind: "complete", summary }));
+    return child;
+  } }).then(r => { returned = true; return r; });
+  await requested;
+  assert.equal(returned, false);
+  child.emit("close", 2, null);
+  assert.deepEqual(await pending, { ...summary, childExitAck: true });
+});
 for (const mode of ["throw", "missing-pid", "error"] as const)
   test(`CLI spawn failure ${mode} is sanitized and does not wait for an impossible exit`, async () => {
     const start = performance.now();
-    const result = await runReadinessCli({}, { forkChild: () => {
+    const result = await runReadinessCli(environment(), { forkChild: () => {
       if (mode === "throw") throw Error("UNIT_SECRET");
       const child = new OwnedChild();
       Object.defineProperty(child, "pid", { value: undefined });
@@ -200,7 +244,7 @@ test("CLI rejects extra IPC envelope fields and unknown kinds explicitly", async
     { kind: "progress", summary: { ...summary, codes: ["UNIT_SECRET"] } }, null,
   ]) {
     const child = new OwnedChild();
-    const result = await runReadinessCli({}, { forkChild: () => {
+    const result = await runReadinessCli(environment(), { forkChild: () => {
       queueMicrotask(() => child.emit("message", value)); return child;
     } });
     assert.equal(child.hasExited, true);
@@ -447,6 +491,14 @@ test("missing process configuration blocks before any pool or query", async () =
     assert.equal(result.queries, 0);
     assert.deepEqual(p.log, []);
     assert.ok(!JSON.stringify(result).includes("UNIT_SECRET"));
+    let forks = 0;
+    const cli = await runReadinessCli(env, { forkChild: () => {
+      forks++; throw Error("invalid configuration must not fork");
+    } });
+    assert.equal(forks, 0);
+    assert.deepEqual(cli, { ...result, childExitAck: true });
+    assert.equal(cli.rollbackAck || cli.leaseCloseAck || cli.poolDrainAck, false);
+    assert.deepEqual(p.resolutions, []);
   });
   test("DNS address drift blocks before pool, never learns aliases from database", async () => {
     const p = protocol();

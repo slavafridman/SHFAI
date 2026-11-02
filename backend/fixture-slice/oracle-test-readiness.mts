@@ -217,9 +217,8 @@ export function isReadinessSummary(v: unknown): v is ReadinessSummary {
     !v.codes.includes("READ_ONLY_CHECK_PASSED_NOT_RELEASE") &&
     (v.codes.length > 0 || v.poolAttempts === 1); // in-flight progress may have no failure yet
 }
-export async function runOracleTestReadiness(env: NodeJS.ProcessEnv,
-  deps: ReadinessDependencies = {}): Promise<ReadinessSummary> {
-  const result: ReadinessSummary = {
+function initialSummary(env: NodeJS.ProcessEnv): ReadinessSummary {
+  return {
     version: "oracle-test-readiness-v1", status: "BLOCKED", codes: [],
     presence: Object.fromEntries(readinessKeys.map(k => [k, typeof env[k] === "string" && env[k]!.length > 0])),
     missing: [], poolAttempts: 0, connectionAttempts: 0, queries: 0,
@@ -227,8 +226,62 @@ export async function runOracleTestReadiness(env: NodeJS.ProcessEnv,
     rollbackAck: false, leaseCloseAck: false, poolDrainAck: false,
     unknown: unknownLimits,
   };
+}
+// Synchronous configuration/proof validation ONLY: no DNS, paths, driver or pool
+// access. Both parent and worker use the same ordering and sanitized failures.
+// Admission here is not endpoint/identity verification or readiness success.
+function preflight(env: NodeJS.ProcessEnv): {
+  result: ReadinessSummary; admitted?: { oracle: OracleEnvironment; p: ReadProof };
+} {
+  const result = initialSummary(env);
+  try {
+    if (env.NODE_ENV === "production" || env.SHF_APP_ENV !== undefined && env.SHF_APP_ENV !== "test")
+      fail("PRODUCTION_OR_ENV_REJECTED");
+    // Stray native authority is rejected by KEY only; never inspect those values.
+    if (Object.keys(env).some(k => k.startsWith("SHF_NATIVE_") ||
+      k.startsWith("SHF_TEST_ORACLE_") || k.startsWith("SHF_ORACLE_READINESS_") &&
+      !knownReadinessKeys.has(k))) fail("STRAY_CONFIG");
+    result.missing = requiredReadinessKeys.filter(k => !result.presence[k]);
+    if (result.missing.length) fail("MISSING_CONFIG");
+    if (env.NODE_ENV !== undefined && env.NODE_ENV !== "test") fail("PRODUCTION_OR_ENV_REJECTED");
+    const config = validateRuntimeConfig(json(env.SHF_ORACLE_CONFIG!));
+    const profile: Record<string, unknown> = { ...config };
+    if (config.dataSource !== "oracle-read-only" || config.deploymentClass !== "isolated-test-demo" ||
+      shiftManagementMode(config) !== "disabled" ||
+      ["attendanceStageArrivalMode", "attendanceStationArrivalMode", "attendanceStationArrivalLateMode",
+        "attendanceStationExitMode", "attendanceStationExitCancellationMode", "shiftManagementMode"]
+        .some(k => profile[k] !== undefined && profile[k] !== "disabled"))
+      fail("INVALID_READ_PROFILE");
+    const oracle = oracleEnvironment(env);
+    if (!win32.isAbsolute(oracle.clientLibDir) || !/^[A-Za-z]:\\/.test(oracle.clientLibDir))
+      fail("INVALID_CLIENT_CONFIG");
+    // Validate syntax only; never open/discover a TNS directory in preflight.
+    if (!env.TNS_ADMIN || !win32.isAbsolute(env.TNS_ADMIN) || !/^[A-Za-z]:\\/.test(env.TNS_ADMIN))
+      fail("INVALID_CLIENT_CONFIG");
+    if (env.SHF_ORACLE_READINESS_METADATA !== undefined && env.SHF_ORACLE_READINESS_METADATA !== "M26")
+      fail("INVALID_METADATA_SCOPE");
+    const p = proof(env.SHF_ORACLE_READINESS_PROOF!, oracle);
+    current(p);
+    return { result, admitted: { oracle, p } };
+  } catch (error) {
+    result.codes.push(record(error) && readinessCode(error.readinessCode) && failureCodes.has(error.readinessCode)
+      ? error.readinessCode : "DEPENDENCY_OR_CONFIG_UNAVAILABLE");
+    const code = safeCode(error);
+    if (code) result.oracleCode = code;
+    return { result };
+  }
+}
+export async function runOracleTestReadiness(env: NodeJS.ProcessEnv,
+  deps: ReadinessDependencies = {}): Promise<ReadinessSummary> {
+  // Preflight is inside the same total budget, not an extra admission window.
   const budget = Math.max(10, Math.min(5000, deps.budgetMs ?? 5000));
   const deadline = performance.now() + budget, reserve = Math.min(1000, budget / 3);
+  const checked = preflight(env), { result } = checked;
+  if (!checked.admitted) {
+    deps.onProgress?.(result);
+    return result;
+  }
+  const { oracle, p } = checked.admitted;
   const controller = new AbortController(), abort = () => controller.abort();
   deps.signal?.addEventListener("abort", abort, { once: true });
   if (deps.signal?.aborted) abort();
@@ -271,34 +324,6 @@ export async function runOracleTestReadiness(env: NodeJS.ProcessEnv,
     }
   }
   try {
-    if (env.NODE_ENV === "production" || env.SHF_APP_ENV !== undefined && env.SHF_APP_ENV !== "test")
-      fail("PRODUCTION_OR_ENV_REJECTED");
-    // Stray native authority is rejected by KEY only; never inspect those values.
-    if (Object.keys(env).some(k => k.startsWith("SHF_NATIVE_") ||
-      k.startsWith("SHF_TEST_ORACLE_") || k.startsWith("SHF_ORACLE_READINESS_") &&
-      !knownReadinessKeys.has(k))) fail("STRAY_CONFIG");
-    result.missing = readinessKeys.filter(k => !["NODE_ENV", "SHF_ORACLE_READINESS_METADATA"].includes(k) &&
-      !result.presence[k]);
-    if (result.missing.length) fail("MISSING_CONFIG");
-    if (env.NODE_ENV !== undefined && env.NODE_ENV !== "test") fail("PRODUCTION_OR_ENV_REJECTED");
-    const config = validateRuntimeConfig(json(env.SHF_ORACLE_CONFIG!));
-    const profile: Record<string, unknown> = { ...config };
-    if (config.dataSource !== "oracle-read-only" || config.deploymentClass !== "isolated-test-demo" ||
-      shiftManagementMode(config) !== "disabled" ||
-      ["attendanceStageArrivalMode", "attendanceStationArrivalMode", "attendanceStationArrivalLateMode",
-        "attendanceStationExitMode", "attendanceStationExitCancellationMode", "shiftManagementMode"]
-        .some(k => profile[k] !== undefined && profile[k] !== "disabled"))
-      fail("INVALID_READ_PROFILE");
-    const oracle = oracleEnvironment(env);
-    if (!win32.isAbsolute(oracle.clientLibDir) || !/^[A-Za-z]:\\/.test(oracle.clientLibDir))
-      fail("INVALID_CLIENT_CONFIG");
-    // Driver resolves ONLY the explicitly selected runtime TNS configuration.
-    // We do not open it, discover a default, or learn a binding from a DB reply.
-    if (!env.TNS_ADMIN || !win32.isAbsolute(env.TNS_ADMIN) || !/^[A-Za-z]:\\/.test(env.TNS_ADMIN))
-      fail("INVALID_CLIENT_CONFIG");
-    if (env.SHF_ORACLE_READINESS_METADATA !== undefined && env.SHF_ORACLE_READINESS_METADATA !== "M26")
-      fail("INVALID_METADATA_SCOPE");
-    const p = proof(env.SHF_ORACLE_READINESS_PROOF!, oracle);
     current(p);
     controller.signal.throwIfAborted();
     const frozen = p.endpointProof;
@@ -398,7 +423,11 @@ export async function runOracleTestReadiness(env: NodeJS.ProcessEnv,
   }
   return result;
 }
-export interface CliReadinessSummary extends ReadinessSummary { childExitAck: boolean; }
+export interface CliReadinessSummary extends ReadinessSummary {
+  // True means no owned child remains: no child was needed, or exit was observed.
+  // It never acknowledges Oracle rollback/lease/pool cleanup.
+  childExitAck: boolean;
+}
 interface CliDependencies {
   // Module-isolated owned fork hook. Never selected by ENV/the supported CLI.
   forkChild?: (env: NodeJS.ProcessEnv) => ChildProcess;
@@ -415,9 +444,9 @@ export async function runReadinessCli(source: NodeJS.ProcessEnv,
       key.startsWith("SHF_ORACLE_READINESS_") && !knownReadinessKeys.has(key))
       env[key] = ""; // Preserve key-only rejection, never copy stray values.
   }
-  let last = await runOracleTestReadiness({});
-  last.presence = Object.fromEntries(readinessKeys.map(k => [k, typeof env[k] === "string" && env[k]!.length > 0]));
-  last.missing = requiredReadinessKeys.filter(k => !last.presence[k]);
+  const checked = preflight(env);
+  if (!checked.admitted) return { ...checked.result, childExitAck: true };
+  let last = checked.result;
   return new Promise<CliReadinessSummary>(resolve => {
     let child: ChildProcess | undefined, complete = false, settled = false, exitAck = false;
     let terminationRequested = false;

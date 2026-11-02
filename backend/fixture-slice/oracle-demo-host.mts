@@ -18,6 +18,7 @@ import { unitCode } from "./current-shifts-validation.mts";
 import { record } from "./contract-validation.mts";
 import { validateConnectionRuntime } from "./oracle-connection-check.mts";
 import { backendLifecycle } from "./backend-lifecycle.mts";
+import { teamsAndParents } from "./oracle-readers.mts";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const oracleKeys = ["SHF_ORACLE_CONNECT_STRING", "SHF_ORACLE_USER", "SHF_ORACLE_PASSWORD",
@@ -25,11 +26,10 @@ const oracleKeys = ["SHF_ORACLE_CONNECT_STRING", "SHF_ORACLE_USER", "SHF_ORACLE_
 const falseAuthority = Object.freeze({
   targetIdentityVerified: false, nativeWritesAuthorized: false, releaseReady: false,
 });
-export interface OracleDemoOptions {
+export type OracleDemoOptions = {
   testReadOnly: boolean;
-  orgUnitId: string;
   port?: number;
-}
+} & ({ orgUnitId: string; allTestUnits?: never } | { allTestUnits: true; orgUnitId?: never });
 export class DemoHostError extends Error {
   readonly oracleCode?: string;
   constructor(code: string, cause?: unknown) {
@@ -44,9 +44,13 @@ function localPath(value: string | undefined) {
   return typeof value === "string" && value.length <= 4096 && value.trim() === value &&
     /^[A-Za-z]:[\\/]/.test(value) && !/[\u0000-\u001f]/.test(value);
 }
-export function demoEnvironment(source: NodeJS.ProcessEnv, options: OracleDemoOptions): NodeJS.ProcessEnv {
-  if (options.testReadOnly !== true || !unitCode(options.orgUnitId) ||
-      /[*%?\\/,;]/.test(options.orgUnitId) ||
+function exactUnit(value: unknown): value is string {
+  return unitCode(value) && !/[*%?\\/,;]/.test(value);
+}
+function preflightEnvironment(source: NodeJS.ProcessEnv, options: OracleDemoOptions): NodeJS.ProcessEnv {
+  if (options.testReadOnly !== true ||
+      (options.allTestUnits === true ? options.orgUnitId !== undefined
+        : options.allTestUnits !== undefined || !exactUnit(options.orgUnitId)) ||
       !Number.isInteger(options.port ?? 18083) || (options.port ?? 18083) < 0 || (options.port ?? 18083) > 65535 ||
       source.NODE_ENV !== undefined && !["development", "test"].includes(source.NODE_ENV) ||
       source.SHF_APP_ENV !== undefined && source.SHF_APP_ENV !== "test" ||
@@ -61,9 +65,12 @@ export function demoEnvironment(source: NodeJS.ProcessEnv, options: OracleDemoOp
   // Only process inputs, never any .env file or unrelated native/fixture authority.
   const env: NodeJS.ProcessEnv = { NODE_ENV: "test", SHF_APP_ENV: "test", SHF_ORACLE_PORT: "0" };
   for (const key of oracleKeys) env[key] = source[key];
+  return env;
+}
+function scopedEnvironment(env: NodeJS.ProcessEnv, orgUnitIds: string[]): NodeJS.ProcessEnv {
   env.SHF_ORACLE_CONFIG = JSON.stringify({
     deploymentClass: "isolated-test-demo", authenticationMode: "synthetic",
-    syntheticAdministratorEnabled: true, syntheticOrgUnitIds: [options.orgUnitId],
+    syntheticAdministratorEnabled: true, syntheticOrgUnitIds: orgUnitIds,
     dataSource: "oracle-read-only", oracleTestScopeConfirmed: true,
     businessTimeZone: "Asia/Jerusalem",
     attendanceStageArrivalMode: "disabled", attendanceStationArrivalMode: "disabled",
@@ -71,6 +78,53 @@ export function demoEnvironment(source: NodeJS.ProcessEnv, options: OracleDemoOp
   });
   loadEnvironmentConfig(env); // Original production/authentication/business gates.
   return env;
+}
+export function demoEnvironment(source: NodeJS.ProcessEnv, options: OracleDemoOptions): NodeJS.ProcessEnv {
+  const env = preflightEnvironment(source, options);
+  if (options.allTestUnits) throw new DemoHostError("DEMO_SCOPE_PENDING");
+  return scopedEnvironment(env, [options.orgUnitId]);
+}
+
+// 55-scope-v0.1: one snapshot, 50+50+1, fixed source SQL; never a partial grant.
+async function discoverUnitScope(session: OracleReadSession, signal?: AbortSignal): Promise<string[]> {
+  let scopeFailure: DemoHostError | undefined;
+  const invalid: (code?: string) => never = (code = "DEMO_SCOPE_INVALID") => {
+    scopeFailure = new DemoHostError(code); throw scopeFailure;
+  };
+  try {
+    return await session.read(async query => {
+      const ids: string[] = [];
+      const seen = new Set<string>();
+      for (const [lowerBound, upperBound, bound] of [[0, 50, 50], [50, 100, 50], [100, 101, 1]]) {
+        const rows = await query(`SELECT "orgUnitId","unitType","parentUnit" FROM (
+  SELECT t.org_unit_id AS "orgUnitId", t.unit_type_id AS "unitType",
+    t.parent_unit AS "parentUnit",
+    ROW_NUMBER() OVER (ORDER BY t.org_unit_id,t.parent_unit) AS "scopeRow"
+  FROM SHIFTER.shf_org_unit t WHERE t.unit_type_id=:teamType
+) WHERE "scopeRow">:lowerBound AND "scopeRow"<=:upperBound
+ORDER BY "scopeRow"`, { teamType: "J01", lowerBound, upperBound }, bound);
+        if (lowerBound === 100 && rows.length) invalid("DEMO_SCOPE_TOO_LARGE");
+        for (const row of rows) {
+          if (!record(row) || Object.keys(row).sort().join(",") !== "orgUnitId,parentUnit,unitType" ||
+              !exactUnit(row.orgUnitId) || row.unitType !== "J01" || !exactUnit(row.parentUnit) ||
+              row.parentUnit === row.orgUnitId || seen.has(row.orgUnitId)) invalid();
+          seen.add(row.orgUnitId); ids.push(row.orgUnitId);
+        }
+        if (rows.length < bound) break;
+      }
+      if (!ids.length) invalid();
+      try { await teamsAndParents(query, ids); }
+      catch (error) {
+        if (record(error) && error.code === "INVALID_SOURCE_DATA") invalid();
+        throw error;
+      }
+      return ids;
+    }, signal);
+  } catch (error) {
+    if (scopeFailure) throw scopeFailure;
+    if (record(error) && error.code === "INVALID_SOURCE_DATA") throw new DemoHostError("DEMO_SCOPE_INVALID");
+    throw error;
+  }
 }
 
 export type DemoAssets = ReadonlyMap<string, Buffer>;
@@ -164,10 +218,15 @@ const mime: Record<string, string> = { ".html": "text/html; charset=utf-8", ".js
 export interface OracleDemoTestDependencies {
   read?: (env: OracleEnvironment) => Promise<OraclePool>;
   assets?: () => Promise<DemoAssets>;
+  signal?: AbortSignal;
 }
 export async function startOracleDemo(source: NodeJS.ProcessEnv, options: OracleDemoOptions,
   isolatedTestDependencies: OracleDemoTestDependencies = {}) {
-  const env = demoEnvironment(source, options); // Before filesystem, driver or listeners.
+  let env = preflightEnvironment(source, options); // No placeholder identity before discovery.
+  if (!options.allTestUnits) env = scopedEnvironment(env, [options.orgUnitId]);
+  const signal = isolatedTestDependencies.signal;
+  const checkAbort = () => { if (signal?.aborted) throw new DemoHostError("DEMO_STARTUP_ABORTED"); };
+  checkAbort();
   if (!isolatedTestDependencies.read) {
     validateConnectionRuntime(process.platform, process.versions.node);
     try {
@@ -185,6 +244,7 @@ export async function startOracleDemo(source: NodeJS.ProcessEnv, options: Oracle
   const selectedPort = addressPort(reservation);
   await closeHost(reservation);
   let pool: OraclePool | undefined;
+  let transferred = false;
   let backend: Server | undefined;
   let host: Server | undefined;
   let stopping = false;
@@ -215,23 +275,37 @@ export async function startOracleDemo(source: NodeJS.ProcessEnv, options: Oracle
         finally {
           await health; // Wait for native health work/rollback before pool owner closes.
           if (backend) await stopBackendServer(backend);
+          else if (pool && !transferred) await pool.close();
         }
       })();
     }
     return stoppingPromise;
   };
   try {
+    checkAbort();
+    if (!isolatedTestDependencies.read) {
+      const { default: driver } = await import("oracledb");
+      validateConnectionRuntime(process.platform, process.versions.node, driver.versionString);
+    }
+    checkAbort();
+    pool = await (isolatedTestDependencies.read ?? createOraclePool)(oracleEnvironment(env));
+    checkAbort(); // Acquisition may settle only after cancellation; never close a busy lease.
+    let authorizedUnitCount = 1;
+    if (options.allTestUnits) {
+      const ids = await discoverUnitScope(new OracleReadSession(pool), signal);
+      checkAbort();
+      authorizedUnitCount = ids.length;
+      env = scopedEnvironment(env, ids);
+    }
     backend = await startFromEnvironment(env, undefined, {
-      async read(target) {
-        if (!isolatedTestDependencies.read) {
-          const { default: driver } = await import("oracledb");
-          validateConnectionRuntime(process.platform, process.versions.node, driver.versionString);
-        }
-        pool = await (isolatedTestDependencies.read ?? createOraclePool)(target);
+      async read() {
+        if (!pool || transferred) throw new DemoHostError("DEMO_POOL_ALREADY_TRANSFERRED");
+        transferred = true;
         return pool; // Backend is the sole pool owner, including startup failure.
       },
       async native() { throw new DemoHostError("DEMO_WRITES_FORBIDDEN"); },
     });
+    checkAbort();
     const backendPort = addressPort(backend);
     host = createServer({ maxHeaderSize: 32 * 1024 }, (request, response) => {
       void (async () => {
@@ -263,6 +337,7 @@ export async function startOracleDemo(source: NodeJS.ProcessEnv, options: Oracle
             probeSummary: result.ready ? "Database credentials accepted; server identity not independently certified"
               : "Database unavailable; no synthetic data fallback",
             ...falseAuthority, syntheticAuthentication: true, dataSource: "oracle-read-only",
+            ...(options.allTestUnits ? { scope: "all-test-units", authorizedUnitCount } : {}),
             ...(result.oracleCode ? { oracleCode: result.oracleCode } : {}),
           }));
           return;
@@ -304,11 +379,15 @@ export async function startOracleDemo(source: NodeJS.ProcessEnv, options: Oracle
   } catch (error) {
     // A rejected backend startup has already closed its pool. Never close it twice.
     await stop();
+    if (error instanceof DemoHostError) throw error;
     throw new DemoHostError("DEMO_STARTUP_FAILED", error);
   }
 }
 
 export function parseDemoArguments(args: string[]): OracleDemoOptions {
+  if (args[0] === "--test-read-only" && args[1] === "--all-test-units" &&
+      (args.length === 2 || args.length === 4 && args[2] === "--port" && /^[0-9]{1,5}$/.test(args[3])))
+    return { testReadOnly: true, allTestUnits: true, port: args.length === 4 ? Number(args[3]) : 18083 };
   if (args.length !== 3 && args.length !== 5 || args[0] !== "--test-read-only" ||
       args[1] !== "--org-unit" || args.length === 5 && (args[3] !== "--port" || !/^[0-9]{1,5}$/.test(args[4])))
     throw new DemoHostError("DEMO_ARGUMENTS_REJECTED");
@@ -325,15 +404,24 @@ export function attachDemoShutdown(demo: { stop(): Promise<void> },
   return () => { signals.removeListener("SIGINT", stop); signals.removeListener("SIGTERM", stop); };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  let detach: (() => void) | undefined;
   try {
-    const demo = await startOracleDemo(process.env, parseDemoArguments(process.argv.slice(2)));
-    attachDemoShutdown(demo);
+    const controller = new AbortController();
+    const startup = startOracleDemo(process.env, parseDemoArguments(process.argv.slice(2)), { signal: controller.signal });
+    detach = attachDemoShutdown({ async stop() {
+      controller.abort();
+      const running = await startup.catch(() => undefined);
+      await running?.stop();
+    } });
+    const demo = await startup;
     process.stdout.write(`Oracle TEST read-only demo: ${demo.url}\nStatus: ${demo.url}/demo-status\n` +
       "Synthetic Administrator; exact operator-attested read scope; all writes disabled.\n" +
       "Connection accepted; server identity NOT independently certified; NOT release-ready. Ctrl+C to stop.\n");
   } catch (error) {
+    detach?.();
     const failure = error instanceof DemoHostError ? error : new DemoHostError("DEMO_STARTUP_FAILED", error);
-    process.stderr.write(`${failure.message}${failure.oracleCode ? ` (${failure.oracleCode})` : ""}\n`);
+    process.stderr.write(JSON.stringify({ code: failure.message,
+      ...(failure.oracleCode ? { oracleCode: failure.oracleCode } : {}) }) + "\n");
     if (failure.message === "DEMO_TEST_ASSETS_REQUIRED")
       process.stderr.write("Build TEST assets explicitly: powershell.exe -NoProfile -File scripts\\Build-Shifter.ps1 -Profile test -Validation\n");
     process.exitCode = 1;

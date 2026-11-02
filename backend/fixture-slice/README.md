@@ -3,8 +3,46 @@
 ## One-command Windows Oracle TEST read-only demonstration
 
 From `D:\AIProjects\SHFAI`, in **your already-configured PowerShell terminal**,
-with process `SHF_ORACLE_DEMO_ORG_UNIT_ID` preset to the exact TEST unit you
-are authorized to read:
+to read all admitted TEST application teams through the existing seven readers:
+
+```powershell
+powershell.exe -NoProfile -File scripts\Start-ShifterOracleDemo.ps1 -AllTestUnits
+```
+
+Approved baseline **55-scope-v0.1** means all **J01 teams**, not every database
+table, hierarchy level, DBA access, production access or write authority.
+The existing five Oracle process inputs below are still required. No unit
+environment variable or unit prompt is required in this explicit mode.
+`-AllTestUnits` ignores an existing launcher unit ENV default (even malformed),
+but rejects any explicitly supplied `-OrgUnitId`, including an empty one.
+The launcher removes the unit ENV key for Node and restores its exact value
+on success or failure. Node's equivalent grammar is
+`--test-read-only --all-test-units [--port N]`; duplicate/mixed/unknown flags fail.
+
+Before any business listener or synthetic identity, one read-only transaction
+discovers the complete ordered J01 catalog using fixed bound SQL against
+`SHIFTER.shf_org_unit`, in pages of **50 + 50 + 1**. In the same snapshot,
+the existing hierarchy validator checks every exact team and G01 parent.
+Parents are never granted. Empty, duplicate, malformed or invalid-parent source
+data fails `DEMO_SCOPE_INVALID`; a 101st team fails **`DEMO_SCOPE_TOO_LARGE`**.
+There is no first100 partial success, wildcard, automatic permission growth or
+changed Principal/API limit. The actual count is **unknown until operator launch**.
+Over100 requires a separately versioned coordinated contract decision, not a bypass.
+The frozen session scope requires restart to rediscover; existing per-request
+authorization, source validation and smaller request limits remain unchanged.
+
+Assets and port availability are checked before Oracle pool acquisition. The
+same single pool is reused after discovery and transferred to backend ownership
+once. Cancellation/timeouts wait for pending native work, rollback and lease
+cleanup before closing that pool; a stalled native operation can delay shutdown.
+No arbitrary SQL console, employee/profile discovery, additional database,
+real authentication, native-command configuration or write grant is introduced.
+Errors print only a constant JSON `code` and, when available, sanitized Oracle
+diagnostic code. The launcher retains that Node output, then reports its fixed
+generic startup failure without echoing arbitrary messages.
+
+**Default single-unit mode is unchanged.** Without `-AllTestUnits`, set process
+`SHF_ORACLE_DEMO_ORG_UNIT_ID` to the exact authorized TEST unit, then run:
 
 ```powershell
 powershell.exe -NoProfile -File scripts\Start-ShifterOracleDemo.ps1
@@ -20,8 +58,8 @@ parameter does not fall through to the environment.
 The value must remain **one exact authorized organizational unit code**, 1-8
 characters with the existing validation: case is preserved, numeric IDs are
 accepted, and whitespace, wildcards, lists and the existing reserved values
-are rejected. There is no synthetic default, parent-wide grant, all-units
-permission, unit discovery or invented real unit. This code is not an employee
+are rejected. There is no synthetic default, parent-wide grant, implicit all-units
+permission or invented real unit. This code is not an employee
 ID or password. Your configured selection remains an operator scope
 attestation, not an independently verified grant or Oracle server certificate.
 Existing scoped readers still validate source hierarchy and data; an unknown
@@ -34,7 +72,8 @@ connection, with the fixed safe message:
 The nonsecret unit key is **launcher-only**, not a new Node/API configuration
 contract. Only this known key is temporarily removed from the child environment
 during Node invocation and restored in `finally` on success or failure. Node
-always receives the validated exact value through `--org-unit`; unrelated
+receives the validated exact value through `--org-unit` in single-unit mode;
+all mode receives only `--all-test-units`. Unrelated
 unapproved keys are still rejected, not silently cleared. No env file is read,
 and this setting does not bypass password input or grant new resource authority.
 
@@ -82,6 +121,8 @@ Health URLs (packaging metadata, **not new domain API contracts**):
   `OracleReadSession`, read-only transaction, existing timeout/break/rollback
   and release semantics. Oracle failure yields503 with only a safe code/summary.
   No business records, host/schema/SQL details or credentials are returned.
+  In explicit all mode only, the summary additionally reports
+  `scope:"all-test-units"` and the actual `authorizedUnitCount`, never unit IDs.
 - Readiness always says `targetIdentityVerified:false`,
   `nativeWritesAuthorized:false`, `releaseReady:false`. Connection acceptance
   does **not** independently certify the server behind a TNS alias as TEST.
@@ -89,7 +130,8 @@ Health URLs (packaging metadata, **not new domain API contracts**):
   separate, and are not prerequisites for this basic read-only demonstration.
 
 Authentication is the existing explicitly isolated synthetic Administrator,
-with exactly the seven read capabilities and the selected exact-unit scope.
+with exactly the seven read capabilities and the selected exact-unit scope
+(or the complete validated 1..100-team scope in explicit all mode).
 It does not verify real application credentials or supply employee context.
 F1/F2/late arrival/exit, management and C52 command modes remain disabled.
 Business validation, employee-context and scope checks are unchanged. Production,
@@ -110,10 +152,37 @@ Verification commands (isolated doubles/static checks; **not live Oracle**):
 ```powershell
 powershell.exe -NoProfile -File scripts\Test-Start-ShifterOracleDemo.ps1
 cd backend\fixture-slice
-node --test --test-concurrency=4 test/oracle-demo-host.test.mts
+node --test --test-concurrency=1 test/oracle-demo-host.test.mts
 npm run typecheck
 npm test
 ```
+
+Verification for **SHF-ALL-TEST-UNITS / 55-scope-v0.1**, 2026-11-02:
+focused host **111/111**, Windows launcher **628 static/synthetic assertions**,
+`npm run typecheck`, both assigned MTS `node --check` commands and five-file
+`git diff --check` passed. Tests include 0/1/50/51/100/101 teams, cross-page
+duplicates, unsafe codes and hierarchy, one snapshot/pool, exact seven-capability
+identity, existing scoped HTTP readers and limits, invalid configuration before
+IO, cancellation while acquisition/discovery is pending, and the unchanged
+cumulative5s budget without closing busy leases.
+The canonical serial `npm test` run across **83 files** finished in
+**288532.3874ms: 2248/2249 passed**, 1 failed, 0 cancellations/skips.
+The existing `oracle-test-readiness.test.mts:620` empty-ENV CLI test expected
+`MISSING_CONFIG` but received `CLI_EXIT_UNACKNOWLEDGED`.
+An unchanged isolated rerun,
+`node --test --test-concurrency=1 test/oracle-test-readiness.test.mts`,
+passed **82/82**; this does **not** make the canonical run fully green.
+The subsequent readiness correction rejects invalid/missing configuration in
+pure parent preflight without a child; valid configurations retain supervised
+native cleanup and the unchanged five-second deadline. Focused readiness
+**85/85** and the final canonical suite **2252/2252** passed, with no skips or
+failures. The earlier failed run and isolated rerun above remain historical
+evidence, not the final result. Real Oracle/TNS/client connection, actual catalog count, operator
+browser interaction and console Ctrl+C were **not run**. All verification was
+static or isolated protocol doubles; no actual database result or full-target
+identity certification is claimed. No existing service was changed or started.
+
+Historical verification before the all-unit implementation follows:
 
 Verification for task **SHF-ORACLE-TEST-DEMO**, 2026-11-02: focused host
 **51/51**, Windows launcher **107/107 static/synthetic assertions**, MTS syntax,

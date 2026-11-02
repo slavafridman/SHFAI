@@ -8,6 +8,50 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ## Resume here
 
+Current all-TEST-access request,2026-11-02 at11:37: user explicitly authorized
+all-unit access. Accepted55-scope-v0.1 means read-only access to all J01 teams
+in the existing approved TEST target through seven existing readers, not DBA
+grants, other databases, production or writes. Oracle demo now supports
+explicit -AllTestUnits / --all-test-units with no unit prompt or unit ENV.
+It discovers complete valid J01/G01 hierarchy in one read-only snapshot using
+50+50+1 bounded pages, then reuses one pool for the application. Existing
+Principal/API100-unit bound is unchanged; empty/invalid scope rejects and
+101st team returns DEMO_SCOPE_TOO_LARGE, never partial all-scope success.
+Operator's actual team count and live connection remain unverified.
+Host111 tests,628 PowerShell assertions and TSC passed. Initial full2248/2249
+failed empty-ENV readiness-child exit acknowledgment; isolated82 pass was not
+accepted as green. Pure invalid/missing preflight now rejects before forking,
+with shared parent/worker validation and unchanged5s deadline. Focused85
+readiness and final full2252/2252 passed, no skips/failures. Valid configurations
+still require supervised child/native cleanup; no guard or timeout weakening.
+No live Oracle, native writes, Docker/service changes or credential/env-file
+access occurred. Scoped publication preflight passed four MTS syntax checks,
+two PowerShell parser checks, local import targets, added-link checks,
+authorized-addition privacy signatures, append-only section55 history and
+unchanged shared contracts. README now records the final2252/2252 correction.
+The standard document verifier is NOT RUN: its historical excluded reference
+remains policy-blocked; no alternate access or partial hashing was attempted.
+The owner-reported full suite,628 assertions and TSC were not repeated.
+Python was unavailable; Node static verification passed after correcting the
+verifier's buffer bound and Windows pipe encoding assumption, without changing
+application code or dependencies. Publication is pending the scoped commit
+and normal push; unrelated checkpoint content remains unstaged.
+Next action: publish all-unit launcher/host/approved design
+and regression fix, then operator runs -AllTestUnits in their configured
+PowerShell. No successful live host or complete-project claim is made.
+
+Oracle UI connection-refused report,2026-11-02 at11:31: actual local
+inspection found zero listeners on18083; bounded /livez probe returnedHTTP000
+and curl timeout28. Browser refusal is therefore not a working Oracle UI.
+The tool process lacks scope and connection inputs, but that does not prove
+the user's separate terminal configuration. Current launcher has no unit
+prompt; missing configured scope can reject before Node with DEMO_UNIT_REQUIRED.
+The original user-terminal failure is not established without its safe code.
+Next diagnostic: run Start-ShifterOracleDemo.ps1 -NonInteractive in the
+configured operator terminal and report only its allowlisted startup code.
+Do not invent a scope, broaden permissions, read excluded env files or route
+18083 to synthetic fixtures. No service/config changes or Oracle calls occurred.
+
 Current launcher change,2026-11-02 at11:24: user explicitly requested no
 unit prompt. Start-ShifterOracleDemo now never asks for a unit. Exact scope
 comes from explicit -OrgUnitId or process SHF_ORACLE_DEMO_ORG_UNIT_ID;

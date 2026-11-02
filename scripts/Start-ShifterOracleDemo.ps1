@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$OrgUnitId = $env:SHF_ORACLE_DEMO_ORG_UNIT_ID,
+    [switch]$AllTestUnits,
     [string]$ClientLibDir = $env:SHF_ORACLE_CLIENT_LIB_DIR,
     [string]$TnsAdmin = $env:TNS_ADMIN,
     [ValidateRange(1, 65535)][int]$Port = 18083,
@@ -24,6 +25,7 @@ function Format-ShifterOracleDemoFailure {
             'Set SHF_ORACLE_DEMO_ORG_UNIT_ID in your launcher environment or supply -OrgUnitId; no unit prompt or connection attempted'
         }
         'DEMO_UNIT_INVALID' { 'Supply one exact authorized TEST team/unit code, 1-8 characters, without whitespace, wildcards or lists. Ask an authorized operator if unknown. No Oracle connection attempted.' }
+        'DEMO_SCOPE_CONFLICT' { 'Use -AllTestUnits or an explicit -OrgUnitId, never both. No Oracle connection attempted.' }
         'DEMO_ENVIRONMENT_REJECTED' { 'Use a clean non-production TEST terminal with only approved Oracle inputs; application/native/writer settings, NODE_OPTIONS and unapproved target/account are rejected. No Oracle connection attempted.' }
         'DEMO_CLIENT_DIR_REQUIRED' { 'Supply the existing local absolute Oracle Client 19.3 bin directory. No Oracle connection attempted.' }
         'DEMO_TNS_REQUIRED' { 'Supply the existing local absolute TNS_ADMIN network/admin directory. No Oracle connection attempted.' }
@@ -60,10 +62,14 @@ function Assert-ShifterOracleDemoEnvironment {
 }
 
 function Invoke-ShifterOracleDemoNode {
-    param([string]$EntryPoint, [string]$Unit, [int]$ListenPort)
+    param([string]$EntryPoint, [string]$Unit, [int]$ListenPort, [switch]$AllTestUnits)
     # Native foreground child: inherits process-only credentials, never argv/file.
     try {
-        & node $EntryPoint --test-read-only --org-unit $Unit --port $ListenPort
+        if ($AllTestUnits) {
+            & node $EntryPoint --test-read-only --all-test-units --port $ListenPort
+        } else {
+            & node $EntryPoint --test-read-only --org-unit $Unit --port $ListenPort
+        }
         if ($LASTEXITCODE -ne 0) { throw (New-ShifterOracleDemoFailure 'DEMO_NODE_STARTUP_FAILED') }
     } catch {
         throw (New-ShifterOracleDemoFailure 'DEMO_NODE_STARTUP_FAILED')
@@ -74,6 +80,7 @@ function Start-ShifterOracleDemo {
     [CmdletBinding()]
     param(
         [string]$OrgUnitId = $env:SHF_ORACLE_DEMO_ORG_UNIT_ID,
+        [switch]$AllTestUnits,
         [string]$ClientLibDir = $env:SHF_ORACLE_CLIENT_LIB_DIR,
         [string]$TnsAdmin = $env:TNS_ADMIN,
         [ValidateRange(1, 65535)][int]$Port = 18083,
@@ -81,12 +88,16 @@ function Start-ShifterOracleDemo {
     )
     $ErrorActionPreference = 'Stop'
     Assert-ShifterOracleDemoEnvironment
+    if ($AllTestUnits -and $PSBoundParameters.ContainsKey('OrgUnitId')) {
+        throw (New-ShifterOracleDemoFailure 'DEMO_SCOPE_CONFLICT')
+    }
+    if ($AllTestUnits) { $OrgUnitId = $null } # Ignore only the launcher ENV default, not explicit parameters.
     # Call-time process default only; an explicitly bound value (even empty) wins.
-    if ([string]::IsNullOrWhiteSpace($OrgUnitId)) {
+    if (-not $AllTestUnits -and [string]::IsNullOrWhiteSpace($OrgUnitId)) {
         throw (New-ShifterOracleDemoFailure 'DEMO_UNIT_REQUIRED')
     }
-    if ($OrgUnitId.Length -gt 8 -or
-        $OrgUnitId -match '[\s\p{Cc}*%?\\/,;]' -or $OrgUnitId -cin @('-1', 'null')) {
+    if (-not $AllTestUnits -and ($OrgUnitId.Length -gt 8 -or
+        $OrgUnitId -match '[\s\p{Cc}*%?\\/,;]' -or $OrgUnitId -cin @('-1', 'null'))) {
         throw (New-ShifterOracleDemoFailure 'DEMO_UNIT_INVALID')
     }
     if (-not $ClientLibDir) {
@@ -129,7 +140,11 @@ function Start-ShifterOracleDemo {
         }
         $env:NODE_ENV = 'test'
         $env:SHF_APP_ENV = 'test'
-        Write-Output 'Starting Oracle TEST READ-ONLY demonstration. Selected exact unit is your authorization attestation, not independent DB identity proof.'
+        if ($AllTestUnits) {
+            Write-Output 'Reading all TEST teams (at most100 current contract); no writes. Not full database or DBA access.'
+        } else {
+            Write-Output 'Starting Oracle TEST READ-ONLY demonstration. Selected exact unit is your authorization attestation, not independent DB identity proof.'
+        }
         Write-Output 'Synthetic Administrator is not a real user login. All commands/writes are disabled. Keep this terminal open; Ctrl+C stops the host.'
         $entry = Join-Path (Split-Path $PSScriptRoot -Parent) 'backend/fixture-slice/oracle-demo-host.mts'
         # Launcher-only input is not part of Node's strict environment contract.
@@ -137,7 +152,7 @@ function Start-ShifterOracleDemo {
         $launcherUnit = [Environment]::GetEnvironmentVariable('SHF_ORACLE_DEMO_ORG_UNIT_ID', 'Process')
         try {
             [Environment]::SetEnvironmentVariable('SHF_ORACLE_DEMO_ORG_UNIT_ID', $null, 'Process')
-            Invoke-ShifterOracleDemoNode -EntryPoint $entry -Unit $OrgUnitId -ListenPort $Port
+            Invoke-ShifterOracleDemoNode -EntryPoint $entry -Unit $OrgUnitId -ListenPort $Port -AllTestUnits:$AllTestUnits
         } catch {
             throw (New-ShifterOracleDemoFailure 'DEMO_NODE_STARTUP_FAILED')
         } finally {

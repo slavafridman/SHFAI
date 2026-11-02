@@ -7748,3 +7748,112 @@ Preserve DTO50/C52, other operation caps/guards and §53 worlds; no 20-new-API e
 Checks DONE: scoped source/design range inspection and appended-section reread only; static/compiler/unit/API/browser/build/Docker tests NOT RUN (design-only).
 Oracle/DNS/EMS/legacy/client/metadata/operator preflight NOT RUN: excluded here, ENV missing; no UAT/WCAG/production/full-project compliance claim.
 Next: parent records state and publishes this written baseline with operator-preflight code handoff; business owner answers B-D1–D4, architect versions canonical.
+
+## 55. All-TEST-unit read-only demonstration — 55-scope-v0.1
+
+Task SHF-ARCH-ALL-TEST-UNITS-2026-11-02; architecture handoff, NOT implemented/runtime verified.
+Authority: user's explicit expanded scope at 2026-11-02 11:37 (“add access to all db”): ALL organizational teams in CTIDBT_WFMT
+TEST application's existing seven readers. No new database, production, DBA/native grants,
+arbitrary-table console, writes, secrets access, partner transport or schema authority.
+Scope expansion approved; caller accepts this exact baseline before consumers change, without reauthorizing all-unit reads.
+
+### 55.1 Source evidence and unchanged shared contracts
+
+S `backend/fixture-slice/oracle-demo-host.mts`: demoEnvironment currently builds ONE exact
+syntheticOrgUnitIds entry; parseDemoArguments requires --org-unit; startup delegates pool ownership.
+S `scripts/Start-ShifterOracleDemo.ps1`: missing unit fails DEMO_UNIT_REQUIRED before connection; launcher-only unit ENV is removed/restored for Node.
+S `backend/fixture-slice/contracts.mts`: PrincipalV1.resourceScope.orgUnitIds is string[];
+IdentityResponseV1, CapabilityV1 and authentication/access-policy interfaces stay EXACTLY unchanged.
+S `contract-validation.mts` validateConfig/validatePrincipal impose100; `synthetic-identity.mts`
+copies configured IDs; `frontend/fixture-slice/src/contract.ts` identity also bounds synthetic IDs100.
+S `backend/fixture-slice/oracle-readers.mts` scopeBinds bounds100; teamsAndParents requires exact
+J01 team→G01 parent, matching cardinality, distinct grants and valid labels; never grant parents.
+Its actual fixed table is SHIFTER.shf_org_unit (SINGULAR), columns org_unit_id, unit_type_id,
+parent_unit, org_unit_name. Do NOT guess SHF_ORG_UNITS or OrgUnitCode/SER.
+S OracleReadSession in oracle-session.mts allows bound<=1001, starts SET TRANSACTION READ ONLY,
+uses5s budget and rollback/release/drop cleanup. Current list scope uses explicit bound IN IDs;
+existing request/filter/catalog/pagination limits remain, including smaller per-request selections.
+D reverse-engineering catalog is absent; §§8/13 and linked inventories are historical evidence.
+U current physical metadata, total J01 count, grants/plans and actual target identity; no live checks.
+
+### 55.2 Exact bounded scope discovery and limit decision
+
+Retain100 EVERYWHERE: no global validator change, wildcard, empty-array-as-all, new public enum,
+principal shape/capability revision, bypassed backend authorization or frontend permission invention.
+All means the COMPLETE admitted J01 catalog, not first100, selected sample or every hierarchy level.
+Before runtime configuration/authentication/listening, discover in ONE OracleReadSession snapshot:
+```sql
+SELECT "orgUnitId","unitType","parentUnit" FROM (
+  SELECT t.org_unit_id AS "orgUnitId", t.unit_type_id AS "unitType",
+    t.parent_unit AS "parentUnit",
+    ROW_NUMBER() OVER (ORDER BY t.org_unit_id,t.parent_unit) AS "scopeRow"
+  FROM SHIFTER.shf_org_unit t WHERE t.unit_type_id=:teamType
+) WHERE "scopeRow">:lowerBound AND "scopeRow"<=:upperBound
+ORDER BY "scopeRow"
+```
+Fixed SQL only; teamType="J01"; pages (lowerBound,upperBound,maxRows)=(0,50,50),
+(50,100,50),(100,101,1), stopping at a short page. At most101 rows total, never an unbounded fetch.
+Ordering/snapshot spans pages; duplicate IDs (including tied identical rows) are INVALID, not deduplicated.
+Validate exact aliases/types, unitCode plus demo's wildcard/list prohibition, unitType J01,
+nonnull valid parent different from team, and uniqueness across pages. Empty/invalid catalog fails
+DEMO_SCOPE_INVALID; any101st row fails DEMO_SCOPE_TOO_LARGE; no runtime or partial success.
+After complete discovery<=100, call existing teamsAndParents(query, exactIds) INSIDE SAME read
+transaction: enforce every G01 parent/label/cardinality invariant before accepting the scope.
+Other hierarchy classes are not grants; absent/unknown parent class fails DEMO_SCOPE_INVALID, never coerces to G01.
+Proposed private result is {orgUnitIds:string[]} of1..100 exact IDs; no discovery DTO/HTTP endpoint.
+Build SHF_ORACLE_CONFIG from that list, then run original loadEnvironmentConfig and provider/policy.
+No fake T001/bootstrap unit, disabled validation, per-page principals or unscoped business query.
+This technical cap DOES NOT prove fulfillment: count is UNKNOWN. >100 blocks all-mode honestly;
+caller/architect must then version a coordinated bounded contract change with evidence, not silently
+widen100, truncate, chunk authorization or claim all=true. No such type/validator edit approved here.
+
+### 55.3 Explicit launcher mode, startup and ownership
+
+Add PS -AllTestUnits and Node --test-read-only --all-test-units [--port N]; no unit prompt.
+Default --org-unit/-OrgUnitId remains strict/unchanged; absent unit WITHOUT all flag still fails early.
+Reject combined explicit unit+all, duplicate/unknown flags and malformed arguments before IO.
+With all flag, ignore the launcher environment's unit DEFAULT (not an explicitly supplied unit);
+remove that launcher-only variable before Node and restore it exactly afterward as today.
+Private OracleDemoOptions may become mutually exclusive single-unit/allTestUnits branches;
+split pure input preflight from final exact-ID config builder; no root/public Principal union change.
+Validate clean isolated TEST, alias/account/local-client inputs and existing assets/port preflight
+BEFORE acquisition; no .env/operator-file reads, DNS probe, production fallback or automatic retry.
+Create ONE read pool after preflight, discover using it, then inject SAME pool into backend read
+factory exactly once; native factory always rejects. No business listener/data before complete scope.
+Host owns pool until factory returns it to backend; backend then owns startup-failure/shutdown close.
+If backend fails BEFORE accepting pool, host closes it; afterward host must NOT close it again.
+Discovery failure/abort/timeout drains execute/break, rolls back/releases or drops unsafe lease,
+then owner closes pool exactly once. Await health/request drain before normal backend pool close.
+Port reservation is preflight, not a held guarantee: later bind failure also performs owned cleanup.
+No DML/DDL/GRANT/sequence/procedure/ledger/mutating-function invocation; rollback cannot undo autonomous
+effects (§13.5). Existing fixed SELECTs only; synthetic privileges cannot constrain/expand DB grants.
+Scope is a frozen operator-session catalog snapshot, NOT real identity or continuous revocation proof;
+no global permission cache, automatic scope growth or fixture fallback. Re-start to rediscover scope.
+Existing per-request policy/catalog checks remain; infrastructure revocation must fail dependency reads.
+Keep existing /demo-status fields/non-all behavior; syntheticAuthentication=true, dataSource=
+"oracle-read-only", targetIdentityVerified=false, nativeWritesAuthorized=false, releaseReady=false.
+Identity/business DTO dataSource stays existing "oracle", never simulated data presented as Oracle.
+Only constant errors and existing sanitized Oracle codes; no IDs/labels/employee values, SQL, credentials, DSN or local paths printed.
+Intended one-command operator entry: `powershell.exe -NoProfile -File scripts\Start-ShifterOracleDemo.ps1 -AllTestUnits`
+(existing approved client/TNS/credential setup still required; no promise of prompt-free credential setup).
+
+### 55.4 Acceptance, unknowns and next owner
+
+Backend/launcher+QA: test1/50/51/100 complete IDs,101 overflow, empty/duplicate/bad-unit/bad-parent,
+stable multi-page snapshot/order, bound parameters, cross-page duplicate rejection and5s abort.
+Assert no partial principal/listener; same-pool reuse and exact-once close on every pre/post-transfer
+failure, assets/port rejection before acquisition, discovery cleanup and SIGINT/request/health drain.
+Assert identity exact seven read capabilities, all discovered IDs, unchanged UI identity parser and
+seven-reader scope enforcement; denied unknown ID, unchanged filter/page limits, zero native factories.
+Regression single-unit/missing-unit/environment-default/explicit-conflict/production/auth-error paths;
+no new deps/framework/schema/SQL console, secrets logging, automatic retry or fixture fallback.
+Checks performed: static source/range inspection and appended-baseline reread only; execution unavailable.
+Next checks NOT RUN: backend `npm run typecheck`; `node --test test/oracle-demo-host.test.mts
+test/oracle.test.mts test/environment-profiles.test.mts`; PS `scripts/Test-Start-ShifterOracleDemo.ps1`;
+frontend identity regressions/build only if needed. No CLI/runtime/Oracle/DNS/legacy/EMS execution here.
+Caller obtains bounded oracle-dba review of this source-grounded SQL/snapshot/cleanup proposal before
+affected live validation; current physical count/support/metadata remain operator/DBA unknowns.
+Backend next implements discovery+private host option+PS flag+focused offline tests after caller accepts
+55-scope-v0.1; QA/operator alone establish actual authorized TEST behavior. No all-scope completion claim
+until those tests/count pass; readiness is diagnostic, zero business operations/new write authority.
+§54 business decisions/API approval remain independently blocked; this scope approval does not unblock them.
