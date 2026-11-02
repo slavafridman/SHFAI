@@ -2,20 +2,41 @@
 
 ## One-command Windows Oracle TEST read-only demonstration
 
-From `D:\AIProjects\SHFAI`, in **your already-configured PowerShell terminal**:
+From `D:\AIProjects\SHFAI`, in **your already-configured PowerShell terminal**,
+with process `SHF_ORACLE_DEMO_ORG_UNIT_ID` preset to the exact TEST unit you
+are authorized to read:
 
 ```powershell
 powershell.exe -NoProfile -File scripts\Start-ShifterOracleDemo.ps1
 ```
 
-The foreground launcher asks for **one exact organizational unit code you are
-authorized to read in TEST**. There is no default, parent-wide grant, wildcard,
-unit discovery or invented real unit. The Hebrew/English prompt explicitly says
-this is not an employee ID or password. Your selection is an operator scope
+The foreground launcher **never prompts for a unit**, including retries and
+noninteractive mode. It uses `-OrgUnitId` when explicitly supplied; otherwise it
+reads the server-only process `SHF_ORACLE_DEMO_ORG_UNIT_ID` at call time (also
+when the function was dot-sourced earlier). Explicit parameter priority applies
+even if the environment value differs or is malformed. An explicitly empty
+parameter does not fall through to the environment.
+
+The value must remain **one exact authorized organizational unit code**, 1-8
+characters with the existing validation: case is preserved, numeric IDs are
+accepted, and whitespace, wildcards, lists and the existing reserved values
+are rejected. There is no synthetic default, parent-wide grant, all-units
+permission, unit discovery or invented real unit. This code is not an employee
+ID or password. Your configured selection remains an operator scope
 attestation, not an independently verified grant or Oracle server certificate.
 Existing scoped readers still validate source hierarchy and data; an unknown
-unit does not grant broader access. You can avoid this prompt with `-OrgUnitId`
-and your authorized code (nonsecret).
+unit does not grant broader access. Without an environment value or parameter,
+the launcher stops before any client/TNS/password prompt or Node/Oracle
+connection, with the fixed safe message:
+
+`Oracle demo [DEMO_UNIT_REQUIRED]: Set SHF_ORACLE_DEMO_ORG_UNIT_ID in your launcher environment or supply -OrgUnitId; no unit prompt or connection attempted`
+
+The nonsecret unit key is **launcher-only**, not a new Node/API configuration
+contract. Only this known key is temporarily removed from the child environment
+during Node invocation and restored in `finally` on success or failure. Node
+always receives the validated exact value through `--org-unit`; unrelated
+unapproved keys are still rejected, not silently cleared. No env file is read,
+and this setting does not bypass password input or grant new resource authority.
 
 The five existing process inputs are reused: `SHF_ORACLE_CONNECT_STRING`,
 `SHF_ORACLE_USER`, `SHF_ORACLE_PASSWORD`, `SHF_ORACLE_CLIENT_LIB_DIR`, `TNS_ADMIN`.
@@ -113,6 +134,18 @@ inherit the operator terminal's five inputs. The operator owns that live check
 using the one command above; independent target proof/native authority/release
 remain false. Temporary test listeners/pools were stopped, synthetic temporary
 files removed; no live/demo service was left running by these checks.
+
+Verification for the **no-unit-prompt launcher follow-up**, 2026-11-02:
+Windows PowerShell 5.1 focused launcher checks passed **456 static/synthetic
+assertions** (baseline **258**). The obsolete blank-unit retry/success and
+three-blank-attempt UI scenarios were replaced, not retained as coverage.
+Checks cover missing/invalid environment scope, explicit parameter priority
+(including explicit empty rejection), call-time defaults, case/numeric
+preservation, no unit prompt, launcher-key isolation/restoration on success and
+failure, and the remaining three client/TNS/secure-password prompts. No backend
+TypeScript, shared contracts or runtime permissions changed; no live Oracle,
+real Node launcher, full project regression or Docker check was run for this
+follow-up.
 
 ## Shared Oracle target preparation (process only, 2026-11-02)
 

@@ -8,6 +8,19 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ## Resume here
 
+Current launcher change,2026-11-02 at11:24: user explicitly requested no
+unit prompt. Start-ShifterOracleDemo now never asks for a unit. Exact scope
+comes from explicit -OrgUnitId or process SHF_ORACLE_DEMO_ORG_UNIT_ID;
+explicit parameter wins, and missing/invalid scope fails before Node/Oracle
+or client/password prompts. No guessed/default/all-unit scope was introduced.
+The launcher-only environment key is removed during Node invocation and
+restored on success/failure; backend scope/auth/production protections stay
+unchanged. PowerShell456 static/synthetic assertions and parser/ASCII/
+whitespace checks passed. Two obsolete retry scenarios were replaced;
+assertion count is not distinct workflow coverage. No live Oracle, backend
+regression or Docker/service checks were repeated. Scope configuration remains
+an operator prerequisite, not a reason to prompt or expand access.
+
 1. Read this file, the [agent brief](AGENT_INSTRUCTION.md), the
    [project instructions](../.github/copilot-instructions.md), and the relevant
    section of the [design baseline](SHF_REVERSE_ENGINEERING_DESIGN.md).
