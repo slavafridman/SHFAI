@@ -1,7 +1,7 @@
 import type { PrincipalV1 } from "./contracts.mts";
 import type { SelectedShiftItemsAccessPolicy, SelectedShiftItemsReadPort,
   SelectedShiftItemsRequestV1, SelectedShiftItemsV1 } from "./shift-items-contracts.mts";
-import { validatePrincipal, validateRaw, record } from "./contract-validation.mts";
+import { validatePrincipal, validateRaw, record, readScopeLimit } from "./contract-validation.mts";
 import { accessPolicy } from "./access-policy.mts";
 import { unitCode } from "./current-shifts-validation.mts";
 import { project } from "./projection.mts";
@@ -22,7 +22,7 @@ export class GetSelectedShiftItems {
     this.policy.requireSelectedShiftItemsRead(p);
     if (!this.policy.canReadSelectedEmployee(p, r.employeeId)) throw new ShiftItemsError("FORBIDDEN");
     const grants = this.policy.authorizedSelectedShiftItemsUnitIds(p);
-    if (grants.length > 100 || new Set(grants).size !== grants.length || !grants.every(unitCode)) itemsSourceFailure();
+    if (grants.length > readScopeLimit(p, this.reader.dataSource) || new Set(grants).size !== grants.length || !grants.every(unitCode)) itemsSourceFailure();
     if (!grants.length) throw new ShiftItemsError("SHIFT_DAY_NOT_FOUND");
     const limit = r.limit ?? 25, offset = r.offset ?? 0;
     const result = await this.reader.read({ employeeId: r.employeeId, shiftDayId: r.shiftDayId,

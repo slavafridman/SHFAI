@@ -28,26 +28,26 @@ export function parseAttendanceQuery(raw: string): AttendanceRequestV1 {
   return grammar(() => parseSearchQuery(new URLSearchParams(raw)));
 }
 export const validateAttendanceRequest = (v: unknown) => grammar(() => validateSearchRequest(v));
-export function validateAttendanceCatalog(v: unknown, grants: readonly string[]): asserts v is AttendanceCatalog {
-  if (grants.length > 100 || new Set(grants).size !== grants.length || !grants.every(unitCode)) attendanceSource();
-  validateSearchCatalog(v, grants);
+export function validateAttendanceCatalog(v: unknown, grants: readonly string[], scopeLimit = 100): asserts v is AttendanceCatalog {
+  if (grants.length > scopeLimit || new Set(grants).size !== grants.length || !grants.every(unitCode)) attendanceSource();
+  validateSearchCatalog(v, grants, scopeLimit);
 }
 // Operation-local admission retains ORIGINAL grants for role eligibility.
 // It is never a wire key, global mutable grant, or a second catalog snapshot.
 export function attendanceGrants(s: AttendanceReadSelection): readonly string[] {
   return attendanceAdmission.getStore()?.grants ?? s.authorizedTeamUnitIds;
 }
-export function validateAttendanceSelection(s: AttendanceReadSelection) {
+export function validateAttendanceSelection(s: AttendanceReadSelection, scopeLimit = 100) {
   validateAttendanceRequest({ attendanceDate: s.attendanceDate, timeFrom: s.timeFrom, timeTo: s.timeTo,
     ...(s.mokedCode === null ? {} : { mokedCode: s.mokedCode }),
     ...(s.innerJobCodes.length ? { innerJobCodes: [...s.innerJobCodes] } : {}),
     ...(s.workLocations.length ? { workLocations: [...s.workLocations] } : {}),
     limit: s.limit, offset: s.offset, sort: s.sort });
-  if (s.authorizedTeamUnitIds.length > 100 || new Set(s.authorizedTeamUnitIds).size !== s.authorizedTeamUnitIds.length ||
+  if (s.authorizedTeamUnitIds.length > scopeLimit || new Set(s.authorizedTeamUnitIds).size !== s.authorizedTeamUnitIds.length ||
       !s.authorizedTeamUnitIds.every(unitCode)) attendanceSource();
 }
-export function eligibleAttendanceTeams(c: AttendanceCatalog, s: AttendanceReadSelection, original: readonly string[]) {
-  validateAttendanceCatalog(c, original);
+export function eligibleAttendanceTeams(c: AttendanceCatalog, s: AttendanceReadSelection, original: readonly string[], scopeLimit = 100) {
+  validateAttendanceCatalog(c, original, scopeLimit);
   const explicitTeams = attendanceAdmission.getStore()?.explicitTeams ?? true;
   if ((s.mokedCode !== null && !c.mokedOptions.some(p => p.code === s.mokedCode)) ||
       s.authorizedTeamUnitIds.some(code => !c.teamOptions.some(t => t.code === code &&

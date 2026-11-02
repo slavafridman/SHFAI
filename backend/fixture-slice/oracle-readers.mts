@@ -103,12 +103,32 @@ export function rawDetail(value: unknown): RawShiftDay {
   };
 }
 export function scopeBinds(ids: readonly string[]) {
-  if (ids.length > 100 || new Set(ids).size !== ids.length || !ids.every(unitCode)) sourceFailure();
+  if (ids.length > 1000 || new Set(ids).size !== ids.length || !ids.every(unitCode)) sourceFailure();
   const binds: Record<string, string | number | null> = {};
   const placeholders = ids.map((id, i) => { binds[`team${i}`] = id; return `:team${i}`; });
   return { binds, placeholders };
 }
 export async function teamsAndParents(query: Query, ids: readonly string[]) {
+  scopeBinds(ids); // Validate the aggregate before the first query.
+  const teams: Array<{ code: string; label: string; parent: MokedOptionV1 }> = [];
+  const parentMap = new Map<string, MokedOptionV1>();
+  const seen = new Set<string>();
+  for (let offset = 0; offset < ids.length; offset += 100) {
+    const chunk = ids.slice(offset, offset + 100);
+    const group = await teamGroup(query, chunk);
+    for (const team of group.teams) {
+      if (seen.has(team.code)) sourceFailure();
+      seen.add(team.code);
+      const previous = parentMap.get(team.parent.code);
+      if (previous && previous.label !== team.parent.label) sourceFailure();
+      parentMap.set(team.parent.code, team.parent);
+      teams.push(team);
+    }
+  }
+  return { options: [...parentMap.values()].sort((a, b) => compareCode(a.code, b.code)),
+    teams: teams.sort((a, b) => compareCode(a.code, b.code)) };
+}
+async function teamGroup(query: Query, ids: readonly string[]) {
   const { binds, placeholders } = scopeBinds(ids);
   if (ids.length === 0) return { options: [], teams: [] };
   const grants = placeholders.map(p => `SELECT ${p} AS grant_id FROM dual`).join(" UNION ALL ");
@@ -126,7 +146,7 @@ export async function teamsAndParents(query: Query, ids: readonly string[]) {
   for (const row of rows) {
     if (!record(row) || !unitCode(row.grantCode) || row.teamCode !== row.grantCode ||
         !plainLabel(row.teamLabel, 1) || row.teamType !== "J01" || !mokedOption(row) ||
-        row.code === row.teamCode || seen.has(row.grantCode)) sourceFailure();
+        row.code === row.teamCode || !ids.includes(row.grantCode) || seen.has(row.grantCode)) sourceFailure();
     seen.add(row.grantCode);
     const parent: MokedOptionV1 = { code: row.code, label: row.label, unitType: "G01" };
     const previous = parentMap.get(parent.code);

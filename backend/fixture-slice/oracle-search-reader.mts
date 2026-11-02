@@ -72,7 +72,7 @@ export class OracleSearchReader implements ShiftSearchReadPort {
           if (!record(r) || typeof r.code !== "string" || typeof r.label !== "string") sourceFailure();
           return { code: r.code, label: r.label };
         }).sort((a, b) => compareCode(a.code, b.code)), workLocationOptions: locations };
-      validateSearchCatalog(catalog, grants);
+      validateSearchCatalog(catalog, grants, 1000);
       return catalog;
     });
   }

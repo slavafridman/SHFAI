@@ -3,7 +3,7 @@ export type { AttendanceFilterContextV1, AttendanceRequestV1, AttendanceRowV1,
   AttendanceListV1, AttendanceProblemV1 } from '../../../backend/fixture-slice/attendance-contracts.mts';
 import type { AttendanceFilterContextV1, AttendanceRequestV1, AttendanceRowV1,
   AttendanceListV1, AttendanceProblemV1 } from '../../../backend/fixture-slice/attendance-contracts.mts';
-import { id, localTime } from './contract';
+import { id, localTime, identityScopeLimit } from './contract';
 import { obj, clean, unitCode, parent, catalog } from './current-shifts-contract';
 import { searchContext, searchProblem } from './shift-search-contract';
 
@@ -14,13 +14,13 @@ const nullableBool = (v: unknown) => v === null || typeof v === 'boolean';
 const integral = (v: unknown): v is string => typeof v === 'string' &&
   /^(?:0|[1-9][0-9]{0,37}|-[1-9][0-9]{0,37})$/.test(v);
 const value = (v: unknown) => keys(v, 'code label') && catalog(v);
-export function attendanceContext(v: unknown): v is AttendanceFilterContextV1 {
-  if (!searchContext(v) || !keys(v, 'defaults mokedOptions teamOptions innerJobOptions workLocationOptions businessTimeZone dataSource') ||
+export function attendanceContext(v: unknown, principal?: unknown): v is AttendanceFilterContextV1 {
+  if (!searchContext(v, principal) || !keys(v, 'defaults mokedOptions teamOptions innerJobOptions workLocationOptions businessTimeZone dataSource') ||
       !keys(v.defaults, 'attendanceDate timeFrom timeTo mokedCode teamCodes innerJobCodes workLocations')) return false;
   const parents = v.mokedOptions.map(p => p.code);
   return v.mokedOptions.every(p => keys(p, 'code label unitType') &&
       v.teamOptions.some(t => t.parentMokedCode === p.code)) &&
-    v.teamOptions.length <= 100 &&
+    v.teamOptions.length <= identityScopeLimit(v.dataSource === 'oracle-read-only' ? principal : undefined) &&
     v.teamOptions.every(t => keys(t, 'code label unitType parentMokedCode') && !parents.includes(t.code) &&
       t.code !== t.parentMokedCode) &&
     v.innerJobOptions.every(value) && v.workLocationOptions.every(l => keys(l, 'code label'));

@@ -42,6 +42,32 @@ function Invoke-ShifterCommand([string]$File, [string[]]$Arguments, [string]$Dir
     } finally { Pop-Location }
 }
 
+function Invoke-ShifterArtifactValidation(
+    [string]$Node, [string]$Backend, [string]$Stage, [string]$BuildProfile, [bool]$Validate
+) {
+    if (-not $Validate) {
+        Write-Host 'ARTIFACT validation not requested (no compiled integration case counted).'
+        return
+    }
+    if ($BuildProfile -ne 'test') {
+        Write-Host "ARTIFACT validation inapplicable for profile=$BuildProfile; TEST-only compiled Oracle demo case not counted. Backend/frontend source suites apply."
+        return
+    }
+    $suite = Join-Path $Backend 'test/oracle-demo-artifact.mts'
+    if (-not (Test-Path -LiteralPath $suite -PathType Leaf)) {
+        throw 'Required TEST artifact suite missing: test/oracle-demo-artifact.mts'
+    }
+    Assert-ShifterNoLink $suite
+    $previous = [Environment]::GetEnvironmentVariable('SHF_TEST_ARTIFACT_STAGE', 'Process')
+    try {
+        [Environment]::SetEnvironmentVariable('SHF_TEST_ARTIFACT_STAGE', [IO.Path]::GetFullPath($Stage), 'Process')
+        Invoke-ShifterCommand $Node @('--test', '--test-concurrency=1', $suite) $Backend
+        Write-Host 'PASS TEST artifact phase: 1 compiled integration case (additional to backend/frontend source suites).'
+    } finally {
+        [Environment]::SetEnvironmentVariable('SHF_TEST_ARTIFACT_STAGE', $previous, 'Process')
+    }
+}
+
 function Remove-ShifterOwned([string]$Path, [string]$ProfileRoot) {
     # Only these exact, resolved outputs can ever be recursively removed.
     $allowed = @(
@@ -512,6 +538,10 @@ console.log('PASS synthetic allowance-path validation calls=' + syntheticPathCal
         Invoke-ShifterCommand $node @('--input-type=module', '-e', $productionCheck, $extractedBackend) $extracted
         Invoke-ShifterCommand $npm @('run', 'check:profile', '--', $Profile, (Join-Path $extracted 'frontend/browser')) $frontend
         Remove-ShifterOwned $extracted $profileRoot
+        Assert-ShifterSourceSnapshot $sourceSnapshot @(Get-ShifterSourceSnapshot)
+        # Current build only: stage + BUILD.md + byte-verified ZIP already exist.
+        # Failure propagates into the same owned-output cleanup; never use old TEST assets.
+        Invoke-ShifterArtifactValidation $node $backend $stage $Profile ([bool]$Validation)
         Assert-ShifterSourceSnapshot $sourceSnapshot @(Get-ShifterSourceSnapshot)
         $files = @(Get-ChildItem -LiteralPath $stage -File -Recurse)
         Write-Host "PASS unchanged scoped source snapshot files=$($sourceSnapshot.Count); SHA256=$(Get-ShifterSnapshotHash $sourceSnapshot)"

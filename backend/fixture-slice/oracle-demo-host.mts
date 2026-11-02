@@ -85,7 +85,7 @@ export function demoEnvironment(source: NodeJS.ProcessEnv, options: OracleDemoOp
   return scopedEnvironment(env, [options.orgUnitId]);
 }
 
-// 55-scope-v0.1: one snapshot, 50+50+1, fixed source SQL; never a partial grant.
+// 55-scope-v0.2: one snapshot, 100-row pages + 1001st sentinel; never a partial grant.
 async function discoverUnitScope(session: OracleReadSession, signal?: AbortSignal): Promise<string[]> {
   let scopeFailure: DemoHostError | undefined;
   const invalid: (code?: string) => never = (code = "DEMO_SCOPE_INVALID") => {
@@ -95,7 +95,9 @@ async function discoverUnitScope(session: OracleReadSession, signal?: AbortSigna
     return await session.read(async query => {
       const ids: string[] = [];
       const seen = new Set<string>();
-      for (const [lowerBound, upperBound, bound] of [[0, 50, 50], [50, 100, 50], [100, 101, 1]]) {
+      const parents = new Map<string, string>();
+      for (let lowerBound = 0; lowerBound <= 1000; lowerBound += 100) {
+        const bound = lowerBound === 1000 ? 1 : 100, upperBound = lowerBound + bound;
         const rows = await query(`SELECT "orgUnitId","unitType","parentUnit" FROM (
   SELECT t.org_unit_id AS "orgUnitId", t.unit_type_id AS "unitType",
     t.parent_unit AS "parentUnit",
@@ -103,17 +105,20 @@ async function discoverUnitScope(session: OracleReadSession, signal?: AbortSigna
   FROM SHIFTER.shf_org_unit t WHERE t.unit_type_id=:teamType
 ) WHERE "scopeRow">:lowerBound AND "scopeRow"<=:upperBound
 ORDER BY "scopeRow"`, { teamType: "J01", lowerBound, upperBound }, bound);
-        if (lowerBound === 100 && rows.length) invalid("DEMO_SCOPE_TOO_LARGE");
+        if (lowerBound === 1000 && rows.length) invalid("DEMO_SCOPE_TOO_LARGE");
         for (const row of rows) {
           if (!record(row) || Object.keys(row).sort().join(",") !== "orgUnitId,parentUnit,unitType" ||
               !exactUnit(row.orgUnitId) || row.unitType !== "J01" || !exactUnit(row.parentUnit) ||
               row.parentUnit === row.orgUnitId || seen.has(row.orgUnitId)) invalid();
-          seen.add(row.orgUnitId); ids.push(row.orgUnitId);
+          seen.add(row.orgUnitId); ids.push(row.orgUnitId); parents.set(row.orgUnitId, row.parentUnit);
         }
         if (rows.length < bound) break;
       }
       if (!ids.length) invalid();
-      try { await teamsAndParents(query, ids); }
+      try {
+        const hierarchy = await teamsAndParents(query, ids);
+        if (hierarchy.teams.some(team => parents.get(team.code) !== team.parent.code)) invalid();
+      }
       catch (error) {
         if (record(error) && error.code === "INVALID_SOURCE_DATA") invalid();
         throw error;

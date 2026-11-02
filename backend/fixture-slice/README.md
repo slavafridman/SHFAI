@@ -1,5 +1,73 @@
 # SHF backend: seven reads, isolated arrivals, and default-off controlled native TEST arrivals
 
+## Canonical validation phases (compiled TEST demo case)
+
+`npm test` in `backend/fixture-slice` runs only `test/*.test.mts`, serially.
+It does **not** include the compiled-browser integration case. Exactly one case
+was moved, not deleted or skipped, from `oracle-demo-host.test.mts` to
+`test/oracle-demo-artifact.mts`; the default backend total drops by one.
+The host unit suite retains its artificial asset-loader fixtures and all
+scope/capacity, HTTP, deadline and pool cases. Shared pure fixtures in
+`test/oracle-demo-test-helper.mts` register no tests.
+
+The canonical Windows command is:
+
+```powershell
+powershell.exe -NoProfile -File scripts\Build-Shifter.ps1 -Profile test -Validation
+```
+
+Its strict order is: remove owned old stage/build/ZIP; typecheck both projects
+(backend `test/**/*.mts` includes the artifact suite); run backend and frontend
+source tests; compile the selected frontend profile; check the public profile;
+stage the runtime whitelist and current browser bytes; generate `BUILD.md`
+with exact byte/hash references; create and byte-check the ZIP; check its
+extracted runtime and profile; verify the source snapshot; then run:
+
+```powershell
+# Builder supplies its absolute current stage through test-only process ENV:
+# SHF_TEST_ARTIFACT_STAGE=<owned output>/test/stage (restored in finally)
+node --test --test-concurrency=1 <backend>/test/oracle-demo-artifact.mts
+```
+
+TEST `-Validation` must pass this **one additional case** before build success;
+the aggregate is backend source tests + frontend source tests + **1 artifact
+case**. The case retains actual loopback HTTP, identity and readiness assertions
+against the source API host and isolated Oracle protocol double, loading only
+the current compiled TEST assets through unchanged strict `loadDemoAssets`.
+There are no generated/substitute assets, live Oracle calls or fallback stage.
+Missing suite, missing explicit stage, absent assets or byte-reference mismatch
+fails validation; the builder removes owned outputs on any phase failure.
+A final source-snapshot check also brackets the artifact phase.
+
+For `dev`/`production -Validation`, both source suites still run, but this
+strictly TEST-only Oracle-demo artifact case is **profile-inapplicable** and
+not counted (not a fake skipped/passing case and never loaded from another
+profile's old TEST stage). Without `-Validation`, source tests and this artifact
+case are not requested. Packaging/profile and fail-closed production checks
+remain separate. No test/helper sources enter the ZIP runtime whitelist.
+Missing TEST assets are a build-phase prerequisite failure, not an Oracle fault.
+Baseline tools remain native Windows Node 24.21.0 / npm 11.19.0 /
+TypeScript 5.9.3; no dependencies or versions changed. Temporary synthetic
+Administrator remains explicit isolated-demo-only, not real authentication or
+production approval.
+
+Focused source-phase verification for this ordering correction (2026-11-02):
+`node --test --test-concurrency=1 test/oracle-demo-host.test.mts` passed
+**114/114**, zero skipped (the prior 115th case is now the one explicit
+artifact case); `npm.cmd run typecheck` passed; and
+`powershell.exe -NoProfile -File scripts\Test-Build-Shifter.ps1` passed
+**64 assertions**, including static ordering and mocked phase/exit/ENV guards.
+Direct artifact invocations without a stage and with an explicitly nonexistent
+stage each failed as expected (one failed case, exit1); the latter reported
+`DEMO_TEST_ASSETS_REQUIRED`. Existing artificial loader-fixture checks covered
+byte mismatch/missing/profile/link rejection. These are unit, static, mocked
+and negative-guard results, **not a passing compiled integration run**.
+The default glob currently matches **85 test files**; no full-backend test total
+is asserted here because the global suite was not rerun. Frontend tests/build
+and the real compiled artifact phase still require the parent's fresh canonical
+TEST `-Validation` after concurrent source fixes settle. No deployment, Docker
+or live Oracle validation is implied.
+
 ## One-command Windows Oracle TEST read-only demonstration
 
 From `D:\AIProjects\SHFAI`, in **your already-configured PowerShell terminal**,
@@ -9,7 +77,7 @@ to read all admitted TEST application teams through the existing seven readers:
 powershell.exe -NoProfile -File D:\AIProjects\SHFAI\scripts\Start-ShifterOracleDemo.ps1 -AllTestUnits
 ```
 
-Approved baseline **55-scope-v0.1** means all **J01 teams**, not every database
+Approved baseline **55-scope-v0.2 / design §55.5** means all **J01 teams**, not every database
 table, hierarchy level, DBA access, production access or write authority.
 The existing Oracle process inputs below are reused, with automatic nonsecret
 client/TNS path resolution when those two inputs are absent. No unit
@@ -22,13 +90,15 @@ on success or failure. Node's equivalent grammar is
 
 Before any business listener or synthetic identity, one read-only transaction
 discovers the complete ordered J01 catalog using fixed bound SQL against
-`SHIFTER.shf_org_unit`, in pages of **50 + 50 + 1**. In the same snapshot,
-the existing hierarchy validator checks every exact team and G01 parent.
+`SHIFTER.shf_org_unit`, in **100-row pages through1000 plus a1001st sentinel**. In the same snapshot,
+the hierarchy validator checks every exact team and G01 parent in sequential
+groups of at most100 (at most101 rows per query), with complete membership,
+global duplicate detection and consistent parent labels.
 Parents are never granted. Empty, duplicate, malformed or invalid-parent source
-data fails `DEMO_SCOPE_INVALID`; a 101st team fails **`DEMO_SCOPE_TOO_LARGE`**.
-There is no first100 partial success, wildcard, automatic permission growth or
-changed Principal/API limit. The actual count is **unknown until operator launch**.
-Over100 requires a separately versioned coordinated contract decision, not a bypass.
+data fails `DEMO_SCOPE_INVALID`; a1001st team fails **`DEMO_SCOPE_TOO_LARGE`**.
+There is no first1000 partial success, wildcard or automatic permission growth.
+The actual count is **unknown until operator launch**. This is a technical
+capacity bound within already-approved all-unit TEST reads, not a new permission.
 The frozen session scope requires restart to rediscover; existing per-request
 authorization, source validation and smaller request limits remain unchanged.
 
@@ -51,7 +121,7 @@ Use the **primary status code**, not an inferred database diagnosis:
 | Status | Safe next action |
 | --- | --- |
 | `DEMO_TEST_ASSETS_REQUIRED` | Run `powershell.exe -NoProfile -File scripts\Build-Shifter.ps1 -Profile test -Validation` explicitly. The launcher does not build, weaken manifest validation or retry automatically. |
-| `DEMO_SCOPE_TOO_LARGE` | The approved scope exceeds 100 teams. Request a coordinated contract decision; do not accept a partial scope or expand permissions. |
+| `DEMO_SCOPE_TOO_LARGE` | The admitted TEST scope exceeds1000 teams, the read-only capacity bound. Do not truncate, retry or accept a partial scope. |
 | `DEMO_SCOPE_INVALID` | Ask the authorized data owner to investigate failed team/hierarchy validation. Do not bypass it. |
 | `DEMO_PORT_UNAVAILABLE` | Choose an authorized free `-Port`; do not kill an unknown listener. |
 | `DEMO_STARTUP_FAILED` | Request authorized investigation using only the optional diagnostic code, not raw native output. |
@@ -212,7 +282,7 @@ Health URLs (packaging metadata, **not new domain API contracts**):
 
 Authentication is the existing explicitly isolated synthetic Administrator,
 with exactly the seven read capabilities and the selected exact-unit scope
-(or the complete validated 1..100-team scope in explicit all mode).
+(or the complete validated 1..1000-team scope in explicit all mode).
 It does not verify real application credentials or supply employee context.
 F1/F2/late arrival/exit, management and C52 command modes remain disabled.
 Business validation, employee-context and scope checks are unchanged. Production,
@@ -227,6 +297,88 @@ production/release certification. Do not copy real records into logs,
 screenshots or reports. Business-policy §54 remains outside this solution.
 Baselines §22.4 read adapters and **52-v0.2 / C52-v0.2 / 52-config-v0.1** are
 unchanged; no architect-owned contract or legacy source is modified.
+
+### 55-scope-v0.2 backend capacity boundaries
+
+Only explicitly isolated synthetic Oracle R7 with every writer family disabled
+can configure1000 exact distinct team IDs. Fixture, local, real-provider and
+all native/fixture writer profiles retain100. Original rights are bounded before
+recursive cancellation/late principal validation; stripping command rights must
+not confer the larger read bound. R7 ordering, PrincipalV1/IdentityResponseV1
+shape and all command capabilities/policies remain unchanged.
+
+All seven read use cases preserve the full authorized scope. Oracle IN lists
+have at most1000 bound expressions; hierarchy UNION ALL queries have at most100
+branches, sequentially on the caller's existing snapshot. Catalog parent/team
+options can contain1000. Explicit query selections and business page limits
+remain100, including when an absent team selection internally uses all grants.
+Selectable-role overflow1001 still fails; no catalog truncation is introduced.
+Only eligible Oracle-R7 identity success uses the existing2MiB envelope (tested
+with actual multi-byte UTF-8 bytes); every other identity retains16KiB.
+
+Pool settings, OracleReadSession maxRows1001 and the cumulative5s request/session
+budget are unchanged. More queries may time out. Isolated doubles do **not**
+establish real Oracle11/client compatibility, plans, runtime performance, actual
+unit totals or live proof. Legacy evidence remains the J01/G01 hierarchy and the
+seven inquiry source links in design §22.4/§55.5; mutating SELECT functions and
+autonomous ledger effects (design §13.5) remain excluded.
+
+Focused capacity checks:
+
+```powershell
+cd backend\fixture-slice
+node --test --test-concurrency=1 test/read-scope-capacity.test.mts test/read-scope-http.test.mts
+```
+
+After coordinated backend/UI source freeze, DevOps must rebuild using
+`powershell.exe -NoProfile -File scripts\Build-Shifter.ps1 -Profile test -Validation`,
+serve manifest-verified refreshed assets and reload the browser. Old compiled UI
+identity/catalog guards still reject scopes over100. This backend task does not
+perform that build, authorize a live connection or certify TEST/release readiness.
+
+Verification checkpoint (2026-11-02, isolated/static only): new capacity tests
+**29/29**; final focused reader/host/native/identity/profile plus existing HTTP
+and populated-fixture compatibility tests **465/465**, followed by TypeScript
+PASS. Launcher **983 assertions** (982 existing plus capacity guidance).
+One canonical serial `npm test` run returned **2275/2285**, ten failures:
+eight fixture-management projection regressions and an oversized-real-identity
+expectation were subsequently repaired and retested in the465 focused checks.
+The unchanged readiness cancellation case failed cleanup timing in that full
+run; its subsequent isolated suite passed **85/85**, without code/budget changes.
+The full suite was **not rerun** to seek a green result. Independent QA must run
+the final frozen source; a final full-suite PASS is not claimed.
+
+Task-owned cumulative source-freeze manifest (relative to repository root;
+no frontend, canonical contracts, native SQL/digests, dependencies, clone scripts,
+operator configuration or design/status artifacts are included):
+
+```text
+backend/fixture-slice/attendance-validation.mts
+backend/fixture-slice/contract-validation.mts
+backend/fixture-slice/http-adapter.mts
+backend/fixture-slice/oracle-attendance-reader.mts
+backend/fixture-slice/oracle-demo-host.mts
+backend/fixture-slice/oracle-readers.mts
+backend/fixture-slice/oracle-search-reader.mts
+backend/fixture-slice/oracle-shift-items-reader.mts
+backend/fixture-slice/read-attendance.mts
+backend/fixture-slice/read-current-shifts.mts
+backend/fixture-slice/read-employee-card.mts
+backend/fixture-slice/read-employee-shift-day.mts
+backend/fixture-slice/read-my-shifts.mts
+backend/fixture-slice/read-shift-items.mts
+backend/fixture-slice/read-shift-search.mts
+backend/fixture-slice/runtime-config.mts
+backend/fixture-slice/shift-search-validation.mts
+backend/fixture-slice/synthetic-identity.mts
+backend/fixture-slice/test/http.test.mts
+backend/fixture-slice/test/oracle-demo-host.test.mts
+backend/fixture-slice/test/read-scope-capacity.test.mts
+backend/fixture-slice/test/read-scope-http.test.mts
+backend/fixture-slice/README.md
+scripts/Start-ShifterOracleDemo.ps1
+scripts/Test-Start-ShifterOracleDemo.ps1
+```
 
 Verification commands (isolated doubles/static checks; **not live Oracle**):
 
@@ -2019,7 +2171,8 @@ Additional explicit environment variable:
   `current-shifts-fixture.mts`, containing `catalog`, `employees`, `days`,
   `attendance`, `activities`, `innerJobs`, `missingReasons`. Empty arrays are
   explicit values, not missing dependencies. Every synthetic grant must resolve
-  to a J01 team with a direct G01 parent. At most 100 parents/grants; source arrays
+  to a J01 team with a direct G01 parent. Fixture/native profiles retain100
+  parents/grants; pure Oracle R7 admits1000 under §55.5 above. Fixture source arrays
   are bounded at 25000 and catalog/source fields are runtime checked.
 
 Omission disables **only** the two new GETs (503 `DEPENDENCY_UNAVAILABLE`);
@@ -2318,7 +2471,8 @@ Fixture methods clone/allowlist output and never mutate supplied data.
 
 `OracleSearchReader` implements the canonical port with bound predicates,
 Oracle-11-compatible ROW_NUMBER window, full-scope ambiguity probe, <=limit+1
-(<=101) page rows, <=100 parents / <=1000 teams / <=1000 selectable roles.
+(<=101) page rows, <=100 parents for fixture/native (1000 for pure Oracle R7) /
+<=1000 teams / <=1000 selectable roles.
 Overflow/duplicate/malformed catalogs fail; page-code labels are separately
 bounded, may resolve inactive entries, and unresolved labels stay null.
 No full-schema/catalog/business-data preload or arbitrary DISTINCT/first row.
@@ -2703,7 +2857,8 @@ Prefix employee, day/change and attendance multiplicity is rejected BEFORE
 offset, including an empty requested page. Oracle11 ROW_NUMBER ordering is
 effective start NULLS LAST, numeric day/employee IDs; SQL transfers <=limit+1
 (<=101), with offset<=10000 and no total. Selected label probes return <=2 per
-identity; scoped hierarchy<=101 and role options<=1001 including overflow.
+identity; scoped hierarchy<=101 per sequential100-grant group and role
+options<=1001 including overflow.
 No unbounded employee directory/catalog preload.
 
 `planned` is separate from all three independent actual timestamps; stored

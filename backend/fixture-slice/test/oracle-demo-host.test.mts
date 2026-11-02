@@ -1,89 +1,27 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createServer, request } from "node:http";
+import { createServer } from "node:http";
 import { EventEmitter } from "node:events";
 import { mkdtemp, mkdir, writeFile, rm, symlink, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
-import type { BindParameters } from "oracledb";
-import type { OraclePool, OracleConnection } from "../oracle-session.mts";
+import { env, options, protocolDouble, raw } from "./oracle-demo-test-helper.mts";
 import { startOracleDemo, demoEnvironment, parseDemoArguments, loadDemoAssets, attachDemoShutdown } from "../oracle-demo-host.mts";
 import { record } from "../contract-validation.mts";
 import { loadEnvironmentConfig, RealAuthenticationNotConfiguredError } from "../environment-profiles.mts";
 
 // ISOLATED TEST DOUBLE ONLY. Never real credentials, orgs, records or Oracle connectivity.
-const env = { SHF_ORACLE_CONNECT_STRING: "CTIDBT_WFMT.WORLD", SHF_ORACLE_USER: "shifter",
-  SHF_ORACLE_PASSWORD: "synthetic-only-not-a-real-password", SHF_ORACLE_CLIENT_LIB_DIR: "C:\\synthetic\\bin",
-  TNS_ADMIN: "C:\\synthetic\\network\\admin" };
-const options = { testReadOnly: true, orgUnitId: "DEMO", port: 0 };
 const assets = async () => new Map([
   ["/index.html", Buffer.from("<!doctype html><title>Isolated double TEST UI</title>")],
   ["/main.js", Buffer.from("/* isolated TEST asset */")],
 ]);
-function protocolDouble(scope?: unknown[]) {
-  let closed = 0, leases = 0, rollbacks = 0, releases = 0, probes = 0, breaks = 0;
-  const statements: Array<{ sql: string; binds: BindParameters; bound: number; lease: number; timeout: number }> = [];
-  let fail = false, badProbe = false;
-  let hierarchy: ((rows: unknown[]) => unknown[]) | undefined;
-  let waitDiscovery: (() => Promise<void>) | undefined;
-  let waitProbe: (() => Promise<void>) | undefined;
-  const pool: OraclePool = {
-    async getConnection() {
-      leases++;
-      const lease = leases;
-      const connection: OracleConnection = {
-        callTimeout: 0,
-        async execute(sql, binds, bound) {
-          statements.push({ sql, binds, bound, lease, timeout: this.callTimeout });
-          if (fail) throw { code: "ORA-01017", message: "private-host SQL password record" };
-          if (sql === "SET TRANSACTION READ ONLY") return [];
-          if (sql === 'SELECT 1 AS "probe" FROM dual') {
-            probes++; await waitProbe?.(); return badProbe ? [] : [{ probe: 1 }];
-          }
-          if (sql.includes("nls_session_parameters")) return [{ calendar: "GREGORIAN" }];
-          if (sql.includes('"scopeRow"')) {
-            await waitDiscovery?.();
-            assert.ok(record(binds));
-            assert.equal(binds.teamType, "J01");
-            assert.equal(typeof binds.lowerBound, "number"); assert.equal(typeof binds.upperBound, "number");
-            return (scope ?? []).slice(Number(binds.lowerBound), Number(binds.upperBound));
-          }
-          if (scope && sql.includes('"grantCode"')) {
-            assert.ok(record(binds));
-            const rows = Object.entries(binds).filter(([key]) => /^team\d+$/.test(key)).map(([, id]) => ({
-              grantCode: id, teamCode: id, teamLabel: "Synthetic team", teamType: "J01",
-              code: "PARENT", label: "Synthetic parent", unitType: "G01",
-            }));
-            return hierarchy ? hierarchy(rows) : rows;
-          }
-          if (sql.includes('"grantCode"')) return [{
-            grantCode: "DEMO", teamCode: "DEMO", teamLabel: "Synthetic team", teamType: "J01",
-            code: "DEMO-P", label: "Synthetic parent", unitType: "G01",
-          }];
-          return []; // Honest empty/not-found records from this labeled protocol double.
-        },
-        async rollback() { rollbacks++; },
-        async close() { releases++; },
-        async break() { breaks++; },
-      };
-      return connection;
-    },
-    async close() { closed++; },
-  };
-  return { pool, statements, get closed() { return closed; }, get leases() { return leases; },
-    get rollbacks() { return rollbacks; }, get releases() { return releases; }, get probes() { return probes; },
-    get breaks() { return breaks; }, set fail(value: boolean) { fail = value; },
-    set hierarchy(value: ((rows: unknown[]) => unknown[]) | undefined) { hierarchy = value; },
-    set waitDiscovery(value: (() => Promise<void>) | undefined) { waitDiscovery = value; },
-    set badProbe(value: boolean) { badProbe = value; }, set waitProbe(value: (() => Promise<void>) | undefined) { waitProbe = value; } };
-}
 const allOptions = { testReadOnly: true, allTestUnits: true as const, port: 0 };
 const scopeRows = (count: number) => Array.from({ length: count }, (_, i) => ({
   orgUnitId: `T${String(i).padStart(3, "0")}`, unitType: "J01", parentUnit: "PARENT",
 }));
-for (const count of [1, 50, 51, 100]) {
+for (const count of [1, 50, 51, 100, 101, 1000]) {
   test(`all TEST units discovers complete ${count} grants in one bounded snapshot and reuses one pool`, async () => {
     const rows = scopeRows(count), oracle = protocolDouble(rows);
     let factories = 0;
@@ -93,12 +31,16 @@ for (const count of [1, 50, 51, 100]) {
       const discovery = oracle.statements.filter(s => s.sql.includes('"scopeRow"'));
       assert.deepEqual(discovery.map(s => [record(s.binds) && s.binds.lowerBound,
         record(s.binds) && s.binds.upperBound, s.bound]),
-      count < 50 ? [[0, 50, 50]] : count < 100 ? [[0, 50, 50], [50, 100, 50]]
-        : [[0, 50, 50], [50, 100, 50], [100, 101, 1]]);
+      Array.from({ length: Math.floor(count / 100) + 1 }, (_, i) =>
+        [i * 100, i * 100 + (i === 10 ? 1 : 100), i === 10 ? 1 : 100]));
       assert.ok(discovery.every(s => s.lease === 1 && s.timeout <= 5000 && s.timeout > 0 &&
         s.sql.includes("ORDER BY t.org_unit_id,t.parent_unit") && s.sql.includes("ORDER BY \"scopeRow\"")));
       const hierarchy = oracle.statements.find(s => s.sql.includes('"grantCode"'));
       assert.equal(hierarchy?.lease, 1);
+      const discoveryHierarchy = oracle.statements.filter(s => s.lease === 1 && s.sql.includes('"grantCode"'));
+      assert.equal(discoveryHierarchy.length, Math.ceil(count / 100));
+      assert.deepEqual(discoveryHierarchy.flatMap(s => Object.entries(s.binds)
+        .filter(([key]) => /^team\d+$/.test(key)).map(([, id]) => id)), rows.map(row => row.orgUnitId));
       assert.equal(oracle.statements[0].sql, "SET TRANSACTION READ ONLY");
       const identity = await (await fetch(demo.url + "/api/v1/identity")).json();
       assert.ok(record(identity) && record(identity.principal) && record(identity.principal.resourceScope));
@@ -123,8 +65,9 @@ for (const count of [1, 50, 51, 100]) {
       ] as const) assert.equal((await raw(demo.url, path)).status, expected, path);
       for (const statement of oracle.statements.filter(s => s.sql.includes('"grantCode"'))) {
         assert.ok(record(statement.binds));
-        assert.deepEqual(Object.entries(statement.binds).filter(([key]) => /^team\d+$/.test(key)).map(([, id]) => id),
-          rows.map(row => row.orgUnitId));
+        const boundIds = Object.entries(statement.binds).filter(([key]) => /^team\d+$/.test(key)).map(([, id]) => id);
+        assert.ok(boundIds.length <= 100 && statement.bound === boundIds.length + 1);
+        assert.ok(boundIds.every(id => rows.some(row => row.orgUnitId === id)));
       }
       assert.ok(oracle.statements.every(s => s.sql === "SET TRANSACTION READ ONLY" || /^\s*SELECT\b/i.test(s.sql)));
     } finally { await demo.stop(); }
@@ -132,9 +75,11 @@ for (const count of [1, 50, 51, 100]) {
   });
 }
 for (const [label, rows, code] of [
-  ["empty", [], "DEMO_SCOPE_INVALID"], ["overflow", scopeRows(101), "DEMO_SCOPE_TOO_LARGE"],
+  ["empty", [], "DEMO_SCOPE_INVALID"], ["overflow", scopeRows(1001), "DEMO_SCOPE_TOO_LARGE"],
   ["duplicate", [scopeRows(1)[0], scopeRows(1)[0]], "DEMO_SCOPE_INVALID"],
-  ["cross-page duplicate", [...scopeRows(50), scopeRows(1)[0]], "DEMO_SCOPE_INVALID"],
+  ["cross-page duplicate", [...scopeRows(100), scopeRows(1)[0]], "DEMO_SCOPE_INVALID"],
+  ["late-page malformed", [...scopeRows(999), { ...scopeRows(1000)[999], parentUnit: null }], "DEMO_SCOPE_INVALID"],
+  ["discovery/hierarchy parent mismatch", [{ ...scopeRows(1)[0], parentUnit: "OTHER" }], "DEMO_SCOPE_INVALID"],
   ...["", " T001", "T001 ", "*", "A,B", "null", "-1", "123456789"].map(orgUnitId =>
     [`unsafe code ${JSON.stringify(orgUnitId)}`, [{ ...scopeRows(1)[0], orgUnitId }], "DEMO_SCOPE_INVALID"]),
   ...[null, "", "T000", "*", 12].map(parentUnit =>
@@ -213,7 +158,7 @@ for (const phase of ["pool", "lease", "discovery"] as const) {
       oracle.pool.getConnection = async () => { await wait(); return original(); };
     }
     test("all discovery pages share the unchanged cumulative 5s budget and drain timed-out native work", async () => {
-      const oracle = protocolDouble(scopeRows(51));
+      const oracle = protocolDouble(scopeRows(101));
       let pages = 0, release!: () => void, reached!: () => void;
       const gate = new Promise<void>(done => { release = done; });
       const active = new Promise<void>(done => { reached = done; });
@@ -253,17 +198,6 @@ async function launch() {
   let factories = 0;
   const demo = await startOracleDemo(env, options, { assets, read: async () => { factories++; return oracle.pool; } });
   return { oracle, demo, get factories() { return factories; } };
-}
-async function raw(url: string, path: string, headers: Record<string, string> = {}, method = "GET") {
-  const target = new URL(url);
-  return new Promise<{ status: number; headers: import("node:http").IncomingHttpHeaders; body: string }>((done, fail) => {
-    const req = request({ hostname: target.hostname, port: target.port, path, headers, method, agent: false }, response => {
-      let body = "";
-      response.setEncoding("utf8"); response.on("data", part => { body += part; });
-      response.on("end", () => done({ status: response.statusCode ?? 0, headers: response.headers, body }));
-    });
-    req.on("error", fail); req.end();
-  });
 }
 test("demo shares one pool, exact R7 identity/read scope and seven existing Oracle adapters; no commands", async () => {
   const started = await launch();
@@ -464,19 +398,6 @@ test("demo preserves business validation, scoped catalogs never grant parent or 
     assert.ok(oracle.statements.filter(s => s.sql.includes('"grantCode"')).every(s =>
       record(s.binds) && s.binds.team0 === "DEMO" && s.binds.team1 === undefined));
   } finally { await demo.stop(); }
-});
-test("demo actual compiled TEST browser plus source API host run with an explicitly isolated protocol double", async () => {
-  const oracle = protocolDouble();
-  const demo = await startOracleDemo(env, options, { read: async () => oracle.pool });
-  try {
-    const page = await raw(demo.url, "/");
-    assert.equal(page.status, 200); assert.match(page.body, /<html\b/i);
-    const identity = await raw(demo.url, "/api/v1/identity", { "Sec-Fetch-Dest": "empty" });
-    assert.equal(identity.status, 200); assert.match(identity.body, /"dataSource":"oracle"/);
-    assert.match(identity.body, /synthetic:administrator/);
-    assert.equal((await raw(demo.url, "/readyz")).status, 200);
-  } finally { await demo.stop(); }
-  assert.equal(oracle.closed, 1);
 });
 async function stagedBrowser() {
   const stage = await mkdtemp(join(tmpdir(), "shf-oracle-demo-assets-"));

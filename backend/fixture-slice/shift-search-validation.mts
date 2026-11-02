@@ -69,9 +69,9 @@ export function validateSearchRequest(v: unknown): ShiftSearchRequestV1 {
   }
   return parseSearchQuery(params);
 }
-export function validateSearchCatalog(v: unknown, grants: readonly string[]): asserts v is ShiftSearchCatalogV1 {
+export function validateSearchCatalog(v: unknown, grants: readonly string[], scopeLimit = 100): asserts v is ShiftSearchCatalogV1 {
   if (!record(v)) sourceFailure();
-  for (const [key, max] of [["mokedOptions", 100], ["teamOptions", 1000], ["innerJobOptions", 1000]] as const) {
+  for (const [key, max] of [["mokedOptions", scopeLimit], ["teamOptions", 1000], ["innerJobOptions", 1000]] as const) {
     const values = v[key];
     if (!Array.isArray(values) || values.length > max) sourceFailure();
     const codes: string[] = [];

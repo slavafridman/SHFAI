@@ -188,16 +188,17 @@ test("large canonical employee/site IDs remain strings through HTTP", async () =
     assert.equal(dto.shiftDayId, "9999999999");
   });
 });
-test("identity response limit is enforced over HTTP; unapproved provider fields never leak", async () => {
+test("oversized real identity fails before serialization; default envelope and provider projection remain bounded", async () => {
+  const oversized = realPrincipal({ resourceScope: {
+    orgUnitIds: Array.from({ length: 3000 }, (_, index) => `UNIT${index}`),
+  } });
+  assert.throws(() => serializeSuccess({ principal: oversized, dataSource: "isolated-fixture" }),
+    { code: "INTERNAL_ERROR" });
   const tooLarge = await createRuntime(realConfig, new FixtureReader([]), async () => ({
-    async authenticate() {
-      return realPrincipal({ resourceScope: {
-        orgUnitIds: Array.from({ length: 3000 }, (_, index) => `UNIT${index}`),
-      } });
-    },
+    async authenticate() { return oversized; },
   }));
   await withServer(tooLarge, async url => {
-    await problem(await fetch(url + "/api/v1/identity"), "INTERNAL_ERROR", 500);
+    await problem(await fetch(url + "/api/v1/identity"), "UNAUTHENTICATED", 401);
   });
   const extra = await createRuntime(realConfig, new FixtureReader([]), async () => ({
     async authenticate() { return { ...realPrincipal({ roles: [] }), internalOnly: "never-public" }; },

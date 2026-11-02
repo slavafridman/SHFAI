@@ -1,7 +1,7 @@
 import type { PrincipalV1 } from "./contracts.mts";
 import type { EmployeeOperationalCardAccessPolicy, EmployeeOperationalCardReadPort,
   EmployeeOperationalCardRequestV1, EmployeeOperationalCardV1 } from "./employee-card-contracts.mts";
-import { decimalId, record, text, validatePrincipal } from "./contract-validation.mts";
+import { decimalId, record, text, validatePrincipal, readScopeLimit } from "./contract-validation.mts";
 import { mokedOption, plainLabel, unitCode } from "./current-shifts-validation.mts";
 import { EmployeeCardError } from "./employee-card-errors.mts";
 import type { CatalogValueV1 } from "./current-shifts-contracts.mts";
@@ -68,7 +68,7 @@ export class GetEmployeeOperationalCard {
     this.policy.requireEmployeeRead(p);
     if (!this.policy.canReadSelectedEmployee(p, request.employeeId)) throw new EmployeeCardError("FORBIDDEN");
     const exactTeamIds = Object.freeze([...this.policy.authorizedEmployeeTeamIds(p)]);
-    if (exactTeamIds.length > 100 || new Set(exactTeamIds).size !== exactTeamIds.length ||
+    if (exactTeamIds.length > readScopeLimit(p, this.source) || new Set(exactTeamIds).size !== exactTeamIds.length ||
         !exactTeamIds.every(unitCode)) cardSourceFailure();
     signal?.throwIfAborted();
     if (!exactTeamIds.length) throw new EmployeeCardError("EMPLOYEE_NOT_FOUND");

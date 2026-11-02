@@ -47,6 +47,7 @@
         </mat-form-field>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>צוותים</mat-label>
+          <mat-hint align="end">עד 100 לבחירה מפורשת</mat-hint>
           <mat-select id="search-teamCodes" formControlName="teamCodes" multiple>
             @for (t of teams(); track t.code) { <mat-option [value]="t.code">{{ t.label }}</mat-option> }
           </mat-select>

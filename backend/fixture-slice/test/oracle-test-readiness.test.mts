@@ -562,24 +562,99 @@ test("missing process configuration blocks before any pool or query", async () =
     assert.deepEqual(p.log, []);
     assert.deepEqual(p.resolutions, []);
   });
-  test("duration cancellation breaks active operation before rollback/drop/drain", async () => {
+  test("duration cancellation breaks active operation before rollback/drop/drain", async t => {
     const p = protocol();
+    let now = performance.now(), busy = false, returned = false;
+    t.mock.method(performance, "now", () => now);
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    let entered!: () => void, breaking!: () => void, acknowledgeBreak!: () => void;
+    const waiting = new Promise<void>(r => { entered = r; });
+    const breakStarted = new Promise<void>(r => { breaking = r; });
+    const breakAck = new Promise<void>(r => { acknowledgeBreak = r; });
     let release: (() => void) | undefined;
     const original = p.connection.execute;
     p.connection.execute = async (sql, binds, maxRows) => {
       if (sql.includes("SYS_CONTEXT")) {
-        p.log.push("waiting"); await new Promise<void>(r => { release = r; }); return [p.identity];
+        busy = true;
+        p.log.push("waiting");
+        await new Promise<void>(r => { release = r; entered(); });
+        busy = false; p.log.push("settled");
+        return [p.identity];
       }
       return original(sql, binds, maxRows);
     };
-    p.connection.break = async () => { p.log.push("break"); release?.(); };
-    const start = performance.now();
-    const result = await runOracleTestReadiness(environment(), { ...p.deps, budgetMs: 90 });
-    assert.ok(performance.now() - start < 500);
-    assert.equal(result.status, "BLOCKED");
-    assert.equal(result.queries, 2);
-    assert.deepEqual(p.log.slice(-4), ["break", "rollback", "close", "drain"]);
-    assert.equal(result.rollbackAck && result.leaseCloseAck && result.poolDrainAck, true);
+    p.connection.break = async () => {
+      p.log.push("break"); breaking(); await breakAck; p.log.push("break-ack");
+    };
+    const rollback = p.connection.rollback, close = p.connection.close;
+    p.connection.rollback = async () => { assert.equal(busy, false); await rollback(); };
+    p.connection.close = async drop => { assert.equal(busy, false); await close(drop); };
+    try {
+      const pending = runOracleTestReadiness(environment(), { ...p.deps, budgetMs: 90 })
+        .then(result => { returned = true; return result; });
+      await waiting;
+      now += 60; t.mock.timers.tick(60); // Work deadline; 30ms cleanup reserve remains.
+      await breakStarted;
+      assert.equal(busy, true); assert.equal(returned, false);
+      assert.deepEqual(p.log.slice(-2), ["waiting", "break"]);
+      acknowledgeBreak();
+      await breakAck;
+      assert.equal(busy, true); assert.equal(returned, false);
+      assert.ok(!p.log.some(event => ["rollback", "close", "drain"].includes(event)));
+      release?.();
+      const result = await pending;
+      assert.equal(result.status, "BLOCKED");
+      assert.ok(result.codes.includes("DEADLINE_EXCEEDED"));
+      assert.equal(result.queries, 2);
+      assert.deepEqual(p.log.slice(-6), ["break", "break-ack", "settled", "rollback", "close", "drain"]);
+      assert.deepEqual(p.drops, [true]);
+      assert.equal(result.rollbackAck && result.leaseCloseAck && result.poolDrainAck, true);
+      t.diagnostic("controlled monotonic work deadline=60ms; break ACK, query settlement and cleanup ACKs before total=90ms; not live capacity evidence");
+    } finally {
+      acknowledgeBreak(); release?.();
+      t.mock.timers.reset(); t.mock.restoreAll();
+    }
+  });
+  test("active query total deadline exhausted: no busy lease release or fake drain ACK", async t => {
+    const p = protocol(), original = p.connection.execute;
+    let now = performance.now(), entered!: () => void, breaking!: () => void, release!: () => void;
+    t.mock.method(performance, "now", () => now);
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    const waiting = new Promise<void>(r => { entered = r; });
+    const breakStarted = new Promise<void>(r => { breaking = r; });
+    p.connection.execute = async (sql, binds, maxRows) => {
+      if (!sql.includes("SYS_CONTEXT")) return original(sql, binds, maxRows);
+      p.log.push("waiting");
+      await new Promise<void>(r => { release = r; entered(); });
+      p.log.push("settled"); return [p.identity];
+    };
+    // Break ACK alone does not settle this owned query double.
+    p.connection.break = async () => { p.log.push("break"); breaking(); };
+    try {
+      const pending = runOracleTestReadiness(environment(), { ...p.deps, budgetMs: 90 });
+      await waiting;
+      now += 60; t.mock.timers.tick(60);
+      await breakStarted;
+      // Flush the acknowledged break continuation so the active-query cleanup
+      // deadline is armed before advancing the controlled scheduler.
+      await new Promise<void>(r => setImmediate(r));
+      now += 30; t.mock.timers.tick(30);
+      const result = await pending;
+      assert.equal(result.status, "BLOCKED"); assert.equal(result.queries, 2);
+      assert.ok(result.codes.includes("BUSY_LEASE_UNACKNOWLEDGED"));
+      assert.ok(result.codes.includes("POOL_DRAIN_UNACKNOWLEDGED"));
+      assert.equal(result.rollbackAck || result.leaseCloseAck || result.poolDrainAck, false);
+      assert.deepEqual(p.log.slice(-2), ["waiting", "break"]);
+      assert.ok(!p.log.some(event => ["rollback", "close", "drain"].includes(event)));
+      assert.deepEqual(p.drops, []);
+      release();
+      await new Promise<void>(r => queueMicrotask(r));
+      assert.equal(result.status, "BLOCKED");
+      assert.equal(result.rollbackAck || result.leaseCloseAck || result.poolDrainAck, false);
+      assert.ok(!p.log.some(event => ["rollback", "close", "drain"].includes(event)));
+    } finally {
+      release?.(); t.mock.timers.reset(); t.mock.restoreAll();
+    }
   });
   test("pool acquisition deadline: no query, late lease dropped, no retry", async t => {
     const p = protocol();

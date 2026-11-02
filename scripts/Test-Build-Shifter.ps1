@@ -28,6 +28,56 @@ Assert-Delivery ($LASTEXITCODE -ne 0) 'source output collision rejected before c
 
 # Dot-sourcing defines functions only; it cannot start an application build.
 . $builder -Profile dev
+# Phase checks are static/mocked; no actual compiled-browser claim is made here.
+$builderText = Get-Content -LiteralPath $builder -Raw
+$phaseCall = $builderText.IndexOf('Invoke-ShifterArtifactValidation $node $backend $stage')
+Assert-Delivery ($phaseCall -gt $builderText.IndexOf('Write-ShifterZip $stage $zip')) 'artifact phase follows current ZIP creation'
+Assert-Delivery ($phaseCall -gt $builderText.IndexOf('[IO.Compression.ZipFile]::ExtractToDirectory($zip, $extracted)')) 'artifact phase follows ZIP byte checks and extraction'
+Assert-Delivery ($phaseCall -lt $builderText.IndexOf('Write-Host "PASS developer snapshot')) 'artifact phase required before build success'
+$artifactSuite = Join-Path $root 'backend/fixture-slice/test/oracle-demo-artifact.mts'
+$artifactText = Get-Content -LiteralPath $artifactSuite -Raw
+$hostText = Get-Content -LiteralPath (Join-Path $root 'backend/fixture-slice/test/oracle-demo-host.test.mts') -Raw
+Assert-Delivery (-not $hostText.Contains('demo actual compiled TEST browser')) 'compiled case no longer registered in backend default suite'
+Assert-Delivery ($artifactText.Contains('assets: () => loadDemoAssets(stage)') -and
+    $artifactText.Contains('process.env.SHF_TEST_ARTIFACT_STAGE') -and
+    $artifactText.Contains('stage && isAbsolute(stage)')) 'artifact suite requires explicit stage and strict real asset loader'
+$phaseRunner = ${function:Invoke-ShifterCommand}
+$phaseEnv = [Environment]::GetEnvironmentVariable('SHF_TEST_ARTIFACT_STAGE', 'Process')
+$script:artifactCalls = 0
+try {
+    [Environment]::SetEnvironmentVariable('SHF_TEST_ARTIFACT_STAGE', 'synthetic-previous', 'Process')
+    function Invoke-ShifterCommand([string]$File, [string[]]$Arguments, [string]$Directory) {
+        $script:artifactCalls++
+        Assert-Delivery ($Arguments.Count -eq 3 -and $Arguments[0] -ceq '--test' -and
+            $Arguments[1] -ceq '--test-concurrency=1' -and $Arguments[2] -ceq $artifactSuite) 'explicit artifact filename and serial Node runner'
+        Assert-Delivery ($env:SHF_TEST_ARTIFACT_STAGE -ceq (Join-Path $root 'synthetic-current-stage')) 'artifact runner receives current stage not inherited output'
+    }
+    $backendPath = Join-Path $root 'backend/fixture-slice'
+    foreach ($mode in @('dev', 'production')) {
+        Invoke-ShifterArtifactValidation 'node.exe' $backendPath '' $mode $true
+    }
+    Invoke-ShifterArtifactValidation 'node.exe' $backendPath '' 'test' $false
+    Assert-Delivery ($script:artifactCalls -eq 0) 'non-TEST and nonvalidation modes do not count or execute artifact case'
+    Invoke-ShifterArtifactValidation 'node.exe' $backendPath (Join-Path $root 'synthetic-current-stage') 'test' $true
+    Assert-Delivery ($script:artifactCalls -eq 1 -and $env:SHF_TEST_ARTIFACT_STAGE -ceq 'synthetic-previous') 'TEST validation invokes artifact case once and restores test-only ENV'
+    $missingRejected = $false
+    try { Invoke-ShifterArtifactValidation 'node.exe' (Join-Path $root 'missing-artifact-backend') '' 'test' $true }
+    catch { $missingRejected = $_.Exception.Message -like 'Required TEST artifact suite missing:*' }
+    Assert-Delivery ($missingRejected -and $script:artifactCalls -eq 1) 'missing explicit suite fails TEST validation before runner'
+    function Invoke-ShifterCommand([string]$File, [string[]]$Arguments, [string]$Directory) {
+        $failure = New-Object System.Exception('Synthetic artifact exit')
+        $failure.Data['ExitCode'] = 38
+        throw $failure
+    }
+    $phaseFailure = $null
+    try { Invoke-ShifterArtifactValidation 'node.exe' $backendPath (Join-Path $root 'synthetic-current-stage') 'test' $true }
+    catch { $phaseFailure = $_.Exception }
+    Assert-Delivery ($null -ne $phaseFailure -and $phaseFailure.Data['ExitCode'] -eq 38 -and
+        $env:SHF_TEST_ARTIFACT_STAGE -ceq 'synthetic-previous') 'artifact failure propagates child code and restores ENV'
+} finally {
+    ${function:Invoke-ShifterCommand} = $phaseRunner
+    [Environment]::SetEnvironmentVariable('SHF_TEST_ARTIFACT_STAGE', $phaseEnv, 'Process')
+}
 $snapshot = @(Get-ShifterSourceSnapshot)
 Assert-ShifterSourceSnapshot $snapshot @(Get-ShifterSourceSnapshot)
 Assert-Delivery ($snapshot.Count -gt 0) 'canonical source-byte snapshot matches current checkout'

@@ -10,6 +10,38 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-ORACLE-DEMO-PATHS — automatic path resolution, 2026-11-02
 
+Operator's12:54 result DEMO_SCOPE_TOO_LARGE confirms startup reached the
+Oracle team-catalog threshold in their session; actual total remains unknown,
+not an independently verified target identity. Accepted55-scope-v0.2 expands
+only isolated synthetic Oracle exact-R7 scope to1000 distinct teams. Fixture/
+native writer limits100, explicit query selections100, five-second request
+budgets, seven capabilities and production guards remain unchanged.
+Discovery uses100-row pages plus1001st sentinel; hierarchy queries use
+sequential batches<=100/101rows in the same read-only snapshot. No truncation,
+wildcard or DBA/write grant is introduced. Above1000 still rejects.
+Coordinated backend/frontend identity/catalog/envelope limits and fresh TEST
+assets are complete. Final canonical TEST validation passed backend2286/
+frontend846 and one post-stage compiled-browser/source-host artifact case.
+The artifact case was moved out of the source-only glob to remove a circular
+dependency on stage cleanup; it still runs and must pass after staging.
+Two scheduler-sensitive cleanup/100-row fixture tests now use controlled
+time/phase assertions plus actual deadline-boundary negatives; no production
+timeout was increased. Original failed runs remain historical, not PASS.
+Independent supplemental checks passed480 source proofs,185 payload hashes,
+186 ZIP entries,148 runtime modules,30 browser assets,158 AST import edges
+across28 bundles and eight index JS references. The earlier regex-scanner
+failure was a harness false positive, replaced by syntax-aware verification.
+Compiled UI passed19 boundary checks and10 actual Chrome/HTTP-double cases:
+1000 Oracle R7 grants/options accepted,1001 and over100 writer/fixture grants
+rejected, no native/nonlocal requests or fallback. This is not live Oracle.
+Fresh TEST ZIP813592 bytes SHA256
+16A0EB6E3EE948E811FCBFBEDFCB7A7C27A3A5055B436B68CFB9D6EFC57060CD.
+DEV/production ZIPs remain stale for this change and are not release evidence.
+Next action: publish coordinated55-v0.2 and artifact-phase/test corrections,
+then operator reruns the same -AllTestUnits launcher against actual TEST.
+Live current count, query performance and successful UI remain unverified;
+no credentials/env-file access or Docker-world mutation occurred.
+
 Operator reported DEMO_NODE_STARTUP_FAILED at12:43. Controlled reproduction
 confirmed the launcher replaced specific Node failures with the generic code;
 this is repaired with finite allowlisted Node-code/action propagation and
@@ -21,8 +53,10 @@ PowerShell982 launcher/94 shared assertions passed, including real child-Node
 fixtures. A pure loadDemoAssets check verified30 TEST assets without Oracle.
 No MTS changed or full suite rebuilt; no live Oracle/TNS/browser verification.
 Actual startup cause still needs the operator's specific safe primary code.
-Next action: publish this diagnostic correction, then rerun the same launcher;
-do not request raw stderr, credentials or reconstruct excluded env files.
+Published4cd5bc4dd75290ae5d84415b0986f5ebee860939; direct remote was
+reconfirmed at this scope's publication preflight with cached0/0.
+Next action: rerun the same launcher; do not request raw stderr, credentials
+or reconstruct excluded env files.
 
 User requested no further Oracle client/TNS path questions. The demo launcher
 now resolves explicit parameters, process path inputs, compatible ORACLE_HOME,

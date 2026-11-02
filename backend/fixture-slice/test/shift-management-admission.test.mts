@@ -1,15 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createIsolatedShiftManagement } from "../shift-management-fixture.mts";
-import { ShiftManagementError, shiftProblem, shiftUnknown } from "../shift-management-errors.mts";
+import { ShiftManagementError, ShiftUowRejection, shiftProblem, shiftUnknown } from "../shift-management-errors.mts";
 import { shiftTextByteLength } from "../shift-management-text.mts";
 import { ShiftManagementApplication } from "../shift-management-application.mts";
 import { shiftManagementAccessPolicy } from "../access-policy.mts";
 import { managementFixtureSnapshot, managementClock, managementPrincipal, createDraft,
   commandFor } from "./shift-management-helpers.mts";
 import type { CsvShiftPreviewV1, CsvShiftCommandV1, ShiftDraftV1, ShiftStateV1 } from "../shift-management-contracts.mts";
-import { nextShiftCivilDate } from "../shift-management-domain.mts";
-import { withRequestBudget } from "../request-budget-context.mts";
+import { assertShiftWorkAllowed, nextShiftCivilDate } from "../shift-management-domain.mts";
+import { currentRequestBudget, withRequestBudget } from "../request-budget-context.mts";
 
 const p = managementPrincipal();
 const csvBytes = () => new TextEncoder().encode("personalId,activityCode,date,location,startTime,endTime\n" +
@@ -260,20 +260,109 @@ test("independent readback compares preserved facts, not just displayed shift st
   await assert.rejects(f.app.command(p, "1", commandFor(prep, createDraft(), 1)), { code: "COMMAND_OUTCOME_UNKNOWN" });
   assert.equal(f.inspect().commits, 1); assert.equal(f.admission.inspect().quarantined, 1);
 });
-test("100-row isolated application exercises one budget and one commit, not native capacity certification", async () => {
-  const f = createIsolatedShiftManagement(managementFixtureSnapshot(), managementClock(), "UTC");
+function hundredRowCsvBytes() {
   const rows = []; let date = "2027-01-04";
   for (let i = 0; i < 100; i++) {
     rows.push(`001234567,1,${date.slice(8, 10)}/${date.slice(5, 7)}/${date.slice(0, 4)},m,09:00,10:00`);
     date = nextShiftCivilDate(date);
   }
-  const bytes = new TextEncoder().encode("personalId,activityCode,date,location,startTime,endTime\n" + rows.join("\n"));
+  return new TextEncoder().encode("personalId,activityCode,date,location,startTime,endTime\n" + rows.join("\n"));
+}
+test("100-row isolated application exercises one budget and one commit, not native capacity certification", async t => {
+  // Semantic budget propagation/atomicity only. Real CPU/scheduler time is not
+  // an Oracle/HTTP SLA. Advance virtual time at owned fixture boundaries; keep
+  // every production validation and deadline guard enabled.
+  const wallNow = performance.now.bind(performance), wallStart = wallNow();
+  let now = 1000;
+  t.mock.method(performance, "now", () => now);
+  const f = createIsolatedShiftManagement(managementFixtureSnapshot(), managementClock(), "UTC");
+  const before = f.inspect().snapshot;
+  const bytes = hundredRowCsvBytes();
   const signal = new AbortController().signal;
-  await withRequestBudget(signal, 5000, async () => {
-    const preview = await f.app.previewCsv(p, "1", bytes, "utf-8", signal);
-    const receipt = await f.app.commandCsv(p, "1", csvCommand(preview), signal);
-    assert.equal(receipt.effects.length, 100);
+  let budget: ReturnType<typeof currentRequestBudget>, sequenceChecks = 0, insertChecks = 0, readbacks = 0;
+  const advance = (ms: number) => {
+    assert.ok(budget); assert.equal(currentRequestBudget(), budget);
+    assert.equal(budget.signal, signal); assert.equal(budget.deadline, 6000);
+    now += ms; assertShiftWorkAllowed(signal);
+  };
+  const read = f.snapshots.read.bind(f.snapshots);
+  const checkedRead: typeof f.snapshots.read = async (selection, signal) => {
+    advance(10);
+    if (f.inspect().commits) readbacks++;
+    return read(selection, signal);
+  };
+  t.mock.method(f.snapshots, "read", checkedRead);
+  const run = f.uow.run.bind(f.uow);
+  const checkedRun: typeof f.uow.run = (selection, work, signal) => run(selection, locked => work({
+    ...locked,
+    async nextDayId() { advance(10); sequenceChecks++; return locked.nextDayId(); },
+    async insertDay(plan) { advance(10); insertChecks++; return locked.insertDay(plan); },
+  }), signal);
+  t.mock.method(f.uow, "run", checkedRun);
+  const phases: string[] = [];
+  f.onStepForIsolatedTest(async phase => { advance(100); phases.push(phase); });
+  try {
+    await withRequestBudget(signal, 5000, async () => {
+      budget = currentRequestBudget();
+      const preview = await f.app.previewCsv(p, "1", bytes, "utf-8", signal);
+      assert.equal(preview.state, "ready"); assert.equal(preview.rows.length, 100);
+      assert.ok(preview.rows.every(row => row.errors.length === 0 && row.effect !== null));
+      const receipt = await f.app.commandCsv(p, "1", csvCommand(preview), signal);
+      advance(10);
+      assert.equal(receipt.effects.length, 100);
+      assert.equal(receipt.outcome, "fixture-committed"); assert.equal(receipt.partnerCompletion, "not-invoked");
+      const after = f.inspect().snapshot;
+      assert.deepEqual({ ...after, days: [] }, { ...before, days: [] });
+      for (let i = 0; i < 100; i++) {
+        const day = after.days[i];
+        const effect: ShiftStateV1 = receipt.effects[i].after;
+        assert.equal(day.overlay, null); assert.equal(day.attendance, null);
+        for (const key of ["shiftDayId", "startLocal", "endLocal", "activityCode", "siteId",
+          "paidMinutes", "workMinutes", "source"] as const) assert.equal(day.baseline[key], effect[key]);
+        assert.equal(effect.startLocal.slice(0, 10), preview.rows[i].effect?.after.startLocal.slice(0, 10));
+      }
+    });
+    const result = f.inspect();
+    assert.equal(result.commits, 1); assert.equal(result.snapshot.days.length, 100);
+    assert.equal(result.sequenceCalls, 100); assert.equal(result.rollbacks, 0);
+    assert.equal(sequenceChecks, 100); assert.equal(insertChecks, 100); assert.equal(readbacks, 1);
+    assert.deepEqual(phases, ["locked", "before-commit"]);
+    assert.equal(now, 3230); // 2 reads + 200 row operations + 2 phases + final check.
+    assert.equal(result.active, 0); assert.equal(f.admission.inspect().active, 0);
+    assert.equal(currentRequestBudget(), undefined);
+    t.diagnostic(`controlled budget elapsed=2230/5000ms; observed wall=${(wallNow() - wallStart).toFixed(1)}ms, NOT a wall-time SLA or native capacity certification`);
+  } finally {
+    f.onStepForIsolatedTest(undefined); t.mock.restoreAll();
+  }
+});
+test("100-row isolated application rejects exactly 5000ms with zero effects and proven rollback", async t => {
+  let now = 1000;
+  t.mock.method(performance, "now", () => now);
+  const f = createIsolatedShiftManagement(managementFixtureSnapshot(), managementClock(), "UTC");
+  const before = f.inspect().snapshot, signal = new AbortController().signal;
+  let budget: ReturnType<typeof currentRequestBudget>, locked = 0;
+  f.onStepForIsolatedTest(async phase => {
+    assert.equal(phase, "locked"); locked++;
+    assert.equal(currentRequestBudget(), budget);
+    now = 5999; assertShiftWorkAllowed(signal); // Still valid one ms before the boundary.
+    now = 6000; // Unmodified fixture guard must reject before any sequence/DML.
   });
-  assert.equal(f.inspect().commits, 1); assert.equal(f.inspect().snapshot.days.length, 100);
-  assert.equal(f.inspect().active, 0); assert.equal(f.admission.inspect().active, 0);
+  try {
+    await assert.rejects(withRequestBudget(signal, 5000, async () => {
+      budget = currentRequestBudget();
+      assert.equal(budget?.deadline, 6000);
+      const preview = await f.app.previewCsv(p, "1", hundredRowCsvBytes(), "utf-8", signal);
+      assert.equal(preview.state, "ready"); assert.equal(preview.rows.length, 100);
+      assert.ok(preview.rows.every(row => row.errors.length === 0 && row.effect !== null));
+      return f.app.commandCsv(p, "1", csvCommand(preview), signal);
+    }), (error: unknown) => error instanceof ShiftUowRejection && error.code === "DEPENDENCY_TIMEOUT" &&
+      error.problemCase.effect === "rolled-back" && error.ordinaryRollbackProved === true);
+    const result = f.inspect();
+    assert.equal(locked, 1); assert.deepEqual(result.snapshot, before);
+    assert.equal(result.sequenceCalls, 0); assert.equal(result.commits, 0); assert.equal(result.rollbacks, 1);
+    assert.equal(result.active, 0); assert.equal(f.admission.inspect().active, 0);
+    assert.equal(currentRequestBudget(), undefined);
+  } finally {
+    f.onStepForIsolatedTest(undefined); t.mock.restoreAll();
+  }
 });

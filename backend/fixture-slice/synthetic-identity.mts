@@ -1,7 +1,7 @@
 import type {
   AuthenticationProvider, AuthenticationRequest, EmployeeShiftDayReader, PrincipalV1,
 } from "./contracts.mts";
-import { validatePrincipal } from "./contract-validation.mts";
+import { validatePrincipal, readScopeLimit } from "./contract-validation.mts";
 import { SliceError } from "./errors.mts";
 import { readEmployeeShiftDay } from "./read-employee-shift-day.mts";
 import type { Clock, CurrentShiftReadPort, CurrentShiftRequestV1 } from "./current-shifts-contracts.mts";
@@ -285,6 +285,8 @@ export async function createRuntime(
       exitMode === "test-oracle-controlled" ? "native-exit" :
       station === "test-oracle-controlled" ? "native-station" : station === "isolated-fixture" ? "joint-fixture" : stageMode);
     if (principal.provider !== config.authenticationMode) throw new SliceError("UNAUTHENTICATED");
+    if (principal.resourceScope.orgUnitIds.length > readScopeLimit(principal, config.dataSource))
+      throw new SliceError("UNAUTHENTICATED");
     if (config.authenticationMode === "synthetic" &&
         (principal.resourceScope.orgUnitIds.length !== config.syntheticOrgUnitIds.length ||
         principal.resourceScope.orgUnitIds.some(unit => !config.syntheticOrgUnitIds.includes(unit))))

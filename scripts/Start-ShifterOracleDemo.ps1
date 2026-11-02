@@ -21,7 +21,7 @@ function Get-ShifterOracleDemoHostAction {
     # Finite source-observed host registry, NOT a DEMO_* prefix trust rule.
     switch -CaseSensitive ($Code) {
         'DEMO_TEST_ASSETS_REQUIRED' { 'Build verified TEST assets: powershell.exe -NoProfile -File scripts\Build-Shifter.ps1 -Profile test -Validation. No automatic build or retry was performed.' }
-        'DEMO_SCOPE_TOO_LARGE' { 'TEST team scope exceeds the approved 100-team contract. Request a coordinated contract decision; no partial scope or retry is permitted.' }
+        'DEMO_SCOPE_TOO_LARGE' { 'TEST team scope exceeds the approved 1000-team read-only capacity. No partial scope or retry is permitted.' }
         'DEMO_SCOPE_INVALID' { 'TEST team scope failed source validation. Ask the authorized data owner to review it; no broader or partial grant was made.' }
         'DEMO_PORT_UNAVAILABLE' { 'The requested local port is unavailable. Select an authorized free -Port; do not terminate an unknown listener.' }
         'DEMO_STARTUP_FAILED' { 'Node host startup failed. Use only the diagnostic code, if present, for authorized investigation; no fallback or automatic retry was performed.' }
@@ -357,7 +357,7 @@ function Start-ShifterOracleDemo {
         $env:NODE_ENV = 'test'
         $env:SHF_APP_ENV = 'test'
         if ($AllTestUnits) {
-            Write-Output 'Reading all TEST teams (at most100 current contract); no writes. Not full database or DBA access.'
+            Write-Output 'Reading all TEST teams (at most1000 read-only capacity); no writes. Not full database or DBA access.'
         } else {
             Write-Output 'Starting Oracle TEST READ-ONLY demonstration. Selected exact unit is your authorization attestation, not independent DB identity proof.'
         }

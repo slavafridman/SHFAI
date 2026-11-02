@@ -5377,3 +5377,144 @@ frontend action. Residual risks are real infrastructure/external writers and
 power-loss behavior beyond doubles, plus manual accessibility coverage.
 Next action: caller review this scoped PASS and cumulative manifest; continue
 only the assigned subsequent work, without treating this as live completion.
+
+## 2026-11-02 — SHF-UI-55-SCOPE-V02 — SOURCESTABLE, not deployed
+
+### Authority, source evidence and unchanged contracts
+
+Caller accepted **55-scope-v0.2**, exact design §55.5 audited seven-consumer map.
+This changes technical read capacity only under the existing approved seven-flow
+UI baseline. PrincipalV1, IdentityResponseV1 and existing inquiry V1 wire shapes
+remain unchanged; no public type/config/version/capability changes. Canonical
+backend imports remain type-only. Existing Node24.21.0/npm11.19.0 were observed;
+Angular21.2/Material-CDK21.2/TypeScript5.9 locked dependencies are reused without
+installation, upgrades or a new compatibility certification.
+
+Source observations: design §55.1/55.5 identifies identity, catalog and original
+runtime-config gates; frontend `identity()` is shared by all seven page identity
+loaders. Controlling legacy evidence was read only:
+`old/SHF/src/bzq/shf/utils/SHFConstants.java:20-23` distinguishes J01/G01/E01/A01;
+`old/SHF/src/bzq/shf/model/Login.java:157-190` expands hierarchy/root permissions.
+That legacy expansion is NOT copied into this exact-ID client grant policy.
+The source contract catalog is absent; the reverse-engineering baseline is the
+locator. No legacy execution/build/edit or live metadata inspection occurred.
+
+### Exact owned manifest — 16 frontend paths
+
+Paths relative to `frontend/fixture-slice/`:
+
+1. `src/contract.ts`
+2. `src/api.ts`
+3. `src/current-shifts-contract.ts`
+4. `src/shift-search-contract.ts`
+5. `src/attendance-contract.ts`
+6. `src/current-shifts-page.ts`
+7. `src/shift-search-page.ts`
+8. `src/attendance-page.ts`
+9. `src/workspace-shell.html`
+10. `src/shift-search-page.html`
+11. `src/attendance-page.html`
+12. `src/oracle-read-capacity-fixtures.ts` (new, generated synthetic data only)
+13. `src/oracle-read-capacity.spec.ts` (new)
+14. `src/oracle-read-views.spec.ts` (new)
+15. `README.md` (append only)
+16. `VERIFICATION.md` (append only)
+
+No backend/public-contract/packaging/script/design/status/plan/lock/dependency
+or legacy files were edited by this task. Other owners' work is not part of this
+manifest. Delivery `dist` assets were not built or replaced.
+
+### Bounds and behavior
+
+- Eligible Oracle synthetic exact ordered R7: scope1/100/101/1000 accepted,
+  1001 rejected. All fixture/native writer families remain100;101 fails,
+  including cancellation and management. Unknown source, real over100,
+  reordered capabilities, malformed/list/wildcard IDs and duplicate IDs fail.
+- HTTP identity uses text framing: raw UTF-8 **2097152 bytes maximum before JSON
+  parsing**, then the original **16384-byte** cap unless the validated identity
+  is eligible. No invalid/unknown principal gains the larger limit. Tests cover
+  raw whitespace, malformed JSON, JSON escaping, multibyte and oversized bodies.
+  The generated1000-ID identity is **17398 bytes**, escaped **41398 bytes**.
+  IDs are generated, distinct and8 Unicode scalars; no captured Oracle records.
+- Catalog ceilings are raised only at the §55.5 parent/attendance-team sites
+  with validated identity/source context. Search team/job catalog1000 was
+  already established, not a new selected-query allowance. Expanded catalogs
+  must exactly match all principal IDs. One parent with1000 children and1000
+  distinct parents pass; overflow/partial/foreign/duplicate fail without partial
+  state. Catalog errors leave no result/context and the form disabled.
+- Existing Material providers expose all1000 team options; no slicing,
+  scroll-skipping, virtualization/dependencies or performance SLA introduced.
+  Hebrew labels use Angular text bindings; the shared banner shows grant count.
+- Explicit team/job selections stay100;101 team selections send no list GET,
+  preserve input and clear only on the explicit existing clearing action.
+  No first100 truncation. All date/page/offset/HTTP mutation/download/CSV and
+  per-row activity bounds are unchanged. No wildcard or parent-derived grants.
+- Backend-only admission gates (original source modes, explicit TEST
+  confirmation, isolated-test-demo/oracle-read-only, six writers disabled) are
+  not inferred from client scope length. No client authorization flag added.
+  Pure R7 cannot authorize native actions; C52 continues to call the general
+  identity guard with the unmodified capability set and enforce its exact family.
+
+### Executed checks — commands from frontend/fixture-slice
+
+| Exact command | Result |
+|---|---|
+| `node --version` / `npm --version` | v24.21.0 /11.19.0 |
+| `npm test -- --include=src/oracle-read-capacity.spec.ts` before implementation | Expected RED: TS2554 for the missing identity-context parser parameter |
+| `npm test -- --include=src/oracle-read-capacity.spec.ts --include=src/contract.spec.ts --include=src/native-read-views.spec.ts` initial implementation |85 PASS,2 FAIL: test incorrectly expected the existing search-team1000 ceiling to be100; first generated multibyte fixture was15398 bytes, below target |
+| `npm test -- --include=src/oracle-read-capacity.spec.ts --include=src/oracle-read-views.spec.ts` intermediate |25 PASS,2 FAIL: card fixtures used markup characters forbidden by the unchanged card-label contract; fixtures corrected, card guard not relaxed |
+| `npm test -- --include=src/oracle-read-capacity.spec.ts --include=src/oracle-read-views.spec.ts --include=src/contract.spec.ts --include=src/native-read-views.spec.ts` |113/113 PASS at that checkpoint, including70 preexisting native seven-flow regressions |
+| `npm test -- --include=src/oracle-read-capacity.spec.ts --include=src/oracle-read-views.spec.ts` final source |44/44 PASS,2 files:26 guard/transport/catalog +18 route/state tests |
+| `npm run typecheck` |PASS final source; app TSC, no emit |
+| `npx tsc --noEmit -p tsconfig.spec.json` |PASS final source |
+| `npm test` final source |**846/846 PASS,60 files**,802 baseline +44 new;160.01s recorded full-run duration, not a UI performance claim |
+
+An earlier full checkpoint passed841/841 before five final completeness/state
+tests were added. Final counts above supersede it. No unresolved test failure.
+JSDOM's existing `Window.scrollTo()` not-implemented messages remain warnings;
+they are not evidence of browser scrolling. A standalone byte-count helper first
+had a syntax typo, then Python was unavailable and a shell-codepage probe
+substituted non-ASCII; the successful Node calculation used Unicode escapes and
+confirmed17398/41398. These exploratory failures did not affect test fixtures.
+
+### Seven-route verification — mocked Angular HTTP, not live Oracle
+
+Each route admits the same exact1000-ID principal, renders a coherent response
+for team index0 and999, uses GET/no-store and issues no mutation:
+
+| Route | Checks |
+|---|---|
+| `/current-shifts` |Identity, parent catalog, coherent current list |
+| `/shift-search` |Identity, full1000-team catalog/Material overlay, selected first/tail team, explicit101 rejected |
+| `/my-shifts/selected/1001` |Identity, selected-employee context, schedule result |
+| `/employees/1001/shift-days/2001` |Identity, detail with exact authorized employee unit |
+| `/employees/1001/shift-days/2001/breaks-and-exceptions` |Identity, detail/items display context coherent with exact unit |
+| `/employees/1001/operational-card` |Identity, coherent card and exact membership, existing label rules retained |
+| `/attendance` |Identity, full1000-team catalog/Material overlay, selected first/tail team, explicit101 rejected |
+
+The full baseline retains absent/failed identity, native actor navigation,
+business-context validation, keyboard/focus, Hebrew/RTL and mixed-direction
+regressions. Material overlay checks are DOM/harness evidence, not actual Chrome
+keyboard/scroll/render timing, screen-reader verification or full WCAG conformance.
+
+### Not run, owners, risks and mandatory next step
+
+No actual Oracle connection, DNS, credentials, private environment/operator
+files, real-data screenshot/snapshot, Docker restart, backend tests or live
+authorization claim. No normal-delivery Angular build, isolated browser build,
+owned Chrome server or actual browser run was performed. No all-mission/legacy
+completion, new native writer scope or release approval is implied.
+
+SOURCESTABLE is frontend source handoff only. The concurrent backend owner must
+finish and freeze its original-config100/1000 and HTTP16KiB/2MiB implementation.
+After BOTH owners freeze, DevOps MUST execute:
+
+`powershell.exe -NoProfile -File scripts/Build-Shifter.ps1 -Profile test -Validation`
+
+Parent QA MUST validate1000-unit APP/NODE HTTP doubles with a fresh TEST artifact
+and manifest; deployment must use the latest BUILD through the existing
+`loadDemoAssets` workflow and reload the browser. Existing compiled100-unit
+guards are stale and are not repaired by this source-only handoff. Actual
+authorized TEST discovery/total, Oracle compatibility/time budget and live
+results remain operator/QA/DBA responsibilities. No measured1000-option browser
+performance or production readiness is asserted.

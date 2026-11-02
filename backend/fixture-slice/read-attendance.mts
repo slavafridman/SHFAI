@@ -1,7 +1,7 @@
 import type { PrincipalV1 } from "./contracts.mts";
 import type { Clock, CurrentShiftDataSourceV1 } from "./current-shifts-contracts.mts";
 import type { AttendanceReadPort, AttendanceRequestV1, AttendanceFilterContextV1, AttendanceListV1 } from "./attendance-contracts.mts";
-import { validatePrincipal } from "./contract-validation.mts";
+import { validatePrincipal, readScopeLimit } from "./contract-validation.mts";
 import { accessPolicy } from "./access-policy.mts";
 import { AttendanceError, attendanceSource } from "./attendance-errors.mts";
 import { attendanceAdmission, validateAttendanceCatalog, validateAttendanceRequest } from "./attendance-validation.mts";
@@ -38,7 +38,7 @@ export class ReadAttendance {
   private grants(p: PrincipalV1, signal?: AbortSignal) {
     validatePrincipal(p); accessPolicy.requireAttendanceRead(p); signal?.throwIfAborted();
     const grants = accessPolicy.authorizedAttendanceTeamIds(p);
-    if (grants.length > 100 || !grants.every(unitCode)) attendanceSource();
+    if (grants.length > readScopeLimit(p, this.source) || !grants.every(unitCode)) attendanceSource();
     return Object.freeze(grants);
   }
   async context(p: PrincipalV1, signal?: AbortSignal): Promise<AttendanceFilterContextV1> {
@@ -46,7 +46,7 @@ export class ReadAttendance {
     const c = await this.reader.readContext(grants, signal);
     signal?.throwIfAborted();
     if (this.reader.dataSource !== this.source) attendanceSource();
-    validateAttendanceCatalog(c, grants);
+    validateAttendanceCatalog(c, grants, readScopeLimit(p, this.source));
     const at = attendanceDefaults(this.clock, this.zone);
     return { defaults: { attendanceDate: at.attendanceDate, timeFrom: at.currentTime, timeTo: at.currentTime,
       mokedCode: c.mokedOptions.length === 1 ? c.mokedOptions[0].code : null,

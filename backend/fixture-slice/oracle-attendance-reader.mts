@@ -63,7 +63,7 @@ export async function attendanceCatalog(query: Query, grants: readonly string[])
       if (!record(r) || typeof r.code !== "string" || typeof r.label !== "string") attendanceSource();
       return { code: r.code, label: r.label };
     }).sort((a,b) => compareCode(a.code,b.code)), workLocationOptions: attendanceLocations };
-  validateAttendanceCatalog(c, grants);
+  validateAttendanceCatalog(c, grants, 1000);
   return c;
 }
 export function attendanceSqlSelection(s: AttendanceReadSelection, teams: readonly string[]) {
@@ -97,12 +97,12 @@ export class OracleAttendanceReader implements AttendanceReadPort {
     return this.session.read(async q => { await requireGregorian(q); return attendanceCatalog(q, grants); }, signal);
   }
   async read(s: AttendanceReadSelection, signal?: AbortSignal) {
-    validateAttendanceSelection(s);
+    validateAttendanceSelection(s, 1000);
     const original = [...attendanceGrants(s)];
     return this.session.read(async query => {
       await requireGregorian(query);
       const c = await attendanceCatalog(query, original);
-      const teams = eligibleAttendanceTeams(c, s, original);
+      const teams = eligibleAttendanceTeams(c, s, original, 1000);
       if (!teams.length) return [];
       const { common, predicate } = attendanceSqlSelection(s, teams);
       const duplicate = await query(`SELECT "ambiguous" FROM (${attendanceBranches(multiplicity, predicate)})

@@ -1773,3 +1773,50 @@ distinctions and remaining limits are appended in `VERIFICATION.md`.
 Subset reflow/keyboard/contrast checks are not full WCAG or Hebrew AT conformance.
 Backend/contracts/legacy/Docker/dependencies/private operator state are untouched;
 this result is not live Oracle completion, UAT or release approval.
+
+## 2026-11-02 — SHF-UI-55-SCOPE-V02 / SOURCESTABLE
+
+Accepted technical baseline: design §55.5 **55-scope-v0.2**, under the caller's
+existing approved UI/seven-inquiry scope. PrincipalV1/IdentityResponseV1 and all
+seven inquiry V1 wire contracts remain unchanged; no new flag, grant or DTO.
+The source admits at most **1000 exact authorized unit IDs**, only for the
+Oracle-sourced synthetic Administrator with the exact ordered seven read
+capabilities. This is a bounded TEST demonstration, not full DBA/table access,
+verified credentials, native-write permission or production authorization.
+Backend config eligibility remains backend-owned: isolated-test-demo,
+oracle-read-only, explicit TEST confirmation and all six writer families
+disabled on the original config. Frontend cannot certify those startup gates.
+
+Identity HTTP now bounds raw UTF-8 at 2 MiB before parsing, validates the
+principal, then retains 16 KiB for every noneligible family. A synthetic
+1000-unit identity is tested at 17,398 bytes (41,398 with JSON Unicode escaping).
+Unknown/malformed identities, scope1001, reordered R7 and writer scope101 fail.
+No new header requirement was added to existing read calls.
+
+Current/search/attendance authorized parent catalogs can reach1000 only with
+validated eligible identity/source context. Attendance teams can reach1000;
+search teams/jobs keep their preexisting1000 catalog ceilings. Expanded search
+and attendance catalogs must contain the complete exact grant set: partial,
+foreign, duplicate and overflowing catalogs fail closed, not first-page success.
+The existing Material provider is not sliced or virtualized: tests open the
+complete1000-option overlay. No new dependency or rendering-time promise.
+The shared notice displays the actual grant count; labels remain Angular-bound
+Hebrew/RTL text. Explicit selections remain100 teams/100 jobs, with a visible
+team-limit hint. Rejected101 selections remain entered until explicitly cleared;
+clearing removes the over-limit selection rather than silently retaining100.
+Page/date/download/CSV/mutation bounds and native/fixture identity bounds100
+are not broadened. R7 grants no native commands, including cancellation.
+
+Validation: **846/846 frontend tests,60 files** (802 baseline +44 new),
+focused44/44, application and spec TSC PASS. All seven routes are exercised with
+1000 grants, first/tail unit and coherent Oracle-shaped synthetic DTOs, not an
+Oracle connection. Exact commands, manifest, history and gaps follow in
+`VERIFICATION.md`.
+
+No delivery build, Docker restart, live Oracle/DNS/credential check or actual
+Chrome run was performed. These sources do not repair an already compiled
+100-unit guard. After both source owners freeze, DevOps must produce fresh TEST
+assets using `scripts/Build-Shifter.ps1 -Profile test -Validation`; parent QA must
+validate1000-unit APP/NODE HTTP doubles and the latest manifest-verified assets.
+Deployment must use the latest BUILD through the existing `loadDemoAssets`
+workflow. Remaining legacy/all-mission work is not addressed here.

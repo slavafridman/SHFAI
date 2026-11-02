@@ -2,7 +2,7 @@ import type { PrincipalV1 } from "./contracts.mts";
 import type { Clock, CurrentShiftDataSourceV1 } from "./current-shifts-contracts.mts";
 import type { MyShiftsAccessPolicy, MyShiftsReadPort, MyShiftsContextRequestV1,
   MyShiftsRequestV1, MyShiftsActorV1, MyShiftsContextV1, MyShiftsListV1, MyShiftRowV1 } from "./my-shifts-contracts.mts";
-import { validatePrincipal } from "./contract-validation.mts";
+import { validatePrincipal, readScopeLimit } from "./contract-validation.mts";
 import { unitCode } from "./current-shifts-validation.mts";
 import { clockMinute } from "./read-current-shifts.mts";
 import { addCivilDates, cleanEmployee, scheduleEmployee, scheduleRow, scheduleSourceFailure,
@@ -33,7 +33,7 @@ export class ReadMyShifts {
     signal?.throwIfAborted(); validatePrincipal(p); this.policy.requireMyShiftsRead(p);
     if (r.mode === "selected" && !this.policy.canSelectEmployee(p)) throw new MyShiftsError("FORBIDDEN");
     const grants = this.policy.authorizedMyShiftsUnitIds(p);
-    if (grants.length > 100 || new Set(grants).size !== grants.length || !grants.every(unitCode))
+    if (grants.length > readScopeLimit(p, this.dataSource) || new Set(grants).size !== grants.length || !grants.every(unitCode))
       scheduleSourceFailure();
     return { id: r.mode === "selected" ? r.employeeId : p.provider === "real" ? p.employeeId : null, grants };
   }

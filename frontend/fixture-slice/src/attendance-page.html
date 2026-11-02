@@ -48,6 +48,7 @@
         </mat-form-field>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>צוותים</mat-label>
+          <mat-hint align="end">עד 100 לבחירה מפורשת</mat-hint>
           <mat-select id="attendance-teamCodes" formControlName="teamCodes" multiple>
             @for (t of teams(); track t.code) { <mat-option [value]="t.code">{{ t.label }} ({{ t.code }})</mat-option> }
           </mat-select>

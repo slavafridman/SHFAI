@@ -15,7 +15,8 @@ export const id = (v: unknown, max = 38): v is string =>
   typeof v === 'string' && new RegExp(`^[1-9][0-9]{0,${max - 1}}$`).test(v);
 const unique = (v: unknown, test: (v: unknown) => boolean): v is string[] =>
   Array.isArray(v) && v.every(test) && new Set(v).size === v.length;
-const unit = (v: unknown): v is string => text(v, 8, 1) && v !== '*';
+const unit = (v: unknown): v is string => text(v, 8, 1) &&
+  !/[\s,*\u0000-\u001f\u007f-\u009f]/u.test(v);
 export const readCapabilities = ['shift-day:read', 'current-shifts:read', 'shift-search:read',
   'my-shifts:read', 'shift-items:read', 'employee:read', 'attendance:read'] as const;
 export const f1Capabilities = [...readCapabilities, 'attendance-stage-arrival:prepare',
@@ -37,6 +38,29 @@ export const managementCapabilities = [...readCapabilities, 'shift-management:pr
   'shift-management:change', 'shift-management:cancel', 'shift-management:csv-preview',
   'shift-management:csv-apply', 'shift-management:test-oracle-write'] as const;
 
+const oracleReadScopeMax = 1000;
+const ordinaryScopeMax = 100;
+const ordinaryIdentityBytes = 16384;
+const oracleReadIdentityBytes = 2097152;
+function oracleR7(v: IdentityResponseV1): boolean {
+  return v.dataSource === 'oracle' && v.principal.synthetic &&
+    v.principal.provider === 'synthetic' &&
+    v.principal.capabilities.join(',') === readCapabilities.join(',');
+}
+/** Capacity is not a grant. Always validate the original identity first. */
+export function identityScopeLimit(v: unknown): number {
+  return identity(v) && oracleR7(v) ? oracleReadScopeMax : ordinaryScopeMax;
+}
+/** Bound the raw UTF-8 envelope before JSON parsing; apply the family cap after validation. */
+export function identityBody(raw: string): IdentityResponseV1 {
+  const bytes = new TextEncoder().encode(raw).length;
+  if (bytes > oracleReadIdentityBytes) throw Error('Invalid identity response');
+  const v: unknown = JSON.parse(raw);
+  if (!identity(v) ||
+      bytes > (oracleR7(v) ? oracleReadIdentityBytes : ordinaryIdentityBytes))
+    throw Error('Invalid identity response');
+  return v;
+}
 export function identity(v: unknown): v is IdentityResponseV1 {
   if (!object(v) || !['isolated-fixture', 'oracle'].includes(String(v.dataSource)) || !object(v.principal)) return false;
   const p = v.principal;
@@ -47,6 +71,10 @@ export function identity(v: unknown): v is IdentityResponseV1 {
       !unique(p.capabilities, c => typeof c === 'string' && ([...nativeArrivalCapabilities, ...jointArrivalCapabilities, ...nativeStationCapabilities, ...nativeLateCapabilities, ...nativeExitCapabilities, ...nativeCancellationCapabilities, ...managementCapabilities] as readonly string[]).includes(c)) ||
       !(p.employeeId === null || id(p.employeeId)) ||
       !object(p.resourceScope) || !unique(p.resourceScope.orgUnitIds, unit)) return false;
+  const extended = v.dataSource === 'oracle' && p.synthetic === true &&
+    p.provider === 'synthetic' && p.capabilities.join(',') === readCapabilities.join(',');
+  if (p.resourceScope.orgUnitIds.length === 0 ||
+      p.resourceScope.orgUnitIds.length > (extended ? oracleReadScopeMax : ordinaryScopeMax)) return false;
   return !p.synthetic || (p.subject === 'synthetic:administrator' &&
     p.displayName === 'Synthetic Administrator (local/isolated only)' &&
     p.employeeId === null && p.roles.length === 1 &&
@@ -56,7 +84,7 @@ export function identity(v: unknown): v is IdentityResponseV1 {
       (v.dataSource === 'isolated-fixture' && p.capabilities.join(',') === fixtureCancellationCapabilities.join(',')) ||
       p.capabilities.join(',') === managementCapabilities.join(',') ||
       (v.dataSource === 'oracle' && [nativeArrivalCapabilities.join(','), nativeStationCapabilities.join(','), nativeLateCapabilities.join(','), nativeExitCapabilities.join(','), nativeCancellationCapabilities.join(',')].includes(p.capabilities.join(',')))) &&
-    p.resourceScope.orgUnitIds.length > 0 && p.resourceScope.orgUnitIds.length <= 100);
+    p.resourceScope.orgUnitIds.length > 0);
 }
 
 export function localTime(v: unknown): v is string {

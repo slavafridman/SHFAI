@@ -1,7 +1,7 @@
 import type { PrincipalV1 } from "./contracts.mts";
 import type { Clock, CurrentShiftDataSourceV1 } from "./current-shifts-contracts.mts";
 import type { ShiftSearchReadPort, ShiftSearchRequestV1, ShiftSearchFilterContextV1, ShiftSearchListV1 } from "./shift-search-contracts.mts";
-import { validatePrincipal } from "./contract-validation.mts";
+import { validatePrincipal, readScopeLimit } from "./contract-validation.mts";
 import { accessPolicy } from "./access-policy.mts";
 import { clockMinute } from "./read-current-shifts.mts";
 import { invalidSearch, searchRow, validateSearchCatalog, validateSearchRequest } from "./shift-search-validation.mts";
@@ -21,9 +21,10 @@ export class ReadShiftSearch {
     signal?.throwIfAborted(); validatePrincipal(principal);
     accessPolicy.requireShiftSearchRead(principal);
     const grants = accessPolicy.authorizedShiftSearchUnitIds(principal);
-    if (grants.length > 100 || !grants.every(unitCode)) sourceFailure();
+    const capacity = readScopeLimit(principal, this.dataSource);
+    if (grants.length > capacity || !grants.every(unitCode)) sourceFailure();
     const catalog = await this.reader.readCatalog(grants);
-    signal?.throwIfAborted(); validateSearchCatalog(catalog, grants);
+    signal?.throwIfAborted(); validateSearchCatalog(catalog, grants, capacity);
     return { grants, catalog };
   }
   async context(principal: PrincipalV1, signal?: AbortSignal): Promise<ShiftSearchFilterContextV1> {

@@ -140,7 +140,7 @@ export class ShiftSearchPage {
     this.work = this.api.searchContext().subscribe({
       next: value => {
         if (!this.active(gen)) return;
-        if (!searchContext(value) || !coherentSource(this.principal()?.dataSource, value.dataSource) ||
+        if (!searchContext(value, this.principal()) || !coherentSource(this.principal()?.dataSource, value.dataSource) ||
             !value.teamOptions.every(t => this.principal()!.principal.resourceScope.orgUnitIds.includes(t.code))) {
           this.fail('התקבלה תשובת מסננים לא תקינה. לא הוצגו תוצאות.'); return;
         }
@@ -184,7 +184,8 @@ export class ShiftSearchPage {
   }
   private validCatalog(): boolean {
     const ctx = this.context(), v = this.form.getRawValue();
-    return !!ctx && (!v.moked || ctx.mokedOptions.some(m => m.code === v.moked)) &&
+    return !!ctx && v.teamCodes.length <= 100 && v.innerJobCodes.length <= 100 &&
+      v.workLocations.length <= 2 && (!v.moked || ctx.mokedOptions.some(m => m.code === v.moked)) &&
       v.teamCodes.every(code => this.teams().some(t => t.code === code)) &&
       v.innerJobCodes.every(code => ctx.innerJobOptions.some(r => r.code === code)) &&
       v.workLocations.every(code => ctx.workLocationOptions.some(l => l.code === code));
@@ -199,9 +200,9 @@ export class ShiftSearchPage {
     if (!ctx) return;
     const v = this.form.getRawValue();
     const moked = ctx.mokedOptions.some(m => m.code === v.moked) ? v.moked : null;
-    this.form.patchValue({ moked, teamCodes: v.teamCodes.filter(code => ctx.teamOptions.some(t =>
+    this.form.patchValue({ moked, teamCodes: v.teamCodes.length > 100 ? [] : v.teamCodes.filter(code => ctx.teamOptions.some(t =>
       t.code === code && (!moked || t.parentMokedCode === moked))),
-      innerJobCodes: v.innerJobCodes.filter(code => ctx.innerJobOptions.some(r => r.code === code)),
+      innerJobCodes: v.innerJobCodes.length > 100 ? [] : v.innerJobCodes.filter(code => ctx.innerJobOptions.some(r => r.code === code)),
       workLocations: v.workLocations.filter(code => ctx.workLocationOptions.some(l => l.code === code)) });
   }
   search(): void {

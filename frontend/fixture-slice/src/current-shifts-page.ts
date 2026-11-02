@@ -153,7 +153,7 @@ export class CurrentShiftsPage {
     this.work = this.api.filterContext().subscribe({
       next: value => {
         if (!this.active(gen)) return;
-        if (!filterContext(value) || !coherentSource(this.principal()?.dataSource, value.dataSource)) {
+        if (!filterContext(value, this.principal()) || !coherentSource(this.principal()?.dataSource, value.dataSource)) {
           this.fail('התקבלה תשובת מסננים לא תקינה. לא הוצגו תוצאות.'); return;
         }
         this.context.set(value);

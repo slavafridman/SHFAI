@@ -7857,3 +7857,109 @@ Backend next implements discovery+private host option+PS flag+focused offline te
 55-scope-v0.1; QA/operator alone establish actual authorized TEST behavior. No all-scope completion claim
 until those tests/count pass; readiness is diagnostic, zero business operations/new write authority.
 §54 business decisions/API approval remain independently blocked; this scope approval does not unblock them.
+
+### 55.5 Coordinated read-capacity correction — 55-scope-v0.2
+
+Task SHF-ARCH-55-SCOPE-V02; 2026-11-02; status REVIEW / concrete consumer handoff, not implemented.
+Authority: current user/parent mandate accepts a coordinated technical bound increase within already
+approved all-unit TEST reads; no renewed unit prompt or new business-capability approval is requested.
+This subsection supersedes §55.2's retain100/discovery cap and affected §55.4 checks ONLY.
+Operator-reported DEMO_SCOPE_TOO_LARGE establishes discovery reached a 101st J01 team, NOT its
+exact total, Oracle authorization failure, current metadata certification or independent live verification.
+All means every admitted J01 team through the existing seven inquiries, NOT all tables/business rows.
+
+**Capacity contract.** Authorized scope max1000 exact distinct team codes; discovery total lookahead1001.
+No wildcard/list syntax, truncation, per-page principal, sampling, inferred parent grant or first1000 success.
+Retain unitCode plus demo exactUnit restrictions, existing Unicode length semantics (8 scalars, NOT
+proven8 UTF-8 bytes), labels1..256 scalars, J01→G01 validation and all existing malformed-source errors.
+R7 is EXACT ordered capabilities: shift-day:read, current-shifts:read, shift-search:read, my-shifts:read,
+shift-items:read, employee:read, attendance:read. PrincipalV1/IdentityResponseV1 remain byte-shape
+compatible: orgUnitIds:string[], same synthetic Administrator fields, employeeId:null, same capabilities.
+No public config field, authentication provider, capability, REST version/route, dependency or schema change.
+Large startup scope is ONLY synthetic + isolated-test-demo + oracle-read-only + oracleTestScopeConfirmed:true,
+with ALL six operation families disabled: stage, station, exit, late, cancellation and management.
+Use existing mode validators on ORIGINAL config before legacy projections; management's controlling
+field is shiftManagement:{mode}, NOT the similarly named shiftManagementMode seen in older projections.
+Missing modes retain existing disabled defaults; invalid modes reject. Fixture/local/write/real-provider
+profiles retain100, production mock still fails before Oracle; no authentication-error Administrator fallback.
+
+**Minimal validation ownership.** Backend owns runtime-config.mts, contract-validation.mts and
+synthetic-identity.mts changes together: validateConfig defaults100; a private optional limit1000 may
+be supplied ONLY by validateRuntimeConfig after the above original-source/mode gates, before its
+Oracle→fixture validation projection. Never infer eligibility from that projected dataSource.
+Because seven use cases revalidate Principal without config, validatePrincipal may recognize fully
+validated synthetic EXACT R7 up to1000; runtime authentication must ALSO enforce config-specific100/1000
+and exact configured membership. This structural allowance alone cannot authorize fixture/startup growth.
+Check original non-R7 principal max100 BEFORE cancellation/late recursive capability projections;
+otherwise cancellation's stripped-to-R7 recursion could accidentally widen a write principal.
+Keep all native/fixture actor/policy bounds100 (including access-policy.mts stageArrivalAccessPolicy).
+Put private runtime constants/R7 predicate in existing contract-validation.mts, not contracts.mts:
+canonical type-only modules MUST still erase to empty runtime modules. UI owns matching constants in
+existing src/contract.ts runtime guards; no backend runtime imports into Angular or new public DTO constants.
+
+**SQL/snapshot contract.** discoverUnitScope in oracle-demo-host.mts uses existing fixed ROW_NUMBER SQL,
+ordered pages (0,100,100)…(900,1000,100), then sentinel(1000,1001,1); stop on short page.
+One OracleReadSession spans discovery AND hierarchy; validate aliases/types/duplicates across ALL pages.
+Any sentinel row fails DEMO_SCOPE_TOO_LARGE before principal/listener; empty/bad hierarchy fails
+DEMO_SCOPE_INVALID. Unknown total>1000 remains an honest resource error, never a promise of all-DB success.
+oracle-readers.mts scopeBinds may encode <=1000 unique valid IDs into one IN list, no value interpolation.
+Oracle11's1000-expression IN ceiling applies PER list, not sum of reused named binds across existing
+two-branch queries. Do NOT generate a1000-branch grants UNION ALL: teamsAndParents partitions IDs
+into sequential groups<=100, each fixed hierarchy query bounded group.length+1<=101.
+Each group must return EXACT requested grant set/cardinality, rejecting missing/foreign/duplicate rows;
+merge<=1000 teams, global seen-set and consistent parent labels, collapse shared parents, sorted options.
+All groups use caller's SAME query/session, no nested read()/new lease/snapshot per group.
+Preserve OracleReadSession bound<=1001, pool settings,5s whole-operation budget, cancellation/drain/
+rollback/drop/one-owner-close and no retry. Larger scope may time out; do not extend budgets silently.
+Keep catalog-role query maxRows1001 and reject >1000, never truncate; labelsFor's existing1000-bind
+chunks/10100 token bound and business page/lookahead bounds do not change. No new SELECT * or table export.
+
+**Audited consumer map (backend paths under backend/fixture-slice; UI under frontend/fixture-slice/src).**
+| Inquiry | Backend scope/capacity sites | UI identity/catalog sites |
+|---|---|---|
+| Shift day | read-employee-shift-day.mts revalidates Principal; accessPolicy membership; OracleDetailReader remains <=2 | shift-day-page.ts → contract.ts identity/detail |
+| Current | read-current-shifts.mts scope teams AND parent-options100; oracle-readers.mts scopeBinds/teamsAndParents | current-shifts-page.ts → contract.ts identity, current-shifts-contract.ts filterContext mokedOptions100 |
+| Search | read-shift-search.mts scope100; shift-search-validation.mts validateSearchCatalog mokedOptions100; oracle-search-reader.mts shared helpers/role sentinel | shift-search-page.ts → identity, shift-search-contract.ts searchContext mokedOptions100; teams/jobs already1000 |
+| Schedule | read-my-shifts.mts prepare grants100; oracle-my-shifts-reader.mts scopeBinds | my-shifts-page.ts → identity; my-shifts-contract.ts has no scope-array cap |
+| Items | read-shift-items.mts grants100; oracle-shift-items-reader.mts exactTeamIds100 | shift-items-page.ts → identity; shift-items-contract.ts keeps item/activity/page bounds |
+| Employee card | read-employee-card.mts exactTeamIds100; oracle-employee-card-reader.mts teamsAndParents | employee-card-page.ts → identity; employee-card-contract.ts keeps selected membership |
+| Attendance | read-attendance.mts grants100; attendance-validation.mts catalog grants AND selection100; oracle-attendance-reader.mts catalog/SQL scope helpers | attendance-page.ts → identity; attendance-contract.ts teamOptions100 AND inherited searchContext parent100 |
+Raise only authorized-array/org-option limits in this map; application admission uses validated R7 and
+Oracle source for1000, otherwise100. Low-level SQL helper capacity is not an authorization decision.
+Catalog moked/team responses may contain1000; preserve uniqueness/order/labels/complete membership.
+Shared search catalog validators need capacity context/default100, not an unconditional request-limit edit.
+UI identity permits1000 ONLY synthetic EXACT R7 with identity dataSource:"oracle"; all other families100.
+All seven inspected recheckIdentity paths call identity(value), fail closed and clear state; no per-page
+fake identity fallback is needed. Native arrival/late/exit/cancellation/management derived guards must
+still reject R7 for commands and reject101-unit write identities; do not mask capabilities to bypass them.
+Backend http-adapter.mts currently serializes identity with16KiB, not2MiB: ASCII8-code1000 fits,
+but Unicode/JSON escaping is not proven to fit. Permit existing2MiB ceiling for ONLY eligible Oracle-R7
+identity success; retain16KiB elsewhere and2MiB list/context ceilings. Test actual serialized bytes.
+Do NOT widen query selection teamCodes/innerJobCodes<=100, workLocations<=2, page limit<=100,
+offset<=10000,8KiB target/query, per-row activities<=100, downloads/CSV or native-operation bounds.
+Absent team filter uses all authorized IDs internally; never serialize1000 explicit selections to evade grammar.
+
+**Acceptance/owners/checks.** Backend+UI implement disjoint paths only after caller accepts this exact
+technical baseline under existing mandate; architect owns numerical/public semantics, no app code edited here.
+QA:1/100/101/1000 admitted,1001 overflow with0 listener/principal; cross-page/group duplicate/missing/
+foreign/bad-parent rejected; shared-parent merge and1000 distinct parents; every SQL group<=101,
+IN<=1000, scope binds exact/injection-safe, same-session snapshot and single pool ownership on failure.
+Exercise all seven HTTP/UI paths with a synthetic101/1000 scope and authorized tail team; unknown sibling
+denied,1001 scope rejected; fixture/write/real config101 rejected, recursive write-principal101 rejected;
+explicit101 selections rejected while absent-team filter works; labels/max byte envelope and role1001 fail safely.
+Run backend npm run typecheck and npm test (focused first: oracle-demo-host, contract, oracle, oracle-search,
+oracle-my-shifts, oracle-shift-items, oracle-employee-card, oracle-attendance, environment-profiles tests);
+UI npm run typecheck, npm test with identity/catalog/seven-page regressions; launcher focused tests and
+constant overflow guidance must say1000, not100. Parent serializes README/launcher/checkpoint updates.
+After source freeze DevOps MUST run powershell.exe -NoProfile -File scripts/Build-Shifter.ps1 -Profile test -Validation;
+serve refreshed manifest-verified TEST assets and reload browser: old compiled identity/catalog guards still reject101.
+S: bounded source/manual contract audit and this append only; no executable tool available, so TSC/tests/build/
+Git/CLI/Oracle/DNS/service/browser/compatibility checks NOT RUN. No agents invoked or live data accessed.
+D: existing locked Node24.21/Angular21.2/oracledb26/Thick19.3 baseline retained, not newly support-certified.
+Caller routes DBA review of11g bind/chunk/snapshot/performance and supported runtime combination before
+affected live validation; no hard UNION-branch failure or measured performance is asserted without evidence.
+Transaction risk: read-only fixed allowlisted SELECTs only; no DML/NEXTVAL/procedure/ledger function.
+Autonomous commits cannot be undone by rollback (§13.5); SELECT spelling is not a general safety guarantee.
+U/owners: actual total and successful TEST demo = operator/QA; SQL/live compatibility = caller/DBA;
+consumer implementation = backend/UI; rebuilt assets = DevOps. Parent accepts v0.2 then assigns consumers,
+without another all-unit permission question; release/native-write/real-auth authority remains unchanged.

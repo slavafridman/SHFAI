@@ -20,7 +20,7 @@ export class OracleShiftItemsReader implements SelectedShiftItemsReadPort {
     signal.throwIfAborted();
     validateItemsRequest({ employeeId: s.employeeId, shiftDayId: s.shiftDayId,
       limit: s.limit, offset: s.offset, sort: s.sort });
-    if (s.exactTeamIds.length > 100 || new Set(s.exactTeamIds).size !== s.exactTeamIds.length ||
+    if (s.exactTeamIds.length > 1000 || new Set(s.exactTeamIds).size !== s.exactTeamIds.length ||
         !s.exactTeamIds.every(unitCode)) itemsSourceFailure();
     if (!s.exactTeamIds.length) return { kind: "not-found" };
     const work = () => this.session.read<SelectedShiftItemsReadResult>(async query => {

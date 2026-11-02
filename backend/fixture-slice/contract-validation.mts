@@ -2,6 +2,23 @@ import type { PrincipalV1, RawShiftDay, StartupConfig } from "./contracts.mts";
 import { SliceError } from "./errors.mts";
 import { shiftManagementActorCapabilities } from "./shift-management-capabilities.mts";
 
+// Private runtime capacity, not a new wire capability or request-selection limit.
+export const READ_SCOPE_LIMIT = 1000;
+const readCapabilities = ["shift-day:read", "current-shifts:read", "shift-search:read", "my-shifts:read",
+  "shift-items:read", "employee:read", "attendance:read"] as const;
+export function syntheticReadOnlyPrincipal(value: unknown): boolean {
+  return record(value) && value.provider === "synthetic" && value.synthetic === true &&
+    value.subject === "synthetic:administrator" &&
+    value.displayName === "Synthetic Administrator (local/isolated only)" && value.employeeId === null &&
+    Array.isArray(value.roles) && value.roles.length === 1 && value.roles[0] === "Administrator" &&
+    Array.isArray(value.capabilities) && value.capabilities.length === readCapabilities.length &&
+    value.capabilities.every((c, i) => c === readCapabilities[i]);
+}
+// Call only after validatePrincipal. The source gate prevents fixture admission.
+export function readScopeLimit(principal: PrincipalV1, source: string): number {
+  return (source === "oracle" || source === "oracle-read-only") && syntheticReadOnlyPrincipal(principal)
+    ? READ_SCOPE_LIMIT : 100;
+}
 export function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -29,7 +46,7 @@ function units(value: unknown, nonempty: boolean): value is string[] {
     value.every(unit => text(unit, 8, 1) && unit !== "*") &&
     new Set(value).size === value.length;
 }
-export function validateConfig(value: unknown): StartupConfig {
+export function validateConfig(value: unknown, scopeLimit: 100 | 1000 = 100): StartupConfig {
   const fail = (): never => { throw new Error("Invalid fixture-slice startup configuration"); };
   if (!record(value)) return fail();
   if (typeof value.deploymentClass !== "string" ||
@@ -45,7 +62,7 @@ export function validateConfig(value: unknown): StartupConfig {
       (value.authenticationMode === "synthetic" || value.syntheticAdministratorEnabled)) return fail();
   if (value.authenticationMode === "synthetic") {
     if (value.syntheticAdministratorEnabled !== true || !units(value.syntheticOrgUnitIds, true) ||
-        value.syntheticOrgUnitIds.length > 100 ||
+        value.syntheticOrgUnitIds.length > scopeLimit ||
         value.realProviderId !== undefined) return fail();
   } else if (value.syntheticAdministratorEnabled !== false || !text(value.realProviderId, 128, 1) ||
       value.realProviderId.trim().length === 0 || value.syntheticOrgUnitIds !== undefined) return fail();
@@ -53,6 +70,11 @@ export function validateConfig(value: unknown): StartupConfig {
 }
 export function validatePrincipal(value: unknown, stageMode?: "disabled" | "isolated-fixture" | "test-oracle-controlled" | "joint-fixture" | "native-station" | "native-exit" | "shift-management" | "native-late"): asserts value is PrincipalV1 {
   const fail = (): never => { throw new SliceError("UNAUTHENTICATED"); };
+  // Check ORIGINAL rights before cancellation/late recursively project capabilities.
+  const maxScope = (stageMode === undefined || stageMode === "disabled") && syntheticReadOnlyPrincipal(value)
+    ? READ_SCOPE_LIMIT : 100;
+  if (record(value) && record(value.resourceScope) && Array.isArray(value.resourceScope.orgUnitIds) &&
+      value.resourceScope.orgUnitIds.length > maxScope) return fail();
   if (record(value) && Array.isArray(value.capabilities) &&
       value.capabilities.some(c => typeof c === "string" && c.startsWith("attendance-station-exit-cancellation:"))) {
     const rights = ["attendance-station-exit-cancellation:prepare", "attendance-station-exit-cancellation:commit",
@@ -135,7 +157,7 @@ export function validatePrincipal(value: unknown, stageMode?: "disabled" | "isol
       (value.capabilities.length === 10 && value.capabilities[9] !== (nativeExit ? "attendance-station-exit:test-oracle-write" : nativeStation ? "attendance-station-arrival:test-oracle-write" : "attendance-stage-arrival:test-oracle-write")) ||
       (value.capabilities.length === 11 && (value.capabilities[9] !== "attendance-station-arrival:prepare" ||
         value.capabilities[10] !== "attendance-station-arrival:commit")) ||
-      value.resourceScope.orgUnitIds.length === 0 || value.resourceScope.orgUnitIds.length > 100)) return fail();
+      value.resourceScope.orgUnitIds.length === 0 || value.resourceScope.orgUnitIds.length > maxScope)) return fail();
 }
 export function validateIds(employeeId: unknown, shiftDayId: unknown): void {
   const invalidParameters: NonNullable<import("./contracts.mts").ProblemV1["invalidParameters"]> = [];

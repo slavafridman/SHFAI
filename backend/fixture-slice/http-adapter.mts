@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Duplex } from "node:stream";
 import { randomUUID } from "node:crypto";
-import { validateIds } from "./contract-validation.mts";
+import { validateIds, record, syntheticReadOnlyPrincipal, validatePrincipal } from "./contract-validation.mts";
 import { SliceError, toProblem } from "./errors.mts";
 import type { SliceRuntime } from "./synthetic-identity.mts";
 import { CurrentShiftError, currentProblem } from "./current-shifts-errors.mts";
@@ -32,6 +32,11 @@ export const REQUEST_BUDGET_MS = 5000;
 export const RESPONSE_LIMIT_BYTES = 16 * 1024;
 export const CURRENT_RESPONSE_LIMIT_BYTES = 2 * 1024 * 1024;
 export const REQUEST_TARGET_LIMIT_BYTES = 8 * 1024;
+function largeReadIdentity(value: unknown): boolean {
+  if (!record(value) || value.dataSource !== "oracle" || !syntheticReadOnlyPrincipal(value.principal)) return false;
+  validatePrincipal(value.principal);
+  return true;
+}
 export function serializeSuccess(value: unknown, byteLimit = RESPONSE_LIMIT_BYTES): string {
   const json = JSON.stringify(value);
   if (typeof json !== "string" || Buffer.byteLength(json, "utf8") > byteLimit)
@@ -232,7 +237,8 @@ export function createLoopbackServer(runtime: SliceRuntime, options: StageArriva
       const payload = await Promise.race([
         withRequestBudget(cancellation.signal, REQUEST_BUDGET_MS, async () => {
           const value = await work();
-          const json = serializeSuccess(value, attendanceEndpoint || itemsEndpoint || currentEndpoint || searchEndpoint || scheduleEndpoint
+          const json = serializeSuccess(value, attendanceEndpoint || itemsEndpoint || currentEndpoint || searchEndpoint || scheduleEndpoint ||
+            request.url === "/api/v1/identity" && largeReadIdentity(value)
             ? CURRENT_RESPONSE_LIMIT_BYTES : RESPONSE_LIMIT_BYTES);
           if (performance.now() >= currentRequestBudget()!.deadline) throw new SliceError("DEPENDENCY_TIMEOUT");
           cancellation.signal.throwIfAborted();

@@ -630,6 +630,10 @@ if ($timer.ElapsedMilliseconds -ge 150) { Write-Output 'FOREGROUND_WAITED' }
                 if ($mode -eq 'assets') {
                     Assert-Demo ($stdout -match 'Build-Shifter.ps1 -Profile test -Validation') 'asset failure has constant canonical build action'
                 }
+                if ($mode -eq 'scope') {
+                    Assert-Demo ($stdout -match '1000-team read-only capacity' -and
+                        $stdout -notmatch 'approved 100-team|coordinated contract decision') 'capacity overflow reports1000 without obsolete permission prompt'
+                }
                 if ($mode -eq 'startup') { Assert-Demo ($stdout -match 'ORA-01017') 'safe Oracle code retained without message' }
                 if ($mode -eq 'malformed') { Assert-Demo ($stdout -notmatch 'ORA-01017') 'malformed Oracle code rejected entirely' }
             }

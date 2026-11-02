@@ -16,7 +16,21 @@ export type RuntimeConfig = (StartupConfig | OracleStartupConfig) & {
   attendanceStationExitCancellationMode?: "disabled" | "isolated-fixture" | "test-oracle-controlled";
 };
 export function validateRuntimeConfig(value: unknown): RuntimeConfig {
-  if (cancellationMode(value) !== "disabled") return validateCancellationConfig(value);
+  const cancellation = cancellationMode(value);
+  if (cancellation !== "disabled") return validateCancellationConfig(value);
+  // Only a request for the larger Oracle capacity enters the new gate. Preserve
+  // existing <=100/native/fixture legacy projections and their exact key rules.
+  // Validate ALL modes on ORIGINAL input before granting the private larger limit.
+  let largeScope = false;
+  if (record(value) && value.dataSource === "oracle-read-only" &&
+      Array.isArray(value.syntheticOrgUnitIds) && value.syntheticOrgUnitIds.length > 100) {
+    const modes = [lateMode(value), shiftManagementMode(value), stationExitMode(value),
+      stationMode(value), validateStageArrivalMode(value)];
+    largeScope = modes.every(mode => mode === "disabled") &&
+      (value.shiftManagementMode === undefined || value.shiftManagementMode === "disabled") &&
+      value.deploymentClass === "isolated-test-demo" && value.authenticationMode === "synthetic" &&
+      value.syntheticAdministratorEnabled === true && value.oracleTestScopeConfirmed === true;
+  }
   value = cancellationLegacyProjection(value);
   const late = lateMode(value), old = legacyRuntimeShape(value);
   shiftManagementMode(old);
@@ -26,7 +40,7 @@ export function validateRuntimeConfig(value: unknown): RuntimeConfig {
   if (!record(value) || value.dataSource !== "oracle-read-only") return validateConfig(old);
   if (value.oracleTestScopeConfirmed !== true || value.deploymentClass === "production")
     throw new Error("Explicit isolated Oracle test scope required");
-  const common = validateConfig({ ...record(old) && old, dataSource: "isolated-fixture" });
+  const common = validateConfig({ ...record(old) && old, dataSource: "isolated-fixture" }, largeScope ? 1000 : 100);
   return { ...common, dataSource: "oracle-read-only", oracleTestScopeConfirmed: true,
     ...(Object.hasOwn(value, "attendanceStationArrivalLateMode") ? { attendanceStationArrivalLateMode: late } : {}) };
 }

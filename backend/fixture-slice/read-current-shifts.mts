@@ -2,7 +2,7 @@ import type { PrincipalV1 } from "./contracts.mts";
 import type { Clock, CurrentShiftReadPort, CurrentShiftRequestV1,
   CurrentShiftFilterContextV1, CurrentShiftListV1, MokedOptionV1,
   CurrentShiftDataSourceV1 } from "./current-shifts-contracts.mts";
-import { validatePrincipal, localDateTime } from "./contract-validation.mts";
+import { validatePrincipal, localDateTime, readScopeLimit } from "./contract-validation.mts";
 import { accessPolicy } from "./access-policy.mts";
 import { currentRow, mokedOption, sourceFailure, unitCode, validateCurrentRequest } from "./current-shifts-validation.mts";
 import { compareCode, compareRows } from "./current-shifts-fixture.mts";
@@ -41,10 +41,11 @@ export class ReadCurrentShifts {
     validatePrincipal(principal);
     accessPolicy.requireCurrentShiftRead(principal);
     const teams = accessPolicy.authorizedCurrentShiftUnitIds(principal);
-    if (teams.length > 100 || !teams.every(unitCode)) sourceFailure();
+    const capacity = readScopeLimit(principal, this.dataSource);
+    if (teams.length > capacity || !teams.every(unitCode)) sourceFailure();
     const raw: unknown = await this.reader.readMokedOptions(teams);
     signal?.throwIfAborted();
-    if (!Array.isArray(raw) || raw.length > 100 || !raw.every(mokedOption) ||
+    if (!Array.isArray(raw) || raw.length > capacity || !raw.every(mokedOption) ||
         new Set(raw.map(p => p.code)).size !== raw.length ||
         raw.some((p, i) => i > 0 && compareCode(raw[i - 1].code, p.code) >= 0)) sourceFailure();
     if (teams.length === 0 && raw.length !== 0) sourceFailure();

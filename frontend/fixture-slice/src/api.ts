@@ -11,7 +11,7 @@ import type { NativeStageArrivalCommitV1 } from '../../../backend/fixture-slice/
 import type { StationArrivalDraftV1, StationArrivalCommitV1 } from '../../../backend/fixture-slice/station-arrival-contracts.mts';
 import type { NativeStationArrivalCommitV1 } from '../../../backend/fixture-slice/oracle-station-arrival-contracts.mts';
 import { environment } from './environments/environment';
-import { id } from './contract';
+import { id, identityBody } from './contract';
 import { emptyExitDraft, exitCommand, type StationExitCommitV1 } from './station-exit-contract';
 import { cancellationDraft, cancellationCommand, type CancellationCommandV1 } from './station-exit-cancellation-contract';
 import { lateDraft, lateCommand, type NativeLateStationDraftV1, type NativeLateStationCommitV1 } from './station-arrival-late-contract';
@@ -143,7 +143,8 @@ export class SliceApi {
   }
   // Runtime validation is mandatory; HTTP generic types do not validate JSON.
   identity() {
-    return this.http.get<unknown>(`${environment.apiBasePath}/v1/identity`, { cache: 'no-store' });
+    return this.http.get(`${environment.apiBasePath}/v1/identity`, { cache: 'no-store', responseType: 'text' })
+      .pipe(map(identityBody));
   }
   detail(employeeId: string, shiftDayId: string) {
     return this.http.get<unknown>(

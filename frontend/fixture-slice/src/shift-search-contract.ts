@@ -6,15 +6,17 @@ export type {
 import type {
   ShiftSearchFilterContextV1, ShiftSearchRequestV1, ShiftSearchRowV1, ShiftSearchListV1, ShiftSearchProblemV1,
 } from '../../../backend/fixture-slice/shift-search-contracts.mts';
-import { id } from './contract';
+import { id, identity, identityScopeLimit } from './contract';
 import { obj, txt, clean, zone, parent, catalog, unitCode, civilDate, minute, coreRow } from './current-shifts-contract';
 
 const ordered = (values: string[]) => values.every((c, i) => !i || values[i - 1] < c);
 const empty = (v: unknown) => Array.isArray(v) && v.length === 0;
-export function searchContext(v: unknown): v is ShiftSearchFilterContextV1 {
+export function searchContext(v: unknown, principal?: unknown): v is ShiftSearchFilterContextV1 {
   if (!obj(v) || !(v['dataSource'] === 'isolated-fixture' || v['dataSource'] === 'oracle-read-only') ||
       !zone(v['businessTimeZone']) || !obj(v['defaults']) ||
-      !Array.isArray(v['mokedOptions']) || v['mokedOptions'].length > 100 || !v['mokedOptions'].every(parent) ||
+      !Array.isArray(v['mokedOptions']) ||
+      v['mokedOptions'].length > identityScopeLimit(v['dataSource'] === 'oracle-read-only' ? principal : undefined) ||
+      !v['mokedOptions'].every(parent) ||
       !Array.isArray(v['teamOptions']) || v['teamOptions'].length > 1000 ||
       !Array.isArray(v['innerJobOptions']) || v['innerJobOptions'].length > 1000 ||
       !Array.isArray(v['workLocationOptions']) || v['workLocationOptions'].length !== 2) return false;
@@ -25,6 +27,13 @@ export function searchContext(v: unknown): v is ShiftSearchFilterContextV1 {
       !v['innerJobOptions'].every(r => catalog(r) && id(r.code) && r.label !== null) ||
       !ordered(v['innerJobOptions'].map(r => r.code)) ||
       !v['workLocationOptions'].every((l, i) => obj(l) && l['code'] === ['home', 'site'][i] && clean(l['label'], 256))) return false;
+  // An expanded Oracle catalog must represent the complete exact grant set,
+  // not a successful first-page subset or an inferred parent/sibling grant.
+  if (identityScopeLimit(principal) === 1000 && identity(principal)) {
+    const grants = new Set(principal.principal.resourceScope.orgUnitIds);
+    if (v['dataSource'] !== 'oracle-read-only' || v['teamOptions'].length !== grants.size ||
+        !v['teamOptions'].every(t => grants.has(t.code))) return false;
+  }
   const d = v['defaults'];
   return civilDate(d['attendanceDate']) && minute(d['timeFrom']) && minute(d['timeTo']) &&
     d['timeFrom'] === d['timeTo'] && d['mokedCode'] === (parents.length === 1 ? parents[0] : null) &&

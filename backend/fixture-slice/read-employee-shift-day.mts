@@ -1,7 +1,7 @@
 import type {
   EmployeeShiftDayReader, EmployeeShiftDayResponseV1, PrincipalV1,
 } from "./contracts.mts";
-import { record, validateIds, validatePrincipal, validateRaw } from "./contract-validation.mts";
+import { record, validateIds, validatePrincipal, validateRaw, readScopeLimit } from "./contract-validation.mts";
 import { accessPolicy } from "./access-policy.mts";
 import { SliceError } from "./errors.mts";
 import { project } from "./projection.mts";
@@ -12,6 +12,8 @@ export async function readEmployeeShiftDay(
   dataSource: EmployeeShiftDayResponseV1["dataSource"] = "isolated-fixture",
 ): Promise<EmployeeShiftDayResponseV1> {
   validatePrincipal(principal);
+  if (principal.resourceScope.orgUnitIds.length > readScopeLimit(principal, dataSource))
+    throw new SliceError("UNAUTHENTICATED");
   validateIds(employeeId, shiftDayId);
   accessPolicy.requireCapability(principal, "shift-day:read");
   const result: unknown = await reader.readByDayId(shiftDayId);

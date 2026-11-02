@@ -7,14 +7,14 @@ import type {
   CurrentShiftFilterContextV1, CurrentShiftListV1, CurrentShiftRequestV1, CurrentShiftProblemV1,
   CurrentShiftRowV1, CatalogValueV1, MokedOptionV1,
 } from '../../../backend/fixture-slice/current-shifts-contracts.mts';
-import { id, localTime } from './contract';
+import { id, localTime, identityScopeLimit } from './contract';
 
 export const obj = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
 export const txt = (v: unknown, max: number, min = 0): v is string =>
   typeof v === 'string' && !/[\uD800-\uDFFF]/u.test(v) && [...v].length >= min && [...v].length <= max;
 export const clean = (v: unknown, max: number, min = 1): v is string =>
   txt(v, max, min) && !/[\u0000-\u001f\u007f-\u009f]/u.test(v);
-export const unitCode = (v: unknown): v is string => clean(v, 8) && !/\s/u.test(v);
+export const unitCode = (v: unknown): v is string => clean(v, 8) && !/[\s,*]/u.test(v);
 export const civilDate = (v: unknown): v is string =>
   typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && localTime(`${v}T00:00:00`);
 export const minute = (v: unknown): v is string => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
@@ -28,9 +28,10 @@ export const catalog = (v: unknown): v is CatalogValueV1 => obj(v) && clean(v['c
 export const coherentSource = (identitySource: unknown, listSource: unknown): boolean =>
   (identitySource === 'isolated-fixture' && listSource === 'isolated-fixture') ||
   (identitySource === 'oracle' && listSource === 'oracle-read-only');
-export function filterContext(v: unknown): v is CurrentShiftFilterContextV1 {
+export function filterContext(v: unknown, principal?: unknown): v is CurrentShiftFilterContextV1 {
   if (!obj(v) || !['isolated-fixture', 'oracle-read-only'].includes(String(v['dataSource'])) || !zone(v['businessTimeZone']) ||
-    !obj(v['defaults']) || !Array.isArray(v['mokedOptions']) || v['mokedOptions'].length > 100 ||
+    !obj(v['defaults']) || !Array.isArray(v['mokedOptions']) ||
+    v['mokedOptions'].length > identityScopeLimit(v['dataSource'] === 'oracle-read-only' ? principal : undefined) ||
     !v['mokedOptions'].every(parent)) return false;
   const codes = v['mokedOptions'].map((p: { code: string }) => p.code);
   const d = v['defaults'];
