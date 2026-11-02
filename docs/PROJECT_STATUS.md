@@ -37,8 +37,15 @@ rejected, no native/nonlocal requests or fallback. This is not live Oracle.
 Fresh TEST ZIP813592 bytes SHA256
 16A0EB6E3EE948E811FCBFBEDFCB7A7C27A3A5055B436B68CFB9D6EFC57060CD.
 DEV/production ZIPs remain stale for this change and are not release evidence.
-Next action: publish coordinated55-v0.2 and artifact-phase/test corrections,
-then operator reruns the same -AllTestUnits launcher against actual TEST.
+Published coordinated55-v0.2 as44a6c9ac5c924839612def39ceaba5cae5cd0f23,
+exactly49 authorized paths. Fresh capacity29/29, backend/frontend/spec TSC,
+26 MTS syntax/four PowerShell parsers and scoped privacy/whitespace passed.
+Postcommit185 payloads/186 ZIP entries/148 runtime-source matches/30 browser
+assets passed; prior2286/846 plus artifact1 was not repeated. Direct remote
+matched HEAD, cached0/0, index/conflicts empty;39 unrelated/concurrent
+statuses were preserved. Artifact provenance remains honest precommit4cd5bc4,
+not a fabricated rebuilt revision. Standard verifier was not run.
+Next action: operator reruns the same -AllTestUnits launcher against actual TEST.
 Live current count, query performance and successful UI remain unverified;
 no credentials/env-file access or Docker-world mutation occurred.
 
