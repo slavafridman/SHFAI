@@ -57,8 +57,16 @@ because its reference is policy-excluded; no alternate access was attempted.
 Normal fetch confirmed baseline8462b23e with cached0/0 and an empty index/
 conflict list. Only the two new scripts, final GettingStarted appendix and this
 current paragraph are in scope; unrelated working-tree changes are preserved.
-Next action: publish the scoped checker/test/GettingStarted docs and give the
-three working URLs; provisioning and live Oracle remain distinct workstreams.
+TEST-entrypoint publication28b4aa6e52de14d1b9b06429de9b6bd75e64c8e9 committed
+exactlyfour authorized files. Both PowerShell parses,35 synthetic scenarios,
+scoped safety/privacy, links and whitespace passed. Direct remote matched
+HEAD, cached0/0, index/conflicts empty. All26 unrelated path statuses and
+external documentation payloads were preserved exactly as observed; no live
+or Docker/business-state operation occurred during publication. Standard doc
+verification remains not run because its reference is policy-excluded.
+Next action: use the three verified URLs and explicit check/reuse command.
+Fresh provisioning, stopped-container recovery and live Oracle are distinct
+workstreams, not functionality silently supplied by this entrypoint.
 
 Current boss-demo request,2026-11-02 at10:08: a one-command Windows Oracle
 TEST read-only host is implemented. Start-ShifterOracleDemo.ps1 reuses the
