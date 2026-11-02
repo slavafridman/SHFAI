@@ -54,9 +54,16 @@ Publication checks passed: two MTS syntax checks, two PowerShell parses,
 package delta. The full suite was not repeated for publication; the standard
 documentation verifier was not run because its reference is policy-excluded.
 No live Oracle start or browser-at-real-data was performed by tools because
-credentials remain in the user's separate terminal. Next action: publish
-the launcher/host/test/scheduling scopes, then user runs one launcher command
-in that configured terminal. Full legacy functionality/release remains open.
+credentials remain in the user's separate terminal. The launcher/host/test/scheduling scopes were published as
+6e59eb386fc62e75f5a4f9a2e58397a27d83e9c7, exactlyseven files. Syntax,
+PowerShell parsing, imports, privacy and whitespace passed; prior2189 full
+result was retained, not repeated. Direct remote matched HEAD, cached0/0,
+index/conflicts empty;25 unrelated statuses and external checkpoint131/-1
+were preserved. Docker worlds were untouched and live Oracle was not run.
+Next action: user runs the single launcher in the configured terminal,
+supplies the authorized exact TEST unit and verifies status/browser reads.
+Full legacy functionality/release remains open; no live-host URL is claimed
+before startup succeeds in that credential-bearing operator session.
 
 Current diagnostic/test correction,2026-11-02: the user's sanitized output
 confirms five Oracle connection/client/TNS inputs are configured in their own
