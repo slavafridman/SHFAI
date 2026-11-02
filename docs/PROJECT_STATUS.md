@@ -10,6 +10,20 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 
 ### SHF-ORACLE-DEMO-PATHS — automatic path resolution, 2026-11-02
 
+Operator reported DEMO_NODE_STARTUP_FAILED at12:43. Controlled reproduction
+confirmed the launcher replaced specific Node failures with the generic code;
+this is repaired with finite allowlisted Node-code/action propagation and
+sanitized stdout/stderr. Native invocation uses scoped Continue and checks
+the actual exit code, restoring preferences in finally. Captured stderr
+reproduced PowerShell NativeCommandError; the original unredirected benign
+stderr did not reproduce the operator failure, so that cause is not asserted.
+PowerShell982 launcher/94 shared assertions passed, including real child-Node
+fixtures. A pure loadDemoAssets check verified30 TEST assets without Oracle.
+No MTS changed or full suite rebuilt; no live Oracle/TNS/browser verification.
+Actual startup cause still needs the operator's specific safe primary code.
+Next action: publish this diagnostic correction, then rerun the same launcher;
+do not request raw stderr, credentials or reconstruct excluded env files.
+
 User requested no further Oracle client/TNS path questions. The demo launcher
 now resolves explicit parameters, process path inputs, compatible ORACLE_HOME,
 then bounded64-bit registered/current-user standard candidates. Invalid

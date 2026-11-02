@@ -16,10 +16,42 @@ function New-ShifterOracleDemoFailure {
     return $failure
 }
 
+function Get-ShifterOracleDemoHostAction {
+    param([string]$Code)
+    # Finite source-observed host registry, NOT a DEMO_* prefix trust rule.
+    switch -CaseSensitive ($Code) {
+        'DEMO_TEST_ASSETS_REQUIRED' { 'Build verified TEST assets: powershell.exe -NoProfile -File scripts\Build-Shifter.ps1 -Profile test -Validation. No automatic build or retry was performed.' }
+        'DEMO_SCOPE_TOO_LARGE' { 'TEST team scope exceeds the approved 100-team contract. Request a coordinated contract decision; no partial scope or retry is permitted.' }
+        'DEMO_SCOPE_INVALID' { 'TEST team scope failed source validation. Ask the authorized data owner to review it; no broader or partial grant was made.' }
+        'DEMO_PORT_UNAVAILABLE' { 'The requested local port is unavailable. Select an authorized free -Port; do not terminate an unknown listener.' }
+        'DEMO_STARTUP_FAILED' { 'Node host startup failed. Use only the diagnostic code, if present, for authorized investigation; no fallback or automatic retry was performed.' }
+        'DEMO_CONFIGURATION_REJECTED' { 'Node rejected the isolated TEST configuration. Review approved process inputs; do not relax production or authentication guards.' }
+        'DEMO_ORACLE_INPUTS_REQUIRED' { 'Node requires the approved Oracle process inputs. Review secure input preparation; no credential verification is implied.' }
+        'DEMO_ORACLE_INPUTS_REJECTED' { 'Node rejected Oracle process inputs. Review approved account and local directory inputs; do not bypass validation.' }
+        'DEMO_ORACLE_DIRECTORIES_REQUIRED' { 'Node requires existing approved local Oracle client and TNS directories. Review those inputs; nothing was installed.' }
+        'DEMO_ARGUMENTS_REJECTED' { 'Node rejected launcher arguments. Use the documented single-unit or explicit all-team invocation.' }
+        'DEMO_SCOPE_PENDING' { 'Node scope is not established. Use the documented launcher; no scope grant was made.' }
+        'DEMO_LISTENER_FAILED' { 'Node could not establish its local listener. Review the local runtime; no readiness is claimed.' }
+        'DEMO_STARTUP_ABORTED' { 'Node startup was cancelled. No readiness is claimed; no automatic retry was performed.' }
+        'DEMO_DATABASE_UNAVAILABLE' { 'Node reported database unavailability. Request authorized investigation using only the diagnostic code, if present; no automatic retry was performed.' }
+        'DEMO_POOL_ALREADY_TRANSFERRED' { 'Node rejected pool ownership transfer. Request runtime investigation; no additional pool or retry was created.' }
+        'DEMO_WRITES_FORBIDDEN' { 'Node rejected a write request. This demonstration remains read-only; do not bypass the guard.' }
+        'DEMO_NODE_RUNTIME_ERROR' { 'Node exited with an error without a recognized host status. RuntimeDiagnosticRequired: check node --version and the approved runtime/dependency compatibility. Raw native diagnostics were withheld; no automatic retry was performed.' }
+    }
+}
+
 function Format-ShifterOracleDemoFailure {
     param([System.Exception]$Exception)
     # Only locally assigned codes select constant text. Never inspect raw messages.
     $code = $Exception.Data['ShifterOracleDemoCode']
+    $hostAction = Get-ShifterOracleDemoHostAction $code
+    if ($hostAction) {
+        $diagnostic = $Exception.Data['ShifterOracleDemoOracleCode']
+        if ($diagnostic -is [string] -and $diagnostic -cmatch '\A(?:ORA-[0-9]{5}|NJS-[0-9]{3}|DPI-[0-9]{4})\z') {
+            return "Oracle demo [$code]: $hostAction Diagnostic: $diagnostic."
+        }
+        return "Oracle demo [$code]: $hostAction"
+    }
     $action = switch -CaseSensitive ($code) {
         'DEMO_UNIT_REQUIRED' {
             'Set SHF_ORACLE_DEMO_ORG_UNIT_ID in your launcher environment or supply -OrgUnitId; no unit prompt or connection attempted'
@@ -228,15 +260,54 @@ function Assert-ShifterOracleDemoEnvironment {
 function Invoke-ShifterOracleDemoNode {
     param([string]$EntryPoint, [string]$Unit, [int]$ListenPort, [switch]$AllTestUnits)
     # Native foreground child: inherits process-only credentials, never argv/file.
-    try {
-        if ($AllTestUnits) {
-            & node $EntryPoint --test-read-only --all-test-units --port $ListenPort
-        } else {
-            & node $EntryPoint --test-read-only --org-unit $Unit --port $ListenPort
+    $preference = $ErrorActionPreference
+    $status = @{ Code = $null; OracleCode = $null }
+    # Process merged output as it arrives, not after host shutdown. Never echo
+    # arbitrary native text (warnings, stacks and driver messages may hold secrets).
+    $safeOutput = {
+        $text = [string]$_
+        foreach ($line in ($text -split '\r?\n')) {
+            try {
+                $json = ConvertFrom-Json -InputObject $line -ErrorAction Stop
+                $codeProperty = $json.PSObject.Properties['code']
+                if ($null -ne $codeProperty -and $codeProperty.Value -is [string] -and
+                    (Get-ShifterOracleDemoHostAction $codeProperty.Value) -and -not $status.Code) {
+                    $status.Code = $codeProperty.Value
+                    $oracleProperty = $json.PSObject.Properties['oracleCode']
+                    if ($null -ne $oracleProperty -and $oracleProperty.Value -is [string] -and
+                        $oracleProperty.Value -cmatch '\A(?:ORA-[0-9]{5}|NJS-[0-9]{3}|DPI-[0-9]{4})\z') {
+                        $status.OracleCode = $oracleProperty.Value
+                    }
+                }
+            } catch { } # Non-JSON native diagnostics are deliberately withheld.
+            if ($line -ceq "Oracle TEST read-only demo: http://127.0.0.1:$ListenPort" -or
+                $line -ceq "Status: http://127.0.0.1:$ListenPort/demo-status" -or
+                $line -ceq 'Synthetic Administrator; exact operator-attested read scope; all writes disabled.' -or
+                $line -ceq 'Connection accepted; server identity NOT independently certified; NOT release-ready. Ctrl+C to stop.') {
+                Write-Output $line
+            }
         }
-        if ($LASTEXITCODE -ne 0) { throw (New-ShifterOracleDemoFailure 'DEMO_NODE_STARTUP_FAILED') }
+    }
+    try {
+        # PS5.1 turns native stderr into ErrorRecords. Stop would abort before
+        # LASTEXITCODE, even on exit 0. Continue is local to this invocation only.
+        $ErrorActionPreference = 'Continue'
+        if ($AllTestUnits) {
+            & node $EntryPoint --test-read-only --all-test-units --port $ListenPort 2>&1 | ForEach-Object $safeOutput
+        } else {
+            & node $EntryPoint --test-read-only --org-unit $Unit --port $ListenPort 2>&1 | ForEach-Object $safeOutput
+        }
+        $exitCode = $LASTEXITCODE
     } catch {
         throw (New-ShifterOracleDemoFailure 'DEMO_NODE_STARTUP_FAILED')
+    } finally {
+        $ErrorActionPreference = $preference
+    }
+    if ($exitCode -ne 0) {
+        $code = if ($status.Code) { $status.Code } else { 'DEMO_NODE_RUNTIME_ERROR' }
+        $failure = New-ShifterOracleDemoFailure $code
+        if ($status.OracleCode) { $failure.Data['ShifterOracleDemoOracleCode'] = $status.OracleCode }
+        throw $failure
     }
 }
 
@@ -299,6 +370,7 @@ function Start-ShifterOracleDemo {
             [Environment]::SetEnvironmentVariable('SHF_ORACLE_DEMO_ORG_UNIT_ID', $null, 'Process')
             Invoke-ShifterOracleDemoNode -EntryPoint $entry -Unit $OrgUnitId -ListenPort $Port -AllTestUnits:$AllTestUnits
         } catch {
+            if (Get-ShifterOracleDemoHostAction $_.Exception.Data['ShifterOracleDemoCode']) { throw }
             throw (New-ShifterOracleDemoFailure 'DEMO_NODE_STARTUP_FAILED')
         } finally {
             [Environment]::SetEnvironmentVariable('SHF_ORACLE_DEMO_ORG_UNIT_ID', $launcherUnit, 'Process')

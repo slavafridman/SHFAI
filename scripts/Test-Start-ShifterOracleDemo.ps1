@@ -500,6 +500,141 @@ try {
         $source -match '\[Environment\]::UserName') 'standard home derives the current username, never a personal path literal'
     Assert-Demo ($source -match '& node \$EntryPoint --test-read-only --org-unit \$Unit --port \$ListenPort') 'foreground Node argv contains scope and port only'
     Assert-Demo ($source -match '& node \$EntryPoint --test-read-only --all-test-units --port \$ListenPort') 'all foreground argv has opt-in and port only; no unit or password'
+    # The outer launcher must preserve only structured allowlisted failures.
+    $syntheticInvoker = ${function:Invoke-ShifterOracleDemoNode}
+    try {
+        function Invoke-ShifterOracleDemoNode {
+            throw (New-ShifterOracleDemoFailure $script:testHostCode)
+        }
+        foreach ($script:testHostCode in @('DEMO_SCOPE_TOO_LARGE', 'DEMO_TEST_ASSETS_REQUIRED', 'DEMO_UNTRUSTED')) {
+            Reset-DemoSynthetic
+            $before = Get-DemoSnapshot
+            $caught = $false
+            try { Start-ShifterOracleDemo -OrgUnitId DEMO -NonInteractive | Out-Null } catch {
+                $caught = $true
+                $expected = if ($script:testHostCode -eq 'DEMO_UNTRUSTED') { 'DEMO_NODE_STARTUP_FAILED' } else { $script:testHostCode }
+                Assert-Demo ($_.Exception.Data['ShifterOracleDemoCode'] -ceq $expected) 'outer launcher preserves only allowlisted structured host codes'
+                $safe = Format-ShifterOracleDemoFailure $_.Exception
+                Assert-Demo ([regex]::Matches($safe, 'Oracle demo \[').Count -eq 1 -and
+                    $safe -notmatch 'DEMO_UNTRUSTED') 'outer launcher renders one unambiguous safe primary status'
+            }
+            Assert-Demo $caught 'typed host failure remains a failure'
+            Assert-DemoSnapshot $before
+        }
+    } finally { Set-Item Function:Invoke-ShifterOracleDemoNode $syntheticInvoker }
+    $hostSource = [IO.File]::ReadAllText((Join-Path (Split-Path $PSScriptRoot -Parent) 'backend/fixture-slice/oracle-demo-host.mts'))
+    $hostCodes = @([regex]::Matches($hostSource, '"(DEMO_[A-Z_]+)"') |
+        ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+    foreach ($hostCode in $hostCodes) {
+        Assert-Demo ([bool](Get-ShifterOracleDemoHostAction $hostCode)) "source-observed host code has fixed action $hostCode"
+    }
+    Assert-Demo (-not (Get-ShifterOracleDemoHostAction 'DEMO_UNTRUSTED')) 'unrecognized DEMO prefix is never trusted'
+    # Real Windows PowerShell + native Node, but ONLY a test-owned module:
+    # no host import, pool, Oracle driver, DNS or listener.
+    $nativeFixture = Join-Path $directory 'native-fixture.mjs'
+    [IO.File]::WriteAllText($nativeFixture, @'
+const args = process.argv.slice(2);
+const mode = args.includes("--all-test-units") ? "all" : args[args.indexOf("--org-unit") + 1];
+if (process.env.SHF_ORACLE_PASSWORD !== "isolated-synthetic-password" ||
+    args.includes(process.env.SHF_ORACLE_PASSWORD) ||
+    args[0] !== "--test-read-only" || args.at(-2) !== "--port" || args.at(-1) !== "18083")
+  process.exit(98);
+process.stderr.write("benign warning SECRET_NATIVE_SENTINEL private-path\n");
+if (mode === "all" || mode === "UNIT") {
+  process.stdout.write("Oracle TEST read-only demo: http://127.0.0.1:18083\n");
+  await new Promise(resolve => setTimeout(resolve, 150));
+  process.stdout.write("Status: http://127.0.0.1:18083/demo-status\n");
+} else {
+  const code = { assets: "DEMO_TEST_ASSETS_REQUIRED", scope: "DEMO_SCOPE_TOO_LARGE",
+    invalid: "DEMO_SCOPE_INVALID", port: "DEMO_PORT_UNAVAILABLE", startup: "DEMO_STARTUP_FAILED",
+    unknown: "DEMO_UNTRUSTED_SECRET_NATIVE_SENTINEL", malformed: "DEMO_STARTUP_FAILED" }[mode];
+  if (code) process.stderr.write(JSON.stringify({code, oracleCode:
+    mode === "malformed" ? "ORA-01017 SECRET_NATIVE_SENTINEL" : "ORA-01017"}) + "\n");
+  process.exitCode = 1;
+}
+'@)
+    $nativeRunner = Join-Path $directory 'native-runner.ps1'
+    [IO.File]::WriteAllText($nativeRunner, @'
+param($Launcher, $Fixture, $Mode)
+$ErrorActionPreference = 'Stop'
+. $Launcher
+$env:SHF_ORACLE_PASSWORD = 'isolated-synthetic-password'
+$timer = [Diagnostics.Stopwatch]::StartNew()
+if ($Mode -eq 'baseline-assets') {
+    $Mode = 'assets'
+    # Controlled before-fix behavior: the original unconditional remapping.
+    function Invoke-ShifterOracleDemoNode {
+        param($EntryPoint, $Unit, $ListenPort)
+        try {
+            & node $EntryPoint --test-read-only --org-unit $Unit --port $ListenPort
+            if ($LASTEXITCODE -ne 0) { throw (New-ShifterOracleDemoFailure 'DEMO_NODE_STARTUP_FAILED') }
+        } catch { throw (New-ShifterOracleDemoFailure 'DEMO_NODE_STARTUP_FAILED') }
+    }
+}
+if ($Mode -eq 'missing') {
+    function node { & ($Fixture + '.missing.exe') @args }
+}
+try {
+    if ($Mode -eq 'all') {
+        Invoke-ShifterOracleDemoNode -EntryPoint $Fixture -AllTestUnits -ListenPort 18083
+    } else {
+        Invoke-ShifterOracleDemoNode -EntryPoint $Fixture -Unit $Mode -ListenPort 18083
+    }
+    Write-Output 'NATIVE_EXIT_ZERO'
+} catch {
+    Write-Output (Format-ShifterOracleDemoFailure $_.Exception)
+}
+Write-Output ("PREFERENCE:" + $ErrorActionPreference)
+if ($timer.ElapsedMilliseconds -ge 150) { Write-Output 'FOREGROUND_WAITED' }
+'@)
+    foreach ($mode in @('baseline-assets', 'all', 'UNIT', 'assets', 'scope', 'invalid', 'port', 'startup', 'unknown', 'malformed', 'missing')) {
+        $info = New-Object Diagnostics.ProcessStartInfo
+        $info.FileName = Join-Path $PSHOME 'powershell.exe'
+        $info.Arguments = '-NoProfile -File "' + $nativeRunner + '" "' + $launcher + '" "' + $nativeFixture + '" ' + $mode
+        $info.UseShellExecute = $false
+        $info.RedirectStandardOutput = $true
+        $info.RedirectStandardError = $true
+        foreach ($name in @($info.EnvironmentVariables.Keys)) {
+            if ($name.StartsWith('SHF_', [StringComparison]::OrdinalIgnoreCase) -or
+                $name -cin @('NODE_ENV', 'NODE_OPTIONS', 'TNS_ADMIN')) { $info.EnvironmentVariables.Remove($name) }
+        }
+        $child = New-Object Diagnostics.Process
+        $child.StartInfo = $info
+        try {
+            [void]$child.Start()
+            $stdout = $child.StandardOutput.ReadToEnd()
+            $stderr = $child.StandardError.ReadToEnd()
+            $child.WaitForExit()
+            Assert-Demo ($child.ExitCode -eq 0) "native fixture runner completed $mode"
+            if ($mode -eq 'baseline-assets') {
+                Assert-Demo ($stdout -match 'Oracle demo \[DEMO_NODE_STARTUP_FAILED\]' -and
+                    $stdout -notmatch 'Oracle demo \[DEMO_TEST_ASSETS_REQUIRED\]') 'before-fix wrapper masks the real native asset failure primary code'
+                Assert-Demo (($stdout + $stderr) -match 'DEMO_TEST_ASSETS_REQUIRED') 'before-fix native fixture actually emitted the specific JSON code'
+                continue # Baseline output is captured only, deliberately never echoed.
+            }
+            Assert-Demo (($stdout + $stderr) -notmatch 'SECRET_NATIVE_SENTINEL|private-path|isolated-synthetic-password|CategoryInfo|FullyQualifiedErrorId') "native output sanitized $mode"
+            Assert-Demo ($stdout -match 'PREFERENCE:Stop') "native invocation restores Stop preference $mode"
+            if ($mode -cin @('all', 'UNIT')) {
+                Assert-Demo ($stdout -match 'NATIVE_EXIT_ZERO' -and $stdout -notmatch 'DEMO_') "benign native stderr does not fail exit zero $mode"
+                Assert-Demo ($stdout -match 'Status: http://127.0.0.1:18083/demo-status' -and
+                    $stdout -match 'FOREGROUND_WAITED') "foreground lifecycle and approved stdout preserved $mode"
+            } else {
+                $expected = switch ($mode) {
+                    assets { 'DEMO_TEST_ASSETS_REQUIRED' }; scope { 'DEMO_SCOPE_TOO_LARGE' }
+                    invalid { 'DEMO_SCOPE_INVALID' }; port { 'DEMO_PORT_UNAVAILABLE' }
+                    unknown { 'DEMO_NODE_RUNTIME_ERROR' }; missing { 'DEMO_NODE_STARTUP_FAILED' }
+                    default { 'DEMO_STARTUP_FAILED' }
+                }
+                Assert-Demo ($stdout -match ([regex]::Escape("Oracle demo [$expected]:")) -and
+                    $stdout -notmatch 'NATIVE_EXIT_ZERO') "nonzero primary code retained $mode"
+                if ($mode -eq 'assets') {
+                    Assert-Demo ($stdout -match 'Build-Shifter.ps1 -Profile test -Validation') 'asset failure has constant canonical build action'
+                }
+                if ($mode -eq 'startup') { Assert-Demo ($stdout -match 'ORA-01017') 'safe Oracle code retained without message' }
+                if ($mode -eq 'malformed') { Assert-Demo ($stdout -notmatch 'ORA-01017') 'malformed Oracle code rejected entirely' }
+            }
+        } finally { $child.Dispose() }
+    }
     # Exercise the actual argv branch with an isolated command double, not Node.
     function node {
         $script:nodeArguments = @($args)
@@ -518,7 +653,7 @@ try {
         $node -is [Management.Automation.Language.CommandAst] -and $node.GetCommandName() -eq 'Read-Host'
     }, $true))
     Assert-Demo ($prompts.Count -eq 0) 'launcher AST has zero Read-Host calls in every mode'
-    Write-Host "PASS Oracle demo launcher: $script:passed static/synthetic assertions; no live Oracle or real Node launcher invoked."
+    Write-Host "PASS Oracle demo launcher: $script:passed static/synthetic/native-fixture assertions; no live Oracle or real demo host invoked."
 } finally {
     foreach ($key in $keys) { [Environment]::SetEnvironmentVariable($key, $original[$key], 'Process') }
     $original.Clear()

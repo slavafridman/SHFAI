@@ -38,9 +38,61 @@ once. Cancellation/timeouts wait for pending native work, rollback and lease
 cleanup before closing that pool; a stalled native operation can delay shutdown.
 No arbitrary SQL console, employee/profile discovery, additional database,
 real authentication, native-command configuration or write grant is introduced.
-Errors print only a constant JSON `code` and, when available, sanitized Oracle
-diagnostic code. The launcher retains that Node output, then reports its fixed
-generic startup failure without echoing arbitrary messages.
+The host emits a constant JSON `code` and, when available, a sanitized Oracle
+diagnostic code. The launcher recognizes a finite source-observed code registry
+and reports that primary code once with a fixed operator action, rather than
+replacing every host failure with `DEMO_NODE_STARTUP_FAILED`. It never echoes
+arbitrary native stderr/stdout, exception messages, stack traces or JSON fields.
+
+### Troubleshooting a stopped Node demonstration
+
+Use the **primary status code**, not an inferred database diagnosis:
+
+| Status | Safe next action |
+| --- | --- |
+| `DEMO_TEST_ASSETS_REQUIRED` | Run `powershell.exe -NoProfile -File scripts\Build-Shifter.ps1 -Profile test -Validation` explicitly. The launcher does not build, weaken manifest validation or retry automatically. |
+| `DEMO_SCOPE_TOO_LARGE` | The approved scope exceeds 100 teams. Request a coordinated contract decision; do not accept a partial scope or expand permissions. |
+| `DEMO_SCOPE_INVALID` | Ask the authorized data owner to investigate failed team/hierarchy validation. Do not bypass it. |
+| `DEMO_PORT_UNAVAILABLE` | Choose an authorized free `-Port`; do not kill an unknown listener. |
+| `DEMO_STARTUP_FAILED` | Request authorized investigation using only the optional diagnostic code, not raw native output. |
+| `DEMO_NODE_RUNTIME_ERROR` | Node exited nonzero without a recognized host status (`RuntimeDiagnosticRequired`). Check `node --version` and approved runtime/dependency compatibility; raw module/driver stacks are withheld. |
+| `DEMO_NODE_STARTUP_FAILED` | The native invocation itself failed. This code alone does not establish an Oracle login, client or database fault. |
+
+Other recognized host guards retain their own code and constant action.
+Only exact `ORA-` + five digits, `NJS-` + three digits or `DPI-` + four digits
+may accompany a recognized status; messages, paths, SQL and credentials are
+never copied. Unknown `DEMO_*` strings are not trusted. There is no credential
+fallback, retry or expanded configuration mode.
+
+The native call remains **foreground** and waits for Node's real exit.
+Windows PowerShell 5.1 can turn captured native stderr into `NativeCommandError`
+under `ErrorActionPreference=Stop`, including on a successful Node exit.
+The launcher uses `Continue` only around that native pipeline, sanitizes output
+as it arrives, records the actual exit code and restores the preference in
+`finally`. Benign warnings do not turn exit0 into failure. Only the host's fixed
+startup URL/status and safety statements pass through; no URL/readiness is
+fabricated when a child exits0 without producing them. Ctrl+C and the host's
+existing single-pool cleanup are unchanged.
+
+Offline regression evidence (2026-11-02): the redirected/captured PS5.1 probe
+reproduced `NativeCommandError` with `Stop`, while `Continue` observed exit0.
+The original **unredirected** benign-stderr probe completed with exit0; it did
+not reproduce the operator's failure. The known unconditional remapping of
+nonzero host failures is corrected independently. The operator's actual cause
+remains unknown until a specific safe primary status is observed.
+The pure current `loadDemoAssets()` check passed for **30 assets**, without
+starting the host, pool or any Oracle connection; no asset rebuild was needed.
+Focused verification: `powershell.exe -NoProfile -File scripts\Test-Start-ShifterOracleDemo.ps1`
+passed **982 assertions** (the existing checks plus isolated real child-Node
+fixtures and controlled before/after failure preservation).
+`powershell.exe -NoProfile -File scripts\Test-ShifterOracleEnvironment.ps1`
+passed **94 assertions**. Both assigned scripts were parsed/executed by Windows
+PowerShell **5.1**; fixture Node was **v24.21.0**. Fixtures exercise warnings with
+exit0, nonzero recognized/unknown JSON, secret-bearing unknown output, missing
+executable, both argv scopes, process-only password and preference restoration.
+No live Oracle, real host/pool lifecycle or console Ctrl+C check was run.
+No MTS changed, so host Node tests, TypeScript and the full backend suite were
+not rerun for this PowerShell-only correction.
 
 **Default single-unit mode is unchanged.** Without `-AllTestUnits`, set process
 `SHF_ORACLE_DEMO_ORG_UNIT_ID` to the exact authorized TEST unit, then run:
