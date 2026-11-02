@@ -89,7 +89,10 @@ new final backend README troubleshooting section and this incident paragraph.
 Pre-publication HEAD was0ffc9756409a8810763191f077e064215c148221; fetch confirmed
 cached0/0 and an empty index/conflict list. External Header/DockerReport131/-1
 and all25 unrelated user statuses remain outside the scoped publication.
-Next action after publication: operator enters their authorized actual
+Fix88b2279ec477be962818d6f9073c0d6e938b38e5 was published in exactlyfour
+authorized paths. Direct remote matched HEAD, cached0/0, index/conflicts empty;
+all25 unrelated statuses and external checkpoint131/-1 were preserved.
+Next action: operator enters their authorized actual
 ORG_UNIT_ID in their prepared terminal and verifies startup/read-only UI.
 Unknown code requires the scope owner; employee ID, database username and
 TNS alias are not organizational units. Live verification remains operator-owned.
