@@ -7,7 +7,7 @@
     "node": ">=24.0.0 <25"
   },
   "scripts": {
-    "test": "node --test --test-concurrency=4 \"test/*.test.mts\"",
+    "test": "node --test --test-concurrency=1 \"test/*.test.mts\"",
     "test:profiles": "node --test test/environment-profiles.test.mts",
     "test:stage-arrival": "node --test test/stage-arrival.test.mts test/stage-arrival-http.test.mts",
     "test:attendance": "node --test test/attendance.test.mts test/attendance-use-case.test.mts test/attendance-http.test.mts test/oracle-attendance.test.mts test/oracle-attendance-live-check.test.mts",

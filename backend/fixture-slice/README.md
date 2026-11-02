@@ -1,5 +1,119 @@
 # SHF backend: seven reads, isolated arrivals, and default-off controlled native TEST arrivals
 
+## One-command Windows Oracle TEST read-only demonstration
+
+From `D:\AIProjects\SHFAI`, in **your already-configured PowerShell terminal**:
+
+```powershell
+powershell.exe -NoProfile -File scripts\Start-ShifterOracleDemo.ps1
+```
+
+The foreground launcher asks for **one exact organizational unit code you are
+authorized to read in TEST**. There is no default, parent-wide grant, wildcard,
+unit discovery or invented real unit. The Hebrew/English prompt explicitly says
+this is not an employee ID or password. Your selection is an operator scope
+attestation, not an independently verified grant or Oracle server certificate.
+Existing scoped readers still validate source hierarchy and data; an unknown
+unit does not grant broader access. You can avoid this prompt with `-OrgUnitId`
+and your authorized code (nonsecret).
+
+The five existing process inputs are reused: `SHF_ORACLE_CONNECT_STRING`,
+`SHF_ORACLE_USER`, `SHF_ORACLE_PASSWORD`, `SHF_ORACLE_CLIENT_LIB_DIR`, `TNS_ADMIN`.
+Only `CTIDBT_WFMT`/`CTIDBT_WFMT.WORLD` and account `shifter` are accepted. If
+client/TNS paths are missing, the launcher asks for the existing Client **19.3
+x64** `bin` directory containing `oci.dll` and the existing `network/admin`
+directory; optional `-ClientLibDir`/`-TnsAdmin` supply them without prompts.
+No disk search, TNS contents, env files, registry, persistent environment or
+credential store is read/changed. A missing password is requested securely by
+the existing `Set-ShifterOracleEnvironment` helper, process-only, never argv,
+logs or files. It is a **database connection secret**, not a user-login form.
+No Oracle client/dependency is downloaded or installed.
+
+On successful startup, open **http://127.0.0.1:18083**. Keep the terminal open;
+**Ctrl+C** stops admission, drains owned read work and closes the backend's one
+pool once. All seven existing Oracle readers share that long-lived pool:
+max4 connections, max20 queued acquisitions, 2s queue timeout and the existing
+5s read budget, read-only transaction/rollback/release. There are no automatic
+command retries or synthetic-data fallbacks on Oracle errors. `-Port` selects
+an explicit alternative if necessary; occupied18083 fails without killing any
+process or scanning other ports. The API backend uses an unpublished ephemeral
+loopback port. Both listeners bind **127.0.0.1 only**. Existing Docker worlds on
+18080/18081/18082 and other servers are not changed.
+
+The host runs **current backend source**, not the packaged backend snapshot.
+It serves the existing compiled TEST browser at
+`.shifter-developer-delivery/test/stage/frontend/browser`, validates every browser
+file's bytes against its shipped `BUILD.md` manifest and runs the existing
+`environment-build-check.mjs` TEST `/api` public-profile check before use.
+This verifies the shipped browser bytes/profile, **not freshness of the whole
+source snapshot or a new frontend build/test result**. Missing/changed assets
+fail with an explicit build command; the launcher never installs or builds
+automatically. `/api` GETs forward to the existing backend with original query
+and application headers/security responses; no invented API JSON, receipts,
+write forwarding, CORS expansion or SPA fallback for API errors is introduced.
+
+Health URLs (packaging metadata, **not new domain API contracts**):
+
+- `/livez`: host liveness only, even when Oracle is unavailable.
+- `/demo-status` or `/readyz`: startup's existing constant `SELECT 1` result,
+  then on-demand single-flight probes on the **same pool**, at most one probe
+  per second. No heartbeat or polling loop. Each new probe uses
+  `OracleReadSession`, read-only transaction, existing timeout/break/rollback
+  and release semantics. Oracle failure yields503 with only a safe code/summary.
+  No business records, host/schema/SQL details or credentials are returned.
+- Readiness always says `targetIdentityVerified:false`,
+  `nativeWritesAuthorized:false`, `releaseReady:false`. Connection acceptance
+  does **not** independently certify the server behind a TNS alias as TEST.
+  The original `oracle-test-readiness.mts` proof requirements are unchanged,
+  separate, and are not prerequisites for this basic read-only demonstration.
+
+Authentication is the existing explicitly isolated synthetic Administrator,
+with exactly the seven read capabilities and the selected exact-unit scope.
+It does not verify real application credentials or supply employee context.
+F1/F2/late arrival/exit, management and C52 command modes remain disabled.
+Business validation, employee-context and scope checks are unchanged. Production,
+missing opt-in, invalid environment/target/path/scope, stray SHF application/
+fixture/native/write inputs and `NODE_OPTIONS` are rejected, not silently
+cleared. Outside this mode the existing production real-authentication guard
+is untouched. Process inputs changed by the launcher are restored on exit.
+
+**Demonstration scope:** implemented read workflows with approved TEST data
+only; not full legacy parity, all missions, native writes, EMS completion or a
+production/release certification. Do not copy real records into logs,
+screenshots or reports. Business-policy §54 remains outside this solution.
+Baselines §22.4 read adapters and **52-v0.2 / C52-v0.2 / 52-config-v0.1** are
+unchanged; no architect-owned contract or legacy source is modified.
+
+Verification commands (isolated doubles/static checks; **not live Oracle**):
+
+```powershell
+powershell.exe -NoProfile -File scripts\Test-Start-ShifterOracleDemo.ps1
+cd backend\fixture-slice
+node --test --test-concurrency=4 test/oracle-demo-host.test.mts
+npm run typecheck
+npm test
+```
+
+Verification for task **SHF-ORACLE-TEST-DEMO**, 2026-11-02: focused host
+**51/51**, Windows launcher **107/107 static/synthetic assertions**, MTS syntax,
+TypeScript and scoped whitespace checks passed. The existing shipped browser
+manifest verified **30 files**, including the existing TEST public-profile
+checker; the source host served those actual assets and identity API with an
+explicitly isolated Oracle protocol double, not a real database.
+The single canonical `npm test` run was **2188/2189**, zero cancellations/skips:
+existing `shift-management-admission.test.mts` “100-row isolated application”
+exceeded its unchanged5s budget. Its isolated file rerun
+`node --test --test-concurrency=4 test/shift-management-admission.test.mts`
+passed **39/39** without changes. This is **not a fully green regression**;
+management/test-resource follow-up belongs to that backend test owner. No
+business code, test budgets or canonical concurrency were changed to hide it.
+Real Oracle/client/TNS startup, browser interaction and console Ctrl+C on the
+operator's installed client remain **not run**: the tool process does not
+inherit the operator terminal's five inputs. The operator owns that live check
+using the one command above; independent target proof/native authority/release
+remain false. Temporary test listeners/pools were stopped, synthetic temporary
+files removed; no live/demo service was left running by these checks.
+
 ## Shared Oracle target preparation (process only, 2026-11-02)
 
 The approved **TEST target** is shared for this step, not a production database
@@ -113,10 +227,85 @@ readiness proof/certificate or release authority.
 Offline tests: `node --test test/oracle-connection-check.test.mts`;
 strict TypeScript: `npm run typecheck`.
 
-The canonical full backend command is `npm test`: it explicitly bounds Node
-test-file concurrency to **4** while retaining the same `test/*.test.mts`
-selector and every test. Older bare `node --test` examples below are historical
-commands/evidence, not the current resource-bounded full-suite command.
+The canonical full backend command is `npm test`, from
+`D:\AIProjects\SHFAI\backend\fixture-slice`. It now runs
+`node --test --test-concurrency=1 "test/*.test.mts"`: serial test files,
+the same selector and every test. The previous bound of **4** and older bare
+`node --test` examples are historical commands/evidence, not the current
+resource-bounded full-suite command.
+
+### Absolute-time integration test scheduling (2026-11-02)
+
+The earlier Oracle demo verification above remains historical evidence:
+**2188/2189**, with the existing “100-row isolated application exercises one
+budget and one commit, not native capacity certification” case exceeding its
+unchanged **5000ms** request budget; its isolated file subsequently passed39/39.
+No more precise original failure duration is available in that summary.
+
+A single instrumented reproduction of that exact100-row preview/command
+workload, without other test-file workers, passed: preview **2073.516ms**,
+command **1319.624ms**, shared budget **3393.911ms**. Process CPU usage for
+the shared budget was **3281ms user +172ms system** (CPU accounting includes
+process threads). All100 effects, one commit,100 stored days and zero active
+fixture/admission ownership were asserted. The budget starts at
+`performance.now() +5000`; work guards compare that absolute deadline, so OS
+scheduling delays count too. Source inspection shows per-row planning and
+pairwise interval checks, not evidence of an unavoidable cubic100-row failure.
+This workload has material computational cost and limited scheduling headroom.
+
+Serial file scheduling is an explicit test correctness/resource-isolation
+choice for these absolute-time integration checks, not a speed optimization.
+The measurement supports susceptibility to contention; it does **not** prove
+the former four-file runner, Docker load, or asset verification was the sole
+cause of the historical failure. Most host tests inject synthetic assets;
+the shipped30-asset manifest is not rehashed in every one of the51 host cases.
+No Docker service is changed to run the suite.
+
+No cases are removed, skipped or moved to another framework. Within-file
+test behavior, child-process lifecycle, production/native5000ms budgets,
+business assertions, driver behavior and dependencies remain unchanged.
+Use a runner process without inherited `SHF_*`, `TNS*`, `NODE_OPTIONS` or
+`NODE_TEST*` inputs; do not silently enable mock login or inject scheduling
+through environment variables. This isolated fixture check is **not** a
+native/Oracle capacity certification or a concurrent-load SLA.
+
+Verification for **SHF-ORACLE-DEMO-REGRESSION**, Windows / existing Node
+**24.21.0**, npm **11.19.0**, TypeScript **5.9.3**:
+
+* One canonical `npm test` run after the scheduling change: **2189 tests,
+  2189 pass,0 fail,0 cancelled,0 skipped,0 todo,0 suites**; Node duration
+  **332092.3104ms**, command wall time **333.528s**. These are parsed runner
+  totals, not a count inferred from previous suites plus new cases.
+* The unchanged100-row case passed in **3270.9288ms** in that full run.
+  Production rejection of synthetic authentication and enabled synthetic
+  Administrator configuration passed before pool creation; the demo's explicit
+  opt-in/production guard case also passed.
+* Timing categories are not interchangeable: the fixture reproduction above
+  measures computation by phase; runner case times include deliberate deadline
+  waits. For example, NEXT01-09/12's timeout scenarios took **15051.2834ms**,
+  bounded shutdown **6204.8802ms**, and existing HTTP5s timeout tests roughly
+  **5024–5183ms**. The actual compiled-browser/protocol-double host case took
+  **302.5207ms**. None of these is a live database latency measurement.
+* `npm run typecheck` passed. No dependency, lockfile, application, fixture,
+  deadline or container configuration change was needed.
+
+Before that run the runner asserted the absolute CWD above, the expected
+package test script and **83** matching `test/*.test.mts` files. Inherited
+`SHF_*`, `TNS*`, `NODE_OPTIONS` and `NODE_TEST*` inputs were removed only from
+the tool's disposable runner process and their absence asserted; no operator
+terminal, env file or service configuration was altered. Full output was
+captured only to an owned OS TEMP log. There was no unchanged full-suite retry.
+This result supersedes the earlier outstanding offline regression failure,
+not the historical observation or the live-demo limitations above.
+
+This was a test/configuration check, **not** a new frontend/backend delivery
+build, Docker check, deployment, external publication or release approval.
+Existing51 host and107 PowerShell checks above remain their original evidence;
+the PowerShell suite was not repeated for this manifest-only scheduling fix.
+Live Oracle19.3-client/TNS startup, operator browser interaction and Ctrl+C
+still need the authorized operator's separate verification. All three running
+Docker worlds were left untouched; no production/native capacity claim follows
+from this serial offline pass.
 
 ## Standalone Oracle TEST readiness (operator-only, 2026-11-01)
 

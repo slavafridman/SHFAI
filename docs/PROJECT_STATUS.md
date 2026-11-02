@@ -31,6 +31,33 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 TEST environments are RUNNING. M02 source is published asdc743e2b; live Oracle
 is blocked by missing process configuration. Full rewrite remains incomplete.**
 
+Current boss-demo request,2026-11-02 at10:08: a one-command Windows Oracle
+TEST read-only host is implemented. Start-ShifterOracleDemo.ps1 reuses the
+operator process credentials or a secure prompt, asks for an explicitly
+authorized exact unit, verifies existing TEST assets and starts one source
+backend pool plus same-origin loopback UI at18083. No env files, native
+commands, business writes, fallback fixtures or production-auth bypass.
+The installed Windows Client19.3 is used; Docker Oracle client/egress is not
+silently enabled. All seven existing readers retain their original scope/rules.
+Health reuses the bounded pool and reports DB failures503, not fabricated
+data success; status always distinguishes unverified target identity, no
+native-write authority and no release readiness. Startup/shutdown cleanup,
+port conflicts and one-pool ownership were exercised using protocol doubles.
+Owner51 Node/107 PowerShell checks and independent51/107 plus4 HTTP/lifecycle
+cases passed; TSC passed. An initial full2188/2189 failed the existing100-row
+fixture deadline. Test-file concurrency was transparently changed4->1 without
+altering production budgets, tests, selectors or assertions. Final2189/2189
+passed, zero failures/cancellations/skips, with the100-row case3271ms;
+full runner took332s. This is offline regression, not live performance SLA.
+Publication checks passed: two MTS syntax checks, two PowerShell parses,
+14 local imports, scoped privacy/whitespace and exact concurrency-only
+package delta. The full suite was not repeated for publication; the standard
+documentation verifier was not run because its reference is policy-excluded.
+No live Oracle start or browser-at-real-data was performed by tools because
+credentials remain in the user's separate terminal. Next action: publish
+the launcher/host/test/scheduling scopes, then user runs one launcher command
+in that configured terminal. Full legacy functionality/release remains open.
+
 Current diagnostic/test correction,2026-11-02: the user's sanitized output
 confirms five Oracle connection/client/TNS inputs are configured in their own
 PowerShell. Strict readiness still lacks app profile/config and independently
