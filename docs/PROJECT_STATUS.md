@@ -31,6 +31,35 @@ Update it at the end of every completed, failed, blocked or approval-gated step.
 TEST environments are RUNNING. M02 source is published asdc743e2b; live Oracle
 is blocked by missing process configuration. Full rewrite remains incomplete.**
 
+Current complete-running-environment request,2026-11-02 at11:02: the existing
+implemented synthetic TEST stack was independently verified, not replaced by
+another Oracle credential prompt. Start-ShifterTestEnvironment.ps1 is a
+preservation-first check/reuse command for the three owned running projects.
+It does NOT install images, start stopped services or seed/recreate fixtures:
+missing/unhealthy/foreign projects fail explicitly rather than reset authority.
+READONLY18080, management18081 and cancellation18082 have exact separate7/14/9
+capabilities, T001 scope and fixed synthetic Clock; no Oracle/native fallback.
+Owner35 synthetic scenarios and39 real GETs passed. Independent35 plus49 HTTP
+checks passed (48 expected200 and one consumed-context403); all six containers
+remained healthy with identical IDs/images/start times and store projections.
+Management's canceled target and created Nov5-7 shifts remain; C52 exit is
+already cleared and cancellation authority consumed. Fresh repeat cancellation
+is NOT offered or silently reset. All three UI roots returned200 HTML/nosniff.
+Scripts require no password or org-unit prompt for this isolated TEST.
+Live Oracle/full legacy coverage, production authentication, UAT and full
+accessibility remain unverified/incomplete. The user's complete-project goal
+cannot be fulfilled merely by labeling this tested partial implementation full.
+Scoped publication preflight: both PowerShell parsers and the35 synthetic
+scenarios passed again; source safety/privacy, appendix links and staged
+whitespace checks passed. No Docker/HTTP probe or full backend/frontend suite
+was repeated for publication. The standard document verifier remains not run
+because its reference is policy-excluded; no alternate access was attempted.
+Normal fetch confirmed baseline8462b23e with cached0/0 and an empty index/
+conflict list. Only the two new scripts, final GettingStarted appendix and this
+current paragraph are in scope; unrelated working-tree changes are preserved.
+Next action: publish the scoped checker/test/GettingStarted docs and give the
+three working URLs; provisioning and live Oracle remain distinct workstreams.
+
 Current boss-demo request,2026-11-02 at10:08: a one-command Windows Oracle
 TEST read-only host is implemented. Start-ShifterOracleDemo.ps1 reuses the
 operator process credentials or a secure prompt, asks for an explicitly

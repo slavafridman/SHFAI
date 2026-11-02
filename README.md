@@ -738,3 +738,80 @@ native-environment work; zero live configuration/connections here. Production
 login remains blocked pending the authentication owner. Next action: parent/
 independent QA accepts this exact image/source snapshot, then service owner
 performs only their explicitly approved replacement/probes.
+
+## Getting started: complete implemented TEST environment
+
+Run this **one command** from any Windows PowerShell 5.1 directory:
+
+```powershell
+powershell.exe -NoProfile -File "D:\AIProjects\SHFAI\scripts\Start-ShifterTestEnvironment.ps1"
+```
+
+This is the populated **existing-workflow synthetic TEST environment**, including
+inquiries, management fixture writes and cancellation, not the Oracle read-only
+launcher. It needs no password, organization code, Oracle Client, environment
+file, Node installation on the host, dependency installation or build. Explicit
+invocation opts into this isolated synthetic check. Nothing is enabled in
+production. Add `-OpenBrowser` only if you want to open the primary URL; by default
+the launcher opens no browser and leaves no helper process.
+
+| Purpose | Existing project | Open in your browser | Exact capabilities |
+|---|---|---|---|
+| Primary inquiries | `shf-full-test` | http://127.0.0.1:18080/ | 7 read capabilities |
+| Management fixture writes | `shf-full-test-management` | http://127.0.0.1:18081/ | 14 management-family capabilities |
+| Station-exit cancellation fixture | `shf-full-test-cancellation` | http://127.0.0.1:18082/ | 9 cancellation-family capabilities |
+
+These are three separate application worlds, not one shared database or a
+combined authorization family. Choose the writer URL for that workflow. The
+temporary identity is synthetic Administrator, employee ID null, scoped to
+synthetic team `T001`; it verifies no real credentials. The fixture clock is
+**2026-11-01T12:00:00.123Z, UTC**, not the Windows clock. Native/production fences
+remain in place, including the management capability whose name contains
+`test-oracle-write`: that name is not permission or readiness for native writes.
+
+**Prerequisites and preservation:** approved Docker Desktop Linux containers on
+Windows, its CLI on PATH, the current local named-pipe endpoint
+`npipe:////./pipe/dockerDesktopLinuxEngine`, no Docker endpoint/config override,
+and the six existing healthy fixture containers. Only `127.0.0.1:18080/18081/18082`
+may be published. The launcher checks ownership, immutable accepted image IDs,
+purpose markers, Node **24.21.0**, synthetic runtime configuration and each live
+world's health, identity, all seven inquiries and four filter/context queries.
+It performs **39 bounded GETs** (13 per world), with a five-second HTTP budget per
+world, three seconds maximum per request, no redirects and strict JSON/nosniff/
+no-store checks. CLI calls have a 15-second timeout and a minimal child environment.
+Four temporary opt-in process settings are restored even on failure. No private
+environment files, credentials, container logs or full HTTP bodies are printed.
+
+Healthy accepted older images are deliberately reused, even if tags have moved
+or their image-cache records were removed. All six IDs, images and start times
+must remain unchanged. Existing manager edits and consumed C52 authority are
+preserved: cancellation context may already be forbidden and its command
+disabled. The launcher does not request validation tokens, issue business POSTs,
+reset fixtures or restore cancellation/native authority to make checks green.
+
+**Fail closed:** missing/partial/foreign/stopped/unhealthy projects, wrong ports,
+unknown image IDs, unsafe headers or incorrect scope stop with an actionable
+status and exit 1. This preservation-first command does **not** create missing
+projects, start stopped containers, run Compose, build, install, pull, prune,
+switch contexts or restart Docker. An explicit owner recovery decision is
+required; restarting loses volatile fixture state. If image preparation is
+separately needed, the existing prior build command is
+`.\scripts\Build-LocalDemo-Shifter.ps1 -DemoOptIn synthetic-full-test -Mode READONLY -ReuseValidatedPayload`;
+it requires an already validated TEST payload matching the current source
+snapshot and is **not** a startup command or permission to replace these worlds.
+
+Focused launcher tests (no Docker engine or network access):
+`powershell.exe -NoProfile -File "D:\AIProjects\SHFAI\scripts\Test-Start-ShifterTestEnvironment.ps1"`.
+Verified here: **35 synthetic scenarios** plus parser/static safety checks;
+actual running-stack checks passed for all three worlds with six unchanged
+healthy containers. These are configuration/runtime-readiness checks, not a new
+build, browser interaction test or re-execution of writer commands.
+
+**Limits:** implemented fixture workflows only, not the complete legacy M04+
+application, real authentication, native Oracle/EMS integration, production,
+deployment or release approval. No live driver-connection instrumentation was
+added: runtime fixture declarations and accepted code/image evidence are not
+proof of topology-wide zero egress. The optional native read-only host on 18083
+is separate and untouched; it is not needed for this TEST command. Fixture owner
+owns unhealthy/missing-project recovery; application/QA owners retain deferred
+legacy, browser interaction and native-environment verification.
